@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Minimalist two-color palette: Warm Beige & Sage Green */
+    --background: 40 100% 96%;
+    --foreground: 100 15% 25%;
+    
+    /* Header specific color - warm beige */
+    --header-bg: 42 35% 89%;
+
+    --card: 42 30% 96%;
+    --card-foreground: 100 15% 25%;
+
+    --popover: 42 30% 96%;
+    --popover-foreground: 100 15% 25%;
+
+    /* Primary - Sage Green */
+    --primary: 100 25% 55%;
+    --primary-foreground: 42 30% 96%;
+    --primary-soft: 100 20% 88%;
+
+    /* Secondary - Warm Beige */
+    --secondary: 42 28% 85%;
+    --secondary-foreground: 100 15% 25%;
+
+    /* Muted - Light Beige */
+    --muted: 42 25% 90%;
+    --muted-foreground: 100 15% 45%;
+
+    /* Accent - Darker Sage */
+    --accent: 100 30% 45%;
+    --accent-foreground: 42 30% 96%;
+
+    /* Nature colors - simplified */
+    --nature-green: 100 25% 55%;
+    --nature-pink: 42 28% 75%;
+    --nature-coral: 42 30% 70%;
+    --nature-lavender: 100 20% 80%;
+    --nature-mint: 100 30% 75%;
+    
+    /* Hero green - olive green like the image */
+    --hero-green: 90 20% 40%;
+
+    /* Minimal gradients */
+    --gradient-primary: linear-gradient(180deg, hsl(var(--primary)), hsl(var(--primary-soft)));
+    --gradient-secondary: linear-gradient(180deg, hsl(var(--secondary)), hsl(var(--background)));
+    --gradient-hero: linear-gradient(180deg, hsl(var(--background)), hsl(var(--secondary)));
+    --gradient-card: linear-gradient(180deg, hsl(var(--card)), hsl(var(--muted)));
+
+    /* Subtle shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(var(--primary) / 0.08);
+    --shadow-elegant: 0 4px 16px -4px hsl(var(--primary) / 0.12);
+    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.1);
+
+    /* Smooth animations */
+    --transition-smooth: all 0.2s ease-out;
+    --transition-spring: all 0.3s ease-out;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 42 30% 96%;
+
+    --border: 100 15% 80%;
+    --input: 42 25% 90%;
+    --ring: 100 25% 55%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 42 28% 92%;
+    --sidebar-foreground: 100 15% 25%;
+    --sidebar-primary: 100 25% 55%;
+    --sidebar-primary-foreground: 42 30% 96%;
+    --sidebar-accent: 42 25% 90%;
+    --sidebar-accent-foreground: 100 15% 25%;
+    --sidebar-border: 100 15% 80%;
+    --sidebar-ring: 100 25% 55%;
+  }
+
+  .dark {
+    /* Dark mode minimalist palette */
+    --background: 100 15% 8%;
+    --foreground: 42 25% 88%;
+
+    --card: 100 15% 10%;
+    --card-foreground: 42 25% 88%;
+
+    --popover: 100 15% 10%;
+    --popover-foreground: 42 25% 88%;
+
+    --primary: 100 20% 70%;
+    --primary-foreground: 100 15% 8%;
+
+    --secondary: 42 15% 18%;
+    --secondary-foreground: 42 25% 88%;
+
+    --muted: 100 15% 15%;
+    --muted-foreground: 42 20% 65%;
+
+    --accent: 100 25% 60%;
+    --accent-foreground: 100 15% 8%;
+
+    --destructive: 0 65% 55%;
+    --destructive-foreground: 42 25% 88%;
+
+    --border: 100 15% 20%;
+    --input: 100 15% 15%;
+    --ring: 100 20% 70%;
+    
+    --sidebar-background: 100 15% 8%;
+    --sidebar-foreground: 42 25% 88%;
+    --sidebar-primary: 100 20% 70%;
+    --sidebar-primary-foreground: 100 15% 8%;
+    --sidebar-accent: 100 15% 15%;
+    --sidebar-accent-foreground: 42 25% 88%;
+    --sidebar-border: 100 15% 20%;
+    --sidebar-ring: 100 20% 70%;
+  }
+}
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-montserrat;
+  }
+}
+
+@layer utilities {
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}
+
+@layer utilities {
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .animate-marquee {
+    animation: marquee 28s linear infinite;
+  }
+}
