@@ -99,7 +99,7 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
             {/* Текст */}
             <div className="text-center space-y-2 text-sm text-foreground">
               <p>
-                Ответим Вам в течение 10 минут. Мы на связи с 9:00 до 23:00.
+                Ответим Вам в течение 10 минут. Мы на связи с 9:00 до 21:00.
               </p>
               <p>
                 Круглосуточная доставка при заказе до 21:00.
@@ -109,7 +109,7 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
               </p>
             </div>
 
-            {/* Кнопки соцсетей - ровно 4 кнопки (без phone) */}
+            {/* Кнопки мессенджеров: единый шаблон — слева иконка в подложке, по центру текст */}
             <div className="grid grid-cols-2 gap-3">
               {providers
                 .filter((p) => p.type !== "phone")
@@ -119,19 +119,29 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
                     href={provider.url || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-white transition-all hover:scale-105 hover:shadow-md"
+                    className="flex items-center gap-4 h-[76px] min-h-[76px] rounded-xl text-white transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-white/30"
                     style={{
-                      background: provider.background,
+                      backgroundImage: provider.background,
+                      backgroundSize: "100% 100%",
+                      backgroundColor: "transparent",
                     }}
                   >
-                    <span className="w-8 h-8 rounded-full bg-white/90 flex items-center justify-center flex-shrink-0">
-                      <img
-                        src={provider.srcModal}
-                        alt={provider.label}
-                        className="w-5 h-5 object-contain block"
-                      />
-                    </span>
-                    <span className="font-medium">{provider.label}</span>
+                    {/* Левый слот: фиксированная ширина 68px, иконка по центру с подложкой для читаемости */}
+                    <div className="w-[68px] min-w-[68px] flex items-center justify-center flex-shrink-0">
+                      <span className="w-10 h-10 rounded-full bg-white/25 flex items-center justify-center flex-shrink-0">
+                        <img
+                          src={provider.src}
+                          alt={provider.label}
+                          className="w-7 h-7 object-contain block"
+                        />
+                      </span>
+                    </div>
+                    {/* Текст строго по центру кнопки по X */}
+                    <div className="flex-1 flex items-center justify-center min-w-0">
+                      <span className="font-semibold text-xl text-white truncate">
+                        {provider.label}
+                      </span>
+                    </div>
                   </a>
                 ))}
             </div>

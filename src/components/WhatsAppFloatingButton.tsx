@@ -120,7 +120,7 @@ export function WhatsAppFloatingButton() {
       </button>
 
       {/* Модалка контактов */}
-      <ContactsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <ContactsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} providers={[]} />
     </>
   );
 }

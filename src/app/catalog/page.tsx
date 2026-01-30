@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
 
 export const metadata: Metadata = {
@@ -13,7 +14,9 @@ export const metadata: Metadata = {
 export default function CatalogPage() {
   return (
     <div className="min-h-screen bg-[#fff8ea]">
-      <FlowerCatalog />
+      <Suspense fallback={<div className="min-h-[60vh] flex items-center justify-center text-[#7e7e7e]">Загрузка каталога…</div>}>
+        <FlowerCatalog />
+      </Suspense>
     </div>
   );
 }

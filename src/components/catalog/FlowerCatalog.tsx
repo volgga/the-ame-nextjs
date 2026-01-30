@@ -72,7 +72,7 @@ export const FlowerCatalog = () => {
   }, [flowers]);
 
   useEffect(() => {
-    setPriceRange(absolutePriceBounds);
+    setPriceRange([absolutePriceBounds[0], absolutePriceBounds[1]]);
   }, [absolutePriceBounds[0], absolutePriceBounds[1]]);
 
   // Сортировка
@@ -124,7 +124,7 @@ export const FlowerCatalog = () => {
           <button
             onClick={() => {
               setSelectedComposition("all");
-              setPriceRange(absolutePriceBounds);
+              setPriceRange([absolutePriceBounds[0], absolutePriceBounds[1]]);
               setSortBy("default");
             }}
             className="rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-accent"

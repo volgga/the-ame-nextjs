@@ -51,7 +51,7 @@ export default function DeliveryAndPaymentsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#fff8ea]">
+    <div className="min-h-screen bg-white">
       {/* Hero */}
       <section className="py-6 md:py-8">
         <div className="container mx-auto px-4 text-center">
@@ -71,7 +71,7 @@ export default function DeliveryAndPaymentsPage() {
           <div className="space-y-4 md:space-y-5 max-w-4xl mx-auto">
             {/* Первый абзац без иконки */}
             <p className="text-base md:text-lg text-[#000] leading-relaxed text-left">
-              Приём заказов с 09:00 до 21:00, остаёмся на связи до 23:00.
+              Приём заказов с 09:00 до 21:00.
             </p>
 
             {/* Второй абзац с иконкой часов */}

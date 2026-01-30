@@ -31,7 +31,7 @@ export default function ContactsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#fff8ea]">
+    <div className="min-h-screen bg-white">
       {/* Hero */}
       <section className="py-16 sm:py-20">
         <div className="container mx-auto px-4 text-center">

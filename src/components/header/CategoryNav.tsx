@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, usePathname } from "next/navigation";
+import { catalogCategories } from "@/lib/categories";
 
 /**
  * CategoryNav — категории-чипсы (овальные кнопки).
@@ -15,16 +16,10 @@ function CategoryNavContent() {
   const active = searchParams.get("category");
   const isCatalogActive = pathname === "/catalog" && !active;
 
-  // Статический список категорий (позже заменим на данные из Supabase)
+  // Категории из единого источника (lib/categories.ts)
   const categories = [
     { name: "Каталог", slug: null, isCatalog: true },
-    { name: "Авторские букеты", slug: "avtorskie-bukety" },
-    { name: "Монобукеты", slug: "monobukety" },
-    { name: "Цветы в корзине/коробке", slug: "tsvety-v-korzine-korobke" },
-    { name: "Премиум", slug: "premium" },
-    { name: "Розы", slug: "rozy" },
-    { name: "Подарки", slug: "podarki" },
-    { name: "Вазы", slug: "vazy" },
+    ...catalogCategories.map((c) => ({ name: c.name, slug: c.slug, isCatalog: false })),
   ];
 
   const base =

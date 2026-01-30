@@ -170,15 +170,8 @@ All colors MUST be HSL.
     animation: marquee 28s linear infinite;
   }
   
-  @keyframes gradient-shift {
-    0%, 100% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-  }
-  .animate-gradient-shift {
-    animation: gradient-shift 3s ease infinite;
+  /* Плавный crossfade для floating-кружка: ~1.3s, ease-in-out, fade + лёгкий scale */
+  .floating-icon-transition {
+    transition: opacity 1300ms ease-in-out, transform 1300ms ease-in-out;
   }
 }
