@@ -70,6 +70,16 @@ export function HeaderMain() {
                         </Link>
                       </li>
                       <li>
+                        <Link href="/catalog" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
+                          Каталог
+                        </Link>
+                      </li>
+                      <li>
+                        <Link href="/delivery" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
+                          Доставка
+                        </Link>
+                      </li>
+                      <li>
                         <Link href="/about" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
                           О нас
                         </Link>
@@ -77,11 +87,6 @@ export function HeaderMain() {
                       <li>
                         <Link href="/contacts" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
                           Контакты
-                        </Link>
-                      </li>
-                      <li>
-                        <Link href="/catalog" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
-                          Каталог
                         </Link>
                       </li>
                     </ul>

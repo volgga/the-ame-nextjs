@@ -25,10 +25,13 @@ export function Footer() {
               <a href="/catalog" className="block text-[#7e7e7e] hover:text-black transition-colors">
                 Каталог
               </a>
+              <a href="/delivery" className="block text-[#7e7e7e] hover:text-black transition-colors">
+                Доставка
+              </a>
               <a href="/about" className="block text-[#7e7e7e] hover:text-black transition-colors">
                 О нас
               </a>
-              <a href="/contact" className="block text-[#7e7e7e] hover:text-black transition-colors">
+              <a href="/contacts" className="block text-[#7e7e7e] hover:text-black transition-colors">
                 Контакты
               </a>
             </nav>
@@ -38,7 +41,10 @@ export function Footer() {
           <div>
             <h3 className="font-semibold mb-4">Контакты</h3>
             <p className="text-[#7e7e7e] text-sm">
-              Сочи, ул. Донская, 10А
+              Пластунская 123А, корпус 2, этаж 2, офис 84
+            </p>
+            <p className="text-[#7e7e7e] text-sm mt-2">
+              Пн–Вс с 09:00 до 21:00
             </p>
             <p className="text-[#7e7e7e] text-sm mt-2">
               2025 © The Áme
