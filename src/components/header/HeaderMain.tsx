@@ -59,6 +59,7 @@ export function HeaderMain() {
                 </div>
 
                 <div className="space-y-6">
+                  {/* Страницы */}
                   <div>
                     <div className="text-xs uppercase tracking-wider opacity-70 mb-2">
                       Страницы
@@ -75,8 +76,8 @@ export function HeaderMain() {
                         </Link>
                       </li>
                       <li>
-                        <Link href="/delivery" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
-                          Доставка
+                        <Link href="/delivery-and-payments" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
+                          Доставка и оплата
                         </Link>
                       </li>
                       <li>
@@ -87,6 +88,83 @@ export function HeaderMain() {
                       <li>
                         <Link href="/contacts" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
                           Контакты
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Категории (как в CategoryNav) */}
+                  <div>
+                    <div className="text-xs uppercase tracking-wider opacity-70 mb-2">
+                      Категории
+                    </div>
+                    <ul className="space-y-2">
+                      <li>
+                        <Link href="/catalog" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
+                          Все товары
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/catalog?category=avtorskie-bukety"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="hover:opacity-80"
+                        >
+                          Авторские букеты
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/catalog?category=monobukety"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="hover:opacity-80"
+                        >
+                          Монобукеты
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/catalog?category=tsvety-v-korzine-korobke"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="hover:opacity-80"
+                        >
+                          Цветы в корзине/коробке
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/catalog?category=premium"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="hover:opacity-80"
+                        >
+                          Премиум
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/catalog?category=rozy"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="hover:opacity-80"
+                        >
+                          Розы
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/catalog?category=podarki"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="hover:opacity-80"
+                        >
+                          Подарки
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/catalog?category=vazy"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="hover:opacity-80"
+                        >
+                          Вазы
                         </Link>
                       </li>
                     </ul>

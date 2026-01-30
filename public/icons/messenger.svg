@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <defs>
+    <linearGradient id="messenger-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0084FF;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#006AFF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="12" cy="12" r="10" fill="url(#messenger-gradient)"/>
+  <path fill="white" d="M12 2C6.48 2 2 6.48 2 12c0 2.13.577 4.127 1.584 5.84L0 24l6.314-1.584C7.988 23.423 9.87 24 12 24c6.627 0 12-5.373 12-12S18.627 2 12 2zm4.5 7.5l-3.5 5.5-3.5-5.5h7zm-7 2l3.5 5.5 3.5-5.5h-7z"/>
+</svg>

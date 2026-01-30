@@ -4,6 +4,7 @@ import "./globals.css";
 import { Header } from "@/components/header/Header";
 import { Footer } from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
+import { FloatingSocialButton } from "@/components/FloatingSocialButton";
 
 // Подключаем шрифт Montserrat (как в старом проекте)
 const montserrat = Montserrat({
@@ -147,6 +148,8 @@ export default function RootLayout({
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />
+            {/* Плавающая кнопка соцсетей */}
+            <FloatingSocialButton />
           </div>
         </CartProvider>
       </body>
