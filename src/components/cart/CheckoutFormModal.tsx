@@ -539,6 +539,7 @@ export function CheckoutFormModal() {
       <button
         type="button"
         onClick={() => {
+          // TODO: отправить orderData при подключении платёжной системы
           const orderData = {
             items: state.items,
             customerName,
@@ -561,7 +562,7 @@ export function CheckoutFormModal() {
             askRecipientForDetails,
             deliverAnonymously,
           };
-          console.log("Перейти к оплате:", orderData);
+          void orderData;
           alert("Переход к оплате (в разработке)");
         }}
         disabled={!isFormValid()}

@@ -39,16 +39,3 @@ export function slugify(input: string, maxLen = 120): string {
   return s;
 }
 
-/** Если slug получился пустым — подставляем fallback (например, id) */
-export function slugifyOrFallback(input: string, fallback?: string) {
-  const s = slugify(input);
-  return s || (fallback ? String(fallback) : '');
-}
-
-/** Делаем человеко-читаемый и почти уникальный slug (хвост из id) */
-export function uniqueSlug(input: string, id?: string, tailLen = 6) {
-  const base = slugify(input);
-  if (!id) return base;
-  const tail = String(id).replace(/[^a-zA-Z0-9]/g, '').slice(-tailLen) || 'x';
-  return base ? `${base}-${tail}` : tail.toLowerCase();
-}

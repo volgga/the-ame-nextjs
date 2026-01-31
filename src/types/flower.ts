@@ -25,11 +25,3 @@ export interface Flower {
 export interface CartItem extends Flower {
   cartQuantity: number;
 }
-
-export type FlowerCategory =
-  | 'roses'
-  | 'tulips'
-  | 'peonies'
-  | 'sunflowers'
-  | 'lavender'
-  | 'mixed';

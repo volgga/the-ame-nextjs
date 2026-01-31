@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Clock, Package, Truck, CreditCard, Wallet, Banknote, FileText, Sprout, Droplets, Heart, Gift, Camera, Video, GiftIcon } from "lucide-react";
 
 export const metadata: Metadata = {

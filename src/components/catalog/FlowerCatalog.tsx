@@ -17,7 +17,6 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category") ?? "";
 
-  const [selectedComposition, setSelectedComposition] = useState("all");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [sortBy, setSortBy] = useState<"default" | "price-asc" | "price-desc">("default");
 
@@ -99,7 +98,7 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
         {/* Сортировка */}
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
+          onChange={(e) => setSortBy(e.target.value as "default" | "price-asc" | "price-desc")}
           className="min-w-[220px] h-10 rounded-md border border-input bg-background px-3 py-2 text-sm"
         >
           <option value="default">По умолчанию</option>
@@ -121,7 +120,6 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
           <p className="mb-4 text-lg text-muted-foreground">Цветы не найдены</p>
           <button
             onClick={() => {
-              setSelectedComposition("all");
               setPriceRange([absolutePriceBounds[0], absolutePriceBounds[1]]);
               setSortBy("default");
             }}

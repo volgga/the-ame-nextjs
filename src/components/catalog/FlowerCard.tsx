@@ -25,11 +25,8 @@ export const FlowerCard = ({ flower, onToggleFavorite }: FlowerCardProps) => {
   };
 
   const productUrl = buildProductUrl({
-    id: flower.id,
     name: flower.name,
     productSlug: flower.slug ?? null,
-    categorySlug: flower.categorySlug ?? null,
-    categoryName: flower.category ?? null,
   });
 
   return (
