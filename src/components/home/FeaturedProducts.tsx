@@ -2,24 +2,20 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { getAllProducts } from "@/lib/products";
 import { useCart } from "@/context/CartContext";
 import { Flower } from "@/types/flower";
+import type { Product } from "@/lib/products";
 
 /**
- * FeaturedProducts — использует данные из src/lib/products.ts.
- *
- * Почему "use client":
- * - кнопка "Показать ещё" (локальное состояние).
- *
- * Позже:
- * - заменим на SSR загрузку товаров из Supabase.
+ * FeaturedProducts — блок «Букеты недели». Товары приходят с сервера из Supabase (таблица products).
  */
-export function FeaturedProducts() {
+type FeaturedProductsProps = {
+  products: Product[];
+};
+
+export function FeaturedProducts({ products: allProducts }: FeaturedProductsProps) {
   const [showAll, setShowAll] = useState(false);
   const { addToCart } = useCart();
-
-  const allProducts = getAllProducts();
 
   // Преобразуем Product[] в Flower[] для совместимости
   const homepageItems: Flower[] = useMemo(

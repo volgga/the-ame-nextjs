@@ -2,17 +2,19 @@ import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { HeroCarousel } from "@/components/home/HeroCarousel";
 import { ReviewsSection } from "@/components/home/ReviewsSection";
 import { WelcomeBonusModal } from "@/components/home/WelcomeBonusModal";
+import { getAllCatalogProducts } from "@/lib/products";
 
 /**
  * Главная страница (Server Component по умолчанию).
- * Интерактивные части вынесены в отдельные компоненты с `use client`.
+ * Товары загружаются из Supabase и передаются в FeaturedProducts.
  */
-export default function HomePage() {
+export default async function HomePage() {
+  const products = await getAllCatalogProducts();
   return (
     <div className="min-h-screen bg-[#fff8ea]">
       <WelcomeBonusModal />
       <HeroCarousel />
-      <FeaturedProducts />
+      <FeaturedProducts products={products} />
       <ReviewsSection />
 
       {/* ====== Расширенный SEO-блок (как в original-project) ====== */}

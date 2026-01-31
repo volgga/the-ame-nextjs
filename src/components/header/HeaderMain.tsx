@@ -1,281 +1,332 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { CartIcon } from "./CartIcon";
 
-/**
- * HeaderMain — верхняя плашка с меню, телефоном, иконками и корзиной.
- */
-export function HeaderMain() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+const SIDEBAR_OPEN_MS = 420;
+const SIDEBAR_CLOSE_MS = 380;
+const OVERLAY_MS = 320;
 
-  // Общий класс для всех иконок справа
+/** Порядок слоёв: марки 70, бежевый хедер 60, оверлей меню 80, сайдбар 85. Оверлей/сайдбар рендерятся в портал поверх всего. */
+const Z_MENU_OVERLAY = 80;
+const Z_MENU_SIDEBAR = 85;
+
+const NAV_LINKS = [
+  { href: "/catalog", label: "Каталог" },
+  { href: "/contacts", label: "Компаниям" },
+  { href: "/about", label: "О нас" },
+  { href: "/contacts", label: "Контакты" },
+] as const;
+
+/** Ссылки сайдбара: Top-зона (лого + этот список) + Center (соц-блок) + Bottom (адрес). */
+const SIDEBAR_LINKS: { href: string; label: string }[] = [
+  { href: "/", label: "Главная" },
+  { href: "/catalog", label: "Каталог" },
+  { href: "/about", label: "О нас" },
+  { href: "/contacts", label: "Контакты" },
+  { href: "/delivery-and-payments", label: "Клиентам" },
+  { href: "/delivery-and-payments", label: "Доставка и оплата" },
+  { href: "/docs/return", label: "Условия возврата" },
+  { href: "/docs/care", label: "Инструкция по уходу" },
+];
+
+export type HeaderMainProps = {
+  isMenuOpen: boolean;
+  setIsMenuOpen: (v: boolean) => void;
+};
+
+/**
+ * HeaderMain — 2-я строка: бургер+лого слева, nav по центру, поиск/лайк/корзина справа.
+ */
+export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
+  const pathname = usePathname();
+  const [isClosing, setIsClosing] = useState(false);
+  const [isAnimateOpen, setIsAnimateOpen] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const prevOpenRef = useRef(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const shouldRenderMenu = isMenuOpen || isClosing;
+  const isSidebarOpen = isMenuOpen && isAnimateOpen;
+
+  // Учёт prefers-reduced-motion
+  useEffect(() => {
+    const m = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(m.matches);
+    const handler = () => setReducedMotion(m.matches);
+    m.addEventListener("change", handler);
+    return () => m.removeEventListener("change", handler);
+  }, []);
+
+  // При открытии: после монтирования запускаем анимацию выезда
+  useEffect(() => {
+    if (isMenuOpen) {
+      setIsAnimateOpen(false);
+      const id = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setIsAnimateOpen(true));
+      });
+      return () => cancelAnimationFrame(id);
+    } else {
+      setIsAnimateOpen(false);
+    }
+  }, [isMenuOpen]);
+
+  // При закрытии: держим меню в DOM и запускаем анимацию уезда
+  useEffect(() => {
+    if (prevOpenRef.current && !isMenuOpen) {
+      setIsClosing(true);
+    }
+    prevOpenRef.current = isMenuOpen;
+  }, [isMenuOpen]);
+
+  // После окончания анимации закрытия — размонтируем
+  useEffect(() => {
+    if (!isClosing) return;
+    const duration = reducedMotion ? 0 : SIDEBAR_CLOSE_MS;
+    const t = setTimeout(() => setIsClosing(false), duration);
+    return () => clearTimeout(t);
+  }, [isClosing, reducedMotion]);
+
+  // Закрытие по ESC
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isMenuOpen, setIsMenuOpen]);
+
+  // Блокировка скролла страницы при открытом меню
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMenuOpen]);
+
   const iconLinkClass =
-    "relative inline-flex items-center justify-center text-[#819570]/95 hover:text-[#819570] transition";
+    "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded text-[#819570]/95 hover:text-[#819570] hover:bg-[#819570]/5 transition-colors outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#819570]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#ffe9c3]";
+
+  const sidebarLinkClass = "hover:opacity-80 block";
+  const sidebarContactBtnClass =
+    "min-h-[44px] flex items-center justify-center py-2.5 px-3 rounded-full border-2 border-[#819570] text-[#819570] text-center text-sm font-medium hover:bg-[#819570]/10 transition-colors";
+
+  const navLinkBase = "relative text-xs md:text-sm font-medium tracking-wide uppercase transition-colors whitespace-nowrap";
+  const navLinkHoverUnderline =
+    "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-[#819570] after:origin-left after:scale-x-0 after:transition-transform after:duration-300 after:ease-out hover:after:scale-x-100";
 
   return (
-    <div className="fixed inset-x-0 top-9 z-[55] bg-[#ffe9c3]">
-      <div className="w-full h-12 flex items-center">
-        {/* Меню слева */}
-        <div className="pl-2">
+    <>
+    <div className="relative w-full bg-[#ffe9c3] border-b border-[#819570]/15">
+      <div className="w-full min-h-[48px] py-2 flex items-center justify-between px-4 md:px-6 gap-4">
+        <div className="relative z-10 flex items-center gap-2 md:gap-3 shrink-0 -ml-1 md:-ml-0.5">
           <button
             type="button"
             onClick={() => setIsMenuOpen(true)}
-            className="inline-flex items-center gap-2 select-none"
+            className="inline-flex items-center justify-center shrink-0 w-9 h-9 md:w-10 md:h-10 rounded hover:bg-[#819570]/10 transition-colors text-[#819570]"
+            aria-label="Открыть меню"
           >
             <svg
-              className="w-6 h-6 text-[#819570]"
+              className="w-5 h-5 md:w-6 md:h-6"
               fill="none"
               stroke="currentColor"
               strokeWidth={2}
               viewBox="0 0 24 24"
             >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <Link href="/" className="shrink-0" style={{ fontFamily: "Forum, serif" }}>
+            <span className="text-[1.75rem] md:text-[2.1rem] text-[#819570] tracking-wide leading-none">
+              The Áme
+            </span>
+          </Link>
+        </div>
+
+        <div className="relative z-10 flex items-center gap-4 md:gap-6 shrink-0">
+          <Link
+            href="/catalog"
+            aria-label="Поиск / Каталог"
+            className={iconLinkClass}
+          >
+            <svg
+              className="w-5 h-5 md:w-6 md:h-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.6}
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                d="M4 6h16M4 12h16M4 18h16"
+                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
               />
             </svg>
-            {/* Текст "Меню" скрыт на мобиле, виден с md+ */}
-            <span className="hidden md:inline text-sm font-medium tracking-wide text-[#819570] uppercase">
-              Меню
-            </span>
-          </button>
-
-          {/* Боковое меню (упрощённая версия без Sheet) */}
-          {isMenuOpen && (
-            <>
-              {/* Затемнение */}
-              <div
-                className="fixed inset-0 bg-black/20 z-[60]"
-                onClick={() => setIsMenuOpen(false)}
-                aria-hidden
+          </Link>
+          <Link href="/favorites" aria-label="Избранное" className={iconLinkClass}>
+            <svg
+              className="w-5 h-5 md:w-6 md:h-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.6}
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
               />
-              {/* Меню */}
-              <div className="fixed left-0 top-9 bottom-0 w-[80vw] sm:w-[65vw] md:w-[22rem] lg:w-[26rem] max-w-[420px] bg-[#ffe9c3] text-[#819570] z-[65] p-6 overflow-y-auto">
-                <div className="mb-6" style={{ fontFamily: "Forum, serif" }}>
-                  <div className="text-4xl leading-none">The Áme</div>
-                </div>
-
-                <div className="space-y-6">
-                  {/* Страницы */}
-                  <div>
-                    <div className="text-xs uppercase tracking-wider opacity-70 mb-2">
-                      Страницы
-                    </div>
-                    <ul className="space-y-2">
-                      <li>
-                        <Link href="/" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
-                          Главная
-                        </Link>
-                      </li>
-                      <li>
-                        <Link href="/catalog" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
-                          Каталог
-                        </Link>
-                      </li>
-                      <li>
-                        <Link href="/delivery-and-payments" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
-                          Доставка и оплата
-                        </Link>
-                      </li>
-                      <li>
-                        <Link href="/about" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
-                          О нас
-                        </Link>
-                      </li>
-                      <li>
-                        <Link href="/contacts" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
-                          Контакты
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-
-                  {/* Категории (как в CategoryNav) */}
-                  <div>
-                    <div className="text-xs uppercase tracking-wider opacity-70 mb-2">
-                      Категории
-                    </div>
-                    <ul className="space-y-2">
-                      <li>
-                        <Link href="/catalog" onClick={() => setIsMenuOpen(false)} className="hover:opacity-80">
-                          Все товары
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/catalog?category=avtorskie-bukety"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="hover:opacity-80"
-                        >
-                          Авторские букеты
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/catalog?category=monobukety"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="hover:opacity-80"
-                        >
-                          Монобукеты
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/catalog?category=tsvety-v-korzine-korobke"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="hover:opacity-80"
-                        >
-                          Цветы в корзине/коробке
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/catalog?category=premium"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="hover:opacity-80"
-                        >
-                          Премиум
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/catalog?category=rozy"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="hover:opacity-80"
-                        >
-                          Розы
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/catalog?category=podarki"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="hover:opacity-80"
-                        >
-                          Подарки
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/catalog?category=vazy"
-                          onClick={() => setIsMenuOpen(false)}
-                          className="hover:opacity-80"
-                        >
-                          Вазы
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="mt-6 text-sm opacity-85 leading-relaxed">
-                  <div>Пластунская 123А, корпус 2, этаж 2, офис 84</div>
-                  <div>Пн–Вс с 09:00 до 21:00</div>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Справа: телефон + ряд иконок */}
-        <div className="ml-auto flex items-center gap-3 md:gap-4 pr-4">
-          {/* Телефон (кликабельный) */}
-          <a
-            href="tel:+79939326095"
-            className="text-xs sm:text-sm md:text-base font-medium text-[#819570] whitespace-nowrap"
-          >
-            +7 993 932-60-95
-          </a>
-
-          {/* Все иконки в одном ряду */}
-          <div className="flex items-center gap-3">
-            {/* WhatsApp */}
-            <a
-              href="https://wa.me/message/XQDDWGSEL35LP1"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Написать в WhatsApp"
-              className={iconLinkClass}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                className="w-5 h-5 md:w-6 md:h-6"
-                fill="currentColor"
-              >
-                <path d="M20.52 3.48A11.77 11.77 0 0 0 12 0C5.37 0 0 5.37 0 12c0 2.11.55 4.16 1.6 5.97L0 24l6.24-1.63A12 12 0 0 0 12 24c6.63 0 12-5.37 12-12 0-3.19-1.24-6.19-3.48-8.52zM12 22a9.9 9.9 0 0 1-5.06-1.39l-.36-.21-3.7.97.99-3.6-.24-.37A9.93 9.93 0 0 1 2 12C2 6.49 6.49 2 12 2c2.66 0 5.17 1.04 7.07 2.93A9.9 9.9 0 0 1 22 12c0 5.51-4.49 10-10 10zm5.13-7.37c-.28-.14-1.63-.8-1.88-.89-.25-.09-.43-.14-.61.14-.18.28-.7.89-.86 1.07-.16.18-.32.2-.6.07-.28-.14-1.19-.44-2.27-1.4-.84-.75-1.4-1.68-1.57-1.96-.16-.28-.02-.43.12-.57.13-.13.28-.32.41-.48.14-.16.18-.27.28-.45.09-.18.05-.34-.02-.48-.07-.14-.61-1.47-.84-2.02-.22-.53-.44-.45-.61-.46l-.52-.01c-.18 0-.48.07-.73.34-.25.27-.96.94-.96 2.29 0 1.35.98 2.65 1.11 2.83.14.18 1.93 2.95 4.67 4.14.65.28 1.16.45 1.55.57.65.21 1.24.18 1.71.11.52-.08 1.63-.67 1.86-1.31.23-.64.23-1.19.16-1.31-.07-.11-.25-.18-.52-.32z" />
-              </svg>
-            </a>
-
-            {/* Telegram */}
-            <a
-              href="https://t.me/the_ame_flowers"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Telegram"
-              className={iconLinkClass}
-            >
-              <svg
-                className="w-5 h-5 md:w-6 md:h-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.6}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-                />
-              </svg>
-            </a>
-
-            {/* Instagram */}
-            <a
-              href="https://www.instagram.com/theame.flowers"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Instagram"
-              className={iconLinkClass}
-            >
-              <svg
-                className="w-5 h-5 md:w-6 md:h-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.6}
-                viewBox="0 0 24 24"
-              >
-                <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-                <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-              </svg>
-            </a>
-
-            {/* Избранное */}
-            <Link href="/favorites" aria-label="Избранное" className={iconLinkClass}>
-              <svg
-                className="w-5 h-5 md:w-6 md:h-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.6}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                />
-              </svg>
-            </Link>
-
-            {/* Корзина */}
-            <CartIcon />
-          </div>
+            </svg>
+          </Link>
+          <CartIcon />
         </div>
       </div>
+
+      <nav
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center justify-center pointer-events-none"
+        aria-label="Основное меню"
+      >
+        <div className="pointer-events-auto flex items-center gap-5 lg:gap-8">
+          {NAV_LINKS.map(({ href, label }) => {
+            const isActive =
+              href === "/catalog"
+                ? pathname === "/catalog" || pathname.startsWith("/catalog/")
+                : pathname === href;
+            return (
+              <Link
+                key={href + label}
+                href={href}
+                className={`${navLinkBase} ${isActive ? "text-[#819570] border-b-2 border-[#819570] pb-0.5" : `text-[#819570]/80 hover:text-[#819570] ${navLinkHoverUnderline}`}`}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
     </div>
+
+      {mounted &&
+        shouldRenderMenu &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 bg-black/70 transition-opacity"
+              style={{
+                zIndex: Z_MENU_OVERLAY,
+                opacity: isSidebarOpen ? 1 : 0,
+                transitionDuration: reducedMotion ? "0ms" : `${OVERLAY_MS}ms`,
+                transitionTimingFunction: isSidebarOpen ? "ease-out" : "ease-in",
+                pointerEvents: isSidebarOpen ? "auto" : "none",
+              }}
+              onClick={() => setIsMenuOpen(false)}
+              aria-hidden={!isSidebarOpen}
+            />
+            <div
+              className="fixed left-0 top-0 h-screen w-[75vw] sm:w-[55vw] md:w-[260px] lg:w-[280px] bg-[#ffe9c3] text-[#819570] px-4 pb-4 pt-0 flex flex-col min-h-0 transition-transform will-change-transform shadow-xl"
+              style={{
+                zIndex: Z_MENU_SIDEBAR,
+                transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
+                transitionDuration: reducedMotion ? "0ms" : isSidebarOpen ? `${SIDEBAR_OPEN_MS}ms` : `${SIDEBAR_CLOSE_MS}ms`,
+                transitionTimingFunction: isSidebarOpen ? "ease-out" : "ease-in-out",
+              }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Меню навигации"
+            >
+                {/* A) Top: лого + ссылки (pt-6 — верхний отступ, чтобы лого не прилипало к краю) */}
+                <div className="shrink-0 pt-6 pb-4" style={{ fontFamily: "Forum, serif" }}>
+                  <div className="text-4xl leading-none">The Áme</div>
+                </div>
+                <nav className="shrink-0" aria-label="Навигация">
+                  <ul className="space-y-2">
+                    {SIDEBAR_LINKS.map(({ href, label }) => (
+                      <li key={href + label}>
+                        <Link href={href} onClick={() => setIsMenuOpen(false)} className={sidebarLinkClass}>
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </nav>
+
+                {/* B) Center: соц-блок (flex-1 spacers центрируют по вертикали) */}
+                <div className="flex-1 min-h-0" aria-hidden />
+                <div className="shrink-0 text-left my-auto">
+                  <h3 className="text-base font-normal text-[#819570] mb-3 antialiased">
+                    Мы в социальных сетях
+                  </h3>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <a
+                      href="tel:+79939326095"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={`col-span-2 ${sidebarContactBtnClass}`}
+                    >
+                      Позвонить нам
+                    </a>
+                    <a
+                      href="https://t.me/the_ame_flowers"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={sidebarContactBtnClass}
+                    >
+                      Telegram
+                    </a>
+                    <a
+                      href="https://www.instagram.com/theame.flowers"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={sidebarContactBtnClass}
+                    >
+                      Instagram
+                    </a>
+                    <a
+                      href="https://wa.me/message/XQDDWGSEL35LP1"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={sidebarContactBtnClass}
+                    >
+                      WhatsApp
+                    </a>
+                    <a
+                      href="https://max.ru/u/f9LHodD0cOJJBRShH_taOp567aS5B7oZt4PZHqOvsl782HDW1tNY1II4OTY"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setIsMenuOpen(false)}
+                      className={sidebarContactBtnClass}
+                    >
+                      Max
+                    </a>
+                  </div>
+                </div>
+                <div className="flex-1 min-h-0" aria-hidden />
+
+                {/* C) Bottom: адрес */}
+                <footer className="shrink-0 pt-4 mt-auto text-sm opacity-85 leading-relaxed">
+                  <div>Пластунская 123А, корпус 2, этаж 2, офис 84</div>
+                  <div>Пн–Вс с 09:00 до 21:00</div>
+                </footer>
+              </div>
+          </>,
+          document.body
+        )}
+    </>
   );
 }

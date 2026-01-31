@@ -81,10 +81,7 @@ export default function DeliveryAndPaymentsPage() {
               </div>
               <div className="flex-1 text-left">
                 <p className="text-base md:text-lg text-[#000] leading-relaxed">
-                  Круглосуточная доставка осуществляется при оформлении заказа с 09:00 до 21:00 текущего дня, стоимость обговаривается индивидуально.
-                </p>
-                <p className="text-base md:text-lg text-[#000] leading-relaxed mt-2">
-                  При оформлении заказа после 21:00 круглосуточная доставка возможна только после согласования с менеджером, стоимость рассчитывается индивидуально.
+                  Круглосуточная доставка осуществляется при оформлении заказа с 09:00 до 21:00 текущего дня. Стоимость доставки в ночное время осуществляется по двойному тарифу.
                 </p>
               </div>
             </div>
@@ -244,8 +241,8 @@ export default function DeliveryAndPaymentsPage() {
                 ))}
               </div>
 
-                <p className="mt-6 text-sm md:text-base text-[#7e7e7e] text-center">
-                  Доставка работает круглосуточно. В ночное время стоимость рассчитывается индивидуально.
+                <p className="mt-6 text-sm md:text-base text-[#7e7e7e] text-left">
+                  Доставка работает круглосуточно. Стоимость доставки с 22:00 до 09:00 осуществляется по двойному тарифу.
                 </p>
               </CardContent>
             </Card>

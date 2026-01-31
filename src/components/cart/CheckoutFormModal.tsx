@@ -44,18 +44,21 @@ export function CheckoutFormModal() {
     { id: "height_960", name: "На высоту 960м (Роза-Хутор/Горки город)", feeUnder: 2400, freeFrom: 24000 },
   ];
 
-  // Расчёт стоимости доставки с учётом бесплатной доставки от суммы
+  // Единый расчёт стоимости доставки: базовая цена по району + удвоение при «Доставка ночью»
   const getDeliveryPrice = () => {
     if (isPickup || !deliveryType) return 0;
     const zone = deliveryZones.find((z) => z.id === deliveryType);
     if (!zone) return 0;
-    return state.total >= zone.freeFrom ? 0 : zone.feeUnder;
+    const basePrice = state.total >= zone.freeFrom ? 0 : zone.feeUnder;
+    const isNightDelivery = deliveryTime === "Доставка ночью";
+    return isNightDelivery ? basePrice * 2 : basePrice;
   };
 
   const deliveryPrice = getDeliveryPrice();
   const selectedZone = deliveryType ? deliveryZones.find((z) => z.id === deliveryType) : null;
+  const isNightDelivery = deliveryTime === "Доставка ночью";
 
-  // Итоговая сумма
+  // Итоговая сумма (товары + доставка, без дублирования логики)
   const finalTotal = state.total + deliveryPrice;
 
   // Форматирование телефона
@@ -329,6 +332,11 @@ export function CheckoutFormModal() {
                   ? `${selectedZone.name} ${deliveryPrice === 0 ? "(Бесплатно)" : `+${deliveryPrice}₽`}`
                   : "Район доставки"}
               </span>
+              {isNightDelivery && (
+                <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-[#819570]/15 text-[#819570] whitespace-nowrap">
+                  ночной тариф ×2
+                </span>
+              )}
               <svg
                 className={`w-5 h-5 transition-transform ${isDeliveryDropdownOpen ? "rotate-180" : ""}`}
                 fill="none"
@@ -389,10 +397,10 @@ export function CheckoutFormModal() {
           </div>
         )}
 
-        {/* Дата доставки: показываем при выборе района ИЛИ самовывоза ИЛИ "другой человек" (даже при "Уточнить время и адрес") */}
+        {/* Дата и время доставки: одна строка на десктопе/планшете, друг под другом на мобильных */}
         {(deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails)) && (
-          <div className="space-y-3">
-            <div>
+          <div className="flex flex-col md:flex-row md:gap-4 gap-3">
+            <div className="w-full min-w-0 md:flex-1">
               <label className="block text-sm mb-1" style={{ color: "#819570" }}>Дата доставки</label>
               <input
                 type="date"
@@ -406,7 +414,7 @@ export function CheckoutFormModal() {
             </div>
             {/* Время доставки: скрыто при "Уточнить время и адрес у получателя"; при самовывозе — показываем */}
             {!(!isRecipientSelf && askRecipientForDetails) && (
-              <div>
+              <div className="w-full min-w-0 md:flex-1">
                 <label className="block text-sm mb-1" style={{ color: "#819570" }}>Время доставки</label>
                 <select
                   value={deliveryTime}
@@ -422,7 +430,7 @@ export function CheckoutFormModal() {
                 </select>
                 {deliveryTime === "Доставка ночью" && (
                   <p className="text-xs mt-1" style={{ color: "#6b7280" }}>
-                    Свяжемся с менеджером для уточнения времени
+                    Мы свяжемся с вами для уточнения времени
                   </p>
                 )}
               </div>
@@ -513,8 +521,13 @@ export function CheckoutFormModal() {
           Сумма: {state.total.toLocaleString("ru-RU")} р.
         </div>
         {deliveryPrice > 0 && (
-          <div className="text-sm">
-            Доставка: {deliveryPrice.toLocaleString("ru-RU")} р.
+          <div className="text-sm flex items-center justify-end gap-2 flex-wrap">
+            <span>Доставка: {deliveryPrice.toLocaleString("ru-RU")} р.</span>
+            {isNightDelivery && (
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#819570]/15 text-[#819570]">
+                ночной тариф ×2
+              </span>
+            )}
           </div>
         )}
         <div className="text-xl font-bold" style={{ color: "#819570" }}>
@@ -539,6 +552,7 @@ export function CheckoutFormModal() {
             deliveryAddress,
             deliveryDate,
             deliveryTime,
+            isNightDelivery,
             deliveryPrice,
             cardText,
             total: finalTotal,

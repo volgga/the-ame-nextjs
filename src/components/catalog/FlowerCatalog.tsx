@@ -2,17 +2,18 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { slugify } from "@/utils/slugify";
 import { FlowerCard } from "./FlowerCard";
 import { Flower } from "@/types/flower";
-import { getAllProducts } from "@/lib/products";
+import type { Product } from "@/lib/products";
 
 /**
- * FlowerCatalog — упрощённая версия каталога без Supabase.
- * Пока использует статические данные из products.ts.
- * Позже подключим реальные данные через SSR.
+ * FlowerCatalog — каталог товаров. Данные приходят с сервера из Supabase (таблица products).
  */
-export const FlowerCatalog = () => {
+type FlowerCatalogProps = {
+  products: Product[];
+};
+
+export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category") ?? "";
 
@@ -20,10 +21,7 @@ export const FlowerCatalog = () => {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [sortBy, setSortBy] = useState<"default" | "price-asc" | "price-desc">("default");
 
-  // Получаем товары из статического массива
-  const allProducts = getAllProducts();
-
-  // Преобразуем в Flower[]
+  // Преобразуем Product[] в Flower[]
   const flowers: Flower[] = useMemo(
     () =>
       allProducts.map((p) => ({

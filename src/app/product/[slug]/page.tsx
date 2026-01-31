@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { getProductBySlug, getAllProducts } from "@/lib/products";
+import { getCatalogProductBySlug, getAllCatalogProducts } from "@/lib/products";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import { ProductPageClient } from "@/components/product/ProductPageClient";
 
 type Props = {
@@ -9,7 +8,7 @@ type Props = {
 };
 
 export async function generateStaticParams() {
-  const products = getAllProducts();
+  const products = await getAllCatalogProducts();
   return products.map((product) => ({
     slug: product.slug,
   }));
@@ -17,7 +16,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getCatalogProductBySlug(slug);
 
   if (!product) {
     return {
@@ -36,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getCatalogProductBySlug(slug);
 
   if (!product) {
     notFound();

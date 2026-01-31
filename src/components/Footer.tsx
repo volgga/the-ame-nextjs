@@ -11,7 +11,7 @@ const FOOTER_LINK =
 export function Footer() {
   return (
     <footer className="bg-white border-t mt-auto">
-      <div className="mx-auto max-w-[1200px] px-5 py-8 md:py-10">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-8 md:py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* 1. Лого: логотип + подпись + копирайт + бейдж Яндекса (ниже копирайта) */}
           <div className="flex flex-col items-start text-left space-y-4 min-w-0">

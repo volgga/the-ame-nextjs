@@ -119,7 +119,7 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
                     href={provider.url || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-4 h-[76px] min-h-[76px] rounded-xl text-white transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-white/30"
+                    className="flex items-center gap-3 h-[76px] min-h-[76px] rounded-xl text-white transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-white/30"
                     style={{
                       backgroundImage: provider.background,
                       backgroundSize: "100% 100%",
@@ -136,9 +136,9 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
                         />
                       </span>
                     </div>
-                    {/* Текст строго по центру кнопки по X */}
-                    <div className="flex-1 flex items-center justify-center min-w-0">
-                      <span className="font-semibold text-xl text-white truncate">
+                    {/* Название рядом с иконкой */}
+                    <div className="flex-1 flex items-center min-w-0 pr-4">
+                      <span className="font-semibold text-xl text-white truncate text-left">
                         {provider.label}
                       </span>
                     </div>
