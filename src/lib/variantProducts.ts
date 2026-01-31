@@ -17,6 +17,7 @@ type VariantProductsRow = {
   description: string | null;
   image_url: string | null;
   min_price_cache: number | null;
+  category_slug?: string | null;
   is_active: boolean;
   is_hidden: boolean | null;
   published_at: string | null;
@@ -31,6 +32,7 @@ function rowToProduct(row: VariantProductsRow): Product {
     price: Number(row.min_price_cache) ?? 0,
     image: row.image_url ?? "",
     shortDescription: row.description ?? "",
+    categorySlug: row.category_slug ?? null,
   };
 }
 
@@ -45,7 +47,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
   try {
     const { data, error } = await supabase
       .from("variant_products")
-      .select("id, slug, name, description, image_url, min_price_cache, is_active, is_hidden, published_at, sort_order")
+      .select("id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order")
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
       .order("sort_order", { ascending: true, nullsFirst: false });
@@ -73,7 +75,7 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
   try {
     const { data, error } = await supabase
       .from("variant_products")
-      .select("id, slug, name, description, image_url, min_price_cache, is_active, is_hidden, published_at, sort_order")
+      .select("id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order")
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")

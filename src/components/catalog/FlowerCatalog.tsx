@@ -8,12 +8,14 @@ import type { Product } from "@/lib/products";
 
 /**
  * FlowerCatalog — каталог товаров. Данные приходят с сервера из Supabase (таблица products).
+ * categoryTitle — заголовок страницы (например для /catalog/avtorskie-bukety).
  */
 type FlowerCatalogProps = {
   products: Product[];
+  categoryTitle?: string;
 };
 
-export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => {
+export const FlowerCatalog = ({ products: allProducts, categoryTitle }: FlowerCatalogProps) => {
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category") ?? "";
 
@@ -89,7 +91,7 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
       {/* Заголовок */}
       <div className="mb-8 text-center">
         <h1 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
-          Каталог цветов и букетов
+          {categoryTitle ?? "Каталог цветов и букетов"}
         </h1>
       </div>
 

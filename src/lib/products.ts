@@ -14,6 +14,7 @@ export type Product = {
   price: number;
   image: string;
   shortDescription: string;
+  categorySlug?: string | null;
 };
 
 /** Сырая строка таблицы products в Supabase */
@@ -24,6 +25,7 @@ type ProductsRow = {
   image_url?: string | null;
   price?: number | null;
   slug?: string | null;
+  category_slug?: string | null;
   is_active?: boolean | null;
   is_hidden?: boolean | null;
 };
@@ -40,6 +42,7 @@ function rowToProduct(row: ProductsRow): Product {
     price: Number(row.price) ?? 0,
     image: row.image_url ?? "",
     shortDescription: row.description ?? "",
+    categorySlug: row.category_slug ?? null,
   };
 }
 
@@ -63,7 +66,7 @@ export async function getAllProducts(): Promise<Product[]> {
     // Показываем все, где не скрыто явно: is_active не false, is_hidden не true
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, description, image_url, price, slug, is_active, is_hidden")
+      .select("id, name, description, image_url, price, slug, category_slug, is_active, is_hidden")
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
       .order("sort_order", { ascending: true, nullsFirst: false });
@@ -117,7 +120,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
     const base = supabase
       .from("products")
-      .select("id, name, description, image_url, price, slug, is_active, is_hidden")
+      .select("id, name, description, image_url, price, slug, category_slug, is_active, is_hidden")
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null");
 

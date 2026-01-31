@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# The Ame — Next.js (магазин цветов)
 
-## Getting Started
+[Next.js](https://nextjs.org) проект: каталог товаров, корзина, оформление заказа, оплата Tinkoff. Бэкенд данных — Supabase.
 
-First, run the development server:
+## Запуск
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Открой [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Переменные окружения
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Скопируй `.env.example` в `.env.local` и заполни значения:
 
-## Learn More
+```bash
+cp .env.example .env.local
+```
 
-To learn more about Next.js, take a look at the following resources:
+- **NEXT_PUBLIC_SUPABASE_URL**, **NEXT_PUBLIC_SUPABASE_ANON_KEY** — проект Supabase (каталог и заказы).
+- **TINKOFF_TERMINAL_KEY**, **TINKOFF_PASSWORD** — Tinkoff Internet Acquiring.
+- **TINKOFF_SUCCESS_URL**, **TINKOFF_FAIL_URL**, **TINKOFF_NOTIFICATION_URL** — редиректы и вебхук оплаты.
+- **NEXT_PUBLIC_SITE_URL** — базовый URL сайта.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Подробнее по оплате: [docs/PAYMENT-TINKOFF.md](docs/PAYMENT-TINKOFF.md).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Админ-панель
 
-## Deploy on Vercel
+Админка: `/admin`. Подробнее см. [docs/ADMIN-PANEL.md](docs/ADMIN-PANEL.md).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Дополнительно в `.env.local`:
+- `SUPABASE_SERVICE_ROLE_KEY` — для серверных операций
+- `ADMIN_PASSWORD` — пароль входа
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Supabase: что должно быть в базе
+
+В схеме **public** используются 4 таблицы:
+
+- **products** — простые товары (одна цена).
+- **variant_products** — товары с вариантами (slug, min_price_cache).
+- **product_variants** — варианты (размер/тип, цена), связь с variant_products.
+- **orders** — заказы (items, amount в копейках, customer, status, оплата Tinkoff).
+
+Схема, FK, индексы и RLS описаны в **[docs/DB-SCHEMA.md](docs/DB-SCHEMA.md)**. Аудит и список миграций — [docs/DB-AUDIT-REPORT.md](docs/DB-AUDIT-REPORT.md), [docs/MIGRATION-HISTORY.md](docs/MIGRATION-HISTORY.md).
+
+Скрипты (выполнять в Supabase SQL Editor при необходимости):
+
+- **scripts/db-fix.sql** — привести orders и каталог к нужной схеме (amount, оплата, FK, индексы).
+- **scripts/db-audit.sql** — только чтение: таблицы, колонки, FK, индексы, проверка сирот.
+- **scripts/diagnose.sql** — счётчики и сироты по текущим таблицам.
+- **scripts/check-db.ts** — локальная проверка: `npm run check-db`.
+
+## Сборка и линт
+
+```bash
+npm run build
+npm run lint
+```
+
+## Деплой
+
+Сборка и деплой как у обычного Next.js (например [Vercel](https://vercel.com)). Не забудь задать переменные окружения в панели деплоя.

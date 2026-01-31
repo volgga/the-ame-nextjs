@@ -1,21 +1,23 @@
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
-import { HeroCarousel } from "@/components/home/HeroCarousel";
-import { ReviewsSection } from "@/components/home/ReviewsSection";
+import { HeroCarousel } from "@/components/hero/HeroCarousel";
 import { WelcomeBonusModal } from "@/components/home/WelcomeBonusModal";
 import { getAllCatalogProducts } from "@/lib/products";
+import { getActiveHeroSlides } from "@/lib/heroSlides";
 
 /**
  * Главная страница (Server Component по умолчанию).
- * Товары загружаются из Supabase и передаются в FeaturedProducts.
+ * Товары и слайды загружаются из Supabase.
  */
 export default async function HomePage() {
-  const products = await getAllCatalogProducts();
+  const [products, slides] = await Promise.all([
+    getAllCatalogProducts(),
+    getActiveHeroSlides(),
+  ]);
   return (
     <div className="min-h-screen bg-[#fff8ea]">
       <WelcomeBonusModal />
-      <HeroCarousel />
+      <HeroCarousel slides={slides} />
       <FeaturedProducts products={products} />
-      <ReviewsSection />
 
       {/* ====== Расширенный SEO-блок (как в original-project) ====== */}
       <section className="py-24 bg-[#fff8ea]" aria-labelledby="seo-the-ame">

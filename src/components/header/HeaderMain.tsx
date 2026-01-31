@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CartIcon } from "./CartIcon";
+import { CatalogDropdown } from "./CatalogDropdown";
 
 const SIDEBAR_OPEN_MS = 420;
 const SIDEBAR_CLOSE_MS = 380;
@@ -15,10 +16,10 @@ const Z_MENU_OVERLAY = 80;
 const Z_MENU_SIDEBAR = 85;
 
 const NAV_LINKS = [
-  { href: "/catalog", label: "Каталог" },
-  { href: "/contacts", label: "Компаниям" },
-  { href: "/about", label: "О нас" },
-  { href: "/contacts", label: "Контакты" },
+  { href: "/catalog", label: "Каталог", isCatalog: true },
+  { href: "/contacts", label: "Компаниям", isCatalog: false },
+  { href: "/about", label: "О нас", isCatalog: false },
+  { href: "/contacts", label: "Контакты", isCatalog: false },
 ] as const;
 
 /** Ссылки сайдбара: Top-зона (лого + этот список) + Center (соц-блок) + Bottom (адрес). */
@@ -201,16 +202,26 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
         aria-label="Основное меню"
       >
         <div className="pointer-events-auto flex items-center gap-5 lg:gap-8">
-          {NAV_LINKS.map(({ href, label }) => {
+          {NAV_LINKS.map(({ href, label, isCatalog }) => {
             const isActive =
               href === "/catalog"
                 ? pathname === "/catalog" || pathname.startsWith("/catalog/")
                 : pathname === href;
+            const linkClass = `${navLinkBase} ${isActive ? "text-[#819570] border-b-2 border-[#819570] pb-0.5" : `text-[#819570]/80 hover:text-[#819570] ${navLinkHoverUnderline}`}`;
+            if (isCatalog) {
+              return (
+                <CatalogDropdown
+                  key="catalog"
+                  triggerClassName={linkClass}
+                  isActive={isActive}
+                />
+              );
+            }
             return (
               <Link
                 key={href + label}
                 href={href}
-                className={`${navLinkBase} ${isActive ? "text-[#819570] border-b-2 border-[#819570] pb-0.5" : `text-[#819570]/80 hover:text-[#819570] ${navLinkHoverUnderline}`}`}
+                className={linkClass}
               >
                 {label}
               </Link>

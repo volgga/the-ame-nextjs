@@ -5,6 +5,7 @@ import { Header } from "@/components/header/Header";
 import { Footer } from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { FloatingSocialButton } from "@/components/FloatingSocialButton";
+import { CookieConsent } from "@/components/common/CookieConsent";
 
 // Подключаем шрифт Montserrat (как в старом проекте)
 const montserrat = Montserrat({
@@ -150,6 +151,7 @@ export default function RootLayout({
             <Footer />
             {/* Плавающая кнопка соцсетей */}
             <FloatingSocialButton />
+            <CookieConsent />
           </div>
         </CartProvider>
       </body>

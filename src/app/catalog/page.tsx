@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
 import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
 import { getAllCatalogProducts } from "@/lib/products";
+import { getCategories } from "@/lib/categories";
+import { isValidCategorySlug } from "@/lib/catalogCategories";
 
 export const metadata: Metadata = {
   title: "Каталог букетов",
@@ -12,7 +15,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function CatalogPage() {
+type CatalogPageProps = {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function CatalogPage({ searchParams }: CatalogPageProps) {
+  const resolved = await searchParams;
+  const category = typeof resolved.category === "string" ? resolved.category : undefined;
+  const categories = await getCategories();
+  const validSlugs = new Set(categories.map((c) => c.slug));
+  if (category && isValidCategorySlug(category, validSlugs)) {
+    permanentRedirect(`/catalog/${category}`);
+  }
+
   const products = await getAllCatalogProducts();
   return (
     <div className="min-h-screen bg-[#fff8ea]">

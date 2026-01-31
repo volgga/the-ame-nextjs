@@ -14,13 +14,9 @@ if (loaded.error && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
 
 const TABLES = [
   "products",
-  "product_categories",
   "product_variants",
   "variant_products",
-  "variant_items",
-  "product_recommendations",
-  "products_with_categories",
-  "variant_product_categories",
+  "orders",
 ] as const;
 
 async function main() {

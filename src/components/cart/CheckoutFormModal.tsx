@@ -2,6 +2,78 @@
 
 import { useState } from "react";
 import { useCart } from "@/context/CartContext";
+import type { OrderCustomerPayload } from "@/types/order";
+
+/** Кнопка «Оплатить»: создаёт заказ на сервере (сумма пересчитывается по каталогу), инициирует платёж Tinkoff, редирект на страницу оплаты. */
+function PayButton({
+  disabled,
+  items,
+  customer,
+}: {
+  disabled: boolean;
+  items: { id: string; quantity: number }[];
+  customer: OrderCustomerPayload;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handlePay = async () => {
+    if (items.length === 0) {
+      setError("Корзина пуста");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const orderRes = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items, customer }),
+      });
+      const orderData = await orderRes.json();
+      if (!orderRes.ok || !orderData.orderId) {
+        setError(orderData.error ?? "Ошибка создания заказа");
+        setLoading(false);
+        return;
+      }
+      const initRes = await fetch("/api/payments/tinkoff/init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: orderData.orderId }),
+      });
+      const initData = await initRes.json();
+      if (!initRes.ok || !initData.paymentUrl) {
+        setError(initData.error ?? "Ошибка инициализации платежа");
+        setLoading(false);
+        return;
+      }
+      window.location.href = initData.paymentUrl;
+      return;
+    } catch {
+      setError("Ошибка сети");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <>
+      {error && (
+        <p className="text-sm text-red-600 mt-2" role="alert">
+          {error}
+        </p>
+      )}
+      <button
+        type="button"
+        onClick={handlePay}
+        disabled={disabled || loading}
+        className="w-full py-4 mt-6 rounded-lg font-semibold text-white uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+        style={{ backgroundColor: "#819570" }}
+      >
+        {loading ? "Подготовка…" : "ПЕРЕЙТИ К ОПЛАТЕ"}
+      </button>
+    </>
+  );
+}
 
 /**
  * CheckoutFormModal — форма оформления заказа внутри модалки.
@@ -535,42 +607,28 @@ export function CheckoutFormModal() {
         </div>
       </div>
 
-      {/* Кнопка оплаты (отступ сверху, чтобы не «прилипала» к сумме) */}
-      <button
-        type="button"
-        onClick={() => {
-          // TODO: отправить orderData при подключении платёжной системы
-          const orderData = {
-            items: state.items,
-            customerName,
-            customerPhone,
-            customerTelegram,
-            isRecipientSelf,
-            recipientName: isRecipientSelf ? customerName : recipientName,
-            recipientPhone: isRecipientSelf ? customerPhone : recipientPhone,
-            deliveryType: isPickup ? "pickup" : deliveryType,
-            isPickup,
-            deliveryAddress,
-            deliveryDate,
-            deliveryTime,
-            isNightDelivery,
-            deliveryPrice,
-            cardText,
-            total: finalTotal,
-            notes,
-            promoCode,
-            askRecipientForDetails,
-            deliverAnonymously,
-          };
-          void orderData;
-          alert("Переход к оплате (в разработке)");
-        }}
+      {/* Кнопка оплаты: создаём заказ на сервере (сумма пересчитывается по каталогу), инициируем платёж Tinkoff, редирект на страницу оплаты */}
+      <PayButton
         disabled={!isFormValid()}
-        className="w-full py-4 mt-6 rounded-lg font-semibold text-white uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
-        style={{ backgroundColor: "#819570" }}
-      >
-        ПЕРЕЙТИ К ОПЛАТЕ
-      </button>
+        items={state.items.map((item) => ({ id: item.id, quantity: item.cartQuantity }))}
+        customer={{
+          name: customerName,
+          phone: customerPhone,
+          telegram: customerTelegram || undefined,
+          recipientName: isRecipientSelf ? customerName : recipientName,
+          recipientPhone: isRecipientSelf ? customerPhone : recipientPhone,
+          deliveryType: isPickup ? "pickup" : deliveryType ?? undefined,
+          isPickup,
+          deliveryAddress: deliveryAddress || undefined,
+          deliveryDate: deliveryDate || undefined,
+          deliveryTime: deliveryTime || undefined,
+          deliveryPrice: deliveryPrice,
+          cardText: cardText || undefined,
+          notes: notes || undefined,
+          askRecipientForDetails,
+          deliverAnonymously,
+        }}
+      />
     </div>
   );
 }

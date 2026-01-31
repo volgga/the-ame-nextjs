@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { CheckoutForm } from "./CheckoutForm";
+import { CheckoutFormModal } from "./CheckoutFormModal";
 
 export const Cart = () => {
   const { state } = useCart();
@@ -28,6 +29,10 @@ export const Cart = () => {
         <h1 className="text-2xl font-bold mb-8">Оформление заказа</h1>
 
         <CheckoutForm />
+        {/* Форма контактов/доставки и кнопка «Оплатить» — та же, что в боковой панели корзины */}
+        <div className="mt-8">
+          <CheckoutFormModal />
+        </div>
       </div>
     </div>
   );
