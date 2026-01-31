@@ -11,7 +11,13 @@ export type Category = {
   slug: string;
   sort_order: number;
   is_active: boolean;
+  /** SEO/описательный текст категории. Если нет — показывается DEFAULT_CATEGORY_SEO_TEXT. */
+  description?: string | null;
 };
+
+/** Дефолтный SEO-текст, если у категории нет своего seoText. */
+export const DEFAULT_CATEGORY_SEO_TEXT =
+  "The Ame — это сервис, которому можно доверить не только букет. Мы с удовольствием выполним ваше поручение: заберём подарок, заедем за любимым тортом или доставим композицию анонимно. Всё — с безупречным стилем и вниманием к деталям.";
 
 const FALLBACK_CATEGORIES: Category[] = [
   { id: "1", name: "Авторские букеты", slug: "avtorskie-bukety", sort_order: 0, is_active: true },
@@ -28,7 +34,7 @@ export async function getCategories(): Promise<Category[]> {
   try {
     const { data, error } = await supabase
       .from("categories")
-      .select("id, name, slug, sort_order, is_active")
+      .select("id, name, slug, sort_order, is_active, description")
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
 
@@ -44,6 +50,7 @@ export async function getCategories(): Promise<Category[]> {
       slug: r.slug ?? "",
       sort_order: r.sort_order ?? 0,
       is_active: r.is_active ?? true,
+      description: r.description ?? null,
     }));
   } catch {
     return FALLBACK_CATEGORIES;

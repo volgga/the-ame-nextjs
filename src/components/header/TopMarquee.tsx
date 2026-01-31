@@ -15,7 +15,7 @@ type TopMarqueeProps = {
  */
 export function TopMarquee({
   phrases = ["Гарантия 3 дня", "Цветочный консьерж", "Доставка за 45 минут"],
-  href = "/catalog",
+  href = "/posmotret-vse-tsvety",
   speed = 50,
   duplicates = 6,
 }: TopMarqueeProps) {

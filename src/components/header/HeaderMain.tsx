@@ -15,8 +15,10 @@ const OVERLAY_MS = 320;
 const Z_MENU_OVERLAY = 80;
 const Z_MENU_SIDEBAR = 85;
 
+const CATALOG_HREF = "/posmotret-vse-tsvety";
+
 const NAV_LINKS = [
-  { href: "/catalog", label: "Каталог", isCatalog: true },
+  { href: CATALOG_HREF, label: "Каталог", isCatalog: true },
   { href: "/contacts", label: "Компаниям", isCatalog: false },
   { href: "/about", label: "О нас", isCatalog: false },
   { href: "/contacts", label: "Контакты", isCatalog: false },
@@ -25,7 +27,7 @@ const NAV_LINKS = [
 /** Ссылки сайдбара: Top-зона (лого + этот список) + Center (соц-блок) + Bottom (адрес). */
 const SIDEBAR_LINKS: { href: string; label: string }[] = [
   { href: "/", label: "Главная" },
-  { href: "/catalog", label: "Каталог" },
+  { href: CATALOG_HREF, label: "Каталог" },
   { href: "/about", label: "О нас" },
   { href: "/contacts", label: "Контакты" },
   { href: "/delivery-and-payments", label: "Клиентам" },
@@ -160,7 +162,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
 
         <div className="relative z-10 flex items-center gap-4 md:gap-6 shrink-0">
           <Link
-            href="/catalog"
+            href={CATALOG_HREF}
             aria-label="Поиск / Каталог"
             className={iconLinkClass}
           >
@@ -204,8 +206,10 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
         <div className="pointer-events-auto flex items-center gap-5 lg:gap-8">
           {NAV_LINKS.map(({ href, label, isCatalog }) => {
             const isActive =
-              href === "/catalog"
-                ? pathname === "/catalog" || pathname.startsWith("/catalog/")
+              href === CATALOG_HREF
+                ? pathname === CATALOG_HREF ||
+                  pathname.startsWith(CATALOG_HREF + "/") ||
+                  pathname.startsWith("/magazine/")
                 : pathname === href;
             const linkClass = `${navLinkBase} ${isActive ? "text-[#819570] border-b-2 border-[#819570] pb-0.5" : `text-[#819570]/80 hover:text-[#819570] ${navLinkHoverUnderline}`}`;
             if (isCatalog) {

@@ -3,7 +3,7 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/header/Header";
 import { Footer } from "@/components/Footer";
-import { CartProvider } from "@/context/CartContext";
+import { Providers } from "@/app/providers";
 import { FloatingSocialButton } from "@/components/FloatingSocialButton";
 import { CookieConsent } from "@/components/common/CookieConsent";
 
@@ -144,7 +144,7 @@ export default function RootLayout({
         />
 
         {/* Основная структура: Header + контент + Footer */}
-        <CartProvider>
+        <Providers>
           <div className="min-h-screen flex flex-col">
             <Header />
             <main className="flex-1">{children}</main>
@@ -153,7 +153,7 @@ export default function RootLayout({
             <FloatingSocialButton />
             <CookieConsent />
           </div>
-        </CartProvider>
+        </Providers>
       </body>
     </html>
   );

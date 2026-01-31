@@ -6,8 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
     "check-db": "tsx scripts/check-db.ts",
+    "seed-categories": "tsx scripts/seed-categories.ts",
     "fix-visibility": "echo 'Выполните scripts/fix_visibility.sql в Supabase SQL Editor'",
     "diagnose": "echo 'Выполните scripts/diagnose.sql в Supabase SQL Editor'"
   },

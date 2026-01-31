@@ -1,0 +1,89 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { CategoryChips } from "@/components/catalog/category-chips";
+import { ProductToolbar } from "@/components/catalog/product-toolbar";
+import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
+import { getAllCatalogProducts } from "@/lib/products";
+import { getCategories } from "@/lib/categories";
+import { ALL_CATALOG } from "@/lib/catalogCategories";
+
+export const metadata: Metadata = {
+  title: `${ALL_CATALOG.title} | The Ame`,
+  description: ALL_CATALOG.description,
+  alternates: {
+    canonical: "https://theame.ru/posmotret-vse-tsvety",
+  },
+};
+
+/**
+ * Общий каталог — все товары без фильтрации по категории.
+ * Та же структура, что и страница категории: breadcrumb → H1+SEO → chips → toolbar → товары.
+ */
+export default async function PosmotretVseTsvetyPage() {
+  const [categories, products] = await Promise.all([
+    getCategories(),
+    getAllCatalogProducts(),
+  ]);
+
+  const priceBounds = (() => {
+    const prices = products.map((p) => p.price).filter(Number.isFinite);
+    if (!prices.length) return [0, 10000] as [number, number];
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    return [min, Math.max(max, min + 1)] as [number, number];
+  })();
+
+  const breadcrumbItems = [
+    { label: "Главная", href: "/" },
+    { label: ALL_CATALOG.title },
+  ];
+
+  const chips = [
+    { slug: "", name: ALL_CATALOG.title, isAll: true },
+    ...categories.map((c) => ({ slug: c.slug, name: c.name, isAll: false })),
+  ];
+
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="container px-6 pt-8 pb-4 md:pt-10 md:pb-6">
+        {/* Breadcrumb — всегда сверху, не зависит от высоты описания */}
+        <div className="mb-6 md:mb-8">
+          <Breadcrumbs items={breadcrumbItems} />
+        </div>
+
+        {/* Заголовок + описание — описание по верху H1 (как flowerna) */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-8 md:items-start mb-8 md:mb-10">
+          <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-foreground uppercase tracking-tight">
+            {ALL_CATALOG.title}
+          </h1>
+          <div className="max-h-[96px] md:max-h-[120px] overflow-y-auto mt-3 md:mt-0">
+            <p className="text-base md:text-[15px] leading-relaxed text-foreground/90">
+              {ALL_CATALOG.description}
+            </p>
+          </div>
+        </div>
+
+        <div className="mb-8 md:mb-10">
+          <CategoryChips categories={chips} currentSlug={null} />
+        </div>
+
+        <div className="mb-6 md:mb-8">
+          <Suspense fallback={<div className="h-10" />}>
+            <ProductToolbar priceBounds={priceBounds} />
+          </Suspense>
+        </div>
+      </div>
+
+      <Suspense
+        fallback={
+          <div className="min-h-[60vh] flex items-center justify-center text-[#7e7e7e]">
+            Загрузка каталога…
+          </div>
+        }
+      >
+        <FlowerCatalog products={products} />
+      </Suspense>
+    </div>
+  );
+}

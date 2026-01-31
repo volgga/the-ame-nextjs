@@ -8,11 +8,11 @@ async function requireAdmin() {
   if (!ok) throw new Error("unauthorized");
 }
 
+/** При редактировании slug не меняем — чтобы не ломать ссылки. */
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/).optional(),
-  sort_order: z.number().int().optional(),
   is_active: z.boolean().optional(),
+  description: z.string().max(5000).optional().nullable(),
 });
 
 export async function PATCH(
@@ -27,11 +27,16 @@ export async function PATCH(
     if (!parsed.success) {
       return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
+    const payload: { name?: string; is_active?: boolean; description?: string | null } = {};
+    if (parsed.data.name !== undefined) payload.name = parsed.data.name.trim();
+    if (parsed.data.is_active !== undefined) payload.is_active = parsed.data.is_active;
+    if (parsed.data.description !== undefined) payload.description = parsed.data.description?.trim() || null;
+
     const supabase = getSupabaseAdmin();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("categories")
-      .update(parsed.data)
+      .update(payload)
       .eq("id", id)
       .select()
       .single();

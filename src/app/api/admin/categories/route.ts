@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { slugify } from "@/utils/slugify";
 import { z } from "zod";
 
 async function requireAdmin() {
@@ -29,10 +30,29 @@ export async function GET() {
 
 const createSchema = z.object({
   name: z.string().min(1),
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/),
-  sort_order: z.number().int().default(0),
   is_active: z.boolean().default(true),
+  description: z.string().max(5000).optional().nullable(),
 });
+
+/** Находит уникальный slug: base, base-2, base-3, ... */
+async function ensureUniqueSlug(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  baseSlug: string
+): Promise<string> {
+  let candidate = baseSlug;
+  let n = 1;
+  for (;;) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data } = await (supabase as any)
+      .from("categories")
+      .select("id")
+      .eq("slug", candidate)
+      .limit(1)
+      .maybeSingle();
+    if (!data) return candidate;
+    candidate = `${baseSlug}-${++n}`;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -43,10 +63,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
     const supabase = getSupabaseAdmin();
+    const baseSlug = slugify(parsed.data.name) || "category";
+    const slug = await ensureUniqueSlug(supabase, baseSlug);
+
+    // sort_order: ставим в конец (по текущему max + 1 или 0)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: existing } = await (supabase as any)
+      .from("categories")
+      .select("sort_order")
+      .order("sort_order", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const sort_order = existing?.sort_order != null ? existing.sort_order + 1 : 0;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("categories")
-      .insert(parsed.data)
+      .insert({
+        name: parsed.data.name.trim(),
+        slug,
+        sort_order,
+        is_active: parsed.data.is_active,
+        description: parsed.data.description?.trim() || null,
+      })
       .select()
       .single();
     if (error) throw error;

@@ -210,8 +210,23 @@ export default function AdminSlidesPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  if (loading) return <p className="text-[#111]">Загрузка…</p>;
   if (error && !creating && !editing) return <p className="text-red-600">{error}</p>;
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="h-7 w-24 animate-pulse rounded bg-gray-200" />
+          <div className="h-10 w-28 animate-pulse rounded bg-gray-200" />
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="aspect-video animate-pulse rounded-xl bg-gray-200" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

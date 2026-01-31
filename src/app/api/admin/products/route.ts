@@ -23,18 +23,18 @@ export async function GET(request: NextRequest) {
     const [productsRes, variantProductsRes] = await Promise.all([
       sb
         .from("products")
-        .select("id, name, slug, price, image_url, is_active, is_hidden, sort_order, category_slug")
+        .select("id, name, slug, price, image_url, is_active, is_hidden, sort_order")
         .order("sort_order", { ascending: true, nullsFirst: false }),
       sb
         .from("variant_products")
-        .select("id, name, slug, min_price_cache, image_url, is_active, is_hidden, sort_order, category_slug")
+        .select("id, name, slug, min_price_cache, image_url, is_active, is_hidden, sort_order")
         .order("sort_order", { ascending: true, nullsFirst: false }),
     ]);
 
     if (productsRes.error) throw productsRes.error;
     if (variantProductsRes.error) throw variantProductsRes.error;
 
-    const products = (productsRes.data ?? []).map((p: { id: string; name?: string; slug?: string; price?: number; image_url?: string; is_active?: boolean; is_hidden?: boolean; sort_order?: number; category_slug?: string }) => ({
+    const products = (productsRes.data ?? []).map((p: { id: string; name?: string; slug?: string; price?: number; image_url?: string; is_active?: boolean; is_hidden?: boolean; sort_order?: number }) => ({
       id: p.id,
       type: "simple" as const,
       name: p.name,
@@ -44,10 +44,9 @@ export async function GET(request: NextRequest) {
       is_active: p.is_active ?? true,
       is_hidden: p.is_hidden ?? false,
       sort_order: p.sort_order ?? 0,
-      category_slug: p.category_slug,
     }));
 
-    const variantProducts = (variantProductsRes.data ?? []).map((p: { id: number; name?: string; slug?: string; min_price_cache?: number; image_url?: string; is_active?: boolean; is_hidden?: boolean; sort_order?: number; category_slug?: string }) => ({
+    const variantProducts = (variantProductsRes.data ?? []).map((p: { id: number; name?: string; slug?: string; min_price_cache?: number; image_url?: string; is_active?: boolean; is_hidden?: boolean; sort_order?: number }) => ({
       id: `vp-${p.id}`,
       type: "variant" as const,
       name: p.name,
@@ -57,7 +56,6 @@ export async function GET(request: NextRequest) {
       is_active: p.is_active ?? true,
       is_hidden: p.is_hidden ?? false,
       sort_order: p.sort_order ?? 0,
-      category_slug: p.category_slug,
     }));
 
     let all = [...products, ...variantProducts].sort(

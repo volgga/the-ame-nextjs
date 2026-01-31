@@ -39,8 +39,33 @@ export default function AdminProductsPage() {
     load();
   }, [search]);
 
-  if (loading) return <p className="text-[#111]">Загрузка…</p>;
   if (error) return <p className="text-red-600">{error}</p>;
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <div className="h-7 w-24 animate-pulse rounded bg-gray-200" />
+          <div className="flex gap-2">
+            <div className="h-10 w-64 animate-pulse rounded bg-gray-200" />
+            <div className="h-10 w-32 animate-pulse rounded bg-gray-200" />
+          </div>
+        </div>
+        <div className="overflow-hidden rounded-xl border border-gray-200">
+          <div className="h-12 animate-pulse bg-gray-100" />
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex h-14 border-t border-gray-100">
+              <div className="w-14 shrink-0 animate-pulse bg-gray-50" />
+              <div className="flex-1 space-y-2 p-3">
+                <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
+                <div className="h-3 w-24 animate-pulse rounded bg-gray-50" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

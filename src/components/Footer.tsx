@@ -46,7 +46,7 @@ export function Footer() {
               <Link href="/" className={FOOTER_LINK}>
                 Главная
               </Link>
-              <Link href="/catalog" className={FOOTER_LINK}>
+              <Link href="/posmotret-vse-tsvety" className={FOOTER_LINK}>
                 Каталог
               </Link>
               <Link href="/about" className={FOOTER_LINK}>

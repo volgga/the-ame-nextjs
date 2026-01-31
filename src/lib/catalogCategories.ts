@@ -5,6 +5,14 @@ import type { Category } from "@/lib/categories";
  * Фильтрация товаров по полю categorySlug.
  */
 
+/** Страница «Все цветы» — виртуальная категория каталога */
+export const ALL_CATALOG = {
+  title: "Все цветы",
+  description:
+    "Все цветы The Áme — аккуратные букеты и гармоничные композиции для любого повода. Идеальный выбор, чтобы порадовать близких, создать настроение и подарить эмоции без лишних слов.",
+  href: "/posmotret-vse-tsvety",
+} as const;
+
 /** Fallback для CatalogDropdown, если категории ещё не загружены */
 export const FALLBACK_CATEGORIES: { label: string; slug: string }[] = [
   { label: "Авторские букеты", slug: "avtorskie-bukety" },

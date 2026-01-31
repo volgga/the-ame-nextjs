@@ -28,7 +28,7 @@ export async function PATCH(
     }
     const supabase = getSupabaseAdmin();
     const payload: Record<string, unknown> = { ...parsed.data, updated_at: new Date().toISOString() };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hero_slides нет в сгенерированных Supabase типах
     const { data, error } = await (supabase as any)
       .from("hero_slides")
       .update(payload)
@@ -69,7 +69,7 @@ export async function DELETE(
     const supabase = getSupabaseAdmin();
 
     // Получить slide для image_url
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hero_slides нет в сгенерированных Supabase типах
     const { data: slide } = await (supabase as any)
       .from("hero_slides")
       .select("image_url")
@@ -79,11 +79,12 @@ export async function DELETE(
     if (slide?.image_url) {
       const path = getStoragePathFromUrl(slide.image_url);
       if (path && !path.includes("..")) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (supabase as any).storage.from(BUCKET).remove([path]);
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hero_slides нет в сгенерированных Supabase типах
     const { error } = await (supabase as any).from("hero_slides").delete().eq("id", id);
     if (error) throw error;
     return NextResponse.json({ success: true });
