@@ -1,138 +1,88 @@
 import type { Metadata } from "next";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Flower, Users, Heart, Award, Clock, Truck } from "lucide-react";
+import Image from "next/image";
+
+const PROSE_CLASS =
+  "space-y-5 text-[18px] leading-relaxed text-neutral-700";
 
 export const metadata: Metadata = {
   title: "О нас",
   description:
-    "The Ame — уютный цветочный магазин в Сочи, где цветы подбирают с душой. Премиальные букеты и авторские композиции.",
+    "The Áme — цветочный магазин в Сочи. Классические сочетания, понятные формы, аккуратные букеты для важных моментов.",
 };
 
 export default function AboutPage() {
-  const values = [
-    {
-      icon: <Heart className="w-8 h-8" />,
-      title: "Любовь к цветам",
-      description: "Каждый букет создается с любовью и вниманием к деталям",
-    },
-    {
-      icon: <Award className="w-8 h-8" />,
-      title: "Качество",
-      description: "Используем только свежие цветы от проверенных поставщиков",
-    },
-    {
-      icon: <Users className="w-8 h-8" />,
-      title: "Клиентоориентированность",
-      description: "Всегда ставим потребности клиентов на первое место",
-    },
-    {
-      icon: <Clock className="w-8 h-8" />,
-      title: "Пунктуальность",
-      description: "Доставляем точно в срок, чтобы не испортить важный момент",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero */}
-      <section className="py-16 sm:py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 text-[#819570]">
-            The Áme
-          </h1>
-          <p className="text-base sm:text-lg max-w-3xl mx-auto text-[#819570]">
-            Цветы говорят за нас. Мы создаём настроение и превращаем моменты в нечто большее.
+    <div className="bg-white">
+      <div className="container mx-auto max-w-[980px] px-4 pb-12 pt-6 md:px-6">
+        {/* A) Заголовок по центру */}
+        <h1 className="mb-8 text-center text-4xl font-semibold tracking-tight text-black sm:text-5xl">
+          О НАС
+        </h1>
+
+        {/* B) Первый блок текста */}
+        <div className={PROSE_CLASS}>
+          <p>
+            <strong>The Áme началось с момента, знакомого почти каждому.</strong>
+          </p>
+          <p>
+            Когда впереди встреча, разговор или жест, который имеет значение.
+            Когда хочется сделать красиво, но без лишних слов. И именно в этот
+            момент появляется сомнение — подойдёт ли букет, будет ли он выглядеть
+            уместно, не окажется ли слишком простым или, наоборот, неуместно
+            громким.
           </p>
         </div>
-      </section>
 
-      {/* О нас */}
-      <section className="py-16 sm:py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-[#819570]">
-                О нас
-              </h2>
-
-              <p className="text-lg mb-6 text-[#819570]">
-                В The Áme мы вдохновляемся французской эстетикой и ценим в цветах не только красоту, но и смысл.
-                Каждая композиция — это продуманный образ, где важна каждая деталь: форма, оттенок, подача.
-              </p>
-              <p className="text-lg mb-6 text-[#819570]">
-                Мы работаем с душой, подбираем только свежие, выразительные цветы и создаём букеты, которые
-                не просто украшают — они говорят за вас.
-              </p>
-
-              <div className="flex flex-wrap gap-3">
-                <Badge variant="outline" className="px-4 py-2 rounded-full border-[#819570] text-[#819570]">
-                  <Award className="w-4 h-4 mr-2" />
-                  5 звёзд оценка
-                </Badge>
-                <Badge variant="outline" className="px-4 py-2 rounded-full border-[#819570] text-[#819570]">
-                  <Clock className="w-4 h-4 mr-2" />
-                  24/7 Поддержка клиентов
-                </Badge>
-                <Badge variant="outline" className="px-4 py-2 rounded-full border-[#819570] text-[#819570]">
-                  <Flower className="w-4 h-4 mr-2" />
-                  50+ видов цветов
-                </Badge>
-                <Badge variant="outline" className="px-4 py-2 rounded-full border-[#819570] text-[#819570]">
-                  <Truck className="w-4 h-4 mr-2" />
-                  Быстрая доставка
-                </Badge>
-              </div>
-            </div>
-
-            {/* Статистика */}
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { title: "⭐⭐⭐⭐⭐", subtitle: "5 звёзд оценка" },
-                { title: "500+", subtitle: "Созданных букетов" },
-                { title: "50+", subtitle: "Видов цветов" },
-                { title: "24/7", subtitle: "Поддержка клиентов" },
-              ].map((item) => (
-                <Card key={item.title} className="border-0 shadow-sm rounded-xl bg-white/60">
-                  <CardContent className="p-6 text-center">
-                    <h3 className="text-2xl font-bold mb-1 text-[#819570]">{item.title}</h3>
-                    <p className="text-sm text-[#819570]">{item.subtitle}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+        {/* C) Фото по центру + подпись */}
+        <div className="mt-12">
+          <Image
+            src="/IMG_1543.PNG"
+            alt="The Áme"
+            width={900}
+            height={1200}
+            priority
+            className="mx-auto h-auto w-full max-w-[860px] rounded-xl"
+          />
+          <p className="mt-4 text-center text-sm text-neutral-500">
+            Дарья и Александр — основатели The Áme
+          </p>
         </div>
-      </section>
 
-      {/* Ценности */}
-      <section className="py-16 sm:py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-3 text-[#819570]">
-              Наши ценности
-            </h2>
-            <p className="text-lg max-w-2xl mx-auto text-[#819570]">
-              Принципы, которые лежат в основе нашей работы и помогают создавать незабываемые моменты.
+        {/* D) Финальный блок: 2 колонки */}
+        <div className="mt-12 grid grid-cols-1 items-start gap-10 lg:grid-cols-2">
+          <div className={PROSE_CLASS}>
+            <p>
+              Мы создали The Áme в Сочи, чтобы в такие моменты выбор был простым
+              и спокойным. Чтобы цветы не становились источником стресса, а
+              наоборот — решали задачу. Здесь не нужно долго разбираться или
+              угадывать: мы собираем букеты так, чтобы они выглядели аккуратно,
+              цельно и производили нужное впечатление.
+            </p>
+            <p>
+              В основе The Áme — классические сочетания и понятные формы. Мы
+              уделяем внимание деталям, пропорциям и тому, как букет ощущается
+              целиком: в руках, на фото, в пространстве. Нам важно, чтобы цветы
+              выглядели дороже своей цены и не требовали пояснений.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {values.map((value, idx) => (
-              <Card
-                key={idx}
-                className="border-0 shadow-sm rounded-xl bg-white/60 transition-transform duration-300 hover:shadow-md hover:-translate-y-0.5"
-              >
-                <CardContent className="p-6 text-center">
-                  <div className="mb-4 flex justify-center text-[#819570]">{value.icon}</div>
-                  <h3 className="text-xl font-semibold mb-2 text-[#819570]">{value.title}</h3>
-                  <p className="text-[#819570]">{value.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+          <div className={PROSE_CLASS}>
+            <p>
+              <strong>The Áme — это про уверенность.</strong>
+            </p>
+            <p>
+              Про моменты, когда не хочется рисковать и экспериментировать, а
+              важно попасть точно. Про цветы, которые поддерживают жест, а не
+              отвлекают от него.
+            </p>
+            <p>
+              Мы работаем для тех, кто ценит вкус, спокойствие и ощущение
+              контроля. Для тех, кому важно, чтобы всё было сделано аккуратно и
+              вовремя. Для тех, кто выбирает цветы не ради формальности, а ради
+              впечатления.
+            </p>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

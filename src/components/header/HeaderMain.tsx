@@ -19,7 +19,6 @@ const CATALOG_HREF = "/posmotret-vse-tsvety";
 
 const NAV_LINKS = [
   { href: CATALOG_HREF, label: "Каталог", isCatalog: true },
-  { href: "/contacts", label: "Компаниям", isCatalog: false },
   { href: "/about", label: "О нас", isCatalog: false },
   { href: "/contacts", label: "Контакты", isCatalog: false },
 ] as const;
