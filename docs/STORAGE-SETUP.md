@@ -129,3 +129,53 @@ WHERE image_url IS NOT NULL;
 3. Обновить `image_url` в БД
 
 Или через админку: редактировать слайд → загрузить новый файл.
+
+---
+
+## Bucket: product-images
+
+### Назначение
+Хранение изображений товаров (каталог). Загрузка из админки, без сжатия.
+
+### Параметры
+
+| Параметр | Значение |
+|----------|----------|
+| Имя bucket | `product-images` |
+| Публичный доступ | Да |
+| Формат пути | `{uuid}-{timestamp}.{ext}` |
+| Допустимые форматы | JPEG, PNG, WebP, AVIF, GIF |
+| Макс. размер файла | 25 MB |
+
+### Где в коде
+- **Upload:** `src/app/api/admin/products/upload/route.ts` — один файл за запрос, без ресайза.
+
+### Создание bucket
+
+**Через Dashboard:** Storage → New Bucket → Name: `product-images`, Public: **Yes**.
+
+**Через SQL:**
+```sql
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('product-images', 'product-images', true)
+ON CONFLICT (id) DO NOTHING;
+```
+
+### RLS для product-images
+```sql
+CREATE POLICY "product-images public read"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'product-images');
+
+CREATE POLICY "product-images service insert"
+ON storage.objects FOR INSERT
+WITH CHECK (bucket_id = 'product-images' AND auth.role() = 'service_role');
+
+CREATE POLICY "product-images service update"
+ON storage.objects FOR UPDATE
+USING (bucket_id = 'product-images' AND auth.role() = 'service_role');
+
+CREATE POLICY "product-images service delete"
+ON storage.objects FOR DELETE
+USING (bucket_id = 'product-images' AND auth.role() = 'service_role');
+```

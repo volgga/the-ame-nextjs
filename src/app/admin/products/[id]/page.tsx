@@ -28,7 +28,8 @@ type ProductData = {
   image_url?: string | null;
   is_active: boolean;
   is_hidden: boolean;
-  sort_order: number;
+  is_preorder?: boolean;
+  sort_order?: number;
   category_slug?: string | null;
   variants?: ProductVariant[];
 };
@@ -49,7 +50,7 @@ export default function AdminProductEditPage() {
     image_url: "",
     is_active: true,
     is_hidden: false,
-    sort_order: 0,
+    is_preorder: false,
     category_slug: "",
   });
   const [variantForm, setVariantForm] = useState({
@@ -83,7 +84,7 @@ export default function AdminProductEditPage() {
         image_url: data.image_url ?? "",
         is_active: data.is_active ?? true,
         is_hidden: data.is_hidden ?? false,
-        sort_order: data.sort_order ?? 0,
+        is_preorder: data.is_preorder ?? false,
         category_slug: data.category_slug ?? "",
       });
     } catch (e) {
@@ -109,7 +110,7 @@ export default function AdminProductEditPage() {
         image_url: form.image_url || null,
         is_active: form.is_active,
         is_hidden: form.is_hidden,
-        sort_order: form.sort_order,
+        is_preorder: form.is_preorder,
         category_slug: form.category_slug || null,
       };
       if (!isVariant) (payload as Record<string, unknown>).price = form.price;
@@ -290,33 +291,27 @@ export default function AdminProductEditPage() {
               className="mt-1 w-full rounded border px-3 py-2"
             />
           </div>
-          <div className="flex items-center gap-6">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.is_active}
-                onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
-              />
-              Активен
-            </label>
+          <div className="flex flex-wrap items-center gap-6">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={form.is_hidden}
                 onChange={(e) => setForm((f) => ({ ...f, is_hidden: e.target.checked }))}
               />
-              Скрыт
+              Скрыть с витрины
             </label>
-            <div>
-              <label className="block text-sm text-[#111]">Порядок</label>
+            <label className="flex items-center gap-2">
               <input
-                type="number"
-                value={form.sort_order}
-                onChange={(e) => setForm((f) => ({ ...f, sort_order: parseInt(e.target.value, 10) || 0 }))}
-                className="mt-1 w-20 rounded border px-2 py-1"
+                type="checkbox"
+                checked={form.is_preorder}
+                onChange={(e) => setForm((f) => ({ ...f, is_preorder: e.target.checked }))}
               />
-            </div>
+              Предзаказ
+            </label>
           </div>
+          <p className="mt-1 text-xs text-gray-500">
+            «Скрыть с витрины» — товар не показывается на сайте. «Предзаказ» — на витрине вместо цены отображается «Предзаказ».
+          </p>
         </div>
         {error && <p className="mt-2 text-red-600 text-sm">{error}</p>}
         <button

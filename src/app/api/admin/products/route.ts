@@ -3,6 +3,27 @@ import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { slugify } from "@/utils/slugify";
 import { z } from "zod";
+import type { ProductRow, VariantProductRow } from "@/types/admin";
+
+/** Извлечь текст ошибки из Supabase или Error (включая hint/details) */
+function getErrorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (typeof e === "object" && e !== null) {
+    const obj = e as Record<string, unknown>;
+    // Supabase возвращает { message, code, details, hint }
+    if (typeof obj.message === "string") {
+      let msg = obj.message;
+      if (typeof obj.hint === "string" && obj.hint) {
+        msg += ` (${obj.hint})`;
+      }
+      if (typeof obj.details === "string" && obj.details) {
+        msg += ` — ${obj.details}`;
+      }
+      return msg;
+    }
+  }
+  return "Ошибка создания";
+}
 
 async function requireAdmin() {
   const ok = await isAdminAuthenticated();
@@ -17,13 +38,12 @@ export async function GET(request: NextRequest) {
     const q = searchParams.get("q")?.trim() || "";
 
     const supabase = getSupabaseAdmin();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- типы Supabase .from() не совпадают с нашей схемой
     const sb = supabase as any;
     const [productsRes, variantProductsRes] = await Promise.all([
       sb
         .from("products")
-        .select("id, name, slug, price, image_url, is_active, is_hidden, sort_order")
+        .select("id, name, slug, price, image_url, is_active, is_hidden, is_preorder, sort_order")
         .order("sort_order", { ascending: true, nullsFirst: false }),
       sb
         .from("variant_products")
@@ -34,7 +54,7 @@ export async function GET(request: NextRequest) {
     if (productsRes.error) throw productsRes.error;
     if (variantProductsRes.error) throw variantProductsRes.error;
 
-    const products = (productsRes.data ?? []).map((p: { id: string; name?: string; slug?: string; price?: number; image_url?: string; is_active?: boolean; is_hidden?: boolean; sort_order?: number }) => ({
+    const products = (productsRes.data ?? []).map((p: ProductRow) => ({
       id: p.id,
       type: "simple" as const,
       name: p.name,
@@ -43,10 +63,11 @@ export async function GET(request: NextRequest) {
       image_url: p.image_url,
       is_active: p.is_active ?? true,
       is_hidden: p.is_hidden ?? false,
+      is_preorder: p.is_preorder ?? false,
       sort_order: p.sort_order ?? 0,
     }));
 
-    const variantProducts = (variantProductsRes.data ?? []).map((p: { id: number; name?: string; slug?: string; min_price_cache?: number; image_url?: string; is_active?: boolean; is_hidden?: boolean; sort_order?: number }) => ({
+    const variantProducts = (variantProductsRes.data ?? []).map((p: VariantProductRow) => ({
       id: `vp-${p.id}`,
       type: "variant" as const,
       name: p.name,
@@ -86,13 +107,15 @@ const createSimpleSchema = z.object({
   name: z.string().min(1),
   slug: z.string().optional(),
   description: z.string().optional(),
+  composition_size: z.string().optional().nullable(),
   price: z.number().min(0),
   image_url: z.string().url().optional().nullable(),
   images: z.array(z.string()).optional(),
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
-  sort_order: z.number().int().default(0),
+  is_preorder: z.boolean().default(false),
   category_slug: z.string().nullable().optional(),
+  category_slugs: z.array(z.string()).optional().nullable(),
 });
 
 const createVariantSchema = z.object({
@@ -103,8 +126,19 @@ const createVariantSchema = z.object({
   image_url: z.string().url().optional().nullable(),
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
-  sort_order: z.number().int().default(0),
   category_slug: z.string().nullable().optional(),
+  category_slugs: z.array(z.string()).optional().nullable(),
+  variants: z.array(
+    z.object({
+      name: z.string().min(1),
+      composition: z.string().min(1),
+      price: z.number().min(0),
+      is_preorder: z.boolean().default(false),
+      image_url: z.string().url().optional().nullable(),
+      sort_order: z.number().default(0),
+      is_active: z.boolean().default(true),
+    })
+  ).min(1),
 });
 
 export async function POST(request: NextRequest) {
@@ -114,7 +148,7 @@ export async function POST(request: NextRequest) {
     const type = body?.type;
 
     const supabase = getSupabaseAdmin();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- типы Supabase .from() не совпадают с нашей схемой
     const sb = supabase as any;
 
     if (type === "simple") {
@@ -127,19 +161,24 @@ export async function POST(request: NextRequest) {
       }
       const slug =
         parsed.data.slug?.trim() || slugify(parsed.data.name) || crypto.randomUUID();
+      const categorySlugs = parsed.data.category_slugs?.filter(Boolean) ?? null;
+      const mainCategorySlug = categorySlugs?.[0] ?? parsed.data.category_slug ?? null;
       const { data, error } = await sb
         .from("products")
         .insert({
           name: parsed.data.name,
           slug,
           description: parsed.data.description ?? null,
+          composition_size: parsed.data.composition_size ?? null,
           price: parsed.data.price,
           image_url: parsed.data.image_url ?? null,
           images: parsed.data.images ?? null,
           is_active: parsed.data.is_active,
           is_hidden: parsed.data.is_hidden,
-          sort_order: parsed.data.sort_order,
-          category_slug: parsed.data.category_slug ?? null,
+          is_preorder: parsed.data.is_preorder,
+          sort_order: 0,
+          category_slug: mainCategorySlug,
+          category_slugs: categorySlugs,
         })
         .select()
         .single();
@@ -157,23 +196,56 @@ export async function POST(request: NextRequest) {
       }
       const slug =
         parsed.data.slug?.trim() || slugify(parsed.data.name) || String(Date.now());
-      const { data, error } = await sb
+      
+      const categorySlugs = parsed.data.category_slugs?.filter(Boolean) ?? null;
+      const mainCategorySlug = categorySlugs?.[0] ?? parsed.data.category_slug ?? null;
+      
+      // Вычислить min_price_cache из вариантов (минимальная цена среди активных вариантов, не-предзаказов)
+      const variantsWithPrice = parsed.data.variants.filter((v) => !v.is_preorder && v.price > 0);
+      const minPrice = variantsWithPrice.length > 0 
+        ? Math.min(...variantsWithPrice.map((v) => v.price))
+        : 0;
+      
+      // Создать variant_product
+      const { data: vpData, error: vpError } = await sb
         .from("variant_products")
         .insert({
           name: parsed.data.name,
           slug,
           description: parsed.data.description ?? null,
           image_url: parsed.data.image_url ?? null,
-          min_price_cache: 0,
+          min_price_cache: minPrice,
           is_active: parsed.data.is_active,
           is_hidden: parsed.data.is_hidden,
-          sort_order: parsed.data.sort_order,
-          category_slug: parsed.data.category_slug ?? null,
+          sort_order: 0,
+          category_slug: mainCategorySlug,
+          category_slugs: categorySlugs,
         })
         .select()
         .single();
-      if (error) throw error;
-      return NextResponse.json({ ...data, type: "variant", id: `vp-${data.id}` });
+      
+      if (vpError) throw vpError;
+      
+      // Создать product_variants
+      // В БД колонка называется "title", не "name"
+      const variantsToInsert = parsed.data.variants.map((v) => ({
+        product_id: vpData.id,
+        title: v.name,
+        composition: v.composition,
+        price: v.price,
+        is_preorder: v.is_preorder,
+        image_url: v.image_url ?? null,
+        sort_order: v.sort_order,
+        is_active: v.is_active,
+      }));
+      
+      const { error: variantsError } = await sb
+        .from("product_variants")
+        .insert(variantsToInsert);
+      
+      if (variantsError) throw variantsError;
+      
+      return NextResponse.json({ ...vpData, type: "variant", id: `vp-${vpData.id}` });
     }
 
     return NextResponse.json({ error: "Укажите type: simple или variant" }, { status: 400 });
@@ -182,6 +254,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     }
     console.error("[admin/products POST]", e);
-    return NextResponse.json({ error: "Ошибка создания" }, { status: 500 });
+    return NextResponse.json({ error: getErrorMessage(e) }, { status: 500 });
   }
 }

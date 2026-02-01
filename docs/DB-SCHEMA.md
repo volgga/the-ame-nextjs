@@ -27,16 +27,19 @@
 | id | UUID | ✓ | NOT NULL | Первичный ключ |
 | name | TEXT | | NOT NULL | Название |
 | description | TEXT | | NULL | Описание |
+| composition_size | TEXT | | NULL | Состав и размер букета (ручной ввод) |
 | price | NUMERIC | | NULL | Цена в рублях (одна на товар) |
 | image_url | TEXT | | NULL | URL главного изображения |
 | images | TEXT[] / JSONB | | NULL | Доп. изображения (если есть) |
 | is_active | BOOLEAN | | NULL/true | Показывать в каталоге |
-| is_hidden | BOOLEAN | | NULL/false | Скрыть из каталога |
-| sort_order | INT | | NULL | Порядок вывода |
+| is_hidden | BOOLEAN | | NULL/false | Скрыть с витрины (в админке остаётся) |
+| is_preorder | BOOLEAN | | NULL/false | Предзаказ: на витрине вместо цены — «Предзаказ» |
+| sort_order | INT | | NULL | Порядок вывода (в форме не редактируется) |
 | slug | TEXT | | NULL/'' | URL-слаг (уникальный) |
+| category_slugs | TEXT[] | | NULL | Массив слогов категорий (привязка к нескольким категориям) |
 | created_at, updated_at | TIMESTAMPTZ | | NULL | Даты (если есть) |
 
-В коде используются: `id`, `name`, `description`, `image_url`, `price`, `slug`, `is_active`, `is_hidden`, `sort_order`.
+В коде используются: `id`, `name`, `description`, `image_url`, `price`, `slug`, `is_active`, `is_hidden`, `is_preorder`, `sort_order`, `category_slug`, `category_slugs`.
 
 ### variant_products
 
@@ -51,9 +54,11 @@
 | is_active | BOOLEAN | | NULL/true | Показывать в каталоге |
 | is_hidden | BOOLEAN | | NULL/false | Скрыть из каталога |
 | sort_order | INT | | NULL | Порядок вывода |
+| category_slug | TEXT | | NULL | Основная категория (для совместимости) |
+| category_slugs | TEXT[] | | NULL | Массив слогов категорий (добавлено миграцией) |
 | published_at | TIMESTAMPTZ | | NULL | Дата публикации (если есть) |
 
-В коде используются: `id`, `slug`, `name`, `description`, `image_url`, `min_price_cache`, `is_active`, `is_hidden`, `published_at`, `sort_order`.
+В коде используются: `id`, `slug`, `name`, `description`, `image_url`, `min_price_cache`, `is_active`, `is_hidden`, `sort_order`, `category_slug`, `category_slugs`.
 
 ### product_variants
 
@@ -61,14 +66,16 @@
 |---------|-----|----|----------|----------|
 | id | INT / SERIAL | ✓ | NOT NULL | Первичный ключ |
 | product_id | INT | FK → variant_products.id | NOT NULL | Родительский variant_product |
-| size / name | TEXT | | NULL | Название варианта (например «25шт», «S») |
-| composition | TEXT | | NULL | Состав (если есть) |
+| title | TEXT | | NOT NULL | Название варианта (например «25шт», «S») |
+| composition | TEXT | | NULL | Состав и размер (добавлено миграцией) |
 | price | NUMERIC | | NOT NULL | Цена в рублях |
+| is_preorder | BOOLEAN | | NULL/false | Предзаказ (добавлено миграцией) |
 | is_active | BOOLEAN | | NULL/true | Учитывать в min_price и показе |
 | sort_order | INT | | NULL | Порядок вариантов |
 | image_url | TEXT | | NULL | Фото варианта (если есть) |
-| description | TEXT | | NULL | Описание варианта |
 | created_at, updated_at | TIMESTAMPTZ | | NULL | Даты (если есть) |
+
+**Важно:** В БД колонка называется `title`, не `name`. В коде админки используется `title`.
 
 В коде каталог **не читает product_variants напрямую** — использует `variant_products` и поле `min_price_cache`. Связь нужна для целостности и для будущего выбора варианта на карточке.
 

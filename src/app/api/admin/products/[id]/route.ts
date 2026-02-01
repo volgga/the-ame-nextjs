@@ -34,7 +34,7 @@ const updateSimpleSchema = z.object({
   images: z.array(z.string()).optional().nullable(),
   is_active: z.boolean().optional(),
   is_hidden: z.boolean().optional(),
-  sort_order: z.number().int().optional(),
+  is_preorder: z.boolean().optional(),
   category_slug: z.string().nullable().optional(),
 });
 
@@ -45,7 +45,6 @@ const updateVariantSchema = z.object({
   image_url: z.string().url().optional().nullable(),
   is_active: z.boolean().optional(),
   is_hidden: z.boolean().optional(),
-  sort_order: z.number().int().optional(),
   category_slug: z.string().nullable().optional(),
 });
 

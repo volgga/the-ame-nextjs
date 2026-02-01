@@ -112,3 +112,62 @@
 | Удалена неиспользуемая переменная nextFromServer | admin/categories/page.tsx |
 | Удалена неиспользуемая константа MENU_PADDING_X | CatalogDropdown.tsx |
 | Добавлены eslint-disable для explicit any | api/admin/slides/[id]/route.ts |
+
+---
+
+## 10) Аудит админки товаров — создание товара (модалка)
+
+### Найденные проблемы и исправления
+
+#### Frontend (`src/app/admin/products/page.tsx`)
+
+| Проблема | Решение |
+|----------|---------|
+| `load()` в `useEffect` без стабильной зависимости | Обёрнут в `useCallback(load, [search])`, эффект зависит от `[load]`. |
+| Утечка blob URL при размонтировании страницы с открытой модалкой и загруженными фото | Добавлен `productImagesRef` и эффект с cleanup при размонтировании — отзыв всех `URL.revokeObjectURL`. |
+| При открытии модалки кнопкой «Добавить» не сбрасывались изображения/категории/флаги, если модалка не была закрыта через `closeCreateModal` | При клике «Добавить» явно: отзыв blob URL, `setProductImages([])`, сброс mainIndex, категорий, isHidden, isPreorder, форма, ошибки. |
+
+#### Валидация
+
+- Один механизм: `validateCreateForm()` возвращает `Record<string, string>`.
+- Сообщения: «Введите название», «Введите описание», «Введите состав и размер», «Загрузите хотя бы одно фото», «Выберите минимум одну категорию», «Цена должна быть больше 0».
+
+#### API (`src/app/api/admin/products/route.ts`)
+
+| Проблема | Решение |
+|----------|---------|
+| Inline-типы для строк БД в `.map()` | Введены типы `ProductRow` и `VariantProductRow`, убран `any` из маппинга. |
+| Дублирование извлечения сообщения ошибки в catch | Вынесена функция `getErrorMessage(e)`, в catch используется `getErrorMessage(e)`. |
+| `as any` для Supabase | Оставлено с комментарием: «типы Supabase .from() не совпадают с нашей схемой». |
+
+#### API Upload (`src/app/api/admin/products/upload/route.ts`)
+
+- Добавлен комментарий к `as any`: «типы Supabase .storage не в дефолтном клиенте».
+
+### Что могло вызывать «Ошибка создания»
+
+1. **Отсутствие колонки `images` в таблице `products`** — миграция `scripts/migrations/products-add-images-column.sql` добавляет `images TEXT[]`. Нужно выполнить в Supabase SQL Editor.
+2. **Отсутствие колонки `category_slugs`** — миграция `products-add-category-slugs.sql`. Выполнить при необходимости.
+3. **Неверный ответ API** — теперь в ответе всегда передаётся `error` с текстом от Supabase (`message`) или «Ошибка создания», без generic-only сообщения.
+4. **RLS на таблице `products`** — если INSERT выполняется не от service_role, вставка может тихо не проходить. Админка использует `getSupabaseAdmin()` (service_role), RLS для service_role обычно не применяется — проверить в Dashboard.
+5. **Storage bucket `product-images`** — если bucket не создан или RLS на Storage запрещает INSERT от service_role, загрузка изображений падает; пользователь видит «Не удалось загрузить изображения: …».
+
+### База данных и Storage (проверка)
+
+- **products**: колонки `name`, `slug`, `description`, `composition_size`, `price`, `image_url`, `images`, `is_active`, `is_hidden`, `is_preorder`, `sort_order`, `category_slug`, `category_slugs` — см. `docs/DB-SCHEMA.md`.
+- **Миграции**: `products-add-images-column.sql`, `products-add-category-slugs.sql`, `products-add-composition-size.sql`, `products-add-is-preorder.sql` — выполнить в Supabase SQL Editor, если колонок ещё нет.
+- **Storage**: bucket `product-images`, публичный; RLS — чтение всем, запись только `auth.role() = 'service_role'`. См. `docs/STORAGE-SETUP.md`.
+
+### Изменённые файлы (аудит админки товаров)
+
+| Файл | Изменения |
+|------|-----------|
+| `src/app/admin/products/page.tsx` | useCallback(load), ref + cleanup для blob URL, полный сброс при открытии «Добавить». |
+| `src/app/api/admin/products/route.ts` | getErrorMessage(), ProductRow, VariantProductRow, комментарии к `as any`. |
+| `src/app/api/admin/products/upload/route.ts` | Комментарий к `as any`. |
+| `docs/AUDIT-CLEANUP-2025.md` | Раздел 10 — отчёт аудита админки товаров. |
+
+### Минимальные правки БД (если ещё не сделаны)
+
+- Выполнить миграции из `scripts/migrations/` в Supabase SQL Editor (см. выше).
+- RLS: при использовании **service_role** в API RLS для таблиц и Storage не блокирует. Если админка когда-либо будет использовать anon/key с RLS — нужны политики INSERT/UPDATE для админа (например, по `auth.uid()` в таблице admin_users).

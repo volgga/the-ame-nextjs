@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { getAllVariantProducts } from "@/lib/variantProducts";
 import { slugify } from "@/utils/slugify";
 
+
 export type Product = {
   id: string;
   slug: string;
@@ -15,6 +16,7 @@ export type Product = {
   image: string;
   shortDescription: string;
   categorySlug?: string | null;
+  isPreorder?: boolean;
 };
 
 /** Сырая строка таблицы products в Supabase */
@@ -28,6 +30,7 @@ type ProductsRow = {
   category_slug?: string | null;
   is_active?: boolean | null;
   is_hidden?: boolean | null;
+  is_preorder?: boolean | null;
 };
 
 function rowToProduct(row: ProductsRow): Product {
@@ -43,6 +46,7 @@ function rowToProduct(row: ProductsRow): Product {
     image: row.image_url ?? "",
     shortDescription: row.description ?? "",
     categorySlug: row.category_slug ?? null,
+    isPreorder: row.is_preorder ?? false,
   };
 }
 
@@ -66,7 +70,7 @@ export async function getAllProducts(): Promise<Product[]> {
     // Показываем все, где не скрыто явно: is_active не false, is_hidden не true
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, description, image_url, price, slug, category_slug, is_active, is_hidden")
+      .select("id, name, description, image_url, price, slug, category_slug, is_active, is_hidden, is_preorder")
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
       .order("sort_order", { ascending: true, nullsFirst: false });
@@ -120,7 +124,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
     const base = supabase
       .from("products")
-      .select("id, name, description, image_url, price, slug, category_slug, is_active, is_hidden")
+      .select("id, name, description, image_url, price, slug, category_slug, is_active, is_hidden, is_preorder")
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null");
 

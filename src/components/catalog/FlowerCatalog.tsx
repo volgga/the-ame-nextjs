@@ -45,7 +45,8 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
         size: "medium",
         occasion: [],
         slug: p.slug,
-        categorySlug: null,
+        categorySlug: p.categorySlug ?? null,
+        isPreorder: p.isPreorder,
       })),
     [allProducts]
   );

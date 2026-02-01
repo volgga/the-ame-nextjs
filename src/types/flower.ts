@@ -20,6 +20,8 @@ export interface Flower {
   colors: string[];
   size: 'small' | 'medium' | 'large';
   occasion: string[];
+  /** Если true — на витрине вместо цены показывается «Предзаказ» */
+  isPreorder?: boolean;
 }
 
 export interface CartItem extends Flower {

@@ -51,7 +51,7 @@ export const FlowerCard = ({ flower, onToggleFavorite }: FlowerCardProps) => {
 
           <div className="mt-1 flex items-center justify-between">
             <span className="text-base md:text-lg font-semibold text-gray-900">
-              {flower.price.toLocaleString("ru-RU")} ₽
+              {flower.isPreorder ? "Предзаказ" : `${flower.price.toLocaleString("ru-RU")} ₽`}
             </span>
 
             {/* ❤️ Избранное */}
