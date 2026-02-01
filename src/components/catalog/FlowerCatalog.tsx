@@ -86,10 +86,10 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
       {/* Пустой результат */}
       {sortedFlowers.length === 0 && (
         <div className="py-12 text-center">
-          <p className="mb-4 text-lg text-muted-foreground">Цветы не найдены</p>
+          <p className="mb-4 text-lg text-color-text-secondary">Цветы не найдены</p>
           <Link
             href={pathname}
-            className="inline-block rounded-md border border-input bg-background px-4 py-2 text-sm hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="inline-block rounded-md border border-border-block bg-white px-4 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
           >
             Сбросить фильтры
           </Link>

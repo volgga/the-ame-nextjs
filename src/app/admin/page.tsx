@@ -7,7 +7,7 @@ export default function AdminPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/admin/slides"
-          className="block rounded-xl border border-[#2E7D32] bg-white p-6 shadow-sm hover:shadow transition"
+          className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition"
         >
           <h3 className="font-medium text-[#111]">Слайды</h3>
           <p className="mt-1 text-sm text-gray-500">
@@ -16,7 +16,7 @@ export default function AdminPage() {
         </Link>
         <Link
           href="/admin/products"
-          className="block rounded-xl border border-[#2E7D32] bg-white p-6 shadow-sm hover:shadow transition"
+          className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition"
         >
           <h3 className="font-medium text-[#111]">Товары</h3>
           <p className="mt-1 text-sm text-gray-500">
@@ -25,7 +25,7 @@ export default function AdminPage() {
         </Link>
         <Link
           href="/admin/categories"
-          className="block rounded-xl border border-[#2E7D32] bg-white p-6 shadow-sm hover:shadow transition"
+          className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition"
         >
           <h3 className="font-medium text-[#111]">Категории</h3>
           <p className="mt-1 text-sm text-gray-500">

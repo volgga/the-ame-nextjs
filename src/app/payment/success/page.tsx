@@ -84,13 +84,12 @@ function PaymentSuccessContent() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#fff8ea] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <p className="text-muted-foreground mb-4">{error}</p>
           <Link
             href="/cart"
-            className="inline-block px-6 py-3 rounded-lg font-semibold text-white"
-            style={{ backgroundColor: "#819570" }}
+            className="inline-block px-6 py-3 rounded-lg font-semibold text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
           >
             В корзину
           </Link>
@@ -101,7 +100,7 @@ function PaymentSuccessContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#fff8ea] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="text-center">
           <p className="text-muted-foreground">Загрузка...</p>
         </div>
@@ -112,9 +111,9 @@ function PaymentSuccessContent() {
   const amountRub = order ? (order.amount / 100).toFixed(0) : "0";
 
   return (
-    <div className="min-h-screen bg-[#fff8ea] py-12 px-4">
+    <div className="min-h-screen bg-white py-12 px-4">
       <div className="max-w-lg mx-auto">
-        <h1 className="text-2xl font-bold mb-6" style={{ color: "#819570" }}>
+        <h1 className="text-2xl font-bold mb-6 text-color-text-main">
           Оплата успешна
         </h1>
 
@@ -162,8 +161,7 @@ function PaymentSuccessContent() {
 
         <Link
           href="/"
-          className="inline-block px-6 py-3 rounded-lg font-semibold text-white"
-          style={{ backgroundColor: "#819570" }}
+          className="inline-block px-6 py-3 rounded-lg font-semibold text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
         >
           На главную
         </Link>
@@ -175,7 +173,7 @@ function PaymentSuccessContent() {
 export default function PaymentSuccessPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#fff8ea] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <p className="text-muted-foreground">Загрузка…</p>
       </div>
     }>

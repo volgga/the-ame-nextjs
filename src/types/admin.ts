@@ -43,6 +43,8 @@ export interface ProductRow {
   slug: string;
   description?: string | null;
   composition_size?: string | null;
+  height_cm?: number | null;
+  width_cm?: number | null;
   price: number;
   image_url?: string | null;
   images?: string[] | null;
@@ -63,6 +65,8 @@ export interface ProductCreatePayload {
   slug?: string;
   description?: string;
   composition_size?: string;
+  height_cm?: number | null;
+  width_cm?: number | null;
   price: number;
   image_url?: string | null;
   images?: string[] | null;
@@ -76,7 +80,7 @@ export interface ProductCreatePayload {
 // Вариантный товар (variant_products)
 // ============================
 
-/** Строка из таблицы variant_products (для чтения) */
+/** Строка из таблицы variant_products (для чтения). Состав/размер у вариантов, не у основного товара. */
 export interface VariantProductRow {
   id: number;
   name: string;
@@ -106,7 +110,9 @@ export interface VariantDraft {
 /** Payload для одного варианта при создании */
 export interface VariantPayload {
   name: string;
-  composition: string;
+  composition?: string | null;
+  height_cm?: number | null;
+  width_cm?: number | null;
   price: number;
   is_preorder: boolean;
   image_url?: string | null;
@@ -137,6 +143,8 @@ export interface ProductVariantRow {
   product_id: number;
   title: string; // В БД колонка называется "title"
   composition?: string | null;
+  height_cm?: number | null;
+  width_cm?: number | null;
   price: number;
   is_preorder: boolean;
   is_active: boolean;

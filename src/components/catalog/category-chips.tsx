@@ -37,10 +37,10 @@ export function CategoryChips({ categories, currentSlug }: CategoryChipsProps) {
             href={href}
             className={`
               inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium
-              transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+              transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2
               ${isActive
-                ? "border-foreground/30 bg-muted text-foreground"
-                : "border-border bg-background text-foreground hover:bg-muted/80 hover:border-foreground/20"
+                ? "border-color-bg-main bg-[rgba(111,131,99,0.20)] text-color-text-main"
+                : "border-border-block bg-white text-color-text-main hover:bg-[rgba(31,42,31,0.06)]"
               }
             `}
             aria-current={isActive ? "page" : undefined}

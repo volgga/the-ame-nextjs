@@ -226,7 +226,7 @@ export default function AdminCategoriesPage() {
             setEditing(null);
             setForm({ name: "", is_active: true, description: "" });
           }}
-          className="rounded bg-[#819570] px-4 py-2 text-white hover:bg-[#6f7f5f]"
+          className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
         >
           Добавить
         </button>
@@ -240,7 +240,7 @@ export default function AdminCategoriesPage() {
             aria-hidden
           />
           <div
-            className="relative w-full max-w-[480px] max-h-[90vh] flex flex-col rounded-xl border border-[#2E7D32] bg-white shadow-xl"
+            className="relative w-full max-w-[480px] max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white hover:border-border-block-hover shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSaveForm} className="flex flex-col min-h-0">
@@ -295,7 +295,7 @@ export default function AdminCategoriesPage() {
               <div className="flex gap-2 p-6 pt-4 border-t border-gray-100">
                   <button
                     type="submit"
-                    className="rounded bg-[#819570] px-4 py-2 text-white hover:bg-[#6f7f5f]"
+                    className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
                   >
                     Сохранить
                   </button>
@@ -383,14 +383,14 @@ export default function AdminCategoriesPage() {
             type="button"
             onClick={handleSaveOrder}
             disabled={saveStatus === "saving"}
-            className="rounded bg-[#819570] px-4 py-2 text-white hover:bg-[#6f7f5f] disabled:opacity-60 transition"
+            className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text transition"
           >
             {saveStatus === "saving" ? "Сохранение…" : saveStatus === "saved" ? "Сохранено ✓" : "Сохранить"}
           </button>
           <button
             type="button"
             onClick={() => setCategoriesDraft([...categoriesFromServer])}
-            className="rounded border border-[#819570] bg-white px-4 py-2 text-[#819570] hover:bg-[#819570]/5 transition"
+            className="rounded border border-outline-btn-border bg-white px-4 py-2 text-color-text-main hover:bg-outline-btn-hover-bg active:bg-outline-btn-active-bg transition"
           >
             Не сохранять
           </button>

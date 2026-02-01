@@ -44,13 +44,13 @@ export default function AdminLayout({
                 key={href}
                 href={href}
                 className={`relative text-base font-medium transition-colors duration-200 ${
-                  isActive ? "text-[#111]" : "text-[#111] hover:text-[#2E7D32]"
+                  isActive ? "text-[#111]" : "text-[#111] hover:text-color-text-main"
                 }`}
               >
                 <span className="relative inline-block pb-0.5">{label}</span>
                 {isActive && (
                   <span
-                    className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] min-w-[1em] max-w-full rounded-full bg-[#819570] transition-all duration-300"
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[3px] min-w-[1em] max-w-full rounded-full bg-color-bg-main transition-all duration-300"
                     style={{ width: "calc(100% + 4px)" }}
                   />
                 )}
@@ -60,7 +60,7 @@ export default function AdminLayout({
           <button
             type="button"
             onClick={handleLogout}
-            className="text-base font-medium text-[#111] hover:text-[#2E7D32] transition-colors duration-200 pb-0.5"
+            className="text-base font-medium text-[#111] hover:text-color-text-main transition-colors duration-200 pb-0.5"
           >
             Выйти
           </button>

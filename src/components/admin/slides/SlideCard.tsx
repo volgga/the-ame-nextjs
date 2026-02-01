@@ -39,11 +39,11 @@ export function SlideCard({ slide, index, onEdit }: SlideCardProps) {
       {...attributes}
       {...listeners}
       className={`
-        group relative flex flex-col overflow-hidden rounded-xl border border-[#2E7D32] bg-white
+        group relative flex flex-col overflow-hidden rounded-xl border border-border-block bg-white hover:border-border-block-hover
         cursor-grab active:cursor-grabbing
         transition-all duration-200 ease-out
         hover:-translate-y-1 hover:shadow-lg
-        ${isDragging ? "z-50 scale-[1.02] shadow-xl ring-2 ring-[#2E7D32]/30" : ""}
+        ${isDragging ? "z-50 scale-[1.02] shadow-xl ring-2 ring-color-text-main/30" : ""}
       `}
     >
       {/* Order badge */}

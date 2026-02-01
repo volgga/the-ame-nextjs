@@ -239,7 +239,7 @@ export default function AdminSlidesPage() {
             setEditing(null);
             setForm({ file: null, sort_order: slidesDraft.length, is_active: true });
           }}
-          className="rounded bg-[#819570] px-4 py-2 text-white hover:bg-[#6f7f5f]"
+          className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
         >
           Добавить
         </button>
@@ -253,7 +253,7 @@ export default function AdminSlidesPage() {
             aria-hidden
           />
           <div
-            className="relative w-full max-w-[720px] rounded-xl border border-[#2E7D32] bg-white p-6 shadow-xl"
+            className="relative w-full max-w-[720px] rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSaveForm}>
@@ -274,7 +274,7 @@ export default function AdminSlidesPage() {
                     type="file"
                     accept={ACCEPT}
                     onChange={handleFileChange}
-                    className="mt-2 block w-full text-sm text-[#111] file:mr-4 file:rounded file:border-0 file:bg-[#819570] file:px-4 file:py-2 file:text-white file:hover:bg-[#6f7f5f]"
+                    className="mt-2 block w-full text-sm text-[#111] file:mr-4 file:rounded file:border-0 file:bg-accent-btn file:px-4 file:py-2 file:text-white file:hover:bg-accent-btn-hover"
                   />
                   {previewUrl && (
                     <div className="mt-3 relative aspect-video w-full max-w-md overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
@@ -317,7 +317,7 @@ export default function AdminSlidesPage() {
                   <button
                     type="submit"
                     disabled={uploading || (creating && !form.file)}
-                    className="rounded bg-[#819570] px-4 py-2 text-white hover:bg-[#6f7f5f] disabled:opacity-60"
+                    className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
                   >
                     {uploading ? "Загрузка…" : "Сохранить"}
                   </button>
@@ -370,7 +370,7 @@ export default function AdminSlidesPage() {
             type="button"
             onClick={handleSaveOrder}
             disabled={saveStatus === "saving"}
-            className="rounded bg-[#819570] px-4 py-2 text-white hover:bg-[#6f7f5f] disabled:opacity-60 transition"
+            className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text transition"
           >
             {saveStatus === "saving" ? "Сохранение…" : saveStatus === "saved" ? "Сохранено ✓" : "Сохранить"}
           </button>
@@ -379,7 +379,7 @@ export default function AdminSlidesPage() {
             onClick={() => {
               setSlidesDraft([...slidesFromServer]);
             }}
-            className="rounded border border-[#819570] bg-white px-4 py-2 text-[#819570] hover:bg-[#819570]/5 transition"
+            className="rounded border border-outline-btn-border bg-white px-4 py-2 text-color-text-main hover:bg-outline-btn-hover-bg active:bg-outline-btn-active-bg transition"
           >
             Не сохранять
           </button>

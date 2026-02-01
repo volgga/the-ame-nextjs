@@ -77,7 +77,7 @@ export default function DeliveryAndPaymentsPage() {
             {/* Второй абзац с иконкой часов */}
             <div className="flex gap-4 md:gap-6 items-start">
               <div className="flex-shrink-0 mt-1">
-                <Clock className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                <Clock className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
               </div>
               <div className="flex-1 text-left">
                 <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -89,7 +89,7 @@ export default function DeliveryAndPaymentsPage() {
             {/* Третий абзац с иконкой грузовика */}
             <div className="flex gap-4 md:gap-6 items-start">
               <div className="flex-shrink-0 mt-1">
-                <Truck className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                <Truck className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
               </div>
               <div className="flex-1 text-left">
                 <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -101,7 +101,7 @@ export default function DeliveryAndPaymentsPage() {
             {/* Четвёртый абзац с иконкой подарка */}
             <div className="flex gap-4 md:gap-6 items-start">
               <div className="flex-shrink-0 mt-1">
-                <Package className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                <Package className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
               </div>
               <div className="flex-1 text-left">
                 <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -125,7 +125,7 @@ export default function DeliveryAndPaymentsPage() {
             <div className="space-y-4 md:space-y-5">
               <div className="flex gap-4 md:gap-6 items-center">
                 <div className="flex-shrink-0">
-                  <Sprout className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                  <Sprout className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -135,7 +135,7 @@ export default function DeliveryAndPaymentsPage() {
               </div>
               <div className="flex gap-4 md:gap-6 items-center">
                 <div className="flex-shrink-0">
-                  <Droplets className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                  <Droplets className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -145,7 +145,7 @@ export default function DeliveryAndPaymentsPage() {
               </div>
               <div className="flex gap-4 md:gap-6 items-center">
                 <div className="flex-shrink-0">
-                  <Heart className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                  <Heart className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -155,7 +155,7 @@ export default function DeliveryAndPaymentsPage() {
               </div>
               <div className="flex gap-4 md:gap-6 items-center">
                 <div className="flex-shrink-0">
-                  <Gift className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                  <Gift className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -177,7 +177,7 @@ export default function DeliveryAndPaymentsPage() {
             <div className="space-y-4 md:space-y-5">
               <div className="flex gap-4 md:gap-6 items-center">
                 <div className="flex-shrink-0">
-                  <Camera className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                  <Camera className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -187,7 +187,7 @@ export default function DeliveryAndPaymentsPage() {
               </div>
               <div className="flex gap-4 md:gap-6 items-center">
                 <div className="flex-shrink-0">
-                  <Video className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                  <Video className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -197,7 +197,7 @@ export default function DeliveryAndPaymentsPage() {
               </div>
               <div className="flex gap-4 md:gap-6 items-center">
                 <div className="flex-shrink-0">
-                  <GiftIcon className="w-6 h-6 md:w-7 md:h-7 text-[#819570]" />
+                  <GiftIcon className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -264,7 +264,7 @@ export default function DeliveryAndPaymentsPage() {
                 >
                   {/* Иконка в круге */}
                   <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-[#F5F2EE] flex items-center justify-center">
-                    <div className="text-[#819570]">{method.icon}</div>
+                    <div className="text-color-text-main">{method.icon}</div>
                   </div>
                   {/* Текст */}
                   <p className="text-sm md:text-base text-[#000] leading-relaxed">

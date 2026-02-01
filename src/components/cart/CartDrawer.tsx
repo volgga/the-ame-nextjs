@@ -62,8 +62,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               type="button"
               onClick={onClose}
               aria-label="Закрыть"
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:opacity-80 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#819570]/40 focus-visible:ring-offset-2"
-              style={{ color: "#819570" }}
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:opacity-80 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-color-text-main/30 focus-visible:ring-offset-2 text-color-text-main"
             >
               <X className="w-6 h-6" />
             </button>

@@ -11,9 +11,45 @@ All colors MUST be HSL.
     /* Minimalist two-color palette: Warm Beige & Sage Green */
     --background: 40 100% 96%;
     --foreground: 100 15% 25%;
-    
-    /* Header specific color - warm beige */
-    --header-bg: 42 35% 89%;
+
+    /* Main green (hex #819570) and darker for buttons/hover */
+    --color-green: 100 25% 55%;
+    --color-green-dark: 100 18% 44%;
+
+    /* Ticker: white bg, dark text */
+    --ticker-bg: 0 0% 100%;
+    --ticker-foreground: #1F2A1F;
+
+    /* Header green blocks: exact colors, no opacity/darkening on background */
+    --header-bg: #6F8363;
+    --header-foreground: #1F2A1F;
+    --header-foreground-secondary: rgba(31, 42, 31, 0.65);
+
+    /* Semantic palette (source of truth: do not change) */
+    --color-text-main: #1F2A1F;
+    --color-text-secondary: rgba(31, 42, 31, 0.65);
+    --color-bg-main: #6F8363;
+    --color-accent-dark: #5c6d50;
+
+    /* Accent buttons (filled): darker #6F8363, hover/active darker */
+    --color-accent-btn: #5c6d50;
+    --color-accent-btn-hover: #536246;
+    --color-accent-btn-active: #4d5a42;
+    --color-accent-btn-disabled-bg: rgba(31, 42, 31, 0.25);
+    --color-accent-btn-disabled-text: rgba(31, 42, 31, 0.5);
+
+    /* Outline / secondary buttons */
+    --color-outline-border: #1F2A1F;
+    --color-outline-hover-bg: rgba(31, 42, 31, 0.08);
+    --color-outline-active-bg: rgba(31, 42, 31, 0.12);
+
+    /* Block/table/card borders */
+    --color-border-block: rgba(31, 42, 31, 0.25);
+    --color-border-block-hover: rgba(31, 42, 31, 0.4);
+
+    /* Badge (cart counter, etc.) */
+    --color-badge-bg: #1F2A1F;
+    --color-badge-text: #FFFFFF;
 
     --card: 42 30% 96%;
     --card-foreground: 100 15% 25%;
@@ -25,6 +61,7 @@ All colors MUST be HSL.
     --primary: 100 25% 55%;
     --primary-foreground: 42 30% 96%;
     --primary-soft: 100 20% 88%;
+    --primary-dark: 100 18% 44%;
 
     /* Secondary - Warm Beige */
     --secondary: 42 28% 85%;
@@ -130,7 +167,38 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground font-montserrat;
+    @apply bg-white text-foreground font-montserrat;
+  }
+}
+
+@layer components {
+  /* Accent (filled) button: palette-based colors */
+  .btn-accent {
+    background-color: var(--color-accent-btn);
+    color: #ffffff;
+  }
+  .btn-accent:hover:not(:disabled) {
+    background-color: var(--color-accent-btn-hover);
+  }
+  .btn-accent:active:not(:disabled) {
+    background-color: var(--color-accent-btn-active);
+  }
+  .btn-accent:disabled {
+    background-color: var(--color-accent-btn-disabled-bg);
+    color: var(--color-accent-btn-disabled-text);
+  }
+
+  /* Outline / secondary button */
+  .btn-outline {
+    border: 1px solid var(--color-outline-border);
+    color: var(--color-text-main);
+    background: transparent;
+  }
+  .btn-outline:hover:not(:disabled) {
+    background-color: var(--color-outline-hover-bg);
+  }
+  .btn-outline:active:not(:disabled) {
+    background-color: var(--color-outline-active-bg);
   }
 }
 

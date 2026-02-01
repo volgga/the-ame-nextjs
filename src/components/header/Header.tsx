@@ -105,7 +105,7 @@ export function Header() {
 
       {/* Один бежевый контейнер: top = высота зелёной; при HIDDEN уезжает целиком (translateY(-100%)), полоска не остаётся */}
       <div
-        className="fixed left-0 right-0 z-[60] bg-[#ffe9c3] will-change-transform"
+        className="fixed left-0 right-0 z-[60] bg-header-bg will-change-transform"
         style={{
           top: MARQUEE_H,
           transform: beigeHidden ? "translateY(-100%)" : "translateY(0)",

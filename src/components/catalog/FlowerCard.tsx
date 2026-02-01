@@ -16,11 +16,9 @@ export const FlowerCard = ({ flower, onToggleFavorite }: FlowerCardProps) => {
 
   const handleAddToCart = () => {
     addToCart(flower);
-    // TODO: добавить toast уведомления
   };
 
   const handleToggleFavorite = () => {
-    // TODO: добавить логику избранного
     onToggleFavorite?.(flower);
   };
 
@@ -45,12 +43,12 @@ export const FlowerCard = ({ flower, onToggleFavorite }: FlowerCardProps) => {
 
         {/* 📝 Название и цена */}
         <div className="mt-3 px-1">
-          <h3 className="text-sm md:text-base font-normal leading-snug text-gray-800 line-clamp-2 min-h-[42px] md:min-h-0">
+          <h3 className="text-sm md:text-base font-normal leading-snug text-color-text-main line-clamp-2 min-h-[42px] md:min-h-0">
             {flower.name}
           </h3>
 
           <div className="mt-1 flex items-center justify-between">
-            <span className="text-base md:text-lg font-semibold text-gray-900">
+            <span className="text-base md:text-lg font-semibold text-color-text-main">
               {flower.isPreorder ? "Предзаказ" : `${flower.price.toLocaleString("ru-RU")} ₽`}
             </span>
 
@@ -61,10 +59,10 @@ export const FlowerCard = ({ flower, onToggleFavorite }: FlowerCardProps) => {
                 e.stopPropagation();
                 handleToggleFavorite();
               }}
-              className="p-2 rounded-full transition-all duration-200 bg-muted hover:bg-destructive hover:text-destructive-foreground"
+              className="p-2 rounded-full transition-all duration-200 bg-[rgba(31,42,31,0.08)] hover:bg-destructive hover:text-destructive-foreground"
               title="Добавить в избранное"
             >
-              <Heart className="w-4 h-4" />
+              <Heart className="w-4 h-4 text-color-text-main" />
             </button>
           </div>
         </div>
@@ -79,7 +77,7 @@ export const FlowerCard = ({ flower, onToggleFavorite }: FlowerCardProps) => {
               e.stopPropagation();
               handleAddToCart();
             }}
-            className="w-full rounded-full px-6 h-10 text-sm md:text-base font-medium bg-[#819570] hover:bg-[#6f7f5f] text-white transition-colors"
+            className="w-full rounded-full px-6 h-10 text-sm md:text-base font-medium text-white transition-colors bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
           >
             В корзину
           </button>
@@ -90,7 +88,7 @@ export const FlowerCard = ({ flower, onToggleFavorite }: FlowerCardProps) => {
               e.stopPropagation();
               window.open("https://wa.me/message/XQDDWGSEL35LP1", "_blank");
             }}
-            className="w-full rounded-full px-6 h-10 text-sm md:text-base font-medium bg-[#819570] hover:bg-[#6f7f5f] text-white transition-colors"
+            className="w-full rounded-full px-6 h-10 text-sm md:text-base font-medium text-white transition-colors bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
           >
             Предзаказ
           </button>

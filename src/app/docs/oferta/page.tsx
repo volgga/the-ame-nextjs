@@ -13,18 +13,18 @@ export const metadata: Metadata = {
 export default function OfertaPage() {
   return (
     <div className="min-h-screen bg-white">
-      <article className="container mx-auto px-4 py-8 md:py-12 pb-16 md:pb-20 max-w-full">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#000] mb-6 md:mb-8">
+      <article className="container mx-auto px-4 py-10 md:py-12 max-w-full">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#000] mb-5 md:mb-6">
           Публичная оферта на заключение договора розничной купли-продажи
         </h1>
 
-        <p className="text-base md:text-lg text-[#000] leading-relaxed mb-8">
+        <p className="text-base md:text-lg text-[#000] leading-relaxed mb-6">
           В настоящей публичной Оферте нижеприведенные термины используются в следующем значении:
         </p>
 
         {/* 1. Термины и определения */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             1. Термины и определения
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -52,13 +52,13 @@ export default function OfertaPage() {
           </div>
         </section>
 
-        <p className="text-base md:text-lg text-[#000] leading-relaxed mb-10 md:mb-12">
+        <p className="text-base md:text-lg text-[#000] leading-relaxed mb-8 md:mb-10">
           С момента подтверждения Заказа на приобретение и доставку Товара, оформленного в соответствии с размещенными на Интернет-сайте правилами, между Продавцом и Покупателем заключен Договор розничной купли-продажи о нижеследующем:
         </p>
 
         {/* 2. Предмет Договора */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             2. Предмет Договора
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -77,7 +77,7 @@ export default function OfertaPage() {
             <p>
               <strong>2.5.</strong> При регистрации (размещении) Заказа на Интернет-сайте Продавца Покупатель обязуется предоставить следующую регистрационную информацию о себе и Получателе Товара:
             </p>
-            <ul className="list-disc pl-6 space-y-1">
+            <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>фамилия, имя (на русском языке), город, страна, адрес электронной почты, контактные телефоны;</li>
               <li>фамилия, имя (на русском языке) Получателя Товара, фактический адрес доставки, контактные телефоны, пожелания по доставке.</li>
             </ul>
@@ -106,8 +106,8 @@ export default function OfertaPage() {
         </section>
 
         {/* 3. Права и обязанности Сторон */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             3. Права и обязанности Сторон
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -137,7 +137,7 @@ export default function OfertaPage() {
             <p><strong>3.3. Покупатель обязан:</strong></p>
             <p>
               <strong>3.3.1.</strong> Произвести оплату Суммы Заказа до момента доставки Товара Получателю в соответствии с условиями оформленного Покупателем Заказа. Оплату заказанных Товаров Покупатель вправе производить одним из следующих способов, описанных в разделе «Оплата заказа» по адресу{" "}
-              <Link href="/delivery-and-payments" className="text-[#819570] underline hover:no-underline">
+              <Link href="/delivery-and-payments" className="text-color-text-main underline hover:no-underline">
                 https://theame.ru/delivery-and-payments
               </Link>
             </p>
@@ -148,8 +148,8 @@ export default function OfertaPage() {
         </section>
 
         {/* 4. Дополнительные условия */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             4. Дополнительные условия
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -161,7 +161,7 @@ export default function OfertaPage() {
             </p>
             <p><strong>4.3. Какие сложности могут возникнуть при доставке подарков?</strong></p>
             <p>Из наиболее распространенных проблем, которые могут возникнуть в процессе доставки товаров, можно назвать следующие:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>Получатель на время отлучился по своим делам. В этом случае курьер с ним созванивается, выясняет, через какое время он прибудет по указанному адресу, дожидается его и вручает подарок.</li>
               <li>Домофон в доме, где проживает получатель, не работает.</li>
               <li>Курьеру не открывают дверь.</li>
@@ -173,8 +173,8 @@ export default function OfertaPage() {
         </section>
 
         {/* 5. Составление букета и замена цветов */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             5. Составление букета и замена цветов
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -197,8 +197,8 @@ export default function OfertaPage() {
         </section>
 
         {/* Возврат и обмен */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6 uppercase">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4 uppercase">
             Возврат и обмен срезанных цветов и горшечных растений
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -221,16 +221,16 @@ export default function OfertaPage() {
         </section>
 
         {/* Политика персональных данных */}
-        <p className="text-base md:text-lg text-[#000] leading-relaxed mb-10 md:mb-12">
-          <Link href="/docs/privacy" className="text-[#819570] underline hover:no-underline">Политика конфиденциальности</Link> размещена на сайте.
+        <p className="text-base md:text-lg text-[#000] leading-relaxed mb-8 md:mb-10">
+          <Link href="/docs/privacy" className="text-color-text-main underline hover:no-underline">Политика конфиденциальности</Link> размещена на сайте.
         </p>
 
         {/* Реквизиты */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             Реквизиты Продавца
           </h2>
-          <div className="text-base md:text-lg text-[#000] leading-relaxed space-y-1">
+          <div className="text-base md:text-lg text-[#000] leading-relaxed space-y-2">
             <p>Интернет-магазин theame.ru</p>
             <p>ИП Волгин Александр Александрович</p>
             <p>ИНН 741514757204 ОГРНИП 325745600059155</p>
@@ -240,7 +240,7 @@ export default function OfertaPage() {
           </div>
         </section>
 
-        <p className="text-sm md:text-base text-[#7e7e7e]">
+        <p className="text-sm md:text-base text-[#7e7e7e] mt-8">
           Дата последнего обновления: 01.02.2026
         </p>
       </article>

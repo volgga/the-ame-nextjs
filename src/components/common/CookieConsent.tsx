@@ -47,7 +47,7 @@ export function CookieConsent() {
         анализа пользовательской активности. Подробнее — в{" "}
         <Link
           href="/docs/privacy"
-          className="text-[#819570] underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#819570]/40 focus-visible:ring-offset-1 rounded"
+          className="text-color-text-main underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-color-text-main/30 focus-visible:ring-offset-1 rounded"
         >
           политике конфиденциальности
         </Link>
@@ -56,7 +56,7 @@ export function CookieConsent() {
       <button
         type="button"
         onClick={accept}
-        className="w-full rounded-lg bg-[#819570] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#819570]/90 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#819570] focus-visible:ring-offset-2"
+        className="w-full rounded-lg text-white px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-color-text-main focus-visible:ring-offset-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
       >
         OK
       </button>

@@ -66,8 +66,7 @@ function PayButton({
         type="button"
         onClick={handlePay}
         disabled={disabled || loading}
-        className="w-full py-4 mt-6 rounded-lg font-semibold text-white uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
-        style={{ backgroundColor: "#819570" }}
+        className="w-full py-4 mt-6 rounded-lg font-semibold text-white uppercase transition-colors disabled:cursor-not-allowed bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
       >
         {loading ? "Подготовка…" : "ПЕРЕЙТИ К ОПЛАТЕ"}
       </button>
@@ -222,14 +221,13 @@ export function CheckoutFormModal() {
     }
   };
 
-  const dividerClass = "border-t my-2";
-  const dividerStyle = { borderColor: "rgba(129, 149, 112, 0.25)" };
+  const dividerClass = "border-t my-2 border-border-block";
 
   return (
-    <div className="pt-3 border-t" style={{ borderColor: "rgba(129, 149, 112, 0.25)" }}>
+    <div className="pt-3 border-t border-border-block">
       {/* Ваши данные */}
       <div>
-        <h3 className="text-base font-semibold mb-2" style={{ color: "#819570" }}>
+        <h3 className="text-base font-semibold mb-2 text-color-text-main">
           Ваши данные
         </h3>
         <div className="space-y-3">
@@ -242,7 +240,7 @@ export function CheckoutFormModal() {
               placeholder="Имя и фамилия"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
@@ -256,7 +254,7 @@ export function CheckoutFormModal() {
                 placeholder="+7 (000) 000-00-00"
                 value={customerPhone}
                 onChange={(e) => handlePhoneChange(e, setCustomerPhone)}
-                className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20"
+                className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -267,16 +265,16 @@ export function CheckoutFormModal() {
               placeholder="@username"
               value={customerTelegram}
               onChange={handleTelegramChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>
       </div>
 
       {/* Разделитель → Получатель */}
-      <div className={dividerClass} style={dividerStyle} />
+      <div className={dividerClass} />
       <div>
-        <h3 className="text-base font-semibold mb-2" style={{ color: "#819570" }}>Получатель</h3>
+        <h3 className="text-base font-semibold mb-2 text-color-text-main">Получатель</h3>
         <div className="space-y-3 mb-4">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -285,8 +283,7 @@ export function CheckoutFormModal() {
               value="self"
               checked={isRecipientSelf}
               onChange={() => setIsRecipientSelf(true)}
-              className="w-4 h-4"
-              style={{ accentColor: "#819570" }}
+              className="w-4 h-4 accent-primary"
             />
             <span className="text-sm">Я получатель</span>
           </label>
@@ -297,8 +294,7 @@ export function CheckoutFormModal() {
               value="other"
               checked={!isRecipientSelf}
               onChange={() => setIsRecipientSelf(false)}
-              className="w-4 h-4"
-              style={{ accentColor: "#819570" }}
+              className="w-4 h-4 accent-primary"
             />
             <span className="text-sm">Получатель другой человек</span>
           </label>
@@ -316,7 +312,7 @@ export function CheckoutFormModal() {
                 placeholder="Имя получателя"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div>
@@ -330,7 +326,7 @@ export function CheckoutFormModal() {
                   placeholder="+7 (000) 000-00-00"
                   value={recipientPhone}
                   onChange={(e) => handlePhoneChange(e, setRecipientPhone)}
-                  className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20"
+                  className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -339,9 +335,9 @@ export function CheckoutFormModal() {
       </div>
 
       {/* Разделитель → Доставка */}
-      <div className={dividerClass} style={dividerStyle} />
+      <div className={dividerClass} />
       <div>
-        <h3 className="text-base font-semibold mb-2" style={{ color: "#819570" }}>Доставка</h3>
+        <h3 className="text-base font-semibold mb-2 text-color-text-main">Доставка</h3>
 
         {/* Самовывоз (только если "Я получатель"); при выборе скрываем районы и адрес, дата и время остаются */}
         {isRecipientSelf && (
@@ -351,8 +347,7 @@ export function CheckoutFormModal() {
                 type="checkbox"
                 checked={isPickup}
                 onChange={handlePickupToggle}
-                className="w-4 h-4"
-                style={{ accentColor: "#819570" }}
+                className="w-4 h-4 accent-primary"
               />
               <span className="text-sm">Самовывоз</span>
             </label>
@@ -372,8 +367,7 @@ export function CheckoutFormModal() {
                 type="checkbox"
                 checked={askRecipientForDetails}
                 onChange={(e) => setAskRecipientForDetails(e.target.checked)}
-                className="w-4 h-4"
-                style={{ accentColor: "#819570" }}
+                className="w-4 h-4 accent-primary"
               />
               <span className="text-sm">Уточнить время и адрес у получателя</span>
             </label>
@@ -382,8 +376,7 @@ export function CheckoutFormModal() {
                 type="checkbox"
                 checked={deliverAnonymously}
                 onChange={(e) => setDeliverAnonymously(e.target.checked)}
-                className="w-4 h-4"
-                style={{ accentColor: "#819570" }}
+                className="w-4 h-4 accent-primary"
               />
               <span className="text-sm">Доставить анонимно</span>
             </label>
@@ -396,8 +389,7 @@ export function CheckoutFormModal() {
             <button
               type="button"
               onClick={() => setIsDeliveryDropdownOpen(!isDeliveryDropdownOpen)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20 text-left flex items-center justify-between bg-white"
-              style={{ borderColor: isDeliveryDropdownOpen ? "#819570" : "#d1d5db" }}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-left flex items-center justify-between bg-white ${isDeliveryDropdownOpen ? "border-border-block" : "border-gray-300"}`}
             >
               <span className={selectedZone ? "text-gray-900" : "text-gray-500"}>
                 {selectedZone
@@ -405,16 +397,15 @@ export function CheckoutFormModal() {
                   : "Район доставки"}
               </span>
               {isNightDelivery && (
-                <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-[#819570]/15 text-[#819570] whitespace-nowrap">
+                <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-color-text-main/10 text-color-text-main whitespace-nowrap">
                   ночной тариф ×2
                 </span>
               )}
               <svg
-                className={`w-5 h-5 transition-transform ${isDeliveryDropdownOpen ? "rotate-180" : ""}`}
+                className={`w-5 h-5 transition-transform text-color-text-main ${isDeliveryDropdownOpen ? "rotate-180" : ""}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
-                style={{ color: "#819570" }}
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
@@ -426,7 +417,7 @@ export function CheckoutFormModal() {
                   className="fixed inset-0 z-10"
                   onClick={() => setIsDeliveryDropdownOpen(false)}
                 />
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto" style={{ borderColor: "#819570" }}>
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-border-block rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
                   {deliveryZones.map((zone) => {
                     const zonePrice = state.total >= zone.freeFrom ? 0 : zone.feeUnder;
                     return (
@@ -434,11 +425,11 @@ export function CheckoutFormModal() {
                         key={zone.id}
                         type="button"
                         onClick={() => handleDeliverySelect(zone.id)}
-                        className="w-full px-4 py-2 text-left hover:bg-[#819570]/10 transition-colors border-b border-gray-100 last:border-b-0"
+                        className="w-full px-4 py-2 text-left hover:bg-color-text-main/10 transition-colors border-b border-gray-100 last:border-b-0"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium">{zone.name}</span>
-                          <span className="text-sm" style={{ color: "#819570" }}>
+                          <span className="text-sm text-color-text-main">
                             {zonePrice === 0 ? "Бесплатно" : `+${zonePrice}₽`}
                           </span>
                         </div>
@@ -464,7 +455,7 @@ export function CheckoutFormModal() {
               placeholder="Улица, номер дома, подъезд, квартира, этаж"
               value={deliveryAddress}
               onChange={(e) => setDeliveryAddress(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         )}
@@ -473,25 +464,24 @@ export function CheckoutFormModal() {
         {(deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails)) && (
           <div className="flex flex-col md:flex-row md:gap-4 gap-3">
             <div className="w-full min-w-0 md:flex-1">
-              <label className="block text-sm mb-1" style={{ color: "#819570" }}>Дата доставки</label>
+              <label className="block text-sm mb-1 text-color-text-main">Дата доставки</label>
               <input
                 type="date"
                 value={deliveryDate}
                 onChange={(e) => setDeliveryDate(e.target.value)}
                 min={getMinDate()}
                 lang="ru"
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20"
-                style={{ borderColor: "#d1d5db" }}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             {/* Время доставки: скрыто при "Уточнить время и адрес у получателя"; при самовывозе — показываем */}
             {!(!isRecipientSelf && askRecipientForDetails) && (
               <div className="w-full min-w-0 md:flex-1">
-                <label className="block text-sm mb-1" style={{ color: "#819570" }}>Время доставки</label>
+                <label className="block text-sm mb-1 text-color-text-main">Время доставки</label>
                 <select
                   value={deliveryTime}
                   onChange={(e) => setDeliveryTime(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">Выберите время</option>
                   {getTimeIntervals().map((interval) => (
@@ -512,28 +502,28 @@ export function CheckoutFormModal() {
       </div>
 
       {/* Разделитель → Текст для открытки */}
-      <div className={dividerClass} style={dividerStyle} />
+      <div className={dividerClass} />
       <div>
-        <h3 className="text-base font-semibold mb-2" style={{ color: "#819570" }}>Текст для открытки</h3>
+        <h3 className="text-base font-semibold mb-2 text-color-text-main">Текст для открытки</h3>
         <textarea
           placeholder="Напишите пожелания в вашу открытку"
           value={cardText}
           onChange={(e) => setCardText(e.target.value)}
           rows={3}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20 resize-none"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
         />
       </div>
 
       {/* Разделитель → Комментарий к заказу */}
-      <div className={dividerClass} style={dividerStyle} />
+      <div className={dividerClass} />
       <div>
-        <h3 className="text-base font-semibold mb-2" style={{ color: "#819570" }}>Комментарий к заказу</h3>
+        <h3 className="text-base font-semibold mb-2 text-color-text-main">Комментарий к заказу</h3>
         <textarea
           placeholder="Если есть пожелания по заказу — укажите их здесь."
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20 resize-none"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
         />
       </div>
 
@@ -544,7 +534,7 @@ export function CheckoutFormModal() {
           placeholder="Промокод"
           value={promoCode}
           onChange={(e) => setPromoCode(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#819570]/20"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
       </div>
 
@@ -555,8 +545,7 @@ export function CheckoutFormModal() {
             type="checkbox"
             checked={agreeNewsletter}
             onChange={(e) => setAgreeNewsletter(e.target.checked)}
-            className="mt-1 w-4 h-4"
-            style={{ accentColor: "#819570" }}
+            className="mt-1 w-4 h-4 accent-primary"
           />
           <span className="text-sm">Согласие на получение рассылки</span>
         </label>
@@ -565,8 +554,7 @@ export function CheckoutFormModal() {
             type="checkbox"
             checked={agreePrivacy}
             onChange={(e) => setAgreePrivacy(e.target.checked)}
-            className="mt-1 w-4 h-4"
-            style={{ accentColor: "#819570" }}
+            className="mt-1 w-4 h-4 accent-primary"
             required
           />
           <span className="text-sm">
@@ -578,8 +566,7 @@ export function CheckoutFormModal() {
             type="checkbox"
             checked={rememberContacts}
             onChange={(e) => setRememberContacts(e.target.checked)}
-            className="mt-1 w-4 h-4"
-            style={{ accentColor: "#819570" }}
+            className="mt-1 w-4 h-4 accent-primary"
           />
           <span className="text-sm">
             Запомнить контакты в браузере для повторной покупки
@@ -596,13 +583,13 @@ export function CheckoutFormModal() {
           <div className="text-sm flex items-center justify-end gap-2 flex-wrap">
             <span>Доставка: {deliveryPrice.toLocaleString("ru-RU")} р.</span>
             {isNightDelivery && (
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#819570]/15 text-[#819570]">
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-color-text-main/10 text-color-text-main">
                 ночной тариф ×2
               </span>
             )}
           </div>
         )}
-        <div className="text-xl font-bold" style={{ color: "#819570" }}>
+        <div className="text-xl font-bold text-color-text-main">
           Итоговая сумма: {finalTotal.toLocaleString("ru-RU")} р.
         </div>
       </div>

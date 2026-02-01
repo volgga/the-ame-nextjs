@@ -97,7 +97,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#fff8ea",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -145,9 +145,9 @@ export default function RootLayout({
 
         {/* Основная структура: Header + контент + Footer */}
         <Providers>
-          <div className="min-h-screen flex flex-col">
+          <div className="min-h-screen flex flex-col bg-white">
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 bg-white">{children}</main>
             <Footer />
             {/* Плавающая кнопка соцсетей */}
             <FloatingSocialButton />

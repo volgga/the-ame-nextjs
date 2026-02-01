@@ -22,11 +22,41 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
-				'header-bg': 'hsl(var(--header-bg))',
+				'header-bg': 'var(--header-bg)',
+				'header-foreground': 'var(--header-foreground)',
+				'header-foreground-secondary': 'var(--header-foreground-secondary)',
+				'color-text-main': 'var(--color-text-main)',
+				'color-text-secondary': 'var(--color-text-secondary)',
+				'color-bg-main': 'var(--color-bg-main)',
+				'accent-btn': {
+					DEFAULT: 'var(--color-accent-btn)',
+					hover: 'var(--color-accent-btn-hover)',
+					active: 'var(--color-accent-btn-active)',
+					'disabled-bg': 'var(--color-accent-btn-disabled-bg)',
+					'disabled-text': 'var(--color-accent-btn-disabled-text)',
+				},
+				'outline-btn': {
+					border: 'var(--color-outline-border)',
+					'hover-bg': 'var(--color-outline-hover-bg)',
+					'active-bg': 'var(--color-outline-active-bg)',
+				},
+				'border-block': {
+					DEFAULT: 'var(--color-border-block)',
+					hover: 'var(--color-border-block-hover)',
+				},
+				'badge': {
+					bg: 'var(--color-badge-bg)',
+					text: 'var(--color-badge-text)',
+				},
+				ticker: {
+					bg: 'hsl(var(--ticker-bg))',
+					foreground: 'var(--ticker-foreground)'
+				},
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',
-					soft: 'hsl(var(--primary-soft))'
+					soft: 'hsl(var(--primary-soft))',
+					dark: 'hsl(var(--primary-dark))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',

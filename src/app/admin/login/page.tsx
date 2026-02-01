@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-sm rounded-xl border border-[#2E7D32] bg-white p-8 shadow-sm">
+    <div className="mx-auto max-w-sm rounded-xl border border-border-block bg-white hover:border-border-block-hover p-8 shadow-sm">
       <h2 className="text-xl font-semibold text-[#111]">Вход в админку</h2>
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-[#2E7D32] focus:outline-none focus:ring-1 focus:ring-[#2E7D32]"
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-color-text-main focus:outline-none focus:ring-1 focus:ring-color-text-main"
             required
             autoFocus
           />
@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded bg-[#819570] py-2 text-white hover:bg-[#6f7f5f] disabled:opacity-50"
+          className="w-full rounded text-white py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
         >
           {loading ? "Вход…" : "Войти"}
         </button>

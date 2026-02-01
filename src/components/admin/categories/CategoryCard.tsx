@@ -55,13 +55,13 @@ export function CategoryCard({
       {...attributes}
       {...listeners}
       className={`
-        group relative flex flex-col overflow-hidden rounded-xl border border-[#2E7D32] bg-white p-4
+        group relative flex flex-col overflow-hidden rounded-xl border border-border-block bg-white hover:border-border-block-hover p-4
         cursor-grab active:cursor-grabbing
         transition-all duration-200 ease-out
         hover:-translate-y-1 hover:shadow-lg
         min-h-[100px]
         ${!category.is_active ? "opacity-85" : ""}
-        ${isDragging ? "z-50 scale-[1.02] shadow-xl ring-2 ring-[#2E7D32]/30" : ""}
+        ${isDragging ? "z-50 scale-[1.02] shadow-xl ring-2 ring-color-text-main/30" : ""}
       `}
     >
       {/* Order badge */}
@@ -121,7 +121,7 @@ export function CategoryCard({
       {/* Content: name + status */}
       <div className="flex flex-1 flex-col justify-center pt-6">
         <p className="font-medium text-[#111] text-lg leading-tight">{category.name}</p>
-        <p className={`mt-1 text-sm ${category.is_active ? "text-[#2E7D32]" : "text-gray-400"}`}>
+        <p className={`mt-1 text-sm ${category.is_active ? "text-color-text-main" : "text-gray-400"}`}>
           {category.is_active ? "Активна" : "Неактивна"}
         </p>
       </div>

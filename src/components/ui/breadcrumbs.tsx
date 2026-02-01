@@ -9,6 +9,8 @@ type BreadcrumbsProps = {
   items: BreadcrumbItem[];
   /** aria-label для навигации */
   ariaLabel?: string;
+  /** Дополнительные классы для nav */
+  className?: string;
 };
 
 /**
@@ -16,11 +18,11 @@ type BreadcrumbsProps = {
  * Формат: Главная / Каталог / {Название категории}
  * Последний элемент без ссылки (текущая страница).
  */
-export function Breadcrumbs({ items, ariaLabel = "Навигация" }: BreadcrumbsProps) {
+export function Breadcrumbs({ items, ariaLabel = "Навигация", className }: BreadcrumbsProps) {
   return (
-    <nav aria-label={ariaLabel} className="mb-6 md:mb-8">
+    <nav aria-label={ariaLabel} className={className ?? "mb-6 md:mb-8"}>
       <ol
-        className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground"
+        className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
         itemScope
         itemType="https://schema.org/BreadcrumbList"
       >
@@ -35,7 +37,7 @@ export function Breadcrumbs({ items, ariaLabel = "Навигация" }: Breadcr
               itemType="https://schema.org/ListItem"
             >
               {i > 0 && (
-                <span className="text-muted-foreground/70" aria-hidden="true">
+                <span className="text-[rgba(31,42,31,0.35)]" aria-hidden="true">
                   /
                 </span>
               )}
@@ -43,12 +45,12 @@ export function Breadcrumbs({ items, ariaLabel = "Навигация" }: Breadcr
                 <Link
                   href={item.href}
                   itemProp="item"
-                  className="text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+                  className="text-[rgba(31,42,31,0.65)] hover:text-color-text-main hover:underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 rounded-sm"
                 >
                   <span itemProp="name">{item.label}</span>
                 </Link>
               ) : (
-                <span itemProp="name" className="text-muted-foreground" aria-current="page">
+                <span itemProp="name" className="text-color-text-main" aria-current="page">
                   {item.label}
                 </span>
               )}

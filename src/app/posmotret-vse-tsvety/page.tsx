@@ -54,11 +54,11 @@ export default async function PosmotretVseTsvetyPage() {
 
         {/* Заголовок + описание — описание по верху H1 (как flowerna) */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-8 md:items-start mb-8 md:mb-10">
-          <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-foreground uppercase tracking-tight">
+          <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-color-text-main uppercase tracking-tight">
             {ALL_CATALOG.title}
           </h1>
           <div className="max-h-[96px] md:max-h-[120px] overflow-y-auto mt-3 md:mt-0">
-            <p className="text-base md:text-[15px] leading-relaxed text-foreground/90">
+            <p className="text-base md:text-[15px] leading-relaxed text-color-text-secondary">
               {ALL_CATALOG.description}
             </p>
           </div>
@@ -77,7 +77,7 @@ export default async function PosmotretVseTsvetyPage() {
 
       <Suspense
         fallback={
-          <div className="min-h-[60vh] flex items-center justify-center text-[#7e7e7e]">
+          <div className="min-h-[60vh] flex items-center justify-center text-color-text-secondary">
             Загрузка каталога…
           </div>
         }

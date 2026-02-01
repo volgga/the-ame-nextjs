@@ -15,6 +15,9 @@ type VariantProductsRow = {
   slug: string;
   name: string;
   description: string | null;
+  composition?: string | null;
+  height_cm?: number | null;
+  width_cm?: number | null;
   image_url: string | null;
   min_price_cache: number | null;
   category_slug?: string | null;
@@ -24,6 +27,7 @@ type VariantProductsRow = {
   sort_order: number;
 };
 
+/** Состав/размер у вариантного товара хранятся в вариантах, не в основном товаре */
 function rowToProduct(row: VariantProductsRow): Product {
   return {
     id: VP_ID_PREFIX + String(row.id),
@@ -32,9 +36,22 @@ function rowToProduct(row: VariantProductsRow): Product {
     price: Number(row.min_price_cache) ?? 0,
     image: row.image_url ?? "",
     shortDescription: row.description ?? "",
+    composition: null,
+    sizeHeightCm: null,
+    sizeWidthCm: null,
     categorySlug: row.category_slug ?? null,
   };
 }
+
+export type ProductVariantPublic = {
+  id: number;
+  name: string;
+  price: number;
+  composition?: string | null;
+  height_cm?: number | null;
+  width_cm?: number | null;
+  image_url?: string | null;
+};
 
 /**
  * Все видимые variant_products (is_active не false, is_hidden не true, published_at не фильтруем — показываем все).
@@ -85,6 +102,50 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
     return rowToProduct(data as VariantProductsRow);
   } catch (e) {
     console.error(`${LOG_PREFIX} getVariantProductBySlug:`, e instanceof Error ? e.message : String(e));
+    return null;
+  }
+}
+
+/**
+ * Вариантный товар по slug с массивом вариантов (для витрины: состав/размер выбранного варианта).
+ */
+export async function getVariantProductWithVariantsBySlug(slug: string): Promise<(Product & { variants?: ProductVariantPublic[] }) | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+
+  try {
+    const { data: vp, error: vpErr } = await supabase
+      .from("variant_products")
+      .select("id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order")
+      .eq("slug", slug)
+      .or("is_active.eq.true,is_active.is.null")
+      .or("is_hidden.eq.false,is_hidden.is.null")
+      .maybeSingle();
+
+    if (vpErr || !vp) return null;
+    const product = rowToProduct(vp as VariantProductsRow);
+
+    const { data: vars, error: vErr } = await supabase
+      .from("product_variants")
+      .select("id, title, composition, height_cm, width_cm, price, image_url")
+      .eq("product_id", (vp as { id: number }).id)
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true, nullsFirst: false });
+
+    if (vErr || !vars?.length) return product;
+    const variants: ProductVariantPublic[] = vars.map((v: { id: number; title?: string; composition?: string | null; height_cm?: number | null; width_cm?: number | null; price?: number; image_url?: string | null }) => ({
+      id: v.id,
+      name: v.title ?? "",
+      price: Number(v.price ?? 0),
+      composition: v.composition?.trim() || null,
+      height_cm: v.height_cm != null ? Number(v.height_cm) : null,
+      width_cm: v.width_cm != null ? Number(v.width_cm) : null,
+      image_url: v.image_url ?? null,
+    }));
+    return { ...product, variants };
+  } catch (e) {
+    console.error(`${LOG_PREFIX} getVariantProductWithVariantsBySlug:`, e instanceof Error ? e.message : String(e));
     return null;
   }
 }

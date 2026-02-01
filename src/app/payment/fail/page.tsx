@@ -30,9 +30,9 @@ function PaymentFailContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fff8ea] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold mb-4" style={{ color: "#819570" }}>
+        <h1 className="text-2xl font-bold mb-4 text-color-text-main">
           Оплата не прошла
         </h1>
         <p className="text-muted-foreground mb-6">
@@ -44,16 +44,14 @@ function PaymentFailContent() {
               type="button"
               onClick={handleRetry}
               disabled={loading}
-              className="px-6 py-3 rounded-lg font-semibold text-white disabled:opacity-50"
-              style={{ backgroundColor: "#819570" }}
+              className="px-6 py-3 rounded-lg font-semibold text-white disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
             >
               {loading ? "Загрузка…" : "Попробовать снова"}
             </button>
           )}
           <Link
             href="/cart"
-            className="inline-block px-6 py-3 rounded-lg font-semibold border border-[#819570]"
-            style={{ color: "#819570" }}
+            className="inline-block px-6 py-3 rounded-lg font-semibold border border-outline-btn-border text-color-text-main bg-transparent hover:bg-outline-btn-hover-bg active:bg-outline-btn-active-bg"
           >
             В корзину
           </Link>
@@ -66,7 +64,7 @@ function PaymentFailContent() {
 export default function PaymentFailPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#fff8ea] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <p className="text-muted-foreground">Загрузка…</p>
       </div>
     }>

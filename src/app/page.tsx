@@ -14,13 +14,13 @@ export default async function HomePage() {
     getActiveHeroSlides(),
   ]);
   return (
-    <div className="min-h-screen bg-[#fff8ea]">
+    <div className="min-h-screen bg-white">
       <WelcomeBonusModal />
       <HeroCarousel slides={slides} />
       <FeaturedProducts products={products} />
 
       {/* ====== Расширенный SEO-блок (как в original-project) ====== */}
-      <section className="py-24 bg-[#fff8ea]" aria-labelledby="seo-the-ame">
+      <section className="py-24 bg-white" aria-labelledby="seo-the-ame">
         <div className="container mx-auto px-6">
           <div className="mx-auto max-w-6xl text-center">
             {/* Главный заголовок */}

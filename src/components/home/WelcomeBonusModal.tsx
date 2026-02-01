@@ -55,7 +55,7 @@ export function WelcomeBonusModal() {
     return (
       <div className="p-6 pt-12 sm:p-8 sm:pt-12">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+          <div className="mx-auto w-16 h-16 bg-color-text-main/10 rounded-lg flex items-center justify-center mb-4">
             <span className="text-3xl" aria-hidden>
               🎁
             </span>
@@ -120,7 +120,7 @@ export function WelcomeBonusModal() {
             type="button"
             onClick={submit}
             disabled={isSubmitting}
-            className="w-full h-12 rounded-full bg-[#819570] hover:bg-[#6f7f5f] disabled:opacity-60 text-white font-semibold transition-colors"
+            className="w-full h-12 rounded-full text-white font-semibold transition-colors bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
           >
             {isSubmitting ? "Отправка..." : "Получить промокод"}
           </button>

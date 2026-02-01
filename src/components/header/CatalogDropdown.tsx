@@ -191,8 +191,8 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
                         role="menuitem"
                         className={
                           isFirst
-                            ? "block py-0.5 text-sm font-semibold text-[#819570] hover:text-[#6f7f5f] hover:underline decoration-2 underline-offset-2 transition-colors leading-tight"
-                            : "block py-0.5 text-sm text-[#333] hover:text-[#819570] hover:underline decoration-2 underline-offset-2 transition-colors leading-tight"
+                            ? "block py-0.5 text-sm font-semibold text-color-text-main hover:opacity-80 hover:underline decoration-2 underline-offset-2 transition-colors leading-tight"
+                            : "block py-0.5 text-sm text-color-text-secondary hover:text-color-text-main hover:underline decoration-2 underline-offset-2 transition-colors leading-tight"
                         }
                         onClick={close}
                       >

@@ -29,6 +29,9 @@ const updateSimpleSchema = z.object({
   name: z.string().min(1).optional(),
   slug: z.string().optional(),
   description: z.string().optional().nullable(),
+  composition_size: z.string().optional().nullable(),
+  height_cm: z.number().int().min(0).optional().nullable(),
+  width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0).optional(),
   image_url: z.string().url().optional().nullable(),
   images: z.array(z.string()).optional().nullable(),
@@ -42,6 +45,9 @@ const updateVariantSchema = z.object({
   name: z.string().min(1).optional(),
   slug: z.string().optional(),
   description: z.string().optional().nullable(),
+  composition: z.string().optional().nullable(),
+  height_cm: z.number().int().min(0).optional().nullable(),
+  width_cm: z.number().int().min(0).optional().nullable(),
   image_url: z.string().url().optional().nullable(),
   is_active: z.boolean().optional(),
   is_hidden: z.boolean().optional(),
@@ -91,9 +97,9 @@ export async function GET(
 
     if (vErr) throw vErr;
 
-    const variantsNorm = (variants ?? []).map((v: { size?: string; name?: string }) => ({
+    const variantsNorm = (variants ?? []).map((v: { title?: string; size?: string; name?: string }) => ({
       ...v,
-      name: v.size ?? v.name ?? "",
+      name: v.title ?? v.size ?? v.name ?? "",
     }));
 
     return NextResponse.json({

@@ -29,7 +29,10 @@ export function TopMarquee({
   const content = [...row, ...row];
 
   return (
-    <div className="w-full overflow-hidden bg-[#819570] text-white h-9 flex items-center">
+    <div
+      className="w-full overflow-hidden bg-ticker-bg text-ticker-foreground h-9 flex items-center"
+      style={{ borderBottom: "0.5px solid rgba(31, 42, 31, 0.65)" }}
+    >
       <div
         className="flex items-center whitespace-nowrap"
         style={{

@@ -9,8 +9,8 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
     const baseClasses = "inline-flex items-center rounded-full px-3 py-1 text-sm font-medium transition-colors";
     const variantClasses =
       variant === "outline"
-        ? "border border-[#819570] text-[#819570] bg-transparent"
-        : "bg-[#819570] text-white";
+        ? "border border-outline-btn-border text-color-text-main bg-transparent hover:bg-outline-btn-hover-bg active:bg-outline-btn-active-bg"
+        : "bg-badge-bg text-badge-text";
 
     return (
       <div

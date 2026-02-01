@@ -3,8 +3,6 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 
-const BRAND_COLOR = "#819570";
-const BORDER_MUTED = "rgba(129, 149, 112, 0.25)";
 
 type Provider = {
   type: string;
@@ -76,7 +74,7 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
           <div className="grid grid-cols-3 items-center gap-2 pt-4 px-6 sticky top-0 bg-white z-10 pb-2">
             <div className="w-10" aria-hidden />
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-1" style={{ color: BRAND_COLOR }}>
+              <h2 className="text-2xl font-bold mb-1 text-color-text-main">
                 The Áme
               </h2>
               <p className="text-sm text-muted-foreground">ЦВЕТЫ × ЧУВСТВА</p>
@@ -86,8 +84,7 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
                 type="button"
                 onClick={onClose}
                 aria-label="Закрыть"
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:opacity-80 flex-shrink-0"
-                style={{ color: BRAND_COLOR }}
+                className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:opacity-80 flex-shrink-0 text-color-text-main"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -147,7 +144,7 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
             </div>
 
             {/* Разделитель */}
-            <div className="border-t" style={{ borderColor: BORDER_MUTED }} />
+            <div className="border-t border-border-block" />
 
             {/* Телефон — текст и outline-иконка на белом фоне */}
             <div className="text-center">
@@ -156,8 +153,7 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
               </p>
               <a
                 href="tel:+79939326095"
-                className="inline-flex items-center justify-center gap-2 transition-colors hover:opacity-80"
-                style={{ color: BRAND_COLOR }}
+                className="inline-flex items-center justify-center gap-2 transition-colors hover:opacity-80 text-color-text-main"
               >
                 <img
                   src="/icons/phone-outline.svg"

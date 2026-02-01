@@ -33,7 +33,8 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
         size: "medium",
         occasion: [],
         slug: p.slug,
-        categorySlug: null,
+        categorySlug: p.categorySlug ?? null,
+        isPreorder: p.isPreorder ?? false,
       })),
     [allProducts]
   );
@@ -42,7 +43,6 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
 
   const handleAddToCart = (flower: Flower) => {
     addToCart(flower);
-    // TODO: добавить toast уведомления
   };
 
   if (!homepageItems.length) return null;
@@ -95,7 +95,7 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
                       e.preventDefault();
                       handleAddToCart(item);
                     }}
-                    className="w-full inline-flex items-center justify-center rounded-full px-6 h-10 text-sm md:text-base font-semibold bg-[#819570] hover:bg-[#6f7f5f] text-white"
+                    className="w-full inline-flex items-center justify-center rounded-full px-6 h-10 text-sm md:text-base font-semibold text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
                   >
                     В корзину
                   </button>
@@ -110,7 +110,7 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="rounded-full px-8 h-11 text-base font-semibold bg-[#819570] hover:bg-[#6f7f5f] text-white shadow"
+              className="rounded-full px-8 h-11 text-base font-semibold text-white shadow bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
             >
               Показать ещё
             </button>

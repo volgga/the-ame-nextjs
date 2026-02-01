@@ -91,8 +91,6 @@ export const CheckoutForm = () => {
           <span>{state.total.toLocaleString("ru-RU")} ₽</span>
         </div>
       </div>
-
-      {/* TODO: Форма доставки и оплаты будет добавлена позже */}
     </div>
   );
 };

@@ -121,25 +121,25 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
   }, [isMenuOpen]);
 
   const iconLinkClass =
-    "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded text-[#819570]/95 hover:text-[#819570] hover:bg-[#819570]/5 transition-colors outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#819570]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#ffe9c3]";
+    "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
 
-  const sidebarLinkClass = "hover:opacity-80 block";
+  const sidebarLinkClass = "block";
   const sidebarContactBtnClass =
-    "min-h-[44px] flex items-center justify-center py-2.5 px-3 rounded-full border-2 border-[#819570] text-[#819570] text-center text-sm font-medium hover:bg-[#819570]/10 transition-colors";
+    "min-h-[44px] flex items-center justify-center py-2.5 px-3 rounded-full border-2 border-header-foreground text-header-foreground text-center text-sm font-medium";
 
   const navLinkBase = "relative text-xs md:text-sm font-medium tracking-wide uppercase transition-colors whitespace-nowrap";
   const navLinkHoverUnderline =
-    "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-[#819570] after:origin-left after:scale-x-0 after:transition-transform after:duration-300 after:ease-out hover:after:scale-x-100";
+    "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-header-foreground after:origin-left after:scale-x-0 after:transition-transform after:duration-300 after:ease-out hover:after:scale-x-100";
 
   return (
     <>
-    <div className="relative w-full bg-[#ffe9c3] border-b border-[#819570]/15">
+    <div className="relative w-full bg-header-bg">
       <div className="w-full min-h-[48px] py-2 flex items-center justify-between px-4 md:px-6 gap-4">
         <div className="relative z-10 flex items-center gap-2 md:gap-3 shrink-0 -ml-1 md:-ml-0.5">
           <button
             type="button"
             onClick={() => setIsMenuOpen(true)}
-            className="inline-flex items-center justify-center shrink-0 w-9 h-9 md:w-10 md:h-10 rounded hover:bg-[#819570]/10 transition-colors text-[#819570]"
+            className="inline-flex items-center justify-center shrink-0 w-9 h-9 md:w-10 md:h-10 rounded text-header-foreground hover:opacity-80 active:opacity-60"
             aria-label="Открыть меню"
           >
             <svg
@@ -153,7 +153,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
             </svg>
           </button>
           <Link href="/" className="shrink-0" style={{ fontFamily: "Forum, serif" }}>
-            <span className="text-[1.75rem] md:text-[2.1rem] text-[#819570] tracking-wide leading-none">
+            <span className="text-[1.75rem] md:text-[2.1rem] text-header-foreground tracking-wide leading-none">
               The Áme
             </span>
           </Link>
@@ -210,7 +210,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
                   pathname.startsWith(CATALOG_HREF + "/") ||
                   pathname.startsWith("/magazine/")
                 : pathname === href;
-            const linkClass = `${navLinkBase} ${isActive ? "text-[#819570] border-b-2 border-[#819570] pb-0.5" : `text-[#819570]/80 hover:text-[#819570] ${navLinkHoverUnderline}`}`;
+            const linkClass = `${navLinkBase} ${isActive ? "text-header-foreground border-b-2 border-header-foreground pb-0.5" : `text-header-foreground ${navLinkHoverUnderline}`}`;
             if (isCatalog) {
               return (
                 <CatalogDropdown
@@ -251,7 +251,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
               aria-hidden={!isSidebarOpen}
             />
             <div
-              className="fixed left-0 top-0 h-screen w-[75vw] sm:w-[55vw] md:w-[260px] lg:w-[280px] bg-[#ffe9c3] text-[#819570] px-4 pb-4 pt-0 flex flex-col min-h-0 transition-transform will-change-transform shadow-xl"
+              className="fixed left-0 top-0 h-screen w-[75vw] sm:w-[55vw] md:w-[260px] lg:w-[280px] bg-header-bg text-header-foreground px-4 pb-4 pt-0 flex flex-col min-h-0 transition-transform will-change-transform shadow-xl"
               style={{
                 zIndex: Z_MENU_SIDEBAR,
                 transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
@@ -281,7 +281,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
                 {/* B) Center: соц-блок (flex-1 spacers центрируют по вертикали) */}
                 <div className="flex-1 min-h-0" aria-hidden />
                 <div className="shrink-0 text-left my-auto">
-                  <h3 className="text-base font-normal text-[#819570] mb-3 antialiased">
+                  <h3 className="text-base font-normal text-header-foreground mb-3 antialiased">
                     Мы в социальных сетях
                   </h3>
                   <div className="grid grid-cols-2 gap-2 sm:gap-3">

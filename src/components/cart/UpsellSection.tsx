@@ -99,7 +99,7 @@ export function UpsellSection() {
                 className={`w-full py-2 px-3 rounded-lg text-xs font-medium transition-colors ${
                   inCart
                     ? "bg-gray-200 text-gray-600 cursor-not-allowed"
-                    : "bg-[#819570] hover:bg-[#6f7f5f] text-white"
+                    : "bg-accent-btn hover:bg-accent-btn-hover text-white"
                 }`}
               >
                 {inCart ? "Добавлено" : "Добавить"}

@@ -163,6 +163,18 @@ BEGIN
   END IF;
 END $$;
 
+-- images (jsonb) в products — массив URL изображений
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'products' AND column_name = 'images'
+  ) THEN
+    ALTER TABLE public.products ADD COLUMN images JSONB DEFAULT NULL;
+    RAISE NOTICE 'Added column: products.images';
+  END IF;
+END $$;
+
 -- ===========================
 -- 9. ПРОВЕРКА НА СИРОТСКИЕ ЗАПИСИ
 -- ===========================

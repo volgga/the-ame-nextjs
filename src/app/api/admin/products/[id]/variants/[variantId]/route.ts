@@ -2,42 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
-
-const VP_PREFIX = "vp-";
+import { getVariantProductId, recalcMinPrice } from "../../../utils";
 
 async function requireAdmin() {
   const ok = await isAdminAuthenticated();
   if (!ok) throw new Error("unauthorized");
 }
 
-function getVariantProductId(id: string): number | null {
-  if (id.startsWith(VP_PREFIX)) {
-    const n = parseInt(id.slice(VP_PREFIX.length), 10);
-    return Number.isNaN(n) ? null : n;
-  }
-  const n = parseInt(id, 10);
-  return Number.isNaN(n) ? null : n;
-}
-
-async function recalcMinPrice(supabase: ReturnType<typeof import("@/lib/supabaseAdmin")["getSupabaseAdmin"]>, productId: number) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sb = supabase as any;
-  const { data } = await sb
-    .from("product_variants")
-    .select("price")
-    .eq("product_id", productId)
-    .eq("is_active", true);
-  const prices = (data ?? []).map((r: { price?: number }) => Number(r.price ?? 0)).filter((p: number) => p > 0);
-  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  await sb
-    .from("variant_products")
-    .update({ min_price_cache: minPrice })
-    .eq("id", productId);
-}
-
 const updateSchema = z.object({
   size: z.string().min(1).optional(),
   composition: z.string().optional().nullable(),
+  height_cm: z.number().int().min(0).optional().nullable(),
+  width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0).optional(),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
@@ -72,10 +48,14 @@ export async function PATCH(
       return NextResponse.json({ error: "Неверный ID варианта" }, { status: 400 });
     }
 
+    // В БД колонка названия варианта — title. API принимает size; маппим в title для update.
+    const { size, ...rest } = parsed.data;
+    const dbUpdate = size !== undefined ? { ...rest, title: size } : rest;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("product_variants")
-      .update(parsed.data)
+      .update(dbUpdate)
       .eq("id", variantNumId)
       .eq("product_id", productId)
       .select()
@@ -84,7 +64,8 @@ export async function PATCH(
     if (error) throw error;
     if (!data) return NextResponse.json({ error: "Вариант не найден" }, { status: 404 });
     await recalcMinPrice(supabase, productId);
-    return NextResponse.json(data);
+    const row = data as { title?: string; size?: string; name?: string };
+    return NextResponse.json({ ...data, name: row.title ?? row.name ?? row.size ?? "", size: row.title ?? row.size ?? "" });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });

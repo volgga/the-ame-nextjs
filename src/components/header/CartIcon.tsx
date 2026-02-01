@@ -6,7 +6,7 @@ import { CartDrawer } from "@/components/cart/CartDrawer";
 
 /** Единый стиль иконок в шапке (поиск, избранное, корзина): размер, цвет, hover. */
 const HEADER_ICON_CLASS =
-  "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded text-[#819570]/95 hover:text-[#819570] transition-colors hover:bg-[#819570]/5 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#819570]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#ffe9c3]";
+  "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
 
 export function CartIcon() {
   const { state } = useCart();
@@ -36,7 +36,7 @@ export function CartIcon() {
         </svg>
         {state.itemCount > 0 && (
           <span
-            className="absolute -top-1 -right-1 z-10 min-w-[18px] h-[18px] px-1 text-[11px] font-medium flex items-center justify-center rounded-full bg-[#819570] text-white border-2 border-[#ffe9c3] pointer-events-none select-none"
+            className="absolute -top-1 -right-1 z-10 min-w-[18px] h-[18px] px-1 text-[11px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text border-2 border-header-bg pointer-events-none select-none"
             aria-hidden
           >
             {state.itemCount > 99 ? "99+" : state.itemCount}

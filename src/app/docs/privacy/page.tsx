@@ -12,14 +12,14 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-white">
-      <article className="container mx-auto px-4 py-8 md:py-12 pb-16 md:pb-20 max-w-full">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#000] mb-8 md:mb-10">
+      <article className="container mx-auto px-4 py-10 md:py-12 max-w-full">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#000] mb-5 md:mb-4">
           Политика в отношении обработки персональных данных
         </h1>
 
         {/* 1. Общие положения */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             1. Общие положения
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -36,8 +36,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 2. Основные понятия */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             2. Основные понятия, используемые в Политике
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -59,19 +59,19 @@ export default function PrivacyPage() {
         </section>
 
         {/* 3. Права и обязанности Оператора */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             3. Основные права и обязанности Оператора
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
             <p><strong>3.1.</strong> Оператор имеет право:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>получать от субъекта персональных данных достоверные информацию и/или документы, содержащие персональные данные;</li>
               <li>в случае отзыва субъектом персональных данных согласия на обработку персональных данных Оператор вправе продолжить обработку персональных данных без согласия субъекта персональных данных при наличии оснований, указанных в Законе о персональных данных;</li>
               <li>самостоятельно определять состав и перечень мер, необходимых и достаточных для обеспечения выполнения обязанностей, предусмотренных Законом о персональных данных и принятыми в соответствии с ним нормативными правовыми актами, если иное не предусмотрено Законом о персональных данных или другими федеральными законами.</li>
             </ul>
             <p><strong>3.2.</strong> Оператор обязан:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>предоставлять субъекту персональных данных по его просьбе информацию, касающуюся обработки его персональных данных;</li>
               <li>организовывать обработку персональных данных в порядке, установленном действующим законодательством РФ;</li>
               <li>отвечать на обращения и запросы субъектов персональных данных и их законных представителей в соответствии с требованиями Закона о персональных данных;</li>
@@ -85,13 +85,13 @@ export default function PrivacyPage() {
         </section>
 
         {/* 4. Права и обязанности субъектов */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             4. Основные права и обязанности субъектов персональных данных
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
             <p><strong>4.1.</strong> Субъекты персональных данных имеют право:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>получать информацию, касающуюся обработки его персональных данных, за исключением случаев, предусмотренных федеральными законами. Сведения предоставляются субъекту персональных данных Оператором в доступной форме, и в них не должны содержаться персональные данные, относящиеся к другим субъектам персональных данных, за исключением случаев, когда имеются законные основания для раскрытия таких персональных данных. Перечень информации и порядок ее получения установлен Законом о персональных данных;</li>
               <li>требовать от оператора уточнения его персональных данных, их блокирования или уничтожения в случае, если персональные данные являются неполными, устаревшими, неточными, незаконно полученными или не являются необходимыми для заявленной цели обработки, а также принимать предусмотренные законом меры по защите своих прав;</li>
               <li>выдвигать условие предварительного согласия при обработке персональных данных в целях продвижения на рынке товаров, работ и услуг;</li>
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
               <li>на осуществление иных прав, предусмотренных законодательством РФ.</li>
             </ul>
             <p><strong>4.2.</strong> Субъекты персональных данных обязаны:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>предоставлять Оператору достоверные данные о себе;</li>
               <li>сообщать Оператору об уточнении (обновлении, изменении) своих персональных данных.</li>
             </ul>
@@ -109,8 +109,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 5. Оператор может обрабатывать */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             5. Оператор может обрабатывать следующие персональные данные Пользователя
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -131,8 +131,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 6. Принципы обработки */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             6. Принципы обработки персональных данных
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -147,13 +147,13 @@ export default function PrivacyPage() {
         </section>
 
         {/* 7. Цели обработки */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             7. Цели обработки персональных данных
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
             <p><strong>7.1.</strong> Цель обработки персональных данных Пользователя:</p>
-            <ul className="list-disc pl-6 space-y-2">
+            <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>информирование Пользователя посредством отправки электронных писем;</li>
               <li>заключение, исполнение и прекращение гражданско-правовых договоров;</li>
               <li>предоставление доступа Пользователю к сервисам, информации и/или материалам, содержащимся на веб-сайте theame.ru.</li>
@@ -164,8 +164,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 8. Правовые основания */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             8. Правовые основания обработки персональных данных
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -177,8 +177,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 9. Условия обработки */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             9. Условия обработки персональных данных
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -193,8 +193,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 10. Порядок сбора, хранения, передачи */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             10. Порядок сбора, хранения, передачи и других видов обработки персональных данных
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -212,8 +212,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 11. Перечень действий */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             11. Перечень действий, производимых Оператором с полученными персональными данными
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -223,8 +223,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 12. Трансграничная передача */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             12. Трансграничная передача персональных данных
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -234,8 +234,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 13. Конфиденциальность */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             13. Конфиденциальность персональных данных
           </h2>
           <p className="text-base md:text-lg text-[#000] leading-relaxed">
@@ -244,8 +244,8 @@ export default function PrivacyPage() {
         </section>
 
         {/* 14. Заключительные положения */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             14. Заключительные положения
           </h2>
           <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
@@ -256,11 +256,11 @@ export default function PrivacyPage() {
         </section>
 
         {/* Реквизиты */}
-        <section className="mb-10 md:mb-12">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-6">
+        <section className="mb-8 md:mb-10">
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">
             Реквизиты Оператора
           </h2>
-          <div className="text-base md:text-lg text-[#000] leading-relaxed space-y-1">
+          <div className="text-base md:text-lg text-[#000] leading-relaxed space-y-2">
             <p>ИП Волгин Александр Александрович</p>
             <p>ИНН 741514757204 ОГРНИП 325745600059155</p>
             <p>Тел. +7 (993) 932-60-95</p>
@@ -269,7 +269,7 @@ export default function PrivacyPage() {
           </div>
         </section>
 
-        <p className="text-sm md:text-base text-[#7e7e7e]">
+        <p className="text-sm md:text-base text-[#7e7e7e] mt-8">
           Дата последнего обновления: 01.02.2026
         </p>
       </article>
