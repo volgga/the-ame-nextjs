@@ -21,9 +21,7 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 /**
  * Получить товар по id: из products (uuid) или variant_products (vp-123).
  */
-export async function getCatalogProductById(
-  id: string
-): Promise<CatalogProductInfo | null> {
+export async function getCatalogProductById(id: string): Promise<CatalogProductInfo | null> {
   const supabase = getSupabase();
   if (!supabase) return null;
 
@@ -70,9 +68,7 @@ export async function getCatalogProductById(
 /**
  * Получить цены и названия по списку id. Возвращает только найденные товары.
  */
-export async function getCatalogProductsByIds(
-  ids: string[]
-): Promise<Map<string, CatalogProductInfo>> {
+export async function getCatalogProductsByIds(ids: string[]): Promise<Map<string, CatalogProductInfo>> {
   const map = new Map<string, CatalogProductInfo>();
   await Promise.all(
     ids.map(async (id) => {

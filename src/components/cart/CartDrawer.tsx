@@ -25,7 +25,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -76,9 +78,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 <>
                   <CartItemsList />
                   <div className="mt-4 text-right">
-                    <div className="font-bold text-lg">
-                      Сумма: {state.total.toLocaleString("ru-RU")} р.
-                    </div>
+                    <div className="font-bold text-lg">Сумма: {state.total.toLocaleString("ru-RU")} р.</div>
                   </div>
                   <UpsellSection />
                 </>
@@ -86,7 +86,8 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
             </div>
             {state.items.length > 0 && (
               <p className="text-sm text-muted-foreground">
-                В подарок мы упакуем ваш букет в транспортировочную коробку, добавим рекомендации по уходу, кризал и открытку по желанию.
+                В подарок мы упакуем ваш букет в транспортировочную коробку, добавим рекомендации по уходу, кризал и
+                открытку по желанию.
               </p>
             )}
             {state.items.length > 0 && <CheckoutFormModal />}

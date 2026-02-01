@@ -25,12 +25,7 @@ export function CartItemsList() {
         <div key={item.id} className="flex gap-3">
           {/* Изображение товара */}
           <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-[#ece9e2] flex-shrink-0">
-            <Image
-              src={item.image}
-              alt={item.name}
-              fill
-              className="object-cover"
-            />
+            <Image src={item.image} alt={item.name} fill className="object-cover" />
           </div>
 
           {/* Информация о товаре */}
@@ -39,9 +34,7 @@ export function CartItemsList() {
 
             {/* Количество (если > 1) */}
             {item.cartQuantity > 1 && (
-              <p className="text-xs text-muted-foreground mb-2">
-                Количество: {item.cartQuantity}
-              </p>
+              <p className="text-xs text-muted-foreground mb-2">Количество: {item.cartQuantity}</p>
             )}
 
             {/* Управление количеством */}
@@ -54,9 +47,7 @@ export function CartItemsList() {
               >
                 <Minus className="w-4 h-4" />
               </button>
-              <span className="w-6 text-center text-sm font-medium">
-                {item.cartQuantity}
-              </span>
+              <span className="w-6 text-center text-sm font-medium">{item.cartQuantity}</span>
               <button
                 type="button"
                 onClick={() => updateItemQuantity(item.id, item.cartQuantity + 1)}
@@ -70,9 +61,7 @@ export function CartItemsList() {
 
           {/* Цена и удаление */}
           <div className="flex flex-col items-end justify-between">
-            <div className="font-semibold text-sm">
-              {(item.price * item.cartQuantity).toLocaleString("ru-RU")} р.
-            </div>
+            <div className="font-semibold text-sm">{(item.price * item.cartQuantity).toLocaleString("ru-RU")} р.</div>
             <button
               type="button"
               onClick={() => removeFromCart(item.id)}

@@ -3,11 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const isLogin = pathname === "/admin/login";
@@ -19,11 +15,7 @@ export default function AdminLayout({
   }
 
   if (isLogin) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center py-12">
-        {children}
-      </div>
-    );
+    return <div className="min-h-screen bg-page-bg flex items-center justify-center py-12">{children}</div>;
   }
 
   const navItems = [
@@ -34,8 +26,8 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="h-14 sm:h-16 bg-white border-b border-gray-200 flex items-end justify-center">
+    <div className="min-h-screen bg-page-bg">
+      <header className="h-14 sm:h-16 bg-page-bg border-b border-gray-200 flex items-end justify-center">
         <nav className="container mx-auto flex items-end justify-center gap-6 sm:gap-8 px-4 pb-3">
           {navItems.map(({ href, label }) => {
             const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));

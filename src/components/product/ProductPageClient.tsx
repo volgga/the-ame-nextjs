@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, ShoppingBag, ChevronDown } from "lucide-reac
 import { useCart } from "@/context/CartContext";
 import type { Product } from "@/lib/products";
 import { Flower } from "@/types/flower";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { Breadcrumbs, BREADCRUMB_SPACING } from "@/components/ui/breadcrumbs";
 import { FullscreenViewer } from "./FullscreenViewer";
 
 type ProductPageClientProps = {
@@ -15,7 +15,7 @@ type ProductPageClientProps = {
 
 /** Аккордеон-секция (single-open: при открытии нового — предыдущий закрывается) */
 function AccordionItem({
-  id,
+  id: _id,
   title,
   children,
   isOpen,
@@ -29,24 +29,14 @@ function AccordionItem({
 }) {
   return (
     <div className="border-b border-border-block">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between py-3 text-left"
-      >
-        <span className="text-sm font-medium text-color-text-secondary uppercase tracking-wide">
-          {title}
-        </span>
+      <button type="button" onClick={onToggle} className="w-full flex items-center justify-between py-3 text-left">
+        <span className="text-sm font-medium text-color-text-secondary uppercase tracking-wide">{title}</span>
         <ChevronDown
-          className={`w-4 h-4 text-color-text-main transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`w-4 h-4 text-color-text-main transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isOpen ? "max-h-96 pb-3" : "max-h-0"
-        }`}
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-96 pb-3" : "max-h-0"}`}
       >
         <div className="text-sm text-color-text-secondary leading-relaxed">{children}</div>
       </div>
@@ -55,15 +45,7 @@ function AccordionItem({
 }
 
 /** Модалка "Купить в один клик" */
-function QuickOrderModal({
-  isOpen,
-  onClose,
-  product,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  product: Product;
-}) {
+function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClose: () => void; product: Product }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("+7 (");
   const [loading, setLoading] = useState(false);
@@ -123,11 +105,8 @@ function QuickOrderModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40"
-        onClick={onClose}
-      />
-      
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+
       {/* Modal */}
       <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
         <button
@@ -160,9 +139,7 @@ function QuickOrderModal({
           </div>
         ) : (
           <>
-            <h2 className="text-xl font-semibold text-color-text-main mb-1">
-              Купить в один клик
-            </h2>
+            <h2 className="text-xl font-semibold text-color-text-main mb-1">Купить в один клик</h2>
             <p className="text-sm text-color-text-secondary mb-6">
               Оставьте контакты — мы перезвоним для оформления заказа
             </p>
@@ -170,18 +147,11 @@ function QuickOrderModal({
             {/* Товар */}
             <div className="flex items-center gap-3 p-3 bg-[rgba(31,42,31,0.06)] rounded-lg mb-6">
               <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                <Image
-                  src={product.image}
-                  alt={product.title}
-                  fill
-                  className="object-cover"
-                />
+                <Image src={product.image} alt={product.title} fill className="object-cover" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-color-text-main truncate">{product.title}</p>
-                <p className="text-sm font-semibold text-color-text-main">
-                  {product.price.toLocaleString("ru-RU")} ₽
-                </p>
+                <p className="text-sm font-semibold text-color-text-main">{product.price.toLocaleString("ru-RU")} ₽</p>
               </div>
             </div>
 
@@ -207,9 +177,7 @@ function QuickOrderModal({
                 />
               </div>
 
-              {error && (
-                <p className="text-sm text-red-600">{error}</p>
-              )}
+              {error && <p className="text-sm text-red-600">{error}</p>}
 
               <button
                 type="button"
@@ -240,9 +208,10 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
   const hasVariants = product.variants && product.variants.length > 0;
   const defaultVariantId = hasVariants ? product.variants![0].id : null;
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(defaultVariantId);
-  const selectedVariant = hasVariants && selectedVariantId != null
-    ? product.variants!.find((v) => v.id === selectedVariantId) ?? product.variants![0]
-    : null;
+  const selectedVariant =
+    hasVariants && selectedVariantId != null
+      ? (product.variants!.find((v) => v.id === selectedVariantId) ?? product.variants![0])
+      : null;
   const displayPrice = selectedVariant ? selectedVariant.price : product.price;
   const displayComposition = selectedVariant ? (selectedVariant.composition ?? null) : (product.composition ?? null);
   const displaySizeHeight = selectedVariant ? (selectedVariant.height_cm ?? null) : (product.sizeHeightCm ?? null);
@@ -323,20 +292,20 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
     setOpenedAccordion((prev) => (prev === id ? null : id));
   };
 
-  // Хлебные крошки
+  // Хлебные крошки (тот же стиль и позиция, что на каталоге)
   const breadcrumbItems = [
     { label: "Главная", href: "/" },
-    { label: "Каталог", href: "/posmotret-vse-tsvety" },
+    { label: "Все цветы", href: "/posmotret-vse-tsvety" },
     { label: product.title },
   ];
 
   return (
     <>
-      <div className="bg-white">
+      <div className="bg-page-bg">
         {/* Контейнер с нормальным отступом сверху, компактным снизу */}
-        <div className="container mx-auto px-4 pt-5 pb-8 md:pt-6 md:pb-10">
+        <div className="container mx-auto px-6 pt-5 pb-8 md:pt-6 md:pb-10">
           {/* Хлебные крошки — минимальный отступ до контента */}
-          <Breadcrumbs items={breadcrumbItems} className="mb-2" />
+          <Breadcrumbs items={breadcrumbItems} className={BREADCRUMB_SPACING} />
 
           {/* Основной контент: 2 колонки на desktop */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.85fr] gap-6 lg:gap-10 items-start">
@@ -426,13 +395,17 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                     <div className="flex flex-col gap-0.5 text-xs font-medium leading-tight">
                       {displaySizeWidth != null && (
                         <span className="flex items-center gap-1 text-white">
-                          <span className="text-[10px] opacity-95" aria-hidden>↔</span>
+                          <span className="text-[10px] opacity-95" aria-hidden>
+                            ↔
+                          </span>
                           <span>{displaySizeWidth} см</span>
                         </span>
                       )}
                       {displaySizeHeight != null && (
                         <span className="flex items-center gap-1 text-white">
-                          <span className="text-[10px] opacity-95" aria-hidden>↕</span>
+                          <span className="text-[10px] opacity-95" aria-hidden>
+                            ↕
+                          </span>
                           <span>{displaySizeHeight} см</span>
                         </span>
                       )}
@@ -481,10 +454,10 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                         key={v.id}
                         type="button"
                         onClick={() => setSelectedVariantId(v.id)}
-                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors border border-[var(--color-outline-border)] ${
                           selectedVariantId === v.id
-                            ? "bg-accent-btn text-white"
-                            : "border border-border-block text-color-text-main hover:bg-[rgba(31,42,31,0.06)]"
+                            ? "bg-btn-chip-active text-color-text-main"
+                            : "bg-white text-color-text-main hover:bg-[rgba(31,42,31,0.06)]"
                         }`}
                       >
                         {v.name} — {v.price.toLocaleString("ru-RU")} ₽
@@ -503,15 +476,14 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
               <div className="flex flex-col gap-2 mb-6 max-w-[300px]">
                 <button
                   onClick={handleAddToCart}
-                  className="w-full h-10 rounded-lg text-sm font-medium text-white transition-colors flex items-center justify-center gap-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+                  className="w-full h-10 rounded-full text-sm font-medium text-white transition-colors flex items-center justify-center gap-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
                 >
-                  <ShoppingBag className="w-4 h-4" />
-                  В корзину
+                  <ShoppingBag className="w-4 h-4" />В корзину
                 </button>
 
                 <button
                   onClick={() => setQuickOrderOpen(true)}
-                  className="w-full h-10 rounded-lg text-sm font-medium border border-outline-btn-border text-color-text-main bg-transparent hover:bg-outline-btn-hover-bg active:bg-outline-btn-active-bg transition-colors"
+                  className="w-full h-10 rounded-full text-sm font-medium btn-outline transition-colors"
                 >
                   Купить в один клик
                 </button>
@@ -530,7 +502,7 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                   </AccordionItem>
                 )}
 
-                {(displayComposition && displayComposition.trim()) ? (
+                {displayComposition && displayComposition.trim() ? (
                   <AccordionItem
                     id="Состав"
                     title="Состав"
@@ -550,7 +522,8 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                   </AccordionItem>
                 ) : null}
 
-                {(displaySizeHeight != null && displaySizeHeight > 0) || (displaySizeWidth != null && displaySizeWidth > 0) ? (
+                {(displaySizeHeight != null && displaySizeHeight > 0) ||
+                (displaySizeWidth != null && displaySizeWidth > 0) ? (
                   <AccordionItem
                     id="Размер"
                     title="Размер"
@@ -560,12 +533,8 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                     <p>
                       Размер:{" "}
                       {[
-                        displaySizeHeight != null && displaySizeHeight > 0
-                          ? `высота ${displaySizeHeight} см`
-                          : null,
-                        displaySizeWidth != null && displaySizeWidth > 0
-                          ? `ширина ${displaySizeWidth} см`
-                          : null,
+                        displaySizeHeight != null && displaySizeHeight > 0 ? `высота ${displaySizeHeight} см` : null,
+                        displaySizeWidth != null && displaySizeWidth > 0 ? `ширина ${displaySizeWidth} см` : null,
                       ]
                         .filter(Boolean)
                         .join(", ")}
@@ -620,11 +589,7 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
       </div>
 
       {/* Модалка быстрого заказа */}
-      <QuickOrderModal
-        isOpen={quickOrderOpen}
-        onClose={() => setQuickOrderOpen(false)}
-        product={product}
-      />
+      <QuickOrderModal isOpen={quickOrderOpen} onClose={() => setQuickOrderOpen(false)} product={product} />
 
       <FullscreenViewer
         isOpen={fullscreenOpen}

@@ -54,10 +54,7 @@ const updateVariantSchema = z.object({
   category_slug: z.string().nullable().optional(),
 });
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -69,11 +66,7 @@ export async function GET(
     const supabase = getSupabaseAdmin();
 
     if (parsed.type === "simple") {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("id", parsed.uuid)
-        .maybeSingle();
+      const { data, error } = await supabase.from("products").select("*").eq("id", parsed.uuid).maybeSingle();
       if (error) throw error;
       if (!data) return NextResponse.json({ error: "Товар не найден" }, { status: 404 });
       return NextResponse.json({ ...(data as object), type: "simple" });
@@ -117,10 +110,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -135,10 +125,7 @@ export async function PATCH(
     if (parsed.type === "simple") {
       const result = updateSimpleSchema.safeParse(body);
       if (!result.success) {
-        return NextResponse.json(
-          { error: "Неверные данные", details: result.error.flatten() },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Неверные данные", details: result.error.flatten() }, { status: 400 });
       }
       const updates: Record<string, unknown> = { ...result.data };
       if (result.data.name && !result.data.slug) {
@@ -157,10 +144,7 @@ export async function PATCH(
 
     const result = updateVariantSchema.safeParse(body);
     if (!result.success) {
-      return NextResponse.json(
-        { error: "Неверные данные", details: result.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Неверные данные", details: result.error.flatten() }, { status: 400 });
     }
     const updates: Record<string, unknown> = { ...result.data };
     if (result.data.name && !result.data.slug) {
@@ -184,10 +168,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -204,10 +185,7 @@ export async function DELETE(
       if (error) throw error;
     } else {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
-        .from("variant_products")
-        .delete()
-        .eq("id", parsed.numId);
+      const { error } = await (supabase as any).from("variant_products").delete().eq("id", parsed.numId);
       if (error) throw error;
     }
     return NextResponse.json({ success: true });

@@ -18,10 +18,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = reorderSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Неверные данные", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();

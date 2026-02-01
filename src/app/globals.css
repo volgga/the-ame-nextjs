@@ -16,40 +16,44 @@ All colors MUST be HSL.
     --color-green: 100 25% 55%;
     --color-green-dark: 100 18% 44%;
 
-    /* Ticker: white bg, dark text */
-    --ticker-bg: 0 0% 100%;
-    --ticker-foreground: #1F2A1F;
+    /* Page background — body, main, pages, footer, ticker */
+    --page-bg: #fef8ec;
+    /* Ticker: same as page bg, dark text */
+    --ticker-bg: #fef8ec;
+    --ticker-foreground: #1f2a1f;
 
     /* Header green blocks: exact colors, no opacity/darkening on background */
-    --header-bg: #6F8363;
-    --header-foreground: #1F2A1F;
+    --header-bg: #81946f;
+    --header-foreground: #1f2a1f;
     --header-foreground-secondary: rgba(31, 42, 31, 0.65);
 
     /* Semantic palette (source of truth: do not change) */
-    --color-text-main: #1F2A1F;
+    --color-text-main: #1f2a1f;
     --color-text-secondary: rgba(31, 42, 31, 0.65);
-    --color-bg-main: #6F8363;
+    --color-bg-main: #6f8363;
     --color-accent-dark: #5c6d50;
 
-    /* Accent buttons (filled): darker #6F8363, hover/active darker */
-    --color-accent-btn: #5c6d50;
-    --color-accent-btn-hover: #536246;
-    --color-accent-btn-active: #4d5a42;
+    /* Accent buttons (filled): green как в шапке */
+    --color-accent-btn: var(--header-bg);
+    --color-accent-btn-hover: #6f8363;
+    --color-accent-btn-active: #657957;
     --color-accent-btn-disabled-bg: rgba(31, 42, 31, 0.25);
     --color-accent-btn-disabled-text: rgba(31, 42, 31, 0.5);
 
-    /* Outline / secondary buttons */
-    --color-outline-border: #1F2A1F;
-    --color-outline-hover-bg: rgba(31, 42, 31, 0.08);
-    --color-outline-active-bg: rgba(31, 42, 31, 0.12);
+    /* Outline / secondary / chip buttons: тёмно-зелёная рамка, как на скрине */
+    --color-outline-border: #1f2a1f;
+    --color-outline-hover-bg: rgba(31, 42, 31, 0.06);
+    --color-outline-active-bg: rgba(31, 42, 31, 0.08);
+    /* Chip active state: светло-бежевая заливка */
+    --btn-chip-active-bg: #e0ddd5;
 
     /* Block/table/card borders */
     --color-border-block: rgba(31, 42, 31, 0.25);
     --color-border-block-hover: rgba(31, 42, 31, 0.4);
 
     /* Badge (cart counter, etc.) */
-    --color-badge-bg: #1F2A1F;
-    --color-badge-text: #FFFFFF;
+    --color-badge-bg: #1f2a1f;
+    --color-badge-text: #ffffff;
 
     --card: 42 30% 96%;
     --card-foreground: 100 15% 25%;
@@ -81,7 +85,7 @@ All colors MUST be HSL.
     --nature-coral: 42 30% 70%;
     --nature-lavender: 100 20% 80%;
     --nature-mint: 100 30% 75%;
-    
+
     /* Hero green - olive green like the image */
     --hero-green: 90 20% 40%;
 
@@ -148,7 +152,7 @@ All colors MUST be HSL.
     --border: 100 15% 20%;
     --input: 100 15% 15%;
     --ring: 100 20% 70%;
-    
+
     --sidebar-background: 100 15% 8%;
     --sidebar-foreground: 42 25% 88%;
     --sidebar-primary: 100 20% 70%;
@@ -160,14 +164,18 @@ All colors MUST be HSL.
   }
 }
 
-
 @layer base {
   * {
     @apply border-border;
   }
 
+  html {
+    background-color: var(--page-bg);
+  }
+
   body {
-    @apply bg-white text-foreground font-montserrat;
+    background-color: var(--page-bg);
+    @apply text-foreground font-montserrat;
   }
 }
 
@@ -188,17 +196,62 @@ All colors MUST be HSL.
     color: var(--color-accent-btn-disabled-text);
   }
 
-  /* Outline / secondary button */
+  /* Outline / secondary button — pill, белый фон, тёмная рамка */
   .btn-outline {
     border: 1px solid var(--color-outline-border);
     color: var(--color-text-main);
-    background: transparent;
+    background: #ffffff;
   }
   .btn-outline:hover:not(:disabled) {
     background-color: var(--color-outline-hover-bg);
   }
   .btn-outline:active:not(:disabled) {
     background-color: var(--color-outline-active-bg);
+  }
+
+  /* Chip/toggle: неактивный = белый, активный = светло-бежевый */
+  .btn-chip {
+    border: 1px solid var(--color-outline-border);
+    color: var(--color-text-main);
+    background: #ffffff;
+  }
+  .btn-chip:hover {
+    background-color: var(--color-outline-hover-bg);
+  }
+  .btn-chip-active {
+    background-color: var(--btn-chip-active-bg) !important;
+    border-color: var(--color-outline-border);
+  }
+
+  /* Карточка товара: hover = цвет как у блока «КАТАЛОГ» (header-bg), active — нажатие */
+  .product-cta {
+    transition:
+      transform 180ms ease-out,
+      background-color 180ms ease-out;
+  }
+  .product-cta:hover {
+    background-color: var(--header-bg);
+    border-color: var(--color-outline-border);
+  }
+  .product-cta:active {
+    transform: scale(0.96) translateY(1px);
+    background-color: var(--color-outline-active-bg);
+  }
+
+  /* Подсветка иконки в шапке после «прилёта» иконки из карточки */
+  .fly-landed {
+    animation: fly-landed-bounce 350ms ease-out;
+  }
+  @keyframes fly-landed-bounce {
+    0% {
+      transform: scale(1);
+    }
+    45% {
+      transform: scale(1.25);
+    }
+    100% {
+      transform: scale(1);
+    }
   }
 }
 
@@ -209,14 +262,14 @@ All colors MUST be HSL.
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
   }
-  
+
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
-  
+
   .line-clamp-3 {
     overflow: hidden;
     display: -webkit-box;
@@ -237,9 +290,11 @@ All colors MUST be HSL.
   .animate-marquee {
     animation: marquee 28s linear infinite;
   }
-  
+
   /* Плавный crossfade для floating-кружка: ~1.3s, ease-in-out, fade + лёгкий scale */
   .floating-icon-transition {
-    transition: opacity 1300ms ease-in-out, transform 1300ms ease-in-out;
+    transition:
+      opacity 1300ms ease-in-out,
+      transform 1300ms ease-in-out;
   }
 }

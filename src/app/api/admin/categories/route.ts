@@ -35,10 +35,7 @@ const createSchema = z.object({
 });
 
 /** Находит уникальный slug: base, base-2, base-3, ... */
-async function ensureUniqueSlug(
-  supabase: ReturnType<typeof getSupabaseAdmin>,
-  baseSlug: string
-): Promise<string> {
+async function ensureUniqueSlug(supabase: ReturnType<typeof getSupabaseAdmin>, baseSlug: string): Promise<string> {
   let candidate = baseSlug;
   let n = 1;
   for (;;) {

@@ -108,7 +108,12 @@ export default function AdminCategoriesPage() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Ошибка");
-        const updated = { ...editing, name: data.name, is_active: data.is_active, description: data.description ?? null };
+        const updated = {
+          ...editing,
+          name: data.name,
+          is_active: data.is_active,
+          description: data.description ?? null,
+        };
         setCategoriesFromServer((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setCategoriesDraft((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setEditing(null);
@@ -234,23 +239,15 @@ export default function AdminCategoriesPage() {
 
       {(creating || editing) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={closeModal}
-            aria-hidden
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
           <div
             className="relative w-full max-w-[480px] max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white hover:border-border-block-hover shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSaveForm} className="flex flex-col min-h-0">
               <div className="flex-1 min-h-0 overflow-y-auto p-6">
-                <h3 className="mb-4 font-medium text-[#111]">
-                  {creating ? "Новая категория" : "Редактирование"}
-                </h3>
-                {error && (creating || editing) && (
-                  <p className="mb-3 text-sm text-red-600">{error}</p>
-                )}
+                <h3 className="mb-4 font-medium text-[#111]">{creating ? "Новая категория" : "Редактирование"}</h3>
+                {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-[#111]">Название категории</label>
@@ -262,9 +259,7 @@ export default function AdminCategoriesPage() {
                       required
                       autoFocus
                     />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Slug формируется автоматически и не показывается.
-                    </p>
+                    <p className="mt-1 text-xs text-gray-500">Slug формируется автоматически и не показывается.</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#111]">Текст</label>
@@ -293,33 +288,33 @@ export default function AdminCategoriesPage() {
                 </div>
               </div>
               <div className="flex gap-2 p-6 pt-4 border-t border-gray-100">
-                  <button
-                    type="submit"
-                    className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
-                  >
-                    Сохранить
-                  </button>
+                <button
+                  type="submit"
+                  className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+                >
+                  Сохранить
+                </button>
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
+                >
+                  Отмена
+                </button>
+                {editing && (
                   <button
                     type="button"
-                    onClick={closeModal}
-                    className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
+                    onClick={() => {
+                      setDeleteConfirmId(editing.id);
+                      setEditing(null);
+                      setForm({ name: "", is_active: true, description: "" });
+                    }}
+                    className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
-                    Отмена
+                    Удалить
                   </button>
-                  {editing && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeleteConfirmId(editing.id);
-                        setEditing(null);
-                        setForm({ name: "", is_active: true, description: "" });
-                      }}
-                      className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Удалить
-                    </button>
-                  )}
-                </div>
+                )}
+              </div>
             </form>
           </div>
         </div>
@@ -343,11 +338,7 @@ export default function AdminCategoriesPage() {
       {/* Мини-модалка подтверждения удаления */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setDeleteConfirmId(null)}
-            aria-hidden
-          />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}

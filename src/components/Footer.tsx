@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 
-const FOOTER_LINK =
-  "block text-[#7e7e7e] hover:text-black transition-colors py-0.5";
+const FOOTER_LINK = "block text-[#7e7e7e] hover:text-black transition-colors py-0.5";
 
 /**
  * Footer — подвал сайта.
@@ -10,20 +9,16 @@ const FOOTER_LINK =
  */
 export function Footer() {
   return (
-    <footer className="bg-white border-t mt-auto">
+    <footer className="bg-page-bg border-t mt-auto">
       <div className="w-full px-4 md:px-6 lg:px-8 py-8 md:py-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* 1. Лого: логотип + подпись + копирайт + бейдж Яндекса (ниже копирайта) */}
           <div className="flex flex-col items-start text-left space-y-4 min-w-0">
             <div className="leading-tight" style={{ fontFamily: "Forum, serif" }}>
               <Link href="/" className="block">
-                <span className="text-3xl md:text-4xl font-normal text-black tracking-wide">
-                  The Áme
-                </span>
+                <span className="text-3xl md:text-4xl font-normal text-black tracking-wide">The Áme</span>
               </Link>
-              <div className="text-sm md:text-base font-normal tracking-wide text-black mt-0.5">
-                ЦВЕТЫ × ЧУВСТВА
-              </div>
+              <div className="text-sm md:text-base font-normal tracking-wide text-black mt-0.5">ЦВЕТЫ × ЧУВСТВА</div>
             </div>
             <p className="text-[#7e7e7e] text-sm">2025–2026 © The Áme</p>
             {/* Бейдж рейтинга Яндекса: ниже копирайта, по левому краю, не растягивать на мобильных */}

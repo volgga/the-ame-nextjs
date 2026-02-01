@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
 import { Card, CardContent } from "@/components/ui/card";
-import { Clock, Package, Truck, CreditCard, Wallet, Banknote, FileText, Sprout, Droplets, Heart, Gift, Camera, Video, GiftIcon } from "lucide-react";
+import {
+  Clock,
+  Package,
+  Truck,
+  CreditCard,
+  Wallet,
+  Banknote,
+  FileText,
+  Sprout,
+  Droplets,
+  Heart,
+  Gift,
+  Camera,
+  Video,
+  GiftIcon,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Доставка и оплата — условия и способы | The Ame",
@@ -51,7 +66,7 @@ export default function DeliveryAndPaymentsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-page-bg">
       {/* Hero */}
       <section className="py-6 md:py-8">
         <div className="container mx-auto px-4 text-center">
@@ -81,7 +96,8 @@ export default function DeliveryAndPaymentsPage() {
               </div>
               <div className="flex-1 text-left">
                 <p className="text-base md:text-lg text-[#000] leading-relaxed">
-                  Круглосуточная доставка осуществляется при оформлении заказа с 09:00 до 21:00 текущего дня. Стоимость доставки в ночное время осуществляется по двойному тарифу.
+                  Круглосуточная доставка осуществляется при оформлении заказа с 09:00 до 21:00 текущего дня. Стоимость
+                  доставки в ночное время осуществляется по двойному тарифу.
                 </p>
               </div>
             </div>
@@ -93,7 +109,8 @@ export default function DeliveryAndPaymentsPage() {
               </div>
               <div className="flex-1 text-left">
                 <p className="text-base md:text-lg text-[#000] leading-relaxed">
-                  Мы доставляем готовый букет от 60 минут с момента оформления заказа. Доставка осуществляется по всему Большому Сочи.
+                  Мы доставляем готовый букет от 60 минут с момента оформления заказа. Доставка осуществляется по всему
+                  Большому Сочи.
                 </p>
               </div>
             </div>
@@ -105,7 +122,8 @@ export default function DeliveryAndPaymentsPage() {
               </div>
               <div className="flex-1 text-left">
                 <p className="text-base md:text-lg text-[#000] leading-relaxed">
-                  Сделаем всё возможное, чтобы передать букет лично в руки. Согласуем удобное время и место с получателем. Исключение — пожелания получателя или режимные объекты.
+                  Сделаем всё возможное, чтобы передать букет лично в руки. Согласуем удобное время и место с
+                  получателем. Исключение — пожелания получателя или режимные объекты.
                 </p>
               </div>
             </div>
@@ -128,9 +146,7 @@ export default function DeliveryAndPaymentsPage() {
                   <Sprout className="w-6 h-6 md:w-7 md:h-7 text-color-text-main" />
                 </div>
                 <div className="flex-1 text-left">
-                  <p className="text-base md:text-lg text-[#000] leading-relaxed">
-                    Инструкцию по уходу за цветами
-                  </p>
+                  <p className="text-base md:text-lg text-[#000] leading-relaxed">Инструкцию по уходу за цветами</p>
                 </div>
               </div>
               <div className="flex gap-4 md:gap-6 items-center">
@@ -218,31 +234,27 @@ export default function DeliveryAndPaymentsPage() {
           <div className="max-w-4xl mx-auto">
             <Card className="border-0 shadow-sm bg-white">
               <CardContent className="p-6 md:p-8">
-              <div className="divide-y divide-[#eaeaea]">
-                {deliveries.map((d, i) => (
-                  <div
-                    key={i}
-                    className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
-                  >
-                    <div className="text-base md:text-lg text-[#000] font-medium">
-                      {d.area}
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm md:text-base">
-                      <div className="text-[#7e7e7e]">
-                        до {d.freeFrom.toLocaleString("ru-RU")} ₽ —{" "}
-                        <span className="text-[#000] font-medium">{d.price} ₽</span>
-                      </div>
-                      <div className="text-[#7e7e7e] sm:ml-4">
-                        от {d.freeFrom.toLocaleString("ru-RU")} ₽ —{" "}
-                        <span className="text-[#000] font-medium">Бесплатно</span>
+                <div className="divide-y divide-[#eaeaea]">
+                  {deliveries.map((d, i) => (
+                    <div key={i} className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                      <div className="text-base md:text-lg text-[#000] font-medium">{d.area}</div>
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm md:text-base">
+                        <div className="text-[#7e7e7e]">
+                          до {d.freeFrom.toLocaleString("ru-RU")} ₽ —{" "}
+                          <span className="text-[#000] font-medium">{d.price} ₽</span>
+                        </div>
+                        <div className="text-[#7e7e7e] sm:ml-4">
+                          от {d.freeFrom.toLocaleString("ru-RU")} ₽ —{" "}
+                          <span className="text-[#000] font-medium">Бесплатно</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
                 <p className="mt-6 text-sm md:text-base text-[#7e7e7e] text-left">
-                  Доставка работает круглосуточно. Стоимость доставки с 22:00 до 09:00 осуществляется по двойному тарифу.
+                  Доставка работает круглосуточно. Стоимость доставки с 22:00 до 09:00 осуществляется по двойному
+                  тарифу.
                 </p>
               </CardContent>
             </Card>
@@ -258,18 +270,13 @@ export default function DeliveryAndPaymentsPage() {
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
               {paymentMethods.map((method, idx) => (
-                <div
-                  key={idx}
-                  className="flex flex-col items-center text-center space-y-4"
-                >
+                <div key={idx} className="flex flex-col items-center text-center space-y-4">
                   {/* Иконка в круге */}
                   <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-[#F5F2EE] flex items-center justify-center">
                     <div className="text-color-text-main">{method.icon}</div>
                   </div>
                   {/* Текст */}
-                  <p className="text-sm md:text-base text-[#000] leading-relaxed">
-                    {method.title}
-                  </p>
+                  <p className="text-sm md:text-base text-[#000] leading-relaxed">{method.title}</p>
                 </div>
               ))}
             </div>

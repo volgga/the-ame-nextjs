@@ -36,9 +36,6 @@ export function filterProductsByCategorySlug<T extends { slug: string; categoryS
   return products.filter((p) => p.categorySlug === categorySlug);
 }
 
-export function isValidCategorySlug(
-  slug: string | null | undefined,
-  validSlugs: Set<string>
-): slug is string {
+export function isValidCategorySlug(slug: string | null | undefined, validSlugs: Set<string>): slug is string {
   return typeof slug === "string" && validSlugs.has(slug);
 }

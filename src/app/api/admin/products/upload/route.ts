@@ -4,14 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 const BUCKET = "product-images";
 const MAX_SIZE_BYTES = 25 * 1024 * 1024; // 25MB, без сжатия
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-  "image/avif",
-  "image/gif",
-];
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/avif", "image/gif"];
 const EXT_MAP: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/jpg": "jpg",
@@ -46,10 +39,7 @@ export async function POST(request: NextRequest) {
 
     const mime = file.type?.toLowerCase();
     if (!mime || !ALLOWED_TYPES.includes(mime)) {
-      return NextResponse.json(
-        { error: "Допустимые форматы: JPEG, PNG, WebP, AVIF, GIF" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Допустимые форматы: JPEG, PNG, WebP, AVIF, GIF" }, { status: 400 });
     }
 
     const ext = EXT_MAP[mime] ?? "jpg";
@@ -61,19 +51,14 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- типы Supabase .storage не в дефолтном клиенте
-    const { data, error } = await (supabase as any).storage
-      .from(BUCKET)
-      .upload(storagePath, buffer, {
-        contentType: mime,
-        upsert: false,
-      });
+    const { data, error } = await (supabase as any).storage.from(BUCKET).upload(storagePath, buffer, {
+      contentType: mime,
+      upsert: false,
+    });
 
     if (error) {
       console.error("[admin/products/upload]", error);
-      return NextResponse.json(
-        { error: error.message ?? "Ошибка загрузки в Storage" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message ?? "Ошибка загрузки в Storage" }, { status: 500 });
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -21,10 +21,7 @@ const updateSchema = z.object({
   description: z.string().optional().nullable(),
 });
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string; variantId: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; variantId: string }> }) {
   try {
     await requireAdmin();
     const { id, variantId } = await params;
@@ -36,10 +33,7 @@ export async function PATCH(
     const body = await request.json();
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Неверные данные", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
@@ -65,7 +59,11 @@ export async function PATCH(
     if (!data) return NextResponse.json({ error: "Вариант не найден" }, { status: 404 });
     await recalcMinPrice(supabase, productId);
     const row = data as { title?: string; size?: string; name?: string };
-    return NextResponse.json({ ...data, name: row.title ?? row.name ?? row.size ?? "", size: row.title ?? row.size ?? "" });
+    return NextResponse.json({
+      ...data,
+      name: row.title ?? row.name ?? row.size ?? "",
+      size: row.title ?? row.size ?? "",
+    });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });

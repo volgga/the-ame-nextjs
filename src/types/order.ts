@@ -3,12 +3,7 @@
  * Заказ создаётся из корзины на сервере; сумма пересчитывается по каталогу.
  */
 
-export type OrderStatus =
-  | "created"
-  | "payment_pending"
-  | "paid"
-  | "canceled"
-  | "failed";
+export type OrderStatus = "created" | "payment_pending" | "paid" | "canceled" | "failed";
 
 export interface OrderItemPayload {
   id: string;

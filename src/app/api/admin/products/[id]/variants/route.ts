@@ -21,10 +21,7 @@ const variantSchema = z.object({
   description: z.string().optional().nullable(),
 });
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -36,10 +33,7 @@ export async function POST(
     const body = await request.json();
     const parsed = variantSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Неверные данные", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
@@ -65,7 +59,11 @@ export async function POST(
     if (error) throw error;
     await recalcMinPrice(supabase, productId);
     const row = data as { title?: string; size?: string; name?: string };
-    return NextResponse.json({ ...data, name: row.title ?? row.name ?? row.size ?? "", size: row.title ?? row.size ?? "" });
+    return NextResponse.json({
+      ...data,
+      name: row.title ?? row.name ?? row.size ?? "",
+      size: row.title ?? row.size ?? "",
+    });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });

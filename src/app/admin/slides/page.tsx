@@ -247,22 +247,14 @@ export default function AdminSlidesPage() {
 
       {(creating || editing) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={closeModal}
-            aria-hidden
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
           <div
             className="relative w-full max-w-[720px] rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSaveForm}>
-              <h3 className="mb-4 font-medium text-[#111]">
-                {creating ? "Новый слайд" : "Редактирование"}
-              </h3>
-              {error && (creating || editing) && (
-                <p className="mb-3 text-sm text-red-600">{error}</p>
-              )}
+              <h3 className="mb-4 font-medium text-[#111]">{creating ? "Новый слайд" : "Редактирование"}</h3>
+              {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-[#111]">Изображение</label>
@@ -306,9 +298,7 @@ export default function AdminSlidesPage() {
                     <input
                       type="number"
                       value={form.sort_order}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, sort_order: parseInt(e.target.value, 10) || 0 }))
-                      }
+                      onChange={(e) => setForm((f) => ({ ...f, sort_order: parseInt(e.target.value, 10) || 0 }))}
                       className="mt-1 w-20 rounded border px-2 py-1"
                     />
                   </div>

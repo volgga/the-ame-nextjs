@@ -1,7 +1,6 @@
 "use client";
 
-const iconLinkClass =
-  "relative inline-flex items-center justify-center text-header-foreground";
+const iconLinkClass = "relative inline-flex items-center justify-center text-header-foreground";
 
 /** Фиксированный клик/бокс для каждой иконки — стоят ровно, без скачков */
 const ICON_BOX = "w-8 h-8 flex items-center justify-center shrink-0";
@@ -29,15 +28,15 @@ const LEFT_TEXT_OFFSET = "ml-1 md:ml-1.5";
 export function TopBar() {
   return (
     <div
-      className={`w-full min-h-[40px] py-1.5 flex items-center justify-between ${ROW_PX} bg-header-bg`}
+      className={`w-full min-h-[44px] py-1.5 flex items-center justify-between ${ROW_PX} bg-header-bg`}
       style={{ borderBottom: "0.5px solid rgba(31, 42, 31, 0.65)" }}
     >
       {/* Слева: 2 строки текста — левый край совпадает с линиями бургера во 2-й строке */}
-      <div className={`min-w-0 ${LEFT_TEXT_OFFSET}`}>
-        <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide leading-tight">
+      <div className={`min-w-0 ${LEFT_TEXT_OFFSET} leading-tight`}>
+        <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide">
           Приём заказов с 09.00 до 21.00
         </div>
-        <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide leading-tight">
+        <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide">
           Доставка по Большому Сочи 24/7
         </div>
       </div>
@@ -74,11 +73,7 @@ export function TopBar() {
           aria-label="Telegram"
           className={`${iconLinkClass} ${ICON_BOX}`}
         >
-          <svg
-            className={`${ICON_SIZE} block text-header-foreground shrink-0`}
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
+          <svg className={`${ICON_SIZE} block text-header-foreground shrink-0`} viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161l-1.89 8.905c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.12l-6.87 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z" />
           </svg>
         </a>

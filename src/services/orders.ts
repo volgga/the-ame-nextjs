@@ -4,12 +4,7 @@
 
 import { getCatalogProductsByIds } from "@/lib/catalogServer";
 import { getSupabaseServer } from "@/lib/supabaseServer";
-import type {
-  OrderCustomerPayload,
-  OrderItemPayload,
-  OrderRecord,
-  OrderStatus,
-} from "@/types/order";
+import type { OrderCustomerPayload, OrderItemPayload, OrderRecord, OrderStatus } from "@/types/order";
 
 export interface CreateOrderInput {
   items: { id: string; quantity: number }[];
@@ -20,9 +15,7 @@ export interface CreateOrderInput {
  * Создать заказ: валидировать товары по каталогу, пересчитать сумму на сервере.
  * Возвращает заказ или ошибку.
  */
-export async function createOrder(
-  input: CreateOrderInput
-): Promise<{ order: OrderRecord } | { error: string }> {
+export async function createOrder(input: CreateOrderInput): Promise<{ order: OrderRecord } | { error: string }> {
   if (!input.items.length) {
     return { error: "Корзина пуста" };
   }
@@ -65,7 +58,9 @@ export async function createOrder(
       tinkoff_payment_id: null,
       payment_provider: "tinkoff",
     })
-    .select("id, items, amount, currency, customer, status, tinkoff_payment_id, payment_id, payment_provider, created_at, updated_at")
+    .select(
+      "id, items, amount, currency, customer, status, tinkoff_payment_id, payment_id, payment_provider, created_at, updated_at"
+    )
     .single();
 
   if (error) {
@@ -106,14 +101,14 @@ export async function createOrder(
 /**
  * Получить заказ по id.
  */
-export async function getOrderById(
-  orderId: string
-): Promise<OrderRecord | null> {
+export async function getOrderById(orderId: string): Promise<OrderRecord | null> {
   const supabase = getSupabaseServer();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
     .from("orders")
-    .select("id, items, amount, currency, customer, status, tinkoff_payment_id, payment_id, payment_provider, created_at, updated_at")
+    .select(
+      "id, items, amount, currency, customer, status, tinkoff_payment_id, payment_id, payment_provider, created_at, updated_at"
+    )
     .eq("id", orderId)
     .single();
 

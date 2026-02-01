@@ -16,16 +16,12 @@ export function getVariantProductId(id: string): number | null {
 
 /** Пересчитать min_price_cache у variant_products по активным вариантам */
 export async function recalcMinPrice(
-  supabase: ReturnType<typeof import("@/lib/supabaseAdmin")["getSupabaseAdmin"]>,
+  supabase: ReturnType<(typeof import("@/lib/supabaseAdmin"))["getSupabaseAdmin"]>,
   productId: number
 ): Promise<void> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sb = supabase as any;
-  const { data } = await sb
-    .from("product_variants")
-    .select("price")
-    .eq("product_id", productId)
-    .eq("is_active", true);
+  const { data } = await sb.from("product_variants").select("price").eq("product_id", productId).eq("is_active", true);
   const prices = (data ?? []).map((r: { price?: number }) => Number(r.price ?? 0)).filter((p: number) => p > 0);
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
   await sb.from("variant_products").update({ min_price_cache: minPrice }).eq("id", productId);

@@ -44,7 +44,7 @@ export function UpsellSection() {
     },
   ];
 
-  const handleAddAddon = (addon: typeof addonItems[number]) => {
+  const handleAddAddon = (addon: (typeof addonItems)[number]) => {
     const flower: Flower = {
       id: addon.id,
       name: addon.title,
@@ -77,26 +77,19 @@ export function UpsellSection() {
             >
               {/* Изображение */}
               <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#ece9e2] mb-2">
-                <Image
-                  src={addon.image}
-                  alt={addon.title}
-                  fill
-                  className="object-cover"
-                />
+                <Image src={addon.image} alt={addon.title} fill className="object-cover" />
               </div>
 
               {/* Название и цена */}
               <h4 className="text-sm font-medium mb-1 line-clamp-2">{addon.title}</h4>
-              <p className="text-sm font-semibold text-gray-900 mb-2">
-                {addon.price.toLocaleString("ru-RU")} ₽
-              </p>
+              <p className="text-sm font-semibold text-gray-900 mb-2">{addon.price.toLocaleString("ru-RU")} ₽</p>
 
               {/* Кнопка */}
               <button
                 type="button"
                 onClick={() => handleAddAddon(addon)}
                 disabled={inCart}
-                className={`w-full py-2 px-3 rounded-lg text-xs font-medium transition-colors ${
+                className={`w-full py-2 px-3 rounded-full text-xs font-medium transition-colors ${
                   inCart
                     ? "bg-gray-200 text-gray-600 cursor-not-allowed"
                     : "bg-accent-btn hover:bg-accent-btn-hover text-white"

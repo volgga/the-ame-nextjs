@@ -24,7 +24,7 @@ type HeroCarouselProps = {
  * next/image обеспечивает оптимизацию (webp/avif, sizes) для быстрой загрузки.
  */
 export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
-  const slides = (propSlides && propSlides.length > 0) ? propSlides : FALLBACK_SLIDES;
+  const slides = propSlides && propSlides.length > 0 ? propSlides : FALLBACK_SLIDES;
 
   const [index, setIndex] = useState(0);
 
@@ -74,20 +74,10 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={prev}
-          aria-label="Предыдущий слайд"
-          className={`left-6 sm:left-8 ${btnBase}`}
-        >
+        <button type="button" onClick={prev} aria-label="Предыдущий слайд" className={`left-6 sm:left-8 ${btnBase}`}>
           <ChevronArrow direction="left" />
         </button>
-        <button
-          type="button"
-          onClick={next}
-          aria-label="Следующий слайд"
-          className={`right-6 sm:right-8 ${btnBase}`}
-        >
+        <button type="button" onClick={next} aria-label="Следующий слайд" className={`right-6 sm:right-8 ${btnBase}`}>
           <ChevronArrow direction="right" />
         </button>
       </div>

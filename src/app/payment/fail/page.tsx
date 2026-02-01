@@ -30,11 +30,9 @@ function PaymentFailContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-page-bg flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
-        <h1 className="text-2xl font-bold mb-4 text-color-text-main">
-          Оплата не прошла
-        </h1>
+        <h1 className="text-2xl font-bold mb-4 text-color-text-main">Оплата не прошла</h1>
         <p className="text-muted-foreground mb-6">
           Платёж не был завершён. Вы можете попробовать оплатить снова или вернуться в корзину.
         </p>
@@ -44,15 +42,12 @@ function PaymentFailContent() {
               type="button"
               onClick={handleRetry}
               disabled={loading}
-              className="px-6 py-3 rounded-lg font-semibold text-white disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+              className="px-6 py-3 rounded-full font-semibold text-white disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
             >
               {loading ? "Загрузка…" : "Попробовать снова"}
             </button>
           )}
-          <Link
-            href="/cart"
-            className="inline-block px-6 py-3 rounded-lg font-semibold border border-outline-btn-border text-color-text-main bg-transparent hover:bg-outline-btn-hover-bg active:bg-outline-btn-active-bg"
-          >
+          <Link href="/cart" className="inline-block px-6 py-3 rounded-full font-semibold btn-outline">
             В корзину
           </Link>
         </div>
@@ -63,11 +58,13 @@ function PaymentFailContent() {
 
 export default function PaymentFailPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center p-4">
-        <p className="text-muted-foreground">Загрузка…</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-page-bg flex items-center justify-center p-4">
+          <p className="text-muted-foreground">Загрузка…</p>
+        </div>
+      }
+    >
       <PaymentFailContent />
     </Suspense>
   );

@@ -13,6 +13,9 @@ type BreadcrumbsProps = {
   className?: string;
 };
 
+/** Единые отступы хлебных крошек: синхронизированы между каталогом и карточкой товара */
+export const BREADCRUMB_SPACING = "mt-1 mb-3 md:mb-4";
+
 /**
  * Breadcrumbs — хлебные крошки навигации.
  * Формат: Главная / Каталог / {Название категории}
@@ -20,7 +23,7 @@ type BreadcrumbsProps = {
  */
 export function Breadcrumbs({ items, ariaLabel = "Навигация", className }: BreadcrumbsProps) {
   return (
-    <nav aria-label={ariaLabel} className={className ?? "mb-6 md:mb-8"}>
+    <nav aria-label={ariaLabel} className={className ?? BREADCRUMB_SPACING}>
       <ol
         className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
         itemScope
@@ -37,7 +40,7 @@ export function Breadcrumbs({ items, ariaLabel = "Навигация", className
               itemType="https://schema.org/ListItem"
             >
               {i > 0 && (
-                <span className="text-[rgba(31,42,31,0.35)]" aria-hidden="true">
+                <span className="text-color-text-secondary" aria-hidden="true">
                   /
                 </span>
               )}
@@ -45,12 +48,12 @@ export function Breadcrumbs({ items, ariaLabel = "Навигация", className
                 <Link
                   href={item.href}
                   itemProp="item"
-                  className="text-[rgba(31,42,31,0.65)] hover:text-color-text-main hover:underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 rounded-sm"
+                  className="text-color-text-secondary hover:text-color-text-main hover:underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 rounded-sm"
                 >
                   <span itemProp="name">{item.label}</span>
                 </Link>
               ) : (
-                <span itemProp="name" className="text-color-text-main" aria-current="page">
+                <span itemProp="name" className="text-color-text-main font-medium no-underline" aria-current="page">
                   {item.label}
                 </span>
               )}

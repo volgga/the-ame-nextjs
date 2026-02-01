@@ -11,8 +11,8 @@ const bodySchema = z.object({
   productId: z.string().min(1),
   productTitle: z.string().min(1),
   productPrice: z.number().min(0),
-  customerName: z.string().min(1),
-  customerPhone: z.string().min(10),
+  customerName: z.string().optional().default(""),
+  customerPhone: z.string().min(1),
 });
 
 export async function POST(request: Request) {
@@ -21,10 +21,7 @@ export async function POST(request: Request) {
     const parsed = bodySchema.safeParse(raw);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Неверные данные", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
 
     const { productId, productTitle, productPrice, customerName, customerPhone } = parsed.data;
@@ -52,10 +49,7 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("[quick-order] Ошибка создания заказа:", error.message);
-      return NextResponse.json(
-        { error: "Ошибка создания заказа" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Ошибка создания заказа" }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -64,9 +58,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("[quick-order] Исключение:", err);
-    return NextResponse.json(
-      { error: "Ошибка сервера" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 });
   }
 }

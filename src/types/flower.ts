@@ -13,15 +13,17 @@ export interface Flower {
   // новые поля для ЧПУ
   categoryId?: string | null;
   categorySlug?: string | null; // <— слаг категории
-  slug?: string | null;         // <— слаг товара
+  slug?: string | null; // <— слаг товара
 
   inStock: boolean;
   quantity: number;
   colors: string[];
-  size: 'small' | 'medium' | 'large';
+  size: "small" | "medium" | "large";
   occasion: string[];
   /** Если true — на витрине вместо цены показывается «Предзаказ» */
   isPreorder?: boolean;
+  /** Для вариантных товаров: показывать "от {price} ₽" */
+  priceFrom?: boolean;
 }
 
 export interface CartItem extends Flower {

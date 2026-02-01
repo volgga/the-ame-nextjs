@@ -1,13 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  useTransition,
-} from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Search, ChevronDown } from "lucide-react";
 
 export type SortValue = "default" | "price_asc" | "price_desc";
@@ -67,12 +61,8 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
 
   const [searchInput, setSearchInput] = useState(qParam);
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [localMin, setLocalMin] = useState(
-    minPriceParam ? Number(minPriceParam) : priceMin
-  );
-  const [localMax, setLocalMax] = useState(
-    maxPriceParam ? Number(maxPriceParam) : priceMax
-  );
+  const [localMin, setLocalMin] = useState(minPriceParam ? Number(minPriceParam) : priceMin);
+  const [localMax, setLocalMax] = useState(maxPriceParam ? Number(maxPriceParam) : priceMax);
 
   useEffect(() => setSearchInput(qParam), [qParam]);
 
@@ -168,9 +158,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
     qParam;
 
   const priceLabel =
-    localMin === priceMin && localMax === priceMax
-      ? "Цена"
-      : `${formatPrice(localMin)} – ${formatPrice(localMax)}`;
+    localMin === priceMin && localMax === priceMax ? "Цена" : `${formatPrice(localMin)} – ${formatPrice(localMax)}`;
 
   const controlH = "h-9";
 
@@ -185,7 +173,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
         <button
           type="button"
           onClick={() => setPopoverOpen((o) => !o)}
-          className={`${controlH} w-full md:w-auto inline-flex items-center justify-between md:justify-start gap-2 rounded-md border border-border-block bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
+          className={`${controlH} w-full md:w-auto inline-flex items-center justify-between md:justify-start gap-2 rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
           aria-expanded={popoverOpen}
           aria-haspopup="true"
           aria-label="Фильтр по цене"
@@ -270,7 +258,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
               <button
                 type="button"
                 onClick={handlePriceReset}
-                className="flex-1 h-9 rounded-md border border-border-block bg-white px-3 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+                className="flex-1 h-9 rounded-full border border-[var(--color-outline-border)] bg-white px-3 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
                 aria-label="Сбросить цену"
               >
                 Сброс
@@ -278,7 +266,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
               <button
                 type="button"
                 onClick={handleApplyPrice}
-                className="flex-1 h-9 rounded-md text-white px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+                className="flex-1 h-9 rounded-full text-white px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
                 aria-label="Применить"
               >
                 Применить
@@ -292,7 +280,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 md:flex-initial min-w-0">
         {/* Поиск: input с встроенной кнопкой-лупой */}
         <div
-          className={`flex ${controlH} w-full sm:w-[220px] md:w-[260px] rounded-md border border-border-block bg-white overflow-hidden transition-colors focus-within:ring-2 focus-within:ring-color-bg-main focus-within:ring-offset-2`}
+          className={`flex ${controlH} w-full sm:w-[220px] md:w-[260px] rounded-full border border-[var(--color-outline-border)] bg-white overflow-hidden transition-colors focus-within:ring-2 focus-within:ring-color-bg-main focus-within:ring-offset-2`}
         >
           <input
             type="search"
@@ -317,7 +305,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
         <select
           value={sort}
           onChange={handleSortChange}
-          className={`${controlH} w-full sm:w-[220px] md:w-[240px] rounded-md border border-border-block bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%231F2A1F%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1rem] bg-[right_0.75rem_center] bg-no-repeat pr-10`}
+          className={`${controlH} w-full sm:w-[220px] md:w-[240px] rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%231F2A1F%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1rem] bg-[right_0.75rem_center] bg-no-repeat pr-10`}
           aria-label="Порядок сортировки"
         >
           {SORT_OPTIONS.map((o) => (
@@ -333,7 +321,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
         <button
           type="button"
           onClick={handleReset}
-          className={`${controlH} rounded-md border border-border-block bg-white px-3 py-2 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
+          className={`${controlH} rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
           aria-label="Сбросить фильтры"
         >
           Сброс

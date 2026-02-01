@@ -5,10 +5,10 @@ import { TopMarquee } from "./TopMarquee";
 import { TopBar } from "./TopBar";
 import { HeaderMain } from "./HeaderMain";
 
-const MARQUEE_H = 36;
+const MARQUEE_H = 32;
 const DIVIDER_H = 1;
-const TOP_BAR_H = 40;
-const HEADER_MAIN_H = 48;
+const TOP_BAR_H = 44;
+const HEADER_MAIN_H = 44;
 const BEIGE_BLOCK_H = DIVIDER_H + TOP_BAR_H + HEADER_MAIN_H;
 
 /** Бежевый блок начинает скрываться только после scrollY > этого значения (нет резкого пропадания с верха) */
@@ -91,13 +91,10 @@ export function Header() {
   return (
     <header className="relative z-50">
       {/* Слои: марки 70 (всегда видна над бежевым), бежевый 60. Оверлей/сайдбар меню рендерятся в портал с z 80/85 в HeaderMain. */}
-      <div
-        className="fixed left-0 right-0 top-0 z-[70]"
-        style={{ height: MARQUEE_H }}
-      >
+      <div className="fixed left-0 right-0 top-0 z-[70]" style={{ height: MARQUEE_H }}>
         <TopMarquee
-          phrases={["Гарантия 3 дня", "Цветочный консьерж", "Доставка за 45 минут"]}
-          href="/posmotret-vse-tsvety"
+          phrases={["Один клик и ты герой 14 февраля"]}
+          href="/magazine/14-fevralya"
           speed={50}
           duplicates={6}
         />
@@ -114,10 +111,7 @@ export function Header() {
         }}
       >
         <TopBar />
-        <HeaderMain
-          isMenuOpen={isMenuOpen}
-          setIsMenuOpen={setIsMenuOpen}
-        />
+        <HeaderMain isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
       </div>
 
       {/* Spacer фиксированной высоты: layout не меняется при скрытии/появлении шапки */}

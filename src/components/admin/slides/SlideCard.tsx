@@ -18,14 +18,7 @@ type SlideCardProps = {
 };
 
 export function SlideCard({ slide, index, onEdit }: SlideCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: slide.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slide.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -55,11 +48,7 @@ export function SlideCard({ slide, index, onEdit }: SlideCardProps) {
       <div className="relative aspect-video w-full overflow-hidden bg-gray-100">
         {slide.image_url ? (
           <>
-            <img
-              src={slide.image_url}
-              alt={`Слайд ${index + 1}`}
-              className="h-full w-full object-cover"
-            />
+            <img src={slide.image_url} alt={`Слайд ${index + 1}`} className="h-full w-full object-cover" />
             {/* Dark overlay on hover */}
             <div
               className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/40"
@@ -82,9 +71,7 @@ export function SlideCard({ slide, index, onEdit }: SlideCardProps) {
             </div>
           </>
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-gray-400">
-            Нет изображения
-          </div>
+          <div className="flex h-full w-full items-center justify-center text-gray-400">Нет изображения</div>
         )}
       </div>
     </div>

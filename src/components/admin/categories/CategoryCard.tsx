@@ -34,14 +34,7 @@ export function CategoryCard({
   onDeleteClick,
   isToggling = false,
 }: CategoryCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: category.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -86,11 +79,7 @@ export function CategoryCard({
           }}
           className={`${iconClass} disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          {category.is_active ? (
-            <Eye size={iconSize} strokeWidth={2} />
-          ) : (
-            <EyeOff size={iconSize} strokeWidth={2} />
-          )}
+          {category.is_active ? <Eye size={iconSize} strokeWidth={2} /> : <EyeOff size={iconSize} strokeWidth={2} />}
         </button>
         <button
           type="button"

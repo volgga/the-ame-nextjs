@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { getAllVariantProducts } from "@/lib/variantProducts";
 import { slugify } from "@/utils/slugify";
 
-
 /** Вариант товара (для вариантных товаров на витрине) */
 export type ProductVariantOption = {
   id: number;
@@ -58,14 +57,12 @@ type ProductsRow = {
 };
 
 function rowToProduct(row: ProductsRow): Product {
-  const slug =
-    (row.slug && String(row.slug).trim()) ||
-    slugify(row.name) ||
-    String(row.id);
+  const slug = (row.slug && String(row.slug).trim()) || slugify(row.name) || String(row.id);
   const imagesRaw = row.images;
-  const images = Array.isArray(imagesRaw) && imagesRaw.length > 0
-    ? imagesRaw.filter((u): u is string => typeof u === "string" && u.length > 0)
-    : undefined;
+  const images =
+    Array.isArray(imagesRaw) && imagesRaw.length > 0
+      ? imagesRaw.filter((u): u is string => typeof u === "string" && u.length > 0)
+      : undefined;
 
   return {
     id: String(row.id),
@@ -93,9 +90,7 @@ export async function getAllProducts(): Promise<Product[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
-    console.warn(
-      `${LOG_PREFIX} NEXT_PUBLIC_SUPABASE_URL или NEXT_PUBLIC_SUPABASE_ANON_KEY не заданы.`
-    );
+    console.warn(`${LOG_PREFIX} NEXT_PUBLIC_SUPABASE_URL или NEXT_PUBLIC_SUPABASE_ANON_KEY не заданы.`);
     return [];
   }
 
@@ -103,18 +98,15 @@ export async function getAllProducts(): Promise<Product[]> {
     // Показываем все, где не скрыто явно: is_active не false, is_hidden не true
     const { data, error } = await supabase
       .from("products")
-      .select("id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, is_active, is_hidden, is_preorder")
+      .select(
+        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, is_active, is_hidden, is_preorder"
+      )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
       .order("sort_order", { ascending: true, nullsFirst: false });
 
     if (error) {
-      console.error(
-        `${LOG_PREFIX} Ошибка при загрузке товаров:`,
-        error.message,
-        "код:",
-        error.code
-      );
+      console.error(`${LOG_PREFIX} Ошибка при загрузке товаров:`, error.message, "код:", error.code);
       if (error.code === "42P01") {
         console.error(`${LOG_PREFIX} Таблица products не найдена.`);
       }
@@ -131,10 +123,7 @@ export async function getAllProducts(): Promise<Product[]> {
 
     return data.map((row) => rowToProduct(row as ProductsRow));
   } catch (e) {
-    console.error(
-      `${LOG_PREFIX} Supabase не отвечает или исключение:`,
-      e instanceof Error ? e.message : String(e)
-    );
+    console.error(`${LOG_PREFIX} Supabase не отвечает или исключение:`, e instanceof Error ? e.message : String(e));
     return [];
   }
 }
@@ -148,33 +137,25 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) {
-    console.warn(
-      `${LOG_PREFIX} NEXT_PUBLIC_SUPABASE_URL или NEXT_PUBLIC_SUPABASE_ANON_KEY не заданы.`
-    );
+    console.warn(`${LOG_PREFIX} NEXT_PUBLIC_SUPABASE_URL или NEXT_PUBLIC_SUPABASE_ANON_KEY не заданы.`);
     return null;
   }
 
   try {
     const base = supabase
       .from("products")
-      .select("id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, is_active, is_hidden, is_preorder")
+      .select(
+        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, is_active, is_hidden, is_preorder"
+      )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null");
 
-    const query =
-      UUID_REGEX.test(slug)
-        ? base.or(`slug.eq.${slug},id.eq.${slug}`)
-        : base.eq("slug", slug);
+    const query = UUID_REGEX.test(slug) ? base.or(`slug.eq.${slug},id.eq.${slug}`) : base.eq("slug", slug);
 
     const { data, error } = await query.maybeSingle();
 
     if (error) {
-      console.error(
-        `${LOG_PREFIX} Ошибка при загрузке товара по slug "${slug}":`,
-        error.message,
-        "код:",
-        error.code
-      );
+      console.error(`${LOG_PREFIX} Ошибка при загрузке товара по slug "${slug}":`, error.message, "код:", error.code);
       if (error.code === "42501") {
         console.error(`${LOG_PREFIX} Нет прав доступа (RLS).`);
       }
@@ -199,17 +180,16 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
  * Единый каталог: products + variant_products (сначала products, затем варианты).
  */
 export async function getAllCatalogProducts(): Promise<Product[]> {
-  const [fromProducts, fromVariants] = await Promise.all([
-    getAllProducts(),
-    getAllVariantProducts(),
-  ]);
+  const [fromProducts, fromVariants] = await Promise.all([getAllProducts(), getAllVariantProducts()]);
   return [...fromProducts, ...fromVariants];
 }
 
 /**
  * Товар по slug: сначала products, затем variant_products.
  */
-export async function getCatalogProductBySlug(slug: string): Promise<Product | (Product & { variants?: import("@/lib/variantProducts").ProductVariantPublic[] }) | null> {
+export async function getCatalogProductBySlug(
+  slug: string
+): Promise<Product | (Product & { variants?: import("@/lib/variantProducts").ProductVariantPublic[] }) | null> {
   const fromProducts = await getProductBySlug(slug);
   if (fromProducts) return fromProducts;
   const { getVariantProductWithVariantsBySlug } = await import("@/lib/variantProducts");

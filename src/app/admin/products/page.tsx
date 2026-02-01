@@ -110,7 +110,7 @@ function AdminProductsPageContent() {
   useEffect(() => {
     if (!createModalOpen) return;
     fetch("/api/admin/categories")
-      .then((res) => res.ok ? res.json() : [])
+      .then((res) => (res.ok ? res.json() : []))
       .then((data: { id: string; name: string; slug: string; is_active: boolean }[]) =>
         setCategories(data.filter((c) => c.is_active))
       )
@@ -151,8 +151,8 @@ function AdminProductsPageContent() {
           name: data.name ?? "",
           description: data.description ?? "",
           composition_size: isVariantProduct ? "" : (data.composition_size ?? ""),
-          height_cm: isVariantProduct ? null : (data.height_cm != null ? Number(data.height_cm) : null),
-          width_cm: isVariantProduct ? null : (data.width_cm != null ? Number(data.width_cm) : null),
+          height_cm: isVariantProduct ? null : data.height_cm != null ? Number(data.height_cm) : null,
+          width_cm: isVariantProduct ? null : data.width_cm != null ? Number(data.width_cm) : null,
           price: Number(data.price ?? data.min_price_cache ?? 0),
         });
         setCreateIsHidden(data.is_hidden ?? false);
@@ -167,7 +167,21 @@ function AdminProductsPageContent() {
           setProductImages([]);
           setProductImagesMainIndex(0);
           const vars = (data.variants ?? []).map(
-            (v: { id: number; name?: string; title?: string; size?: string; composition?: string; height_cm?: number | null; width_cm?: number | null; price?: number; is_preorder?: boolean; image_url?: string | null }, idx: number) => ({
+            (
+              v: {
+                id: number;
+                name?: string;
+                title?: string;
+                size?: string;
+                composition?: string;
+                height_cm?: number | null;
+                width_cm?: number | null;
+                price?: number;
+                is_preorder?: boolean;
+                image_url?: string | null;
+              },
+              idx: number
+            ) => ({
               id: v.id,
               name: v.name ?? v.title ?? v.size ?? `Вариант ${idx + 1}`,
               composition: v.composition ?? "",
@@ -236,7 +250,7 @@ function AdminProductsPageContent() {
     if (!name) errors.name = "Введите название";
     const description = createForm.description.trim();
     if (!description) errors.description = "Введите описание";
-    
+
     if (createType === "simple") {
       const composition = createForm.composition_size.trim();
       if (!composition) errors.composition_size = "Введите состав";
@@ -246,12 +260,12 @@ function AdminProductsPageContent() {
       const price = createForm.price;
       if (typeof price !== "number" || price <= 0) errors.price = "Цена должна быть больше 0";
     }
-    
+
     if (createType === "variant") {
       if (!variantMainImage && !existingMainImageUrl) errors.variantMainImage = "Загрузите главное фото товара";
       if (selectedCategorySlugs.length === 0) errors.categories = "Выберите минимум одну категорию";
       if (variants.length === 0) errors.variants = "Добавьте хотя бы один вариант";
-      
+
       // Валидация каждого варианта (состав/размер не обязательны)
       variants.forEach((v, idx) => {
         if (!v.name.trim()) errors[`variant_${idx}_name`] = "Введите название варианта";
@@ -260,21 +274,17 @@ function AdminProductsPageContent() {
         }
       });
     }
-    
+
     return errors;
   }
 
   function toggleCategorySlug(slug: string) {
-    setSelectedCategorySlugs((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
-    );
+    setSelectedCategorySlugs((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
   }
 
   function addProductImages(files: FileList | null) {
     if (!files?.length) return;
-    const allowed = Array.from(files).filter((f) =>
-      ALLOWED_IMAGE_TYPES.split(",").some((t) => f.type === t.trim())
-    );
+    const allowed = Array.from(files).filter((f) => ALLOWED_IMAGE_TYPES.split(",").some((t) => f.type === t.trim()));
     setProductImages((prev) => {
       const next = [...prev];
       for (const file of allowed) {
@@ -441,7 +451,7 @@ function AdminProductsPageContent() {
     setCreateLoading(true);
     try {
       if (createType === "simple") {
-        let uploadedUrls: string[] = [];
+        const uploadedUrls: string[] = [];
         if (productImages.length > 0) {
           setProductImagesUploading(true);
           for (const item of productImages) {
@@ -591,7 +601,7 @@ function AdminProductsPageContent() {
     try {
       if (createType === "simple") {
         // Загрузка изображений для простого товара
-        let imageUrls: string[] = [];
+        const imageUrls: string[] = [];
         if (productImages.length > 0) {
           setProductImagesUploading(true);
           try {
@@ -627,14 +637,11 @@ function AdminProductsPageContent() {
         const mainUrl = imageUrls[productImagesMainIndex] ?? imageUrls[0] ?? undefined;
         const otherUrls =
           imageUrls.length > 0
-            ? [
-                ...imageUrls.slice(0, productImagesMainIndex),
-                ...imageUrls.slice(productImagesMainIndex + 1),
-              ]
+            ? [...imageUrls.slice(0, productImagesMainIndex), ...imageUrls.slice(productImagesMainIndex + 1)]
             : [];
         const slug = slugify(createForm.name);
         const category_slugs = selectedCategorySlugs.length > 0 ? selectedCategorySlugs : null;
-        
+
         const payload = {
           type: "simple",
           name: createForm.name.trim(),
@@ -663,7 +670,9 @@ function AdminProductsPageContent() {
           data = raw ? JSON.parse(raw) : {};
         } catch {
           console.error("[admin/products] POST failed: non-JSON response", res.status, raw.slice(0, 200));
-          setCreateError(res.status === 500 ? "Сервер вернул ошибку. Проверьте терминал (логи сервера)." : `Ошибка ${res.status}`);
+          setCreateError(
+            res.status === 500 ? "Сервер вернул ошибку. Проверьте терминал (логи сервера)." : `Ошибка ${res.status}`
+          );
           setCreateLoading(false);
           return;
         }
@@ -678,7 +687,7 @@ function AdminProductsPageContent() {
         // Загрузка главного фото для вариантного товара
         setProductImagesUploading(true);
         let mainImageUrl: string | null = null;
-        
+
         if (variantMainImage) {
           const formData = new FormData();
           formData.append("file", variantMainImage.file);
@@ -727,7 +736,7 @@ function AdminProductsPageContent() {
         // Создание вариантного товара с вариантами
         const slug = slugify(createForm.name);
         const category_slugs = selectedCategorySlugs.length > 0 ? selectedCategorySlugs : null;
-        
+
         const payload = {
           type: "variant",
           name: createForm.name.trim(),
@@ -761,7 +770,9 @@ function AdminProductsPageContent() {
           data = raw ? JSON.parse(raw) : {};
         } catch {
           console.error("[admin/products] POST failed: non-JSON response", res.status, raw.slice(0, 200));
-          setCreateError(res.status === 500 ? "Сервер вернул ошибку. Проверьте терминал (логи сервера)." : `Ошибка ${res.status}`);
+          setCreateError(
+            res.status === 500 ? "Сервер вернул ошибку. Проверьте терминал (логи сервера)." : `Ошибка ${res.status}`
+          );
           setCreateLoading(false);
           return;
         }
@@ -920,11 +931,7 @@ function AdminProductsPageContent() {
 
       {createModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={closeCreateModal}
-            aria-hidden
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={closeCreateModal} aria-hidden />
           <div
             role="dialog"
             aria-modal="true"
@@ -950,9 +957,7 @@ function AdminProductsPageContent() {
                 </button>
               </div>
               <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-3">
-                {editLoading && (
-                  <p className="text-sm text-color-text-secondary">Загрузка товара…</p>
-                )}
+                {editLoading && <p className="text-sm text-color-text-secondary">Загрузка товара…</p>}
                 {createError && (
                   <p className="text-sm text-red-600" role="alert">
                     {createError}
@@ -961,7 +966,9 @@ function AdminProductsPageContent() {
                 <div>
                   <span className="block text-sm font-medium text-color-text-main mb-1.5">Тип товара</span>
                   <div className="flex gap-4">
-                    <label className={`flex items-center gap-2 ${isEditMode ? "cursor-default opacity-70" : "cursor-pointer"}`}>
+                    <label
+                      className={`flex items-center gap-2 ${isEditMode ? "cursor-default opacity-70" : "cursor-pointer"}`}
+                    >
                       <input
                         type="radio"
                         name="createType"
@@ -973,7 +980,9 @@ function AdminProductsPageContent() {
                       />
                       <span className="text-sm text-color-text-main">Обычный</span>
                     </label>
-                    <label className={`flex items-center gap-2 ${isEditMode ? "cursor-default opacity-70" : "cursor-pointer"}`}>
+                    <label
+                      className={`flex items-center gap-2 ${isEditMode ? "cursor-default opacity-70" : "cursor-pointer"}`}
+                    >
                       <input
                         type="radio"
                         name="createType"
@@ -986,9 +995,7 @@ function AdminProductsPageContent() {
                       <span className="text-sm text-color-text-main">Варианты</span>
                     </label>
                   </div>
-                  {fieldErrors.type && (
-                    <p className="mt-0.5 text-xs text-red-600">{fieldErrors.type}</p>
-                  )}
+                  {fieldErrors.type && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.type}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-color-text-main mb-1">Название</label>
@@ -1000,9 +1007,7 @@ function AdminProductsPageContent() {
                     required
                     autoFocus
                   />
-                  {fieldErrors.name && (
-                    <p className="mt-0.5 text-xs text-red-600">{fieldErrors.name}</p>
-                  )}
+                  {fieldErrors.name && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.name}</p>}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-color-text-main mb-1">Описание</label>
@@ -1012,28 +1017,25 @@ function AdminProductsPageContent() {
                     className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                     rows={3}
                   />
-                  {fieldErrors.description && (
-                    <p className="mt-0.5 text-xs text-red-600">{fieldErrors.description}</p>
-                  )}
+                  {fieldErrors.description && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.description}</p>}
                 </div>
                 {createType === "simple" && (
                   <>
                     <div>
                       <label className="block text-sm font-medium text-color-text-main mb-1">Изображения</label>
                       <p className="text-xs text-color-text-secondary mb-1.5">
-                        Максимум 5 файлов. Первое изображение — главное, используется на витрине. Перетаскивайте для изменения порядка.
+                        Максимум 5 файлов. Первое изображение — главное, используется на витрине. Перетаскивайте для
+                        изменения порядка.
                       </p>
                       <input
                         type="file"
                         accept={ALLOWED_IMAGE_TYPES}
                         multiple
                         onChange={(e) => addProductImages(e.target.files)}
-                        disabled={(existingImageUrls.length + productImages.length) >= MAX_IMAGES}
+                        disabled={existingImageUrls.length + productImages.length >= MAX_IMAGES}
                         className="block w-full text-sm text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-3 file:py-1.5 file:text-white file:hover:bg-accent-btn-hover focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                       />
-                      {fieldErrors.images && (
-                        <p className="mt-0.5 text-xs text-red-600">{fieldErrors.images}</p>
-                      )}
+                      {fieldErrors.images && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.images}</p>}
                       {(existingImageUrls.length > 0 || productImages.length > 0) && (
                         <div className="mt-3 flex flex-wrap gap-3">
                           {existingImageUrls.map((url, index) => (
@@ -1076,10 +1078,7 @@ function AdminProductsPageContent() {
                                 onDragOver={(ev) => ev.preventDefault()}
                                 onDrop={(ev) => {
                                   ev.preventDefault();
-                                  const toIndex = parseInt(
-                                    (ev.currentTarget.getAttribute("data-index") ?? "0"),
-                                    10
-                                  );
+                                  const toIndex = parseInt(ev.currentTarget.getAttribute("data-index") ?? "0", 10);
                                   if (productImagesDraggedIndex !== null && productImagesDraggedIndex !== toIndex) {
                                     reorderProductImages(productImagesDraggedIndex, toIndex);
                                   }
@@ -1092,11 +1091,7 @@ function AdminProductsPageContent() {
                                     : "border-border-block"
                                 }`}
                               >
-                                <img
-                                  src={item.previewUrl}
-                                  alt=""
-                                  className="w-full h-full object-cover"
-                                />
+                                <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
                                 {productImagesMainIndex === combinedIndex && (
                                   <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
                                     Главное
@@ -1128,16 +1123,12 @@ function AdminProductsPageContent() {
                       <label className="block text-sm font-medium text-color-text-main mb-1">Состав</label>
                       <textarea
                         value={createForm.composition_size}
-                        onChange={(e) =>
-                          setCreateForm((f) => ({ ...f, composition_size: e.target.value }))
-                        }
+                        onChange={(e) => setCreateForm((f) => ({ ...f, composition_size: e.target.value }))}
                         className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                         rows={3}
                         placeholder="Розы 7 шт, Тюльпаны 8 шт, Гипсофила…"
                       />
-                      <p className="mt-0.5 text-xs text-color-text-secondary">
-                        Укажите состав букета вручную
-                      </p>
+                      <p className="mt-0.5 text-xs text-color-text-secondary">Укажите состав букета вручную</p>
                       {fieldErrors.composition_size && (
                         <p className="mt-0.5 text-xs text-red-600">{fieldErrors.composition_size}</p>
                       )}
@@ -1184,9 +1175,7 @@ function AdminProductsPageContent() {
                           <span className="text-xs text-color-text-secondary mt-0.5 block">Ширина, см</span>
                         </div>
                       </div>
-                      <p className="mt-0.5 text-xs text-color-text-secondary">
-                        Размер букета в сантиметрах
-                      </p>
+                      <p className="mt-0.5 text-xs text-color-text-secondary">Размер букета в сантиметрах</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-color-text-main mb-1">Цена (₽)</label>
@@ -1195,16 +1184,12 @@ function AdminProductsPageContent() {
                         min={0}
                         step={0.01}
                         value={createForm.price || ""}
-                        onChange={(e) =>
-                          setCreateForm((f) => ({ ...f, price: parseFloat(e.target.value) || 0 }))
-                        }
+                        onChange={(e) => setCreateForm((f) => ({ ...f, price: parseFloat(e.target.value) || 0 }))}
                         onWheel={(e) => (e.target as HTMLInputElement).blur()}
                         className="w-32 rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         required
                       />
-                      {fieldErrors.price && (
-                        <p className="mt-0.5 text-xs text-red-600">{fieldErrors.price}</p>
-                      )}
+                      {fieldErrors.price && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.price}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-color-text-main mb-1">Категории</label>
@@ -1218,7 +1203,10 @@ function AdminProductsPageContent() {
                             return (
                               <ul key={col} className="divide-y divide-border-block">
                                 {list.map((cat) => (
-                                  <li key={cat.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]">
+                                  <li
+                                    key={cat.id}
+                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                  >
                                     <input
                                       type="checkbox"
                                       id={`cat-${cat.slug}`}
@@ -1226,7 +1214,10 @@ function AdminProductsPageContent() {
                                       onChange={() => toggleCategorySlug(cat.slug)}
                                       className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                                     />
-                                    <label htmlFor={`cat-${cat.slug}`} className="text-sm text-color-text-main cursor-pointer flex-1">
+                                    <label
+                                      htmlFor={`cat-${cat.slug}`}
+                                      className="text-sm text-color-text-main cursor-pointer flex-1"
+                                    >
                                       {cat.name}
                                     </label>
                                   </li>
@@ -1280,9 +1271,7 @@ function AdminProductsPageContent() {
                           Добавить вариант
                         </button>
                       </div>
-                      {fieldErrors.variants && (
-                        <p className="mb-2 text-xs text-red-600">{fieldErrors.variants}</p>
-                      )}
+                      {fieldErrors.variants && <p className="mb-2 text-xs text-red-600">{fieldErrors.variants}</p>}
                       {variants.length === 0 && (
                         <p className="text-sm text-color-text-secondary py-3 text-center border border-border-block rounded">
                           Нет вариантов. Нажмите «Добавить вариант».
@@ -1306,7 +1295,9 @@ function AdminProductsPageContent() {
                                   setVariantsDraggedIndex(null);
                                 }}
                                 className={`border rounded-lg bg-[rgba(31,42,31,0.04)] ${
-                                    variantsDraggedIndex === idx ? "border-color-text-main opacity-80" : "border-border-block"
+                                  variantsDraggedIndex === idx
+                                    ? "border-color-text-main opacity-80"
+                                    : "border-border-block"
                                 }`}
                               >
                                 {/* Шапка варианта (всегда видна) */}
@@ -1361,7 +1352,9 @@ function AdminProductsPageContent() {
                                         className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                                       />
                                       {fieldErrors[`variant_${idx}_name`] && (
-                                        <p className="mt-0.5 text-xs text-red-600">{fieldErrors[`variant_${idx}_name`]}</p>
+                                        <p className="mt-0.5 text-xs text-red-600">
+                                          {fieldErrors[`variant_${idx}_name`]}
+                                        </p>
                                       )}
                                     </div>
                                     <div>
@@ -1373,7 +1366,9 @@ function AdminProductsPageContent() {
                                         className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                                         rows={2}
                                       />
-                                      <p className="mt-0.5 text-xs text-color-text-secondary">Укажите состав букета вручную</p>
+                                      <p className="mt-0.5 text-xs text-color-text-secondary">
+                                        Укажите состав букета вручную
+                                      </p>
                                     </div>
                                     <div>
                                       <label className="block text-xs text-color-text-main mb-0.5">Размер</label>
@@ -1386,7 +1381,8 @@ function AdminProductsPageContent() {
                                             value={variant.height_cm ?? ""}
                                             onChange={(e) =>
                                               updateVariant(variant.id, {
-                                                height_cm: e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
+                                                height_cm:
+                                                  e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
                                               })
                                             }
                                             onWheel={(e) => (e.target as HTMLInputElement).blur()}
@@ -1403,7 +1399,8 @@ function AdminProductsPageContent() {
                                             value={variant.width_cm ?? ""}
                                             onChange={(e) =>
                                               updateVariant(variant.id, {
-                                                width_cm: e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
+                                                width_cm:
+                                                  e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
                                               })
                                             }
                                             onWheel={(e) => (e.target as HTMLInputElement).blur()}
@@ -1413,7 +1410,9 @@ function AdminProductsPageContent() {
                                           <span className="text-xs text-color-text-secondary block">Ширина, см</span>
                                         </div>
                                       </div>
-                                      <p className="mt-0.5 text-xs text-color-text-secondary">Размер букета в сантиметрах</p>
+                                      <p className="mt-0.5 text-xs text-color-text-secondary">
+                                        Размер букета в сантиметрах
+                                      </p>
                                     </div>
                                     <div className="flex gap-2 items-start">
                                       <div className="flex-1">
@@ -1431,23 +1430,25 @@ function AdminProductsPageContent() {
                                           className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-[rgba(31,42,31,0.06)]"
                                         />
                                         {fieldErrors[`variant_${idx}_price`] && (
-                                          <p className="mt-0.5 text-xs text-red-600">{fieldErrors[`variant_${idx}_price`]}</p>
+                                          <p className="mt-0.5 text-xs text-red-600">
+                                            {fieldErrors[`variant_${idx}_price`]}
+                                          </p>
                                         )}
                                       </div>
                                       <label className="flex items-center gap-1 pt-1">
                                         <input
                                           type="checkbox"
                                           checked={variant.is_preorder}
-                                          onChange={(e) =>
-                                            updateVariant(variant.id, { is_preorder: e.target.checked })
-                                          }
+                                          onChange={(e) => updateVariant(variant.id, { is_preorder: e.target.checked })}
                                           className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                                         />
                                         <span className="text-xs text-color-text-main">Предзаказ</span>
                                       </label>
                                     </div>
                                     <div>
-                                      <label className="block text-xs text-color-text-secondary mb-1">Фото варианта</label>
+                                      <label className="block text-xs text-color-text-secondary mb-1">
+                                        Фото варианта
+                                      </label>
                                       {variant.image ? (
                                         <div className="relative w-16 h-16 rounded border border-border-block overflow-hidden">
                                           <img
@@ -1465,11 +1466,7 @@ function AdminProductsPageContent() {
                                         </div>
                                       ) : variant.imageUrl ? (
                                         <div className="relative w-16 h-16 rounded border border-border-block overflow-hidden">
-                                          <img
-                                            src={variant.imageUrl}
-                                            alt=""
-                                            className="w-full h-full object-cover"
-                                          />
+                                          <img src={variant.imageUrl} alt="" className="w-full h-full object-cover" />
                                           <input
                                             type="file"
                                             accept={ALLOWED_IMAGE_TYPES}
@@ -1519,11 +1516,7 @@ function AdminProductsPageContent() {
                       </p>
                       {variantMainImage ? (
                         <div className="relative w-20 h-20 rounded-lg border border-border-block overflow-hidden">
-                          <img
-                            src={variantMainImage.previewUrl}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={variantMainImage.previewUrl} alt="" className="w-full h-full object-cover" />
                           <button
                             type="button"
                             onClick={removeMainImageForVariantProduct}
@@ -1534,11 +1527,7 @@ function AdminProductsPageContent() {
                         </div>
                       ) : existingMainImageUrl ? (
                         <div className="relative w-20 h-20 rounded-lg border border-border-block overflow-hidden">
-                          <img
-                            src={existingMainImageUrl}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={existingMainImageUrl} alt="" className="w-full h-full object-cover" />
                           <p className="text-xs text-color-text-secondary mt-1">Загрузите новый файл, чтобы заменить</p>
                           <input
                             type="file"
@@ -1579,7 +1568,10 @@ function AdminProductsPageContent() {
                             return (
                               <ul key={col} className="divide-y divide-border-block">
                                 {list.map((cat) => (
-                                  <li key={cat.id} className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]">
+                                  <li
+                                    key={cat.id}
+                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                  >
                                     <input
                                       type="checkbox"
                                       id={`cat-${cat.slug}`}
@@ -1587,7 +1579,10 @@ function AdminProductsPageContent() {
                                       onChange={() => toggleCategorySlug(cat.slug)}
                                       className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                                     />
-                                    <label htmlFor={`cat-${cat.slug}`} className="text-sm text-color-text-main cursor-pointer flex-1">
+                                    <label
+                                      htmlFor={`cat-${cat.slug}`}
+                                      className="text-sm text-color-text-main cursor-pointer flex-1"
+                                    >
                                       {cat.name}
                                     </label>
                                   </li>
@@ -1629,7 +1624,9 @@ function AdminProductsPageContent() {
                   {productImagesUploading
                     ? "Загрузка изображений…"
                     : createLoading
-                      ? (isEditMode ? "Сохранение…" : "Создание…")
+                      ? isEditMode
+                        ? "Сохранение…"
+                        : "Создание…"
                       : isEditMode
                         ? "Сохранить изменения"
                         : "Создать"}

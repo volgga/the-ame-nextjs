@@ -64,7 +64,9 @@ export async function getAllVariantProducts(): Promise<Product[]> {
   try {
     const { data, error } = await supabase
       .from("variant_products")
-      .select("id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order")
+      .select(
+        "id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order"
+      )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
       .order("sort_order", { ascending: true, nullsFirst: false });
@@ -92,7 +94,9 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
   try {
     const { data, error } = await supabase
       .from("variant_products")
-      .select("id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order")
+      .select(
+        "id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order"
+      )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -109,7 +113,9 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
 /**
  * Вариантный товар по slug с массивом вариантов (для витрины: состав/размер выбранного варианта).
  */
-export async function getVariantProductWithVariantsBySlug(slug: string): Promise<(Product & { variants?: ProductVariantPublic[] }) | null> {
+export async function getVariantProductWithVariantsBySlug(
+  slug: string
+): Promise<(Product & { variants?: ProductVariantPublic[] }) | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
@@ -117,7 +123,9 @@ export async function getVariantProductWithVariantsBySlug(slug: string): Promise
   try {
     const { data: vp, error: vpErr } = await supabase
       .from("variant_products")
-      .select("id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order")
+      .select(
+        "id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order"
+      )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -134,15 +142,25 @@ export async function getVariantProductWithVariantsBySlug(slug: string): Promise
       .order("sort_order", { ascending: true, nullsFirst: false });
 
     if (vErr || !vars?.length) return product;
-    const variants: ProductVariantPublic[] = vars.map((v: { id: number; title?: string; composition?: string | null; height_cm?: number | null; width_cm?: number | null; price?: number; image_url?: string | null }) => ({
-      id: v.id,
-      name: v.title ?? "",
-      price: Number(v.price ?? 0),
-      composition: v.composition?.trim() || null,
-      height_cm: v.height_cm != null ? Number(v.height_cm) : null,
-      width_cm: v.width_cm != null ? Number(v.width_cm) : null,
-      image_url: v.image_url ?? null,
-    }));
+    const variants: ProductVariantPublic[] = vars.map(
+      (v: {
+        id: number;
+        title?: string;
+        composition?: string | null;
+        height_cm?: number | null;
+        width_cm?: number | null;
+        price?: number;
+        image_url?: string | null;
+      }) => ({
+        id: v.id,
+        name: v.title ?? "",
+        price: Number(v.price ?? 0),
+        composition: v.composition?.trim() || null,
+        height_cm: v.height_cm != null ? Number(v.height_cm) : null,
+        width_cm: v.width_cm != null ? Number(v.width_cm) : null,
+        image_url: v.image_url ?? null,
+      })
+    );
     return { ...product, variants };
   } catch (e) {
     console.error(`${LOG_PREFIX} getVariantProductWithVariantsBySlug:`, e instanceof Error ? e.message : String(e));

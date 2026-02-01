@@ -60,8 +60,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "The Ame — премиальные букеты в Сочи",
-    description:
-      "Премиальные букеты, свежие цветы и идеальный сервис. Закажите доставку по Сочи от 45 минут.",
+    description: "Премиальные букеты, свежие цветы и идеальный сервис. Закажите доставку по Сочи от 45 минут.",
     images: ["https://theame.ru/og-image.jpg"],
   },
   // Иконки (favicon)
@@ -71,9 +70,7 @@ export const metadata: Metadata = {
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   // Другие метаданные
   manifest: "/site.webmanifest",
@@ -145,9 +142,9 @@ export default function RootLayout({
 
         {/* Основная структура: Header + контент + Footer */}
         <Providers>
-          <div className="min-h-screen flex flex-col bg-white">
+          <div className="min-h-screen flex flex-col bg-page-bg">
             <Header />
-            <main className="flex-1 bg-white">{children}</main>
+            <main className="flex-1 bg-page-bg">{children}</main>
             <Footer />
             {/* Плавающая кнопка соцсетей */}
             <FloatingSocialButton />

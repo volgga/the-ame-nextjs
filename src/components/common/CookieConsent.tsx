@@ -43,8 +43,8 @@ export function CookieConsent() {
       className="fixed bottom-4 right-4 z-[90] w-[min(360px,calc(100vw-2rem))] rounded-xl bg-white p-4 shadow-[0_4px_20px_rgba(0,0,0,0.12)]"
     >
       <p className="text-sm text-[#333] leading-relaxed mb-4">
-        К сайту подключен сервис веб-аналитики, использующий cookie-файлы для
-        анализа пользовательской активности. Подробнее — в{" "}
+        К сайту подключен сервис веб-аналитики, использующий cookie-файлы для анализа пользовательской активности.
+        Подробнее — в{" "}
         <Link
           href="/docs/privacy"
           className="text-color-text-main underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-color-text-main/30 focus-visible:ring-offset-1 rounded"

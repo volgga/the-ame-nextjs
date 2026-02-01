@@ -59,11 +59,7 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
 
             return (
               <div key={item.id} className="group flex flex-col h-full">
-                <Link
-                  href={href}
-                  aria-label={item.name}
-                  className="block flex-1 flex flex-col"
-                >
+                <Link href={href} aria-label={item.name} className="block flex-1 flex flex-col">
                   <div className="relative overflow-hidden rounded-2xl">
                     <div className="aspect-square bg-[#ece9e2]">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -82,9 +78,7 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
                       {item.name}
                     </h3>
                     <div className="mt-1">
-                      <span className="text-base md:text-lg font-semibold">
-                        {priceText}
-                      </span>
+                      <span className="text-base md:text-lg font-semibold">{priceText}</span>
                     </div>
                   </div>
                 </Link>
@@ -120,4 +114,3 @@ export function FeaturedProducts({ products: allProducts }: FeaturedProductsProp
     </section>
   );
 }
-

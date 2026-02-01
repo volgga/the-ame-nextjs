@@ -22,11 +22,7 @@ type CategoryChipsProps = {
  */
 export function CategoryChips({ categories, currentSlug }: CategoryChipsProps) {
   return (
-    <div
-      className="w-full max-w-full px-4 md:px-6 flex flex-wrap justify-center gap-3"
-      role="group"
-      aria-label="Категории каталога"
-    >
+    <div className="w-full max-w-full flex flex-wrap justify-center gap-3" role="group" aria-label="Категории каталога">
       {categories.map((cat) => {
         const href = cat.isAll ? ALL_CATALOG.href : `/magazine/${cat.slug}`;
         const isActive = cat.isAll ? currentSlug === null : cat.slug === currentSlug;
@@ -38,10 +34,8 @@ export function CategoryChips({ categories, currentSlug }: CategoryChipsProps) {
             className={`
               inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-medium
               transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2
-              ${isActive
-                ? "border-color-bg-main bg-[rgba(111,131,99,0.20)] text-color-text-main"
-                : "border-border-block bg-white text-color-text-main hover:bg-[rgba(31,42,31,0.06)]"
-              }
+              border-[var(--color-outline-border)] text-color-text-main
+              ${isActive ? "bg-btn-chip-active" : "bg-white hover:bg-[rgba(31,42,31,0.06)]"}
             `}
             aria-current={isActive ? "page" : undefined}
           >

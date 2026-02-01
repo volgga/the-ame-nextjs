@@ -15,10 +15,7 @@ const updateSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
 });
 
-export async function PATCH(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -34,12 +31,7 @@ export async function PATCH(
 
     const supabase = getSupabaseAdmin();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
-      .from("categories")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+    const { data, error } = await (supabase as any).from("categories").update(payload).eq("id", id).select().single();
     if (error) throw error;
     return NextResponse.json(data);
   } catch (e) {
@@ -51,10 +43,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;

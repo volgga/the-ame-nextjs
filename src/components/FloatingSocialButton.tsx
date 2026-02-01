@@ -68,8 +68,11 @@ export function FloatingSocialButton() {
   const [transitionPhase, setTransitionPhase] = useState<"start" | "end">("end");
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const stateRef = useRef({ currentIndex: 0, isTransitioning: false });
-  stateRef.current.currentIndex = currentIndex;
-  stateRef.current.isTransitioning = isTransitioning;
+
+  useEffect(() => {
+    stateRef.current.currentIndex = currentIndex;
+    stateRef.current.isTransitioning = isTransitioning;
+  }, [currentIndex, isTransitioning]);
 
   useEffect(() => {
     const t = setTimeout(() => setIsVisible(true), 500);
@@ -173,11 +176,7 @@ export function FloatingSocialButton() {
         {/* Иконки: crossfade prev / next */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           {!showTwoLayers ? (
-            <img
-              src={currentProvider.src}
-              alt={currentProvider.label}
-              className="w-8 h-8 object-contain block"
-            />
+            <img src={currentProvider.src} alt={currentProvider.label} className="w-8 h-8 object-contain block" />
           ) : (
             <>
               <img
@@ -210,11 +209,7 @@ export function FloatingSocialButton() {
         />
       </button>
 
-      <ContactsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        providers={providers}
-      />
+      <ContactsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} providers={providers} />
     </>
   );
 }

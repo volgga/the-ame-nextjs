@@ -35,8 +35,7 @@ export function FullscreenViewer({
   const didDragRef = useRef(false);
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  const hasHover =
-    typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches;
+  const hasHover = typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches;
   const imagesLen = images.length;
   const hasMultipleImages = imagesLen > 1;
   const scale = isZoomed ? ZOOM_SCALE : 1;
@@ -115,13 +114,7 @@ export function FullscreenViewer({
     didDragRef.current = true;
     const dx = e.clientX - dragStartRef.current.clientX;
     const dy = e.clientY - dragStartRef.current.clientY;
-    setOffset(
-      clampOffset(
-        dragStartRef.current.offsetX + dx,
-        dragStartRef.current.offsetY + dy,
-        scale
-      )
-    );
+    setOffset(clampOffset(dragStartRef.current.offsetX + dx, dragStartRef.current.offsetY + dy, scale));
   };
 
   const handlePointerUp = (e: React.PointerEvent) => {

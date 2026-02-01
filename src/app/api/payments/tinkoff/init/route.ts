@@ -17,25 +17,16 @@ export async function POST(request: Request) {
     const raw = await request.json();
     const parsed = bodySchema.safeParse(raw);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Неверный orderId" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Неверный orderId" }, { status: 400 });
     }
 
     const order = await getOrderById(parsed.data.orderId);
     if (!order) {
-      return NextResponse.json(
-        { error: "Заказ не найден" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Заказ не найден" }, { status: 404 });
     }
 
     if (order.status === "paid") {
-      return NextResponse.json(
-        { error: "Заказ уже оплачен" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Заказ уже оплачен" }, { status: 400 });
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
@@ -53,10 +44,7 @@ export async function POST(request: Request) {
     });
 
     if ("error" in initResult) {
-      return NextResponse.json(
-        { error: initResult.error },
-        { status: 502 }
-      );
+      return NextResponse.json({ error: initResult.error }, { status: 502 });
     }
 
     await updateOrderStatus(order.id, "payment_pending", initResult.PaymentId);
@@ -66,9 +54,6 @@ export async function POST(request: Request) {
       orderId: order.id,
     });
   } catch {
-    return NextResponse.json(
-      { error: "Ошибка инициализации платежа" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Ошибка инициализации платежа" }, { status: 500 });
   }
 }

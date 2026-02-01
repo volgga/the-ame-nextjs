@@ -44,20 +44,11 @@ export function SlidesGrid({ slides, onReorder, onEdit }: SlidesGridProps) {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={slides.map((s) => s.id)} strategy={rectSortingStrategy}>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
           {slides.map((slide, i) => (
-            <SlideCard
-              key={slide.id}
-              slide={slide}
-              index={i}
-              onEdit={() => onEdit(slide)}
-            />
+            <SlideCard key={slide.id} slide={slide} index={i} onEdit={() => onEdit(slide)} />
           ))}
         </div>
       </SortableContext>

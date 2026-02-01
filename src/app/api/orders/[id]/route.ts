@@ -5,10 +5,7 @@
 import { NextResponse } from "next/server";
 import { getOrderById } from "@/services/orders";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const order = await getOrderById(id);
   if (!order) {

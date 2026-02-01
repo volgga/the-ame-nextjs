@@ -25,26 +25,16 @@ export const CheckoutForm = () => {
       {/* Список товаров */}
       <div className="space-y-4">
         {state.items.map((item) => (
-          <div
-            key={item.id}
-            className="flex gap-4 p-4 border rounded-lg bg-white"
-          >
+          <div key={item.id} className="flex gap-4 p-4 border rounded-lg bg-white">
             {/* Изображение */}
             <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-[#ece9e2] flex-shrink-0">
-              <Image
-                src={item.image}
-                alt={item.name}
-                fill
-                className="object-cover"
-              />
+              <Image src={item.image} alt={item.name} fill className="object-cover" />
             </div>
 
             {/* Информация */}
             <div className="flex-1">
               <h3 className="font-semibold mb-1">{item.name}</h3>
-              <p className="text-sm text-muted-foreground mb-2">
-                {item.price.toLocaleString("ru-RU")} ₽
-              </p>
+              <p className="text-sm text-muted-foreground mb-2">{item.price.toLocaleString("ru-RU")} ₽</p>
 
               {/* Управление количеством */}
               <div className="flex items-center gap-3">
@@ -76,9 +66,7 @@ export const CheckoutForm = () => {
 
             {/* Итого по товару */}
             <div className="text-right">
-              <div className="font-semibold">
-                {(item.price * item.cartQuantity).toLocaleString("ru-RU")} ₽
-              </div>
+              <div className="font-semibold">{(item.price * item.cartQuantity).toLocaleString("ru-RU")} ₽</div>
             </div>
           </div>
         ))}

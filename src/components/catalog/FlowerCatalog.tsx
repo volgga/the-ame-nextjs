@@ -32,22 +32,29 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   // Преобразуем Product[] в Flower[]
   const flowers: Flower[] = useMemo(
     () =>
-      allProducts.map((p) => ({
-        id: p.id,
-        name: p.title,
-        price: p.price,
-        image: p.image,
-        description: p.shortDescription,
-        category: "Разное",
-        inStock: true,
-        quantity: 1,
-        colors: [],
-        size: "medium",
-        occasion: [],
-        slug: p.slug,
-        categorySlug: p.categorySlug ?? null,
-        isPreorder: p.isPreorder,
-      })),
+      allProducts.map((p) => {
+        const hasVariants = p.variants && p.variants.length > 0;
+        const variantPrices = hasVariants ? p.variants!.map((v) => v.price).filter(Number.isFinite) : [];
+        const minPrice = variantPrices.length > 0 ? Math.min(...variantPrices, p.price) : p.price;
+        const priceFrom = hasVariants || p.id.startsWith("vp-");
+        return {
+          id: p.id,
+          name: p.title,
+          price: minPrice,
+          image: p.image,
+          description: p.shortDescription,
+          category: "Разное",
+          inStock: true,
+          quantity: 1,
+          colors: [],
+          size: "medium",
+          occasion: [],
+          slug: p.slug,
+          categorySlug: p.categorySlug ?? null,
+          isPreorder: p.isPreorder,
+          priceFrom,
+        };
+      }),
     [allProducts]
   );
 
@@ -75,9 +82,9 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   }, [filteredFlowers, sortParam]);
 
   return (
-    <div className="container px-6 py-8">
-      {/* Каталог */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+    <div>
+      {/* Каталог: 2 колонки mobile, 4 на desktop; меньший gap — карточки крупнее */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {sortedFlowers.map((flower) => (
           <FlowerCard key={flower.id} flower={flower} />
         ))}
@@ -89,7 +96,7 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
           <p className="mb-4 text-lg text-color-text-secondary">Цветы не найдены</p>
           <Link
             href={pathname}
-            className="inline-block rounded-md border border-border-block bg-white px-4 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+            className="inline-block rounded-full border border-[var(--color-outline-border)] bg-white px-4 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
           >
             Сбросить фильтры
           </Link>

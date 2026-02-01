@@ -1,6 +1,5 @@
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { HeroCarousel } from "@/components/hero/HeroCarousel";
-import { WelcomeBonusModal } from "@/components/home/WelcomeBonusModal";
 import { getAllCatalogProducts } from "@/lib/products";
 import { getActiveHeroSlides } from "@/lib/heroSlides";
 
@@ -9,18 +8,14 @@ import { getActiveHeroSlides } from "@/lib/heroSlides";
  * Товары и слайды загружаются из Supabase.
  */
 export default async function HomePage() {
-  const [products, slides] = await Promise.all([
-    getAllCatalogProducts(),
-    getActiveHeroSlides(),
-  ]);
+  const [products, slides] = await Promise.all([getAllCatalogProducts(), getActiveHeroSlides()]);
   return (
-    <div className="min-h-screen bg-white">
-      <WelcomeBonusModal />
+    <div className="min-h-screen bg-page-bg">
       <HeroCarousel slides={slides} />
       <FeaturedProducts products={products} />
 
       {/* ====== Расширенный SEO-блок (как в original-project) ====== */}
-      <section className="py-24 bg-white" aria-labelledby="seo-the-ame">
+      <section className="py-24 bg-page-bg" aria-labelledby="seo-the-ame">
         <div className="container mx-auto px-6">
           <div className="mx-auto max-w-6xl text-center">
             {/* Главный заголовок */}
@@ -42,14 +37,11 @@ export default async function HomePage() {
             {/* Блок 1 */}
             <div className="mt-12 text-left md:text-center">
               <p className="mx-auto max-w-4xl text-lg md:text-xl leading-8 text-[#4b4b4b]">
-                The Ame — уютный цветочный магазин в Сочи на ул. Пластунская 123А,
-                корпус 2, этаж 2, офис 84, где цветы подбирают с душой. В нашем
-                каталоге — монобукеты из роз, пионов, хризантем, гортензий,
-                тюльпанов и ромашек, а также авторские букеты, композиции в
-                коробках или корзинах, и премиум-букеты для особых случаев.
-                Каждый цветок свежий и отборный, а гарантия на 3 дня даёт
-                уверенность в качестве: если букет не понравится — заменим
-                бесплатно.
+                The Ame — уютный цветочный магазин в Сочи на ул. Пластунская 123А, корпус 2, этаж 2, офис 84, где цветы
+                подбирают с душой. В нашем каталоге — монобукеты из роз, пионов, хризантем, гортензий, тюльпанов и
+                ромашек, а также авторские букеты, композиции в коробках или корзинах, и премиум-букеты для особых
+                случаев. Каждый цветок свежий и отборный, а гарантия на 3 дня даёт уверенность в качестве: если букет не
+                понравится — заменим бесплатно.
               </p>
             </div>
 
@@ -58,16 +50,12 @@ export default async function HomePage() {
 
             {/* Блок 2 */}
             <div className="mt-12">
-              <h3 className="text-2xl md:text-3xl font-semibold text-[#000]">
-                Быстрая доставка цветов по всему Сочи
-              </h3>
+              <h3 className="text-2xl md:text-3xl font-semibold text-[#000]">Быстрая доставка цветов по всему Сочи</h3>
               <p className="mt-5 mx-auto max-w-4xl text-lg md:text-xl leading-8 text-[#4b4b4b]">
-                Закажите доставку цветов в Сочи — мы привезём букет уже через 45
-                минут. Работаем во всех районах: Центр, Адлер, Хоста, Сириус,
-                Мацеста, Лоо, Дагомыс и Красная Поляна. Это идеальный способ
-                подарить цветы в Сочи любимой девушке, жене, маме, бабушке,
-                сестре, подруге, коллеге, учителю или начальнику. Мы
-                позаботимся о стильной упаковке и ярких эмоциях получателя.
+                Закажите доставку цветов в Сочи — мы привезём букет уже через 45 минут. Работаем во всех районах: Центр,
+                Адлер, Хоста, Сириус, Мацеста, Лоо, Дагомыс и Красная Поляна. Это идеальный способ подарить цветы в Сочи
+                любимой девушке, жене, маме, бабушке, сестре, подруге, коллеге, учителю или начальнику. Мы позаботимся о
+                стильной упаковке и ярких эмоциях получателя.
               </p>
             </div>
 
@@ -80,20 +68,17 @@ export default async function HomePage() {
                 Букеты для всех праздников и важных событий
               </h3>
               <p className="mt-5 mx-auto max-w-4xl text-lg md:text-xl leading-8 text-[#4b4b4b]">
-                В The Ame вы можете купить букет в Сочи на любой повод: 8 Марта,
-                14 февраля, Новый год, день рождения, юбилей, выпускной, День
-                матери, День учителя, свадьбу, годовщину, рождение ребёнка,
-                корпоратив или просто «без повода» — чтобы сказать «спасибо» или
-                «люблю». У нас есть сезонные коллекции, подарочные корзины с
-                фруктами и сладостями, ароматные свечи и стильные вазы — всё,
-                чтобы ваш подарок был особенным.
+                В The Ame вы можете купить букет в Сочи на любой повод: 8 Марта, 14 февраля, Новый год, день рождения,
+                юбилей, выпускной, День матери, День учителя, свадьбу, годовщину, рождение ребёнка, корпоратив или
+                просто «без повода» — чтобы сказать «спасибо» или «люблю». У нас есть сезонные коллекции, подарочные
+                корзины с фруктами и сладостями, ароматные свечи и стильные вазы — всё, чтобы ваш подарок был особенным.
               </p>
             </div>
 
             {/* CTA-текст */}
             <p className="mt-14 mx-auto max-w-3xl text-lg md:text-xl font-medium leading-8 text-[#2b2b2b]">
-              Выберите букет или купите онлайн прямо сейчас — и пусть цветы The
-              Ame создадут настроение, наполняя каждый момент красотой и теплом.
+              Выберите букет или купите онлайн прямо сейчас — и пусть цветы The Ame создадут настроение, наполняя каждый
+              момент красотой и теплом.
             </p>
           </div>
         </div>

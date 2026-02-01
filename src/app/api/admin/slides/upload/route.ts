@@ -4,13 +4,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 
 const BUCKET = "hero-slides";
 const MAX_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
-const ALLOWED_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-  "image/avif",
-];
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/avif"];
 const EXT_MAP: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/jpg": "jpg",
@@ -45,10 +39,7 @@ export async function POST(request: NextRequest) {
 
     const mime = file.type?.toLowerCase();
     if (!mime || !ALLOWED_TYPES.includes(mime)) {
-      return NextResponse.json(
-        { error: "Допустимые форматы: JPEG, PNG, WebP, AVIF" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Допустимые форматы: JPEG, PNG, WebP, AVIF" }, { status: 400 });
     }
 
     const ext = EXT_MAP[mime] ?? "jpg";
@@ -61,19 +52,14 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any).storage
-      .from(BUCKET)
-      .upload(storagePath, buffer, {
-        contentType: mime,
-        upsert: true,
-      });
+    const { data, error } = await (supabase as any).storage.from(BUCKET).upload(storagePath, buffer, {
+      contentType: mime,
+      upsert: true,
+    });
 
     if (error) {
       console.error("[admin/slides/upload]", error);
-      return NextResponse.json(
-        { error: error.message ?? "Ошибка загрузки в Storage" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: error.message ?? "Ошибка загрузки в Storage" }, { status: 500 });
     }
 
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

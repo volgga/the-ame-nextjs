@@ -18,9 +18,5 @@ export default function AdminProductEditRedirect() {
     }
   }, [id, router]);
 
-  return (
-    <div className="p-8 text-color-text-secondary">
-      Перенаправление на редактирование…
-    </div>
-  );
+  return <div className="p-8 text-color-text-secondary">Перенаправление на редактирование…</div>;
 }

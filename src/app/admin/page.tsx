@@ -10,27 +10,21 @@ export default function AdminPage() {
           className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition"
         >
           <h3 className="font-medium text-[#111]">Слайды</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Управление hero-слайдами на главной
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Управление hero-слайдами на главной</p>
         </Link>
         <Link
           href="/admin/products"
           className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition"
         >
           <h3 className="font-medium text-[#111]">Товары</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Товары и варианты
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Товары и варианты</p>
         </Link>
         <Link
           href="/admin/categories"
           className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition"
         >
           <h3 className="font-medium text-[#111]">Категории</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Категории каталога
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Категории каталога</p>
         </Link>
       </div>
     </div>

@@ -79,17 +79,11 @@ export async function GET(request: NextRequest) {
       sort_order: p.sort_order ?? 0,
     }));
 
-    let all = [...products, ...variantProducts].sort(
-      (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
-    );
+    let all = [...products, ...variantProducts].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
 
     if (q) {
       const lower = q.toLowerCase();
-      all = all.filter(
-        (p) =>
-          p.name?.toLowerCase().includes(lower) ||
-          p.slug?.toLowerCase().includes(lower)
-      );
+      all = all.filter((p) => p.name?.toLowerCase().includes(lower) || p.slug?.toLowerCase().includes(lower));
     }
 
     return NextResponse.json(all);
@@ -130,19 +124,21 @@ const createVariantSchema = z.object({
   is_hidden: z.boolean().default(false),
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
-  variants: z.array(
-    z.object({
-      name: z.string().min(1),
-      composition: z.string().optional().nullable(),
-      height_cm: z.number().int().min(0).optional().nullable(),
-      width_cm: z.number().int().min(0).optional().nullable(),
-      price: z.number().min(0),
-      is_preorder: z.boolean().default(false),
-      image_url: z.string().url().optional().nullable(),
-      sort_order: z.number().default(0),
-      is_active: z.boolean().default(true),
-    })
-  ).min(1),
+  variants: z
+    .array(
+      z.object({
+        name: z.string().min(1),
+        composition: z.string().optional().nullable(),
+        height_cm: z.number().int().min(0).optional().nullable(),
+        width_cm: z.number().int().min(0).optional().nullable(),
+        price: z.number().min(0),
+        is_preorder: z.boolean().default(false),
+        image_url: z.string().url().optional().nullable(),
+        sort_order: z.number().default(0),
+        is_active: z.boolean().default(true),
+      })
+    )
+    .min(1),
 });
 
 export async function POST(request: NextRequest) {
@@ -158,13 +154,9 @@ export async function POST(request: NextRequest) {
     if (type === "simple") {
       const parsed = createSimpleSchema.safeParse(body);
       if (!parsed.success) {
-        return NextResponse.json(
-          { error: "Неверные данные", details: parsed.error.flatten() },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
       }
-      const slug =
-        parsed.data.slug?.trim() || slugify(parsed.data.name) || crypto.randomUUID();
+      const slug = parsed.data.slug?.trim() || slugify(parsed.data.name) || crypto.randomUUID();
       const categorySlugs = parsed.data.category_slugs?.filter(Boolean) ?? null;
       const mainCategorySlug = categorySlugs?.[0] ?? parsed.data.category_slug ?? null;
       const { data, error } = await sb
@@ -195,23 +187,17 @@ export async function POST(request: NextRequest) {
     if (type === "variant") {
       const parsed = createVariantSchema.safeParse(body);
       if (!parsed.success) {
-        return NextResponse.json(
-          { error: "Неверные данные", details: parsed.error.flatten() },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
       }
-      const slug =
-        parsed.data.slug?.trim() || slugify(parsed.data.name) || String(Date.now());
-      
+      const slug = parsed.data.slug?.trim() || slugify(parsed.data.name) || String(Date.now());
+
       const categorySlugs = parsed.data.category_slugs?.filter(Boolean) ?? null;
       const mainCategorySlug = categorySlugs?.[0] ?? parsed.data.category_slug ?? null;
-      
+
       // Вычислить min_price_cache из вариантов (минимальная цена среди активных вариантов, не-предзаказов)
       const variantsWithPrice = parsed.data.variants.filter((v) => !v.is_preorder && v.price > 0);
-      const minPrice = variantsWithPrice.length > 0 
-        ? Math.min(...variantsWithPrice.map((v) => v.price))
-        : 0;
-      
+      const minPrice = variantsWithPrice.length > 0 ? Math.min(...variantsWithPrice.map((v) => v.price)) : 0;
+
       // Создать variant_product
       const { data: vpData, error: vpError } = await sb
         .from("variant_products")
@@ -229,9 +215,9 @@ export async function POST(request: NextRequest) {
         })
         .select()
         .single();
-      
+
       if (vpError) throw vpError;
-      
+
       // Создать product_variants
       // В БД колонка называется "title", не "name"
       const variantsToInsert = parsed.data.variants.map((v) => ({
@@ -246,13 +232,11 @@ export async function POST(request: NextRequest) {
         sort_order: v.sort_order,
         is_active: v.is_active,
       }));
-      
-      const { error: variantsError } = await sb
-        .from("product_variants")
-        .insert(variantsToInsert);
-      
+
+      const { error: variantsError } = await sb.from("product_variants").insert(variantsToInsert);
+
       if (variantsError) throw variantsError;
-      
+
       return NextResponse.json({ ...vpData, type: "variant", id: `vp-${vpData.id}` });
     }
 

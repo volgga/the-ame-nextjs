@@ -40,6 +40,7 @@ export default {
 					'hover-bg': 'var(--color-outline-hover-bg)',
 					'active-bg': 'var(--color-outline-active-bg)',
 				},
+				'btn-chip-active': 'var(--btn-chip-active-bg)',
 				'border-block': {
 					DEFAULT: 'var(--color-border-block)',
 					hover: 'var(--color-border-block-hover)',
@@ -49,9 +50,10 @@ export default {
 					text: 'var(--color-badge-text)',
 				},
 				ticker: {
-					bg: 'hsl(var(--ticker-bg))',
+					bg: 'var(--ticker-bg)',
 					foreground: 'var(--ticker-foreground)'
 				},
+				'page-bg': 'var(--page-bg)',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))',

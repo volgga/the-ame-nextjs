@@ -21,10 +21,7 @@ export const metadata: Metadata = {
  * Та же структура, что и страница категории: breadcrumb → H1+SEO → chips → toolbar → товары.
  */
 export default async function PosmotretVseTsvetyPage() {
-  const [categories, products] = await Promise.all([
-    getCategories(),
-    getAllCatalogProducts(),
-  ]);
+  const [categories, products] = await Promise.all([getCategories(), getAllCatalogProducts()]);
 
   const priceBounds = (() => {
     const prices = products.map((p) => p.price).filter(Number.isFinite);
@@ -34,10 +31,7 @@ export default async function PosmotretVseTsvetyPage() {
     return [min, Math.max(max, min + 1)] as [number, number];
   })();
 
-  const breadcrumbItems = [
-    { label: "Главная", href: "/" },
-    { label: ALL_CATALOG.title },
-  ];
+  const breadcrumbItems = [{ label: "Главная", href: "/" }, { label: ALL_CATALOG.title }];
 
   const chips = [
     { slug: "", name: ALL_CATALOG.title, isAll: true },
@@ -45,14 +39,12 @@ export default async function PosmotretVseTsvetyPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="container px-6 pt-8 pb-4 md:pt-10 md:pb-6">
-        {/* Breadcrumb — всегда сверху, не зависит от высоты описания */}
-        <div className="mb-6 md:mb-8">
-          <Breadcrumbs items={breadcrumbItems} />
-        </div>
+    <div className="min-h-screen bg-page-bg">
+      <div className="container px-6 pt-5 pb-8 md:pt-6 md:pb-10">
+        {/* Breadcrumb — отступы совпадают с карточкой товара */}
+        <Breadcrumbs items={breadcrumbItems} />
 
-        {/* Заголовок + описание — описание по верху H1 (как flowerna) */}
+        {/* Заголовок + описание */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-8 md:items-start mb-8 md:mb-10">
           <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-color-text-main uppercase tracking-tight">
             {ALL_CATALOG.title}
@@ -68,22 +60,22 @@ export default async function PosmotretVseTsvetyPage() {
           <CategoryChips categories={chips} currentSlug={null} />
         </div>
 
-        <div className="mb-6 md:mb-8">
+        <div className="mb-8 md:mb-10">
           <Suspense fallback={<div className="h-10" />}>
             <ProductToolbar priceBounds={priceBounds} />
           </Suspense>
         </div>
-      </div>
 
-      <Suspense
-        fallback={
-          <div className="min-h-[60vh] flex items-center justify-center text-color-text-secondary">
-            Загрузка каталога…
-          </div>
-        }
-      >
-        <FlowerCatalog products={products} />
-      </Suspense>
+        <Suspense
+          fallback={
+            <div className="min-h-[60vh] flex items-center justify-center text-color-text-secondary">
+              Загрузка каталога…
+            </div>
+          }
+        >
+          <FlowerCatalog products={products} />
+        </Suspense>
+      </div>
     </div>
   );
 }

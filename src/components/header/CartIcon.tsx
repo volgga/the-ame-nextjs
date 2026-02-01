@@ -15,13 +15,14 @@ export function CartIcon() {
   return (
     <>
       <button
+        id="header-cart"
         type="button"
         onClick={() => setIsDrawerOpen(true)}
         aria-label="Корзина"
         className={HEADER_ICON_CLASS}
       >
         <svg
-          className="w-5 h-5 md:w-6 md:h-6 shrink-0"
+          className="w-[18px] h-[18px] md:w-5 md:h-5 shrink-0"
           fill="none"
           stroke="currentColor"
           strokeWidth={1.6}

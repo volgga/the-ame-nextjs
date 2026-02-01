@@ -27,10 +27,7 @@ export interface TinkoffInitParams {
  * 4) конкатенация только значений
  * 5) SHA-256 (UTF-8)
  */
-export function buildTinkoffToken(
-  params: Record<string, string | number | undefined>,
-  password: string
-): string {
+export function buildTinkoffToken(params: Record<string, string | number | undefined>, password: string): string {
   const withPassword: Record<string, string> = {};
   for (const [k, v] of Object.entries(params)) {
     if (v === undefined || v === "") continue;
@@ -123,10 +120,7 @@ export async function tinkoffInit(
  * Проверка подписи входящего уведомления от Tinkoff.
  * Параметры — все из тела POST, кроме Token и вложенных объектов (Data, Receipt).
  */
-export function verifyTinkoffNotificationToken(
-  payload: Record<string, unknown>,
-  password: string
-): boolean {
+export function verifyTinkoffNotificationToken(payload: Record<string, unknown>, password: string): boolean {
   const tokenReceived = payload.Token as string | undefined;
   if (!tokenReceived) return false;
 

@@ -66,7 +66,7 @@ function PayButton({
         type="button"
         onClick={handlePay}
         disabled={disabled || loading}
-        className="w-full py-4 mt-6 rounded-lg font-semibold text-white uppercase transition-colors disabled:cursor-not-allowed bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
+        className="w-full py-4 mt-6 rounded-full font-semibold text-white uppercase transition-colors disabled:cursor-not-allowed bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
       >
         {loading ? "Подготовка…" : "ПЕРЕЙТИ К ОПЛАТЕ"}
       </button>
@@ -161,9 +161,8 @@ export function CheckoutFormModal() {
     const intervals: string[] = ["Доставка ночью"];
     const today = new Date();
     const selectedDate = deliveryDate ? new Date(deliveryDate) : null;
-    const isToday = selectedDate && 
-      selectedDate.toDateString() === today.toDateString();
-    
+    const isToday = selectedDate && selectedDate.toDateString() === today.toDateString();
+
     const now = new Date();
     const currentHour = now.getHours();
 
@@ -227,9 +226,7 @@ export function CheckoutFormModal() {
     <div className="pt-3 border-t border-border-block">
       {/* Ваши данные */}
       <div>
-        <h3 className="text-base font-semibold mb-2 text-color-text-main">
-          Ваши данные
-        </h3>
+        <h3 className="text-base font-semibold mb-2 text-color-text-main">Ваши данные</h3>
         <div className="space-y-3">
           <div>
             <label className="block text-sm mb-1">
@@ -413,10 +410,7 @@ export function CheckoutFormModal() {
 
             {isDeliveryDropdownOpen && (
               <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setIsDeliveryDropdownOpen(false)}
-                />
+                <div className="fixed inset-0 z-10" onClick={() => setIsDeliveryDropdownOpen(false)} />
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-border-block rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
                   {deliveryZones.map((zone) => {
                     const zonePrice = state.total >= zone.freeFrom ? 0 : zone.feeUnder;
@@ -557,9 +551,7 @@ export function CheckoutFormModal() {
             className="mt-1 w-4 h-4 accent-primary"
             required
           />
-          <span className="text-sm">
-            Согласие с политикой конфиденциальности и договором оферты
-          </span>
+          <span className="text-sm">Согласие с политикой конфиденциальности и договором оферты</span>
         </label>
         <label className="flex items-start gap-2 cursor-pointer">
           <input
@@ -568,17 +560,13 @@ export function CheckoutFormModal() {
             onChange={(e) => setRememberContacts(e.target.checked)}
             className="mt-1 w-4 h-4 accent-primary"
           />
-          <span className="text-sm">
-            Запомнить контакты в браузере для повторной покупки
-          </span>
+          <span className="text-sm">Запомнить контакты в браузере для повторной покупки</span>
         </label>
       </div>
 
       {/* Итоговая сумма (без линии сверху) */}
       <div className="pt-4 space-y-2 text-right">
-        <div className="text-sm">
-          Сумма: {state.total.toLocaleString("ru-RU")} р.
-        </div>
+        <div className="text-sm">Сумма: {state.total.toLocaleString("ru-RU")} р.</div>
         {deliveryPrice > 0 && (
           <div className="text-sm flex items-center justify-end gap-2 flex-wrap">
             <span>Доставка: {deliveryPrice.toLocaleString("ru-RU")} р.</span>
@@ -604,7 +592,7 @@ export function CheckoutFormModal() {
           telegram: customerTelegram || undefined,
           recipientName: isRecipientSelf ? customerName : recipientName,
           recipientPhone: isRecipientSelf ? customerPhone : recipientPhone,
-          deliveryType: isPickup ? "pickup" : deliveryType ?? undefined,
+          deliveryType: isPickup ? "pickup" : (deliveryType ?? undefined),
           isPickup,
           deliveryAddress: deliveryAddress || undefined,
           deliveryDate: deliveryDate || undefined,

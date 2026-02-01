@@ -14,10 +14,7 @@ const updateSchema = z.object({
   is_active: z.boolean().optional(),
 });
 
-export async function PATCH(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -29,12 +26,7 @@ export async function PATCH(
     const supabase = getSupabaseAdmin();
     const payload: Record<string, unknown> = { ...parsed.data, updated_at: new Date().toISOString() };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hero_slides нет в сгенерированных Supabase типах
-    const { data, error } = await (supabase as any)
-      .from("hero_slides")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+    const { data, error } = await (supabase as any).from("hero_slides").update(payload).eq("id", id).select().single();
     if (error) throw error;
     return NextResponse.json(data);
   } catch (e) {
@@ -59,10 +51,7 @@ function getStoragePathFromUrl(url: string): string | null {
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -70,11 +59,7 @@ export async function DELETE(
 
     // Получить slide для image_url
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hero_slides нет в сгенерированных Supabase типах
-    const { data: slide } = await (supabase as any)
-      .from("hero_slides")
-      .select("image_url")
-      .eq("id", id)
-      .single();
+    const { data: slide } = await (supabase as any).from("hero_slides").select("image_url").eq("id", id).single();
 
     if (slide?.image_url) {
       const path = getStoragePathFromUrl(slide.image_url);

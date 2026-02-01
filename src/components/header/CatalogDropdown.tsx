@@ -138,7 +138,14 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
         aria-haspopup="true"
         aria-controls="catalog-dropdown-menu"
         id="catalog-dropdown-trigger"
-        onClick={isTouch ? (e) => { e.preventDefault(); setOpen((v) => !v); } : undefined}
+        onClick={
+          isTouch
+            ? (e) => {
+                e.preventDefault();
+                setOpen((v) => !v);
+              }
+            : undefined
+        }
       >
         Каталог
       </Link>
@@ -157,7 +164,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
           onMouseLeave={handleClose}
         >
           <div
-            className="overflow-hidden bg-white transition-all duration-200 ease-out"
+            className="overflow-hidden bg-white transition-all duration-200 ease-out border border-[#1F2A1F]"
             style={{
               padding: "22px 26px",
               width: "fit-content",
@@ -169,10 +176,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
               transition: "opacity 200ms ease-out, transform 200ms ease-out",
             }}
           >
-            <div
-              className="flex items-start"
-              style={{ gap: COLUMN_GAP }}
-            >
+            <div className="flex items-start" style={{ gap: COLUMN_GAP }}>
               {columns.map((col, colIdx) => (
                 <div
                   key={colIdx}
