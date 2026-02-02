@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { Breadcrumbs, SECTION_GAP } from "@/components/ui/breadcrumbs";
 import { CategoryChips } from "@/components/catalog/category-chips";
 import { ProductToolbar } from "@/components/catalog/product-toolbar";
 import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
@@ -40,12 +40,12 @@ export default async function PosmotretVseTsvetyPage() {
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-6 pt-5 pb-8 md:pt-6 md:pb-10">
+      <div className="container px-6 pt-3 pb-8 md:pt-4 md:pb-10">
         {/* Breadcrumb — отступы совпадают с карточкой товара */}
         <Breadcrumbs items={breadcrumbItems} />
 
         {/* Заголовок + описание */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-8 md:items-start mb-8 md:mb-10">
+        <div className={`grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-8 md:items-start ${SECTION_GAP}`}>
           <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-color-text-main uppercase tracking-tight">
             {ALL_CATALOG.title}
           </h1>
@@ -56,11 +56,11 @@ export default async function PosmotretVseTsvetyPage() {
           </div>
         </div>
 
-        <div className="mb-8 md:mb-10">
+        <div className={SECTION_GAP}>
           <CategoryChips categories={chips} currentSlug={null} />
         </div>
 
-        <div className="mb-8 md:mb-10">
+        <div className={SECTION_GAP}>
           <Suspense fallback={<div className="h-10" />}>
             <ProductToolbar priceBounds={priceBounds} />
           </Suspense>

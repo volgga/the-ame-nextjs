@@ -40,6 +40,7 @@ All colors MUST be HSL.
     --color-accent-btn-disabled-bg: rgba(31, 42, 31, 0.25);
     --color-accent-btn-disabled-text: rgba(31, 42, 31, 0.5);
 
+
     /* Outline / secondary / chip buttons: тёмно-зелёная рамка, как на скрине */
     --color-outline-border: #1f2a1f;
     --color-outline-hover-bg: rgba(31, 42, 31, 0.06);
@@ -184,12 +185,14 @@ All colors MUST be HSL.
   .btn-accent {
     background-color: var(--color-accent-btn);
     color: #ffffff;
+    transition: background-color 0.2s ease, transform 0.1s ease;
   }
   .btn-accent:hover:not(:disabled) {
     background-color: var(--color-accent-btn-hover);
   }
   .btn-accent:active:not(:disabled) {
     background-color: var(--color-accent-btn-active);
+    transform: scale(0.98) translateY(1px);
   }
   .btn-accent:disabled {
     background-color: var(--color-accent-btn-disabled-bg);
@@ -207,6 +210,98 @@ All colors MUST be HSL.
   }
   .btn-outline:active:not(:disabled) {
     background-color: var(--color-outline-active-bg);
+  }
+
+  /* Product CTA buttons: outline с зелёным hover (как на шапке) */
+  .btn-product-cta {
+    border: 1px solid var(--color-outline-border);
+    color: var(--color-text-main);
+    background: #ffffff;
+  }
+  .btn-product-cta:hover:not(:disabled) {
+    background-color: var(--header-bg);
+    color: var(--header-foreground);
+    border-color: var(--header-bg);
+  }
+  .btn-product-cta:active:not(:disabled) {
+    background-color: var(--color-accent-btn-active);
+    color: var(--header-foreground);
+    border-color: var(--color-accent-btn-active);
+    transform: scale(0.98) translateY(1px);
+  }
+
+  /* Favorite button: унифицированный стиль для каталога и product page */
+  .btn-favorite {
+    width: 2.25rem; /* w-9 */
+    height: 2.25rem; /* h-9 */
+    border: 1px solid var(--color-outline-border);
+    background: #ffffff;
+    border-radius: 0.5rem; /* rounded-lg */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+  /* Selected state: светло-зелёный фон (базовое состояние) */
+  .btn-favorite.selected {
+    background-color: var(--header-bg);
+    border-color: var(--color-outline-border);
+  }
+  /* Hover: заливка светло-зелёным (для невыбранного состояния) */
+  .btn-favorite:not(.selected):hover:not(:disabled) {
+    background-color: var(--header-bg);
+    border-color: var(--header-bg);
+  }
+  /* Active: press-эффект */
+  .btn-favorite:active:not(:disabled) {
+    transform: scale(0.98) translateY(1px);
+  }
+  .btn-favorite.selected:active:not(:disabled) {
+    background-color: var(--color-accent-btn-active);
+    border-color: var(--color-accent-btn-active);
+  }
+  /* Focus-visible: кастомный ring в стиле сайта */
+  .btn-favorite:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(31, 42, 31, 0.3), 0 0 0 4px rgba(31, 42, 31, 0.1);
+  }
+
+  /* Catalog icon buttons: круглые кнопки для сердечка и лупы в каталоге */
+  .btn-icon-circle {
+    width: 2rem; /* w-8 */
+    height: 2rem; /* h-8 */
+    border: 1px solid var(--color-outline-border);
+    background: #ffffff;
+    border-radius: 50%; /* rounded-full */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease-out;
+    flex-shrink: 0;
+  }
+  /* Selected state (только для сердечка) */
+  .btn-icon-circle.selected {
+    background-color: var(--header-bg);
+    border-color: var(--color-outline-border);
+  }
+  /* Hover: заливка светло-зелёным (для невыбранного состояния) */
+  .btn-icon-circle:not(.selected):hover:not(:disabled) {
+    background-color: var(--header-bg);
+    border-color: var(--color-outline-border);
+  }
+  /* Active: press-эффект */
+  .btn-icon-circle:active:not(:disabled) {
+    transform: scale(0.97) translateY(1px);
+  }
+  .btn-icon-circle.selected:active:not(:disabled) {
+    background-color: var(--color-accent-btn-active);
+    border-color: var(--color-accent-btn-active);
+  }
+  /* Focus-visible: кастомный ring в стиле сайта */
+  .btn-icon-circle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(31, 42, 31, 0.3), 0 0 0 4px rgba(31, 42, 31, 0.1);
   }
 
   /* Chip/toggle: неактивный = белый, активный = светло-бежевый */
@@ -237,6 +332,7 @@ All colors MUST be HSL.
     transform: scale(0.96) translateY(1px);
     background-color: var(--color-outline-active-bg);
   }
+
 
   /* Подсветка иконки в шапке после «прилёта» иконки из карточки */
   .fly-landed {
@@ -275,6 +371,15 @@ All colors MUST be HSL.
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+  }
+
+  /* Скрыть полосу прокрутки, оставить скролл (лента «Рекомендуем») */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 

@@ -13,6 +13,15 @@ export const ALL_CATALOG = {
   href: "/posmotret-vse-tsvety",
 } as const;
 
+/** Слаги категории «Популярное» — пробуем по порядку (в БД может быть populyarnoe или popularnoe) */
+export const POPULAR_CATEGORY_SLUG_CANDIDATES = ["populyarnoe", "popularnoe"] as const;
+
+/** Основной слаг для обратной совместимости (первый из кандидатов) */
+export const POPULAR_CATEGORY_SLUG = POPULAR_CATEGORY_SLUG_CANDIDATES[0];
+
+/** Максимум товаров в блоке «Рекомендуем» (лента в одну строку) */
+export const RECOMMEND_MAX = 12;
+
 /** Fallback для CatalogDropdown, если категории ещё не загружены */
 export const FALLBACK_CATEGORIES: { label: string; slug: string }[] = [
   { label: "Авторские букеты", slug: "avtorskie-bukety" },
@@ -27,13 +36,33 @@ export function categoriesToNav(categories: Category[]): { label: string; slug: 
 
 /**
  * Отфильтровать товары по slug категории.
- * Использует поле categorySlug у товара (из products/variant_products).
+ * Учитывает categorySlug и массив categorySlugs (из products/variant_products).
  */
-export function filterProductsByCategorySlug<T extends { slug: string; categorySlug?: string | null }>(
+export function filterProductsByCategorySlug<
+  T extends { slug: string; categorySlug?: string | null; categorySlugs?: string[] | null }
+>(products: T[], categorySlug: string): T[] {
+  return products.filter(
+    (p) => p.categorySlug === categorySlug || (p.categorySlugs && p.categorySlugs.includes(categorySlug))
+  );
+}
+
+type ProductWithCategory = { slug: string; categorySlug?: string | null; categorySlugs?: string[] | null };
+
+/**
+ * Товары для блока «Рекомендуем»: перебираем кандидатов slug (populyarnoe, popularnoe),
+ * возвращаем первый непустой результат и слаг, который сработал.
+ */
+export function getRecommendProducts<T extends ProductWithCategory>(
   products: T[],
-  categorySlug: string
-): T[] {
-  return products.filter((p) => p.categorySlug === categorySlug);
+  maxItems: number = RECOMMEND_MAX
+): { products: T[]; usedSlug: string | null } {
+  for (const slug of POPULAR_CATEGORY_SLUG_CANDIDATES) {
+    const filtered = filterProductsByCategorySlug(products, slug);
+    if (filtered.length > 0) {
+      return { products: filtered.slice(0, maxItems), usedSlug: slug };
+    }
+  }
+  return { products: [], usedSlug: null };
 }
 
 export function isValidCategorySlug(slug: string | null | undefined, validSlugs: Set<string>): slug is string {

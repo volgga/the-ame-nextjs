@@ -9,15 +9,18 @@ async function requireAdmin() {
   if (!ok) throw new Error("unauthorized");
 }
 
+const optionalImageUrl = z.union([z.string(), z.null(), z.literal("")]).optional().transform((v) => (v === "" ? null : v));
+
 const updateSchema = z.object({
   size: z.string().min(1).optional(),
   composition: z.string().optional().nullable(),
   height_cm: z.number().int().min(0).optional().nullable(),
   width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0).optional(),
+  is_preorder: z.boolean().optional(),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
-  image_url: z.string().url().optional().nullable(),
+  image_url: optionalImageUrl,
   description: z.string().optional().nullable(),
 });
 
@@ -33,7 +36,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const body = await request.json();
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
+      const flatten = parsed.error.flatten();
+      console.error("[admin/products variants PATCH] validation failed:", flatten);
+      return NextResponse.json(
+        { error: "Неверные данные", details: flatten, fieldErrors: flatten.fieldErrors },
+        { status: 400 }
+      );
     }
 
     const supabase = getSupabaseAdmin();

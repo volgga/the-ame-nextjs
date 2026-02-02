@@ -50,7 +50,7 @@ export function FavoritesPageClient({ products }: FavoritesPageClientProps) {
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-6 pt-5 pb-8 md:pt-6 md:pb-10">
+      <div className="container px-6 pt-3 pb-8 md:pt-4 md:pb-10">
         <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Избранное" }]} />
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 md:mb-10">
@@ -84,9 +84,11 @@ export function FavoritesPageClient({ products }: FavoritesPageClientProps) {
         {/* Grid — как в каталоге */}
         {favoriteFlowers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-5">
-            {favoriteFlowers.map((flower) => (
-              <FlowerCard key={flower.id} flower={flower} />
-            ))}
+            {favoriteFlowers.map((flower) => {
+              // Находим соответствующий Product для передачи дополнительных данных
+              const product = products.find((p) => p.id === flower.id);
+              return <FlowerCard key={flower.id} flower={flower} product={product} />;
+            })}
           </div>
         ) : (
           <div className="py-16 text-center">

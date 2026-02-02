@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { Breadcrumbs, SECTION_GAP } from "@/components/ui/breadcrumbs";
 import { CategoryChips } from "@/components/catalog/category-chips";
 import { ProductToolbar } from "@/components/catalog/product-toolbar";
 import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
@@ -70,12 +70,12 @@ export default async function MagazineCategoryPage({ params }: MagazineCategoryP
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-6 pt-5 pb-8 md:pt-6 md:pb-10">
+      <div className="container px-6 pt-3 pb-8 md:pt-4 md:pb-10">
         {/* A) Breadcrumb — отступы совпадают с карточкой товара */}
         <Breadcrumbs items={breadcrumbItems} />
 
         {/* B+C) Заголовок + SEO текст */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-8 md:items-start mb-8 md:mb-10">
+        <div className={`grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-8 md:items-start ${SECTION_GAP}`}>
           <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-foreground uppercase tracking-tight">
             {category.name}
           </h1>
@@ -85,12 +85,12 @@ export default async function MagazineCategoryPage({ params }: MagazineCategoryP
         </div>
 
         {/* D) Category chips */}
-        <div className="mb-8 md:mb-10">
+        <div className={SECTION_GAP}>
           <CategoryChips categories={chips} currentSlug={slug} />
         </div>
 
         {/* E) Product toolbar */}
-        <div className="mb-8 md:mb-10">
+        <div className={SECTION_GAP}>
           <Suspense fallback={<div className="h-10" />}>
             <ProductToolbar priceBounds={priceBounds} />
           </Suspense>

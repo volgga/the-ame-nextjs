@@ -96,6 +96,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
+const optionalImageUrl = z.union([z.string(), z.null(), z.literal("")]).optional().transform((v) => (v === "" ? null : v));
+
 const createSimpleSchema = z.object({
   type: z.literal("simple"),
   name: z.string().min(1),
@@ -105,7 +107,7 @@ const createSimpleSchema = z.object({
   height_cm: z.number().int().min(0).optional().nullable(),
   width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0),
-  image_url: z.string().url().optional().nullable(),
+  image_url: optionalImageUrl,
   images: z.array(z.string()).optional(),
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
@@ -119,7 +121,7 @@ const createVariantSchema = z.object({
   name: z.string().min(1),
   slug: z.string().optional(),
   description: z.string().optional(),
-  image_url: z.string().url().optional().nullable(),
+  image_url: optionalImageUrl,
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
   category_slug: z.string().nullable().optional(),
@@ -133,7 +135,7 @@ const createVariantSchema = z.object({
         width_cm: z.number().int().min(0).optional().nullable(),
         price: z.number().min(0),
         is_preorder: z.boolean().default(false),
-        image_url: z.string().url().optional().nullable(),
+        image_url: optionalImageUrl,
         sort_order: z.number().default(0),
         is_active: z.boolean().default(true),
       })
@@ -154,7 +156,14 @@ export async function POST(request: NextRequest) {
     if (type === "simple") {
       const parsed = createSimpleSchema.safeParse(body);
       if (!parsed.success) {
-        return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
+        const flatten = parsed.error.flatten();
+        const payload = {
+          error: "Неверные данные",
+          details: flatten,
+          fieldErrors: flatten.fieldErrors as Record<string, string[]>,
+        };
+        console.error("[admin/products POST] validation failed (simple):", payload);
+        return NextResponse.json(payload, { status: 400 });
       }
       const slug = parsed.data.slug?.trim() || slugify(parsed.data.name) || crypto.randomUUID();
       const categorySlugs = parsed.data.category_slugs?.filter(Boolean) ?? null;
@@ -187,7 +196,14 @@ export async function POST(request: NextRequest) {
     if (type === "variant") {
       const parsed = createVariantSchema.safeParse(body);
       if (!parsed.success) {
-        return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
+        const flatten = parsed.error.flatten();
+        const payload = {
+          error: "Неверные данные",
+          details: flatten,
+          fieldErrors: flatten.fieldErrors as Record<string, string[]>,
+        };
+        console.error("[admin/products POST] validation failed (variant):", payload);
+        return NextResponse.json(payload, { status: 400 });
       }
       const slug = parsed.data.slug?.trim() || slugify(parsed.data.name) || String(Date.now());
 
@@ -240,12 +256,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ...vpData, type: "variant", id: `vp-${vpData.id}` });
     }
 
-    return NextResponse.json({ error: "Укажите type: simple или variant" }, { status: 400 });
+    const payload = { error: "Укажите type: simple или variant", details: { receivedType: type } };
+    console.error("[admin/products POST] missing or invalid type:", payload);
+    return NextResponse.json(payload, { status: 400 });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     }
+    const errMsg = getErrorMessage(e);
     console.error("[admin/products POST]", e);
-    return NextResponse.json({ error: getErrorMessage(e) }, { status: 500 });
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

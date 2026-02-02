@@ -85,9 +85,11 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     <div>
       {/* Каталог: 2 колонки mobile, 4 на desktop; меньший gap — карточки крупнее */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {sortedFlowers.map((flower) => (
-          <FlowerCard key={flower.id} flower={flower} />
-        ))}
+        {sortedFlowers.map((flower) => {
+          // Находим соответствующий Product для передачи дополнительных данных
+          const product = allProducts.find((p) => p.id === flower.id);
+          return <FlowerCard key={flower.id} flower={flower} product={product} />;
+        })}
       </div>
 
       {/* Пустой результат */}

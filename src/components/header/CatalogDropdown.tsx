@@ -87,7 +87,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
   };
 
   const handleClose = () => {
-    closeTimeoutRef.current = setTimeout(() => setOpen(false), 100);
+    closeTimeoutRef.current = setTimeout(() => setOpen(false), 150);
   };
 
   const close = () => setOpen(false);
@@ -155,7 +155,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
           id="catalog-dropdown-menu"
           role="menu"
           aria-labelledby="catalog-dropdown-trigger"
-          className="absolute left-1/2 top-full z-[65]"
+          className="absolute left-1/2 top-full z-[75]"
           style={{
             transform: "translateX(-50%)",
             paddingTop: "20px",

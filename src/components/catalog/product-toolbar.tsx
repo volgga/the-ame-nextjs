@@ -280,7 +280,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 md:flex-initial min-w-0">
         {/* Поиск: input с встроенной кнопкой-лупой */}
         <div
-          className={`flex ${controlH} w-full sm:w-[220px] md:w-[260px] rounded-full border border-[var(--color-outline-border)] bg-white overflow-hidden transition-colors focus-within:ring-2 focus-within:ring-color-bg-main focus-within:ring-offset-2`}
+          className={`flex ${controlH} w-full sm:w-[180px] md:w-[200px] rounded-full border border-[var(--color-outline-border)] bg-white overflow-hidden transition-colors focus-within:ring-2 focus-within:ring-color-bg-main focus-within:ring-offset-2`}
         >
           <input
             type="search"

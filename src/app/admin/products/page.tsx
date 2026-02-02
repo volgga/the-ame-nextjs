@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { slugify } from "@/utils/slugify";
+import { ProductsList } from "@/components/admin/products/ProductsList";
 
 type Product = {
   id: string;
@@ -14,6 +15,7 @@ type Product = {
   is_active: boolean;
   is_hidden: boolean;
   is_preorder?: boolean;
+  sort_order?: number;
 };
 
 const MAX_IMAGES = 5;
@@ -69,6 +71,7 @@ function AdminProductsPageContent() {
   // Режим редактирования: id товара или null (создание)
   const [editProductId, setEditProductId] = useState<string | null>(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [existingMainImageUrl, setExistingMainImageUrl] = useState<string | null>(null);
 
@@ -78,6 +81,11 @@ function AdminProductsPageContent() {
   const [variantMainImage, setVariantMainImage] = useState<ImageItem | null>(null);
   // Множество id развернутых вариантов (первый добавленный — развернут по умолчанию)
   const [expandedVariants, setExpandedVariants] = useState<Set<string>>(new Set());
+  // ID вариантов при открытии редактирования (для удаления удалённых в UI)
+  const [initialVariantIds, setInitialVariantIds] = useState<number[]>([]);
+
+  const [togglingProductId, setTogglingProductId] = useState<string | null>(null);
+  const [deleteConfirmProductId, setDeleteConfirmProductId] = useState<string | null>(null);
 
   const isEditMode = editProductId != null;
 
@@ -132,6 +140,67 @@ function AdminProductsPageContent() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (!deleteConfirmProductId) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDeleteConfirmProductId(null);
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [deleteConfirmProductId]);
+
+  async function handleToggleHidden(p: Product) {
+    setTogglingProductId(p.id);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/products/${p.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_hidden: !p.is_hidden }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Ошибка");
+      setProducts((prev) =>
+        prev.map((x) => (x.id === p.id ? { ...x, is_hidden: data.is_hidden ?? !p.is_hidden } : x))
+      );
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setTogglingProductId(null);
+    }
+  }
+
+  async function handleDeleteFromList(id: string) {
+    setDeleteConfirmProductId(null);
+    try {
+      const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "Ошибка удаления");
+      const next = products.filter((x) => x.id !== id).map((p, i) => ({ ...p, sort_order: i }));
+      setProducts(next);
+      if (editProductId === id) {
+        setEditProductId(null);
+        setCreateModalOpen(false);
+      }
+      if (next.length > 0) {
+        const reorderRes = await fetch("/api/admin/products/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: next.map((p, i) => ({ id: p.id, sort_order: i })),
+          }),
+        });
+        if (!reorderRes.ok) {
+          const err = await reorderRes.json().catch(() => ({}));
+          setError(err?.error ?? "Порядок не обновлён");
+          load();
+        }
+      }
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
   // Загрузка товара при открытии модалки в режиме редактирования
   useEffect(() => {
     if (!createModalOpen || !editProductId) return;
@@ -166,7 +235,9 @@ function AdminProductsPageContent() {
           setExistingImageUrls([]);
           setProductImages([]);
           setProductImagesMainIndex(0);
-          const vars = (data.variants ?? []).map(
+          const rawVariants = data.variants ?? [];
+          setInitialVariantIds(rawVariants.map((v: { id?: number }) => v.id).filter((id: unknown): id is number => typeof id === "number"));
+          const vars = rawVariants.map(
             (
               v: {
                 id: number;
@@ -197,6 +268,7 @@ function AdminProductsPageContent() {
           setVariants(vars);
           setExpandedVariants(new Set(vars.map((v: Variant) => String(v.id))));
         } else {
+          setInitialVariantIds([]);
           setExistingMainImageUrl(null);
           const main = data.image_url ? [data.image_url] : [];
           const rest = Array.isArray(data.images) ? data.images.filter((u: unknown) => typeof u === "string" && u) : [];
@@ -217,6 +289,27 @@ function AdminProductsPageContent() {
     };
   }, [createModalOpen, editProductId]);
 
+  async function handleDeleteProduct() {
+    if (!editProductId) return;
+    const confirmed = window.confirm(
+      "Вы уверены, что хотите удалить этот товар? Это действие нельзя отменить."
+    );
+    if (!confirmed) return;
+    setDeleteLoading(true);
+    setCreateError("");
+    try {
+      const res = await fetch(`/api/admin/products/${editProductId}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error ?? "Ошибка удаления");
+      closeCreateModal();
+      load();
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
   function closeCreateModal() {
     productImages.forEach((item) => URL.revokeObjectURL(item.previewUrl));
     setProductImages([]);
@@ -231,6 +324,7 @@ function AdminProductsPageContent() {
     setCreateModalOpen(false);
     setCreateForm(initialForm);
     setCreateError("");
+    setInitialVariantIds([]);
     variants.forEach((v) => {
       if (v.image) URL.revokeObjectURL(v.image.previewUrl);
     });
@@ -480,14 +574,31 @@ function AdminProductsPageContent() {
           is_hidden: createIsHidden,
           is_preorder: createIsPreorder,
           category_slug: selectedCategorySlugs[0] || null,
+          category_slugs: selectedCategorySlugs,
         };
-        const res = await fetch(`/api/admin/products/${editProductId}`, {
+        const url = `/api/admin/products/${editProductId}`;
+        if (process.env.NODE_ENV === "development") {
+          // eslint-disable-next-line no-console
+          console.log("EDIT payload (simple)", payload);
+          // eslint-disable-next-line no-console
+          console.log("EDIT method/url", "PATCH", url);
+        }
+        const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.error ?? "Ошибка сохранения");
+        if (!res.ok) {
+          if (data?.fieldErrors && typeof data.fieldErrors === "object") {
+            const flat: Record<string, string> = {};
+            for (const [k, v] of Object.entries(data.fieldErrors)) {
+              flat[k] = Array.isArray(v) ? v[0] : String(v);
+            }
+            setFieldErrors(flat);
+          }
+          throw new Error(data?.error ?? "Ошибка сохранения");
+        }
         closeCreateModal();
         load();
       } else {
@@ -509,14 +620,42 @@ function AdminProductsPageContent() {
           is_active: true,
           is_hidden: createIsHidden,
           category_slug: selectedCategorySlugs[0] || null,
+          category_slugs: selectedCategorySlugs,
         };
-        const res = await fetch(`/api/admin/products/${editProductId}`, {
+        const url = `/api/admin/products/${editProductId}`;
+        if (process.env.NODE_ENV === "development") {
+          // eslint-disable-next-line no-console
+          console.log("EDIT payload (variant header)", payload);
+          // eslint-disable-next-line no-console
+          console.log("EDIT method/url", "PATCH", url);
+        }
+        const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         const patchData = await res.json();
-        if (!res.ok) throw new Error(patchData?.error ?? "Ошибка сохранения товара");
+        if (!res.ok) {
+          if (patchData?.fieldErrors && typeof patchData.fieldErrors === "object") {
+            const flat: Record<string, string> = {};
+            for (const [k, v] of Object.entries(patchData.fieldErrors)) {
+              flat[k] = Array.isArray(v) ? v[0] : String(v);
+            }
+            setFieldErrors(flat);
+          }
+          throw new Error(patchData?.error ?? "Ошибка сохранения товара");
+        }
+        const currentVariantIds = variants.filter((v) => typeof v.id === "number").map((v) => v.id as number);
+        const toDeleteIds = initialVariantIds.filter((id) => !currentVariantIds.includes(id));
+        for (const variantId of toDeleteIds) {
+          const delRes = await fetch(`/api/admin/products/${editProductId}/variants/${variantId}`, {
+            method: "DELETE",
+          });
+          if (!delRes.ok) {
+            const delData = await delRes.json().catch(() => ({}));
+            throw new Error(delData?.error ?? "Ошибка удаления варианта");
+          }
+        }
         for (const v of variants) {
           if (typeof v.id === "number") {
             let variantImageUrl: string | null = v.imageUrl ?? null;
@@ -537,6 +676,7 @@ function AdminProductsPageContent() {
                 height_cm: v.height_cm ?? null,
                 width_cm: v.width_cm ?? null,
                 price: v.is_preorder ? 0 : v.price,
+                is_preorder: v.is_preorder,
                 image_url: variantImageUrl,
                 sort_order: v.sort_order,
               }),
@@ -564,6 +704,7 @@ function AdminProductsPageContent() {
                 height_cm: v.height_cm ?? null,
                 width_cm: v.width_cm ?? null,
                 price: v.is_preorder ? 0 : v.price,
+                is_preorder: v.is_preorder,
                 image_url: variantImageUrl,
                 sort_order: v.sort_order,
                 is_active: true,
@@ -665,7 +806,7 @@ function AdminProductsPageContent() {
           body: JSON.stringify(payload),
         });
         const raw = await res.text();
-        let data: { error?: string } = {};
+        let data: { error?: string; fieldErrors?: Record<string, string[]> } = {};
         try {
           data = raw ? JSON.parse(raw) : {};
         } catch {
@@ -679,6 +820,13 @@ function AdminProductsPageContent() {
         if (!res.ok) {
           const msg = data?.error ?? "Ошибка создания";
           console.error("[admin/products] POST failed:", res.status, data);
+          if (data?.fieldErrors && typeof data.fieldErrors === "object") {
+            const flat: Record<string, string> = {};
+            for (const [k, v] of Object.entries(data.fieldErrors)) {
+              flat[k] = Array.isArray(v) ? v[0] : String(v);
+            }
+            setFieldErrors(flat);
+          }
           setCreateError(msg);
           setCreateLoading(false);
           return;
@@ -765,7 +913,7 @@ function AdminProductsPageContent() {
           body: JSON.stringify(payload),
         });
         const raw = await res.text();
-        let data: { error?: string } = {};
+        let data: { error?: string; fieldErrors?: Record<string, string[]> } = {};
         try {
           data = raw ? JSON.parse(raw) : {};
         } catch {
@@ -779,6 +927,13 @@ function AdminProductsPageContent() {
         if (!res.ok) {
           const msg = data?.error ?? "Ошибка создания";
           console.error("[admin/products] POST failed:", res.status, data);
+          if (data?.fieldErrors && typeof data.fieldErrors === "object") {
+            const flat: Record<string, string> = {};
+            for (const [k, v] of Object.entries(data.fieldErrors)) {
+              flat[k] = Array.isArray(v) ? v[0] : String(v);
+            }
+            setFieldErrors(flat);
+          }
           setCreateError(msg);
           setCreateLoading(false);
           return;
@@ -840,6 +995,7 @@ function AdminProductsPageContent() {
             type="button"
             onClick={() => {
               setEditProductId(null);
+              setInitialVariantIds([]);
               setCreateType("simple");
               setExistingImageUrls([]);
               setExistingMainImageUrl(null);
@@ -868,64 +1024,37 @@ function AdminProductsPageContent() {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full rounded-xl border border-border-block bg-white shadow-sm hover:border-border-block-hover">
-          <thead>
-            <tr className="border-b border-border-block bg-white">
-              <th className="px-4 py-3 text-left text-sm font-medium text-color-text-main">Фото</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-color-text-main">Название</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-color-text-main">Slug</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-color-text-main">Тип</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-color-text-main">Цена</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-color-text-main">Статус</th>
-              <th className="px-4 py-3 text-left text-sm font-medium text-color-text-main">Действия</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p) => (
-              <tr key={p.id} className="border-b border-border-block last:border-0 hover:bg-[rgba(31,42,31,0.06)]">
-                <td className="px-4 py-2">
-                  {p.image_url ? (
-                    <img src={p.image_url} alt="" className="h-12 w-12 object-cover rounded" />
-                  ) : (
-                    <div className="h-12 w-12 rounded bg-[rgba(31,42,31,0.08)]" />
-                  )}
-                </td>
-                <td className="px-4 py-2 font-medium text-color-text-main">{p.name}</td>
-                <td className="px-4 py-2 text-sm text-color-text-secondary">{p.slug}</td>
-                <td className="px-4 py-2">
-                  <span className="text-xs px-2 py-0.5 rounded bg-[rgba(31,42,31,0.08)] text-color-text-main">
-                    {p.type === "simple" ? "Простой" : "С вариантами"}
-                  </span>
-                </td>
-                <td className="px-4 py-2 text-color-text-main">{p.price?.toLocaleString("ru-RU")} ₽</td>
-                <td className="px-4 py-2">
-                  {p.is_hidden ? (
-                    <span className="text-color-text-secondary">Скрыт</span>
-                  ) : p.is_preorder ? (
-                    <span className="text-color-bg-main">Предзаказ</span>
-                  ) : (
-                    <span className="text-color-text-main">Активен</span>
-                  )}
-                </td>
-                <td className="px-4 py-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditProductId(p.id);
-                      setCreateModalOpen(true);
-                    }}
-                    className="text-color-text-main hover:underline text-sm"
-                  >
-                    Редактировать
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {products.length === 0 && (
-          <p className="text-color-text-secondary py-8 text-center">Нет товаров. Нажмите «Добавить».</p>
+      <div className="space-y-2">
+        {products.length === 0 ? (
+          <p className="text-color-text-secondary py-8 text-center rounded-xl border border-border-block bg-white">
+            Нет товаров. Нажмите «Добавить».
+          </p>
+        ) : (
+          <ProductsList
+            products={products}
+            onReorder={async (newOrder) => {
+              setProducts(newOrder);
+              const res = await fetch("/api/admin/products/reorder", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  items: newOrder.map((p, i) => ({ id: p.id, sort_order: i })),
+                }),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                setError(err?.error ?? "Ошибка сохранения порядка");
+                load();
+              }
+            }}
+            onEdit={(p) => {
+              setEditProductId(p.id);
+              setCreateModalOpen(true);
+            }}
+            onToggleHidden={handleToggleHidden}
+            onDeleteClick={(p) => setDeleteConfirmProductId(p.id)}
+            togglingId={togglingProductId}
+          />
         )}
       </div>
 
@@ -939,7 +1068,17 @@ function AdminProductsPageContent() {
             className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl hover:border-border-block-hover"
             onClick={(e) => e.stopPropagation()}
           >
-            <form onSubmit={isEditMode ? handleEditSubmit : handleCreateSubmit} className="flex flex-col min-h-0">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (editProductId != null) {
+                  handleEditSubmit(e);
+                } else {
+                  handleCreateSubmit(e);
+                }
+              }}
+              className="flex flex-col min-h-0"
+            >
               <div className="relative flex items-center justify-center px-6 py-3 border-b border-border-block">
                 <h3 id="create-product-title" className="font-medium text-color-text-main">
                   {isEditMode ? "Редактировать товар" : "Новый товар"}
@@ -1615,10 +1754,10 @@ function AdminProductsPageContent() {
                   </>
                 )}
               </div>
-              <div className="flex gap-2 px-6 py-3 border-t border-border-block">
+              <div className="flex flex-wrap gap-2 px-6 py-3 border-t border-border-block">
                 <button
                   type="submit"
-                  disabled={createLoading || productImagesUploading || editLoading}
+                  disabled={createLoading || productImagesUploading || editLoading || deleteLoading}
                   className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
                 >
                   {productImagesUploading
@@ -1638,8 +1777,47 @@ function AdminProductsPageContent() {
                 >
                   Отмена
                 </button>
+                {isEditMode && (
+                  <button
+                    type="button"
+                    onClick={handleDeleteProduct}
+                    disabled={createLoading || productImagesUploading || editLoading || deleteLoading}
+                    className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {deleteLoading ? "Удаление…" : "Удалить"}
+                  </button>
+                )}
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Мини-модалка подтверждения удаления (как в Категориях) */}
+      {deleteConfirmProductId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmProductId(null)} aria-hidden />
+          <div
+            className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-4 text-[#111]">Точно удалить?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmProductId(null)}
+                className="rounded bg-gray-100 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-200"
+              >
+                Нет
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteFromList(deleteConfirmProductId)}
+                className="rounded px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
+              >
+                Да
+              </button>
+            </div>
           </div>
         </div>
       )}

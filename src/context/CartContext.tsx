@@ -18,6 +18,10 @@ interface CartContextType {
   // Для доп.товаров (addon items)
   addAddonToCart: (addon: Flower) => void;
   isAddonInCart: (id: string) => boolean;
+  // Управление drawer корзины
+  isCartDrawerOpen: boolean;
+  openCartDrawer: () => void;
+  closeCartDrawer: () => void;
 }
 
 type CartAction =
@@ -83,6 +87,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     total: 0,
     itemCount: 0,
   });
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = React.useState(false);
 
   // Загрузка корзины из localStorage при инициализации
   useEffect(() => {
@@ -128,6 +133,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return state.items.some((item) => item.id === id);
   };
 
+  const openCartDrawer = () => {
+    setIsCartDrawerOpen(true);
+  };
+
+  const closeCartDrawer = () => {
+    setIsCartDrawerOpen(false);
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -138,6 +151,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         clearCart,
         addAddonToCart,
         isAddonInCart,
+        isCartDrawerOpen,
+        openCartDrawer,
+        closeCartDrawer,
       }}
     >
       {children}

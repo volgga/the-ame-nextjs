@@ -22,7 +22,7 @@ type CategoryChipsProps = {
  */
 export function CategoryChips({ categories, currentSlug }: CategoryChipsProps) {
   return (
-    <div className="w-full max-w-full flex flex-wrap justify-center gap-3" role="group" aria-label="Категории каталога">
+    <div className="w-full max-w-5xl mx-auto flex flex-wrap justify-center gap-2.5" role="group" aria-label="Категории каталога">
       {categories.map((cat) => {
         const href = cat.isAll ? ALL_CATALOG.href : `/magazine/${cat.slug}`;
         const isActive = cat.isAll ? currentSlug === null : cat.slug === currentSlug;

@@ -6,6 +6,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import { getAllVariantProducts } from "@/lib/variantProducts";
 import { slugify } from "@/utils/slugify";
+import { getCategories } from "@/lib/categories";
 
 /** Вариант товара (для вариантных товаров на витрине) */
 export type ProductVariantOption = {
@@ -34,8 +35,16 @@ export type Product = {
   /** Варианты (только у вариантного товара) */
   variants?: ProductVariantOption[];
   categorySlug?: string | null;
+  /** Слоги категорий (для фильтрации по категории «Популярное» и др.) */
+  categorySlugs?: string[] | null;
+  /** Названия категорий товара (массив строк) */
+  categories?: string[];
   isPreorder?: boolean;
   images?: string[];
+  /** Порядок сортировки из админки (для объединённого каталога) */
+  sortOrder?: number;
+  /** Дата создания (для вторичной сортировки) */
+  createdAt?: string;
 };
 
 /** Сырая строка таблицы products в Supabase */
@@ -51,12 +60,32 @@ type ProductsRow = {
   price?: number | null;
   slug?: string | null;
   category_slug?: string | null;
+  category_slugs?: string[] | null;
   is_active?: boolean | null;
   is_hidden?: boolean | null;
   is_preorder?: boolean | null;
+  sort_order?: number | null;
+  created_at?: string | null; // опционально, если есть в БД
 };
 
-function rowToProduct(row: ProductsRow): Product {
+/**
+ * Преобразует слоги категорий в названия категорий
+ */
+async function slugsToCategoryNames(categorySlugs: string[] | null | undefined): Promise<string[]> {
+  if (!categorySlugs || categorySlugs.length === 0) return [];
+  
+  try {
+    const allCategories = await getCategories();
+    const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
+    return categorySlugs
+      .map((slug) => categoryMap.get(slug))
+      .filter((name): name is string => Boolean(name));
+  } catch {
+    return [];
+  }
+}
+
+async function rowToProduct(row: ProductsRow, getCategoryNames?: (slugs: string[]) => string[]): Promise<Product> {
   const slug = (row.slug && String(row.slug).trim()) || slugify(row.name) || String(row.id);
   const imagesRaw = row.images;
   const images =
@@ -64,7 +93,26 @@ function rowToProduct(row: ProductsRow): Product {
       ? imagesRaw.filter((u): u is string => typeof u === "string" && u.length > 0)
       : undefined;
 
-  return {
+  // Получаем категории из category_slugs или category_slug
+  let categories: string[] | undefined = undefined;
+  const categorySlugs: string[] = [];
+  if (row.category_slugs && Array.isArray(row.category_slugs)) {
+    categorySlugs.push(...row.category_slugs);
+  }
+  if (row.category_slug && !categorySlugs.includes(row.category_slug)) {
+    categorySlugs.push(row.category_slug);
+  }
+  if (categorySlugs.length > 0) {
+    if (getCategoryNames) {
+      // Используем переданную функцию для получения названий (с кэшем)
+      categories = getCategoryNames(categorySlugs);
+    } else {
+      // Загружаем напрямую (для единичных запросов)
+      categories = await slugsToCategoryNames(categorySlugs);
+    }
+  }
+
+    return {
     id: String(row.id),
     slug,
     title: row.name ?? "",
@@ -75,8 +123,12 @@ function rowToProduct(row: ProductsRow): Product {
     sizeHeightCm: row.height_cm != null ? Number(row.height_cm) : null,
     sizeWidthCm: row.width_cm != null ? Number(row.width_cm) : null,
     categorySlug: row.category_slug ?? null,
+    categorySlugs: categorySlugs.length > 0 ? categorySlugs : null,
+    categories: categories && categories.length > 0 ? categories : undefined,
     isPreorder: row.is_preorder ?? false,
     images,
+    sortOrder: row.sort_order ?? 0,
+    createdAt: row.created_at ?? undefined, // fallback для вторичной сортировки
   };
 }
 
@@ -99,19 +151,19 @@ export async function getAllProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, is_active, is_hidden, is_preorder"
+        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, sort_order, created_at"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
       .order("sort_order", { ascending: true, nullsFirst: false });
 
     if (error) {
-      console.error(`${LOG_PREFIX} Ошибка при загрузке товаров:`, error.message, "код:", error.code);
+      console.error(`[getAllProducts] Supabase error:`, error.message, "code:", error.code);
       if (error.code === "42P01") {
-        console.error(`${LOG_PREFIX} Таблица products не найдена.`);
+        console.error(`[getAllProducts] Таблица products не найдена.`);
       }
       if (error.code === "42501") {
-        console.error(`${LOG_PREFIX} Нет прав доступа (RLS или роль).`);
+        console.error(`[getAllProducts] Нет прав доступа (RLS).`);
       }
       return [];
     }
@@ -121,9 +173,29 @@ export async function getAllProducts(): Promise<Product[]> {
       return [];
     }
 
-    return data.map((row) => rowToProduct(row as ProductsRow));
+    // Загружаем все категории один раз для кэширования
+    const allCategories = await getCategories();
+    const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
+    
+    // Создаем кэш для преобразования слогов в названия
+    const categoryNamesCache = new Map<string, string[]>();
+    const getCategoryNames = (slugs: string[]): string[] => {
+      const cacheKey = slugs.sort().join(",");
+      if (!categoryNamesCache.has(cacheKey)) {
+        const names = slugs
+          .map((slug) => categoryMap.get(slug))
+          .filter((name): name is string => Boolean(name));
+        categoryNamesCache.set(cacheKey, names);
+      }
+      return categoryNamesCache.get(cacheKey)!;
+    };
+
+    // Преобразуем все строки в Product с категориями
+    return Promise.all(
+      data.map((row) => rowToProduct(row as ProductsRow, getCategoryNames))
+    );
   } catch (e) {
-    console.error(`${LOG_PREFIX} Supabase не отвечает или исключение:`, e instanceof Error ? e.message : String(e));
+    console.error("[getAllProducts]", e instanceof Error ? e.message : String(e));
     return [];
   }
 }
@@ -145,7 +217,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     const base = supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, is_active, is_hidden, is_preorder"
+        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null");
@@ -177,11 +249,32 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 /**
- * Единый каталог: products + variant_products (сначала products, затем варианты).
+ * Единый каталог: products + variant_products.
+ * Сортировка по sort_order ASC, затем по createdAt ASC (если есть) для стабильности при равных позициях.
  */
 export async function getAllCatalogProducts(): Promise<Product[]> {
-  const [fromProducts, fromVariants] = await Promise.all([getAllProducts(), getAllVariantProducts()]);
-  return [...fromProducts, ...fromVariants];
+  try {
+    const [fromProducts, fromVariants] = await Promise.all([getAllProducts(), getAllVariantProducts()]);
+    const combined = [...fromProducts, ...fromVariants];
+
+    // Сортируем объединённый массив по sortOrder (primary) и createdAt (secondary, fallback id)
+    return combined.sort((a, b) => {
+    const orderA = a.sortOrder ?? 0;
+    const orderB = b.sortOrder ?? 0;
+    if (orderA !== orderB) return orderA - orderB;
+    
+    // Вторичная сортировка по createdAt для стабильности
+    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    if (dateA !== dateB) return dateA - dateB;
+    
+    // Третичная по id для полной детерминированности
+    return a.id.localeCompare(b.id);
+  });
+  } catch (e) {
+    console.error("[getAllCatalogProducts]", e instanceof Error ? e.message : String(e));
+    return [];
+  }
 }
 
 /**

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 
@@ -9,15 +8,14 @@ const HEADER_ICON_CLASS =
   "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
 
 export function CartIcon() {
-  const { state } = useCart();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { state, isCartDrawerOpen, openCartDrawer, closeCartDrawer } = useCart();
 
   return (
     <>
       <button
         id="header-cart"
         type="button"
-        onClick={() => setIsDrawerOpen(true)}
+        onClick={openCartDrawer}
         aria-label="Корзина"
         className={HEADER_ICON_CLASS}
       >
@@ -37,14 +35,15 @@ export function CartIcon() {
         </svg>
         {state.itemCount > 0 && (
           <span
-            className="absolute -top-1 -right-1 z-10 min-w-[18px] h-[18px] px-1 text-[11px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text border-2 border-header-bg pointer-events-none select-none"
+            className="absolute z-10 min-w-[16px] h-[16px] px-1 text-[10px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text pointer-events-none select-none leading-[16px]"
+            style={{ top: "4px", right: "2px", transform: "translate(35%, -25%)" }}
             aria-hidden
           >
             {state.itemCount > 99 ? "99+" : state.itemCount}
           </span>
         )}
       </button>
-      <CartDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
+      <CartDrawer isOpen={isCartDrawerOpen} onClose={closeCartDrawer} />
     </>
   );
 }

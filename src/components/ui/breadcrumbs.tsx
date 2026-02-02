@@ -14,7 +14,10 @@ type BreadcrumbsProps = {
 };
 
 /** Единые отступы хлебных крошек: синхронизированы между каталогом и карточкой товара */
-export const BREADCRUMB_SPACING = "mt-1 mb-3 md:mb-4";
+export const BREADCRUMB_SPACING = "mt-0 mb-3 md:mb-4";
+
+/** Вертикальный отступ между блоками (breadcrumb→контент, заголовок→след. блок и т.д.). Эталон: карточка товара. */
+export const SECTION_GAP = "mb-3 md:mb-4";
 
 /**
  * Breadcrumbs — хлебные крошки навигации.

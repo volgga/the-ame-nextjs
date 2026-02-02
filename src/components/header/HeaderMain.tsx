@@ -136,8 +136,16 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
 
   return (
     <>
-      <div className="relative w-full bg-header-bg">
-        <div className="w-full min-h-[44px] py-1.5 flex items-center justify-between px-4 md:px-6 gap-4">
+      <div 
+        className="relative w-full bg-header-bg flex items-center overflow-visible" 
+        style={{ 
+          margin: 0,
+          padding: 0,
+          height: "100%",
+          lineHeight: "normal",
+        }}
+      >
+        <div className="w-full flex items-center justify-between px-4 md:px-6 gap-4">
           <div className="relative z-10 flex items-center gap-2 md:gap-3 shrink-0 -ml-1 md:-ml-0.5">
             <button
               type="button"
@@ -155,14 +163,14 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <Link href="/" className="shrink-0" style={{ fontFamily: "Forum, serif" }}>
-              <span className="text-[1.75rem] md:text-[2.1rem] text-header-foreground tracking-wide leading-none">
+            <Link href="/" className="shrink-0 flex items-center" style={{ fontFamily: "Forum, serif", lineHeight: 1 }}>
+              <span className="text-[1.6rem] md:text-[1.9rem] text-header-foreground tracking-wide leading-none">
                 The Áme
               </span>
             </Link>
           </div>
 
-          <div className="relative z-10 flex items-center gap-4 md:gap-6 shrink-0">
+          <div className="relative z-10 flex items-center gap-2 md:gap-3 shrink-0" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
             <Link href={CATALOG_HREF} aria-label="Поиск / Каталог" className={iconLinkClass}>
               <svg
                 className="w-[18px] h-[18px] md:w-5 md:h-5 shrink-0"
@@ -199,7 +207,8 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
               </svg>
               {favoritesCount > 0 && (
                 <span
-                  className="absolute -top-1 -right-1 z-10 min-w-[18px] h-[18px] px-1 text-[11px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text border-2 border-header-bg pointer-events-none select-none"
+                  className="absolute z-10 min-w-[16px] h-[16px] px-1 text-[10px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text pointer-events-none select-none leading-[16px]"
+                  style={{ top: "4px", right: "2px", transform: "translate(35%, -25%)" }}
                   aria-hidden
                 >
                   {favoritesCount > 99 ? "99+" : favoritesCount}

@@ -9,15 +9,18 @@ async function requireAdmin() {
   if (!ok) throw new Error("unauthorized");
 }
 
+const optionalImageUrl = z.union([z.string(), z.null(), z.literal("")]).optional().transform((v) => (v === "" ? null : v));
+
 const variantSchema = z.object({
   size: z.string().min(1),
   composition: z.string().optional().nullable(),
   height_cm: z.number().int().min(0).optional().nullable(),
   width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0),
+  is_preorder: z.boolean().default(false),
   is_active: z.boolean().default(true),
   sort_order: z.number().int().default(0),
-  image_url: z.string().url().optional().nullable(),
+  image_url: optionalImageUrl,
   description: z.string().optional().nullable(),
 });
 
@@ -33,7 +36,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const body = await request.json();
     const parsed = variantSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
+      const flatten = parsed.error.flatten();
+      console.error("[admin/products variants POST] validation failed:", flatten);
+      return NextResponse.json(
+        { error: "Неверные данные", details: flatten, fieldErrors: flatten.fieldErrors },
+        { status: 400 }
+      );
     }
 
     const supabase = getSupabaseAdmin();
@@ -48,6 +56,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         height_cm: parsed.data.height_cm ?? null,
         width_cm: parsed.data.width_cm ?? null,
         price: parsed.data.price,
+        is_preorder: parsed.data.is_preorder,
         is_active: parsed.data.is_active,
         sort_order: parsed.data.sort_order,
         image_url: parsed.data.image_url ?? null,

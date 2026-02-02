@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 type Provider = {
@@ -23,6 +24,9 @@ type ContactsModalProps = {
  * Закрывается по X, overlay, Esc.
  */
 export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // Блокировка скролла страницы при открытой модалке
   useEffect(() => {
     if (isOpen) {
@@ -47,24 +51,20 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
 
-  return (
+  if (!mounted || !isOpen) return null;
+
+  const content = (
     <>
-      {/* Overlay — затемняет всё (marquee, шапку, страницу); z выше шапки и корзины */}
+      {/* Overlay — затемняет всё (marquee, шапку, страницу); z-50 выше header z-40 */}
       <div
-        className={`fixed inset-0 bg-black/50 transition-opacity duration-300 ${
-          isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        style={{ zIndex: 202 }}
+        className="fixed inset-0 z-50 bg-black/50 transition-opacity duration-300"
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Модалка по центру экрана */}
       <div
-        className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-[500px] max-h-[90vh] bg-white shadow-2xl rounded-2xl overflow-hidden transform transition-all duration-300 ease-out ${
-          isOpen ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"
-        }`}
-        style={{ zIndex: 203 }}
+        className="fixed left-1/2 top-1/2 z-[60] -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-[500px] max-h-[90vh] bg-white shadow-2xl rounded-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Скроллируемый контент */}
@@ -151,4 +151,6 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
       </div>
     </>
   );
+
+  return createPortal(content, document.body);
 }

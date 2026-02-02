@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabaseClient";
  * Публичный API для получения активных категорий каталога.
  * Используется в выпадающем меню "Каталог" на клиенте.
  */
+export const revalidate = 3600; // Кэш на 1 час
+
 export async function GET() {
   try {
     const { data, error } = await supabase

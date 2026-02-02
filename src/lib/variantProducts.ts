@@ -6,6 +6,7 @@
 
 import { supabase } from "@/lib/supabaseClient";
 import type { Product } from "@/lib/products";
+import { getCategories } from "@/lib/categories";
 
 const VP_ID_PREFIX = "vp-";
 const LOG_PREFIX = "[variantProducts/Supabase]";
@@ -21,27 +22,13 @@ type VariantProductsRow = {
   image_url: string | null;
   min_price_cache: number | null;
   category_slug?: string | null;
+  category_slugs?: string[] | null;
   is_active: boolean;
   is_hidden: boolean | null;
   published_at: string | null;
   sort_order: number;
+  created_at?: string | null; // опционально, если есть в БД
 };
-
-/** Состав/размер у вариантного товара хранятся в вариантах, не в основном товаре */
-function rowToProduct(row: VariantProductsRow): Product {
-  return {
-    id: VP_ID_PREFIX + String(row.id),
-    slug: row.slug ?? "",
-    title: row.name ?? "",
-    price: Number(row.min_price_cache) ?? 0,
-    image: row.image_url ?? "",
-    shortDescription: row.description ?? "",
-    composition: null,
-    sizeHeightCm: null,
-    sizeWidthCm: null,
-    categorySlug: row.category_slug ?? null,
-  };
-}
 
 export type ProductVariantPublic = {
   id: number;
@@ -65,20 +52,69 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
       .order("sort_order", { ascending: true, nullsFirst: false });
 
     if (error) {
-      console.error(`${LOG_PREFIX} Ошибка загрузки variant_products:`, error.message, error.code);
+      console.error("[getAllVariantProducts] Supabase error:", error.message, "code:", error.code);
       return [];
     }
     if (!data?.length) return [];
-    return data.map((r) => rowToProduct(r as VariantProductsRow));
+
+    // Загружаем все категории один раз для кэширования
+    const allCategories = await getCategories();
+    const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
+    
+    // Создаем кэш для преобразования слогов в названия
+    const categoryNamesCache = new Map<string, string[]>();
+    const getCategoryNames = (slugs: string[]): string[] => {
+      const cacheKey = slugs.sort().join(",");
+      if (!categoryNamesCache.has(cacheKey)) {
+        const names = slugs
+          .map((slug) => categoryMap.get(slug))
+          .filter((name): name is string => Boolean(name));
+        categoryNamesCache.set(cacheKey, names);
+      }
+      return categoryNamesCache.get(cacheKey)!;
+    };
+
+    // Преобразуем все строки в Product с категориями
+    return Promise.all(
+      data.map(async (r) => {
+        const row = r as VariantProductsRow;
+        const categorySlugs: string[] = [];
+        if (row.category_slugs && Array.isArray(row.category_slugs)) {
+          categorySlugs.push(...row.category_slugs);
+        }
+        if (row.category_slug && !categorySlugs.includes(row.category_slug)) {
+          categorySlugs.push(row.category_slug);
+        }
+        
+        const categories = categorySlugs.length > 0 ? getCategoryNames(categorySlugs) : undefined;
+        
+        return {
+          id: VP_ID_PREFIX + String(row.id),
+          slug: row.slug ?? "",
+          title: row.name ?? "",
+          price: Number(row.min_price_cache) ?? 0,
+          image: row.image_url ?? "",
+          shortDescription: row.description ?? "",
+          composition: null,
+          sizeHeightCm: null,
+          sizeWidthCm: null,
+          categorySlug: row.category_slug ?? null,
+          categorySlugs: categorySlugs.length > 0 ? categorySlugs : null,
+          categories: categories && categories.length > 0 ? categories : undefined,
+          sortOrder: row.sort_order ?? 0,
+          createdAt: row.created_at ?? undefined, // fallback для вторичной сортировки
+        } satisfies Product;
+      })
+    );
   } catch (e) {
-    console.error(`${LOG_PREFIX} Исключение:`, e instanceof Error ? e.message : String(e));
+    console.error("[getAllVariantProducts]", e instanceof Error ? e.message : String(e));
     return [];
   }
 }
@@ -95,7 +131,7 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -103,7 +139,36 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
       .maybeSingle();
 
     if (error || !data) return null;
-    return rowToProduct(data as VariantProductsRow);
+    
+    // Загружаем категории для преобразования
+    const allCategories = await getCategories();
+    const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
+    const row = data as VariantProductsRow;
+    const categorySlugs: string[] = [];
+    if (row.category_slugs && Array.isArray(row.category_slugs)) {
+      categorySlugs.push(...row.category_slugs);
+    }
+    if (row.category_slug && !categorySlugs.includes(row.category_slug)) {
+      categorySlugs.push(row.category_slug);
+    }
+    const categories = categorySlugs.length > 0
+      ? categorySlugs.map((slug) => categoryMap.get(slug)).filter((name): name is string => Boolean(name))
+      : undefined;
+    
+    return {
+      id: VP_ID_PREFIX + String(row.id),
+      slug: row.slug ?? "",
+      title: row.name ?? "",
+      price: Number(row.min_price_cache) ?? 0,
+      image: row.image_url ?? "",
+      shortDescription: row.description ?? "",
+      composition: null,
+      sizeHeightCm: null,
+      sizeWidthCm: null,
+      categorySlug: row.category_slug ?? null,
+      categorySlugs: categorySlugs.length > 0 ? categorySlugs : null,
+      categories: categories && categories.length > 0 ? categories : undefined,
+    };
   } catch (e) {
     console.error(`${LOG_PREFIX} getVariantProductBySlug:`, e instanceof Error ? e.message : String(e));
     return null;
@@ -124,7 +189,7 @@ export async function getVariantProductWithVariantsBySlug(
     const { data: vp, error: vpErr } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, is_active, is_hidden, published_at, sort_order"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -132,7 +197,35 @@ export async function getVariantProductWithVariantsBySlug(
       .maybeSingle();
 
     if (vpErr || !vp) return null;
-    const product = rowToProduct(vp as VariantProductsRow);
+    
+    // Загружаем категории для преобразования
+    const allCategories = await getCategories();
+    const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
+    const row = vp as VariantProductsRow;
+    const categorySlugs: string[] = [];
+    if (row.category_slugs && Array.isArray(row.category_slugs)) {
+      categorySlugs.push(...row.category_slugs);
+    }
+    if (row.category_slug && !categorySlugs.includes(row.category_slug)) {
+      categorySlugs.push(row.category_slug);
+    }
+    const categories = categorySlugs.length > 0
+      ? categorySlugs.map((slug) => categoryMap.get(slug)).filter((name): name is string => Boolean(name))
+      : undefined;
+    
+    const product: Product = {
+      id: VP_ID_PREFIX + String(row.id),
+      slug: row.slug ?? "",
+      title: row.name ?? "",
+      price: Number(row.min_price_cache) ?? 0,
+      image: row.image_url ?? "",
+      shortDescription: row.description ?? "",
+      composition: null,
+      sizeHeightCm: null,
+      sizeWidthCm: null,
+      categorySlug: row.category_slug ?? null,
+      categories: categories && categories.length > 0 ? categories : undefined,
+    };
 
     const { data: vars, error: vErr } = await supabase
       .from("product_variants")

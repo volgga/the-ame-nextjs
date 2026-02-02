@@ -2,12 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, ShoppingBag, ChevronDown } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Heart, Bell, Minus, Plus } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import type { Product } from "@/lib/products";
 import { Flower } from "@/types/flower";
 import { Breadcrumbs, BREADCRUMB_SPACING } from "@/components/ui/breadcrumbs";
 import { FullscreenViewer } from "./FullscreenViewer";
+import { GiftHintModal } from "./GiftHintModal";
+import { runFlyToHeader } from "@/utils/flyToHeader";
 
 type ProductPageClientProps = {
   product: Product;
@@ -203,7 +206,10 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quickOrderOpen, setQuickOrderOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
-  const { addToCart } = useCart();
+  const [giftHintOpen, setGiftHintOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const { addToCart, state: cartState, updateQuantity, openCartDrawer } = useCart();
+  const { toggle: toggleFavorite, isFavorite } = useFavorites();
 
   const hasVariants = product.variants && product.variants.length > 0;
   const defaultVariantId = hasVariants ? product.variants![0].id : null;
@@ -281,8 +287,58 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
     setSelectedImageIndex((i) => (i === imagesLen - 1 ? 0 : i + 1));
   };
 
-  const handleAddToCart = () => {
-    addToCart(flower);
+  const handleAddToCart = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    // Проверяем, есть ли товар уже в корзине
+    const existingItem = cartState.items.find((item) => item.id === flower.id);
+    if (existingItem) {
+      // Если есть, увеличиваем количество
+      updateQuantity(flower.id, existingItem.cartQuantity + quantity);
+    } else {
+      // Если нет, добавляем с нужным количеством
+      for (let i = 0; i < quantity; i++) {
+        addToCart(flower);
+      }
+    }
+    // Запускаем анимацию полёта иконки к корзине
+    if (e?.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      runFlyToHeader("cart", rect);
+    }
+  };
+
+  const handleBuyNow = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    // Добавляем в корзину (та же логика, что и в handleAddToCart)
+    const existingItem = cartState.items.find((item) => item.id === flower.id);
+    if (existingItem) {
+      updateQuantity(flower.id, existingItem.cartQuantity + quantity);
+    } else {
+      for (let i = 0; i < quantity; i++) {
+        addToCart(flower);
+      }
+    }
+    // Запускаем анимацию полёта иконки к корзине
+    if (e?.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      runFlyToHeader("cart", rect);
+    }
+    // Открываем модалку корзины вместо редиректа
+    openCartDrawer();
+  };
+
+  const handleToggleFavorite = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const wasInFavorites = isInFavorites;
+    toggleFavorite(product.id.toString());
+    // Запускаем анимацию полёта иконки к избранному (только при добавлении)
+    if (!wasInFavorites && e?.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      runFlyToHeader("favorite", rect);
+    }
+  };
+
+  const isInFavorites = isFavorite(product.id.toString());
+
+  const handleQuantityChange = (delta: number) => {
+    setQuantity((prev) => Math.max(1, prev + delta));
   };
 
   // Аккордеон: только один пункт открыт за раз, "Описание" по умолчанию
@@ -303,7 +359,7 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
     <>
       <div className="bg-page-bg">
         {/* Контейнер с нормальным отступом сверху, компактным снизу */}
-        <div className="container mx-auto px-6 pt-5 pb-8 md:pt-6 md:pb-10">
+        <div className="container mx-auto px-6 pt-3 pb-8 md:pt-4 md:pb-10">
           {/* Хлебные крошки — минимальный отступ до контента */}
           <Breadcrumbs items={breadcrumbItems} className={BREADCRUMB_SPACING} />
 
@@ -467,30 +523,94 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                 </div>
               )}
 
-              {/* Цена (для обычного товара или выбранного варианта) */}
-              <div className="text-lg md:text-xl font-medium text-color-text-main mb-5">
-                {displayPrice.toLocaleString("ru-RU")} ₽
-              </div>
+              {/* Цена и блок действий в едином контейнере */}
+              <div className="mb-4">
+                {/* Цена */}
+                <div className="text-lg md:text-xl font-medium text-color-text-main mb-4">
+                  {displayPrice.toLocaleString("ru-RU")} ₽
+                </div>
 
-              {/* Кнопки */}
-              <div className="flex flex-col gap-2 mb-6 max-w-[300px]">
-                <button
-                  onClick={handleAddToCart}
-                  className="w-full h-10 rounded-full text-sm font-medium text-white transition-colors flex items-center justify-center gap-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
-                >
-                  <ShoppingBag className="w-4 h-4" />В корзину
-                </button>
+                {/* Блок действий */}
+                <div>
+                {/* Первая строка: количество, CTA кнопки, избранное */}
+                <div className="flex flex-row items-center gap-2 mb-4 flex-wrap">
+                  {/* Селектор количества */}
+                  <div className="flex items-center border border-border-block rounded-lg bg-white overflow-hidden flex-shrink-0 h-9">
+                    <button
+                      type="button"
+                      onClick={() => handleQuantityChange(-1)}
+                      disabled={quantity <= 1}
+                      className="px-2 py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-r border-border-block"
+                      aria-label="Уменьшить количество"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <div className="px-2.5 py-1.5 text-sm font-medium text-color-text-main min-w-[2rem] text-center border-r border-border-block">
+                      {quantity}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleQuantityChange(1)}
+                      className="px-2 py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors"
+                      aria-label="Увеличить количество"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
-                <button
-                  onClick={() => setQuickOrderOpen(true)}
-                  className="w-full h-10 rounded-full text-sm font-medium btn-outline transition-colors"
-                >
-                  Купить в один клик
-                </button>
+                  {/* CTA кнопки вместе (на мобильных могут переноситься) */}
+                  <div className="flex flex-1 gap-2 min-w-0">
+                    {/* Кнопка "В КОРЗИНУ" - зелёная залитая */}
+                    <button
+                      onClick={handleAddToCart}
+                      className="flex-1 h-9 px-3 rounded-lg text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0"
+                    >
+                      В КОРЗИНУ
+                    </button>
+
+                    {/* Кнопка "КУПИТЬ СЕЙЧАС" */}
+                    <button
+                      onClick={handleBuyNow}
+                      className="flex-1 h-9 px-3 rounded-lg text-sm font-medium uppercase transition-all btn-product-cta min-w-0"
+                    >
+                      КУПИТЬ СЕЙЧАС
+                    </button>
+                  </div>
+
+                  {/* Кнопка избранного - зелёный акцент */}
+                  <button
+                    type="button"
+                    onClick={handleToggleFavorite}
+                    className={`btn-favorite group ${isInFavorites ? "selected" : ""}`}
+                    aria-label={isInFavorites ? "Убрать из избранного" : "Добавить в избранное"}
+                  >
+                    <Heart
+                      className={`w-4 h-4 transition-colors ${
+                        isInFavorites
+                          ? "fill-[var(--color-text-main)] text-[var(--color-text-main)]"
+                          : "text-[var(--color-text-main)] group-hover:text-[var(--header-foreground)]"
+                      }`}
+                      strokeWidth={1.5}
+                    />
+                  </button>
+                </div>
+
+                  {/* Вторая строка: "Намекнуть о подарке" */}
+                  <button
+                    type="button"
+                    onClick={() => setGiftHintOpen(true)}
+                    className="flex items-center gap-1.5 text-xs text-color-text-main hover:text-color-text-secondary transition-colors w-fit min-h-[40px]"
+                  >
+                    <Bell className="w-3.5 h-3.5" />
+                    <span className="relative after:absolute after:left-0 after:-bottom-[3px] after:h-[1px] after:w-full after:bg-[var(--header-foreground)] after:origin-left after:transition-transform after:duration-300 after:ease-out after:scale-x-0 hover:after:scale-x-100">
+                      НАМЕКНУТЬ О ПОДАРКЕ
+                    </span>
+                  </button>
+                </div>
               </div>
 
               {/* Аккордеон-секции (single-open) */}
-              <div className="border-t border-border-block">
+              <div className="mt-4">
                 {product.shortDescription && (
                   <AccordionItem
                     id="Описание"
@@ -590,6 +710,9 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
 
       {/* Модалка быстрого заказа */}
       <QuickOrderModal isOpen={quickOrderOpen} onClose={() => setQuickOrderOpen(false)} product={product} />
+
+      {/* Модалка "Намекнуть о подарке" */}
+      <GiftHintModal isOpen={giftHintOpen} onClose={() => setGiftHintOpen(false)} product={product} />
 
       <FullscreenViewer
         isOpen={fullscreenOpen}
