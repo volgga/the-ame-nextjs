@@ -577,12 +577,6 @@ function AdminProductsPageContent() {
           category_slugs: selectedCategorySlugs,
         };
         const url = `/api/admin/products/${editProductId}`;
-        if (process.env.NODE_ENV === "development") {
-          // eslint-disable-next-line no-console
-          console.log("EDIT payload (simple)", payload);
-          // eslint-disable-next-line no-console
-          console.log("EDIT method/url", "PATCH", url);
-        }
         const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -623,12 +617,6 @@ function AdminProductsPageContent() {
           category_slugs: selectedCategorySlugs,
         };
         const url = `/api/admin/products/${editProductId}`;
-        if (process.env.NODE_ENV === "development") {
-          // eslint-disable-next-line no-console
-          console.log("EDIT payload (variant header)", payload);
-          // eslint-disable-next-line no-console
-          console.log("EDIT method/url", "PATCH", url);
-        }
         const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

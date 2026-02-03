@@ -29,7 +29,7 @@
 | `/posmotret-vse-tsvety` | Каталог всех товаров | `src/app/posmotret-vse-tsvety/page.tsx` |
 | `/magazine/[slug]` | Товары категории | `src/app/magazine/[slug]/page.tsx` |
 | `/product/[slug]` | Карточка товара | `src/app/product/[slug]/page.tsx` |
-| `/cart` | Корзина | `src/app/cart/page.tsx` |
+| — | Корзина (модалка) | Нет страницы, только модалка в шапке |
 | `/about`, `/contacts`, `/delivery-and-payments` | Статические страницы |
 
 ### Редиректы (middleware)

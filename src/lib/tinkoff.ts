@@ -6,6 +6,7 @@
 import { createHash } from "crypto";
 
 const TINKOFF_INIT_URL = "https://securepay.tinkoff.ru/v2/Init";
+const TINKOFF_GET_STATE_URL = "https://securepay.tinkoff.ru/v2/GetState";
 
 /** Параметры для Init (только корневые — вложенные объекты не участвуют в Token). */
 export interface TinkoffInitParams {
@@ -48,6 +49,8 @@ export async function tinkoffInit(
   params: Omit<TinkoffInitParams, "TerminalKey"> & {
     TerminalKey?: string;
     Password?: string;
+    /** Метаданные заказа (адрес, дата, время и т.д.); в Token не входят. */
+    Data?: Record<string, string>;
   }
 ): Promise<{ PaymentId: string; PaymentURL: string } | { error: string; details?: unknown }> {
   const terminalKey = params.TerminalKey ?? process.env.TINKOFF_TERMINAL_KEY;
@@ -57,7 +60,7 @@ export async function tinkoffInit(
     return { error: "TINKOFF_TERMINAL_KEY or TINKOFF_PASSWORD not set" };
   }
 
-  const body: TinkoffInitParams & { Token: string } = {
+  const body: TinkoffInitParams & { Token: string; Data?: Record<string, string> } = {
     TerminalKey: terminalKey,
     Amount: params.Amount,
     OrderId: params.OrderId,
@@ -68,6 +71,9 @@ export async function tinkoffInit(
     Language: params.Language ?? "ru",
     Token: "",
   };
+  if (params.Data && Object.keys(params.Data).length > 0) {
+    body.Data = params.Data;
+  }
 
   const tokenParams: Record<string, string | number> = {
     TerminalKey: body.TerminalKey,
@@ -114,6 +120,35 @@ export async function tinkoffInit(
     error: data.Message ?? "Tinkoff Init failed",
     details: { ErrorCode: data.ErrorCode },
   };
+}
+
+/**
+ * Получение статуса платежа в T-Bank (GetState).
+ * Возвращает статус (CONFIRMED, AUTHORIZED, и т.д.) или ошибку.
+ */
+export async function tinkoffGetState(
+  paymentId: string,
+  opts?: { TerminalKey?: string; Password?: string }
+): Promise<{ Status: string } | { error: string }> {
+  const terminalKey = opts?.TerminalKey ?? process.env.TINKOFF_TERMINAL_KEY;
+  const password = opts?.Password ?? process.env.TINKOFF_PASSWORD;
+  if (!terminalKey || !password) {
+    return { error: "TINKOFF_TERMINAL_KEY or TINKOFF_PASSWORD not set" };
+  }
+  const token = buildTinkoffToken(
+    { TerminalKey: terminalKey, PaymentId: paymentId },
+    password
+  );
+  const res = await fetch(TINKOFF_GET_STATE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ TerminalKey: terminalKey, PaymentId: paymentId, Token: token }),
+  });
+  const data = (await res.json()) as { Success?: boolean; Status?: string; Message?: string };
+  if (!res.ok || !data.Success) {
+    return { error: data.Message ?? "GetState failed" };
+  }
+  return { Status: data.Status ?? "UNKNOWN" };
 }
 
 /**

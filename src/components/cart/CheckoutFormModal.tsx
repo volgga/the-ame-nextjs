@@ -83,6 +83,7 @@ export function CheckoutFormModal() {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("+7 (");
   const [customerTelegram, setCustomerTelegram] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
   const [isRecipientSelf, setIsRecipientSelf] = useState(true);
   const [recipientName, setRecipientName] = useState("");
   const [recipientPhone, setRecipientPhone] = useState("+7 (");
@@ -224,10 +225,11 @@ export function CheckoutFormModal() {
 
   return (
     <div className="pt-3 border-t border-border-block">
-      {/* Ваши данные */}
-      <div>
+      {/* Ваши данные: 2 колонки на desktop, компактная ширина по эталону телефона */}
+      <div className="max-w-[480px]">
         <h3 className="text-base font-semibold mb-2 text-color-text-main">Ваши данные</h3>
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {/* Слева: обязательные */}
           <div>
             <label className="block text-sm mb-1">
               Имя и фамилия <span className="text-red-500">*</span>
@@ -244,8 +246,8 @@ export function CheckoutFormModal() {
             <label className="block text-sm mb-1">
               Телефон <span className="text-red-500">*</span>
             </label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">🇷🇺</span>
+            <div className="relative w-full min-w-0">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none">🇷🇺</span>
               <input
                 type="tel"
                 placeholder="+7 (000) 000-00-00"
@@ -255,13 +257,24 @@ export function CheckoutFormModal() {
               />
             </div>
           </div>
+          {/* Справа: необязательные */}
           <div>
-            <label className="block text-sm mb-1">Ник в Telegram</label>
+            <label className="block text-sm mb-1">Ник в Telegram (необязательное)</label>
             <input
               type="text"
               placeholder="@username"
               value={customerTelegram}
               onChange={handleTelegramChange}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <div>
+            <label className="block text-sm mb-1">Почта (необязательное)</label>
+            <input
+              type="email"
+              placeholder="example@mail.ru"
+              value={customerEmail}
+              onChange={(e) => setCustomerEmail(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
@@ -522,7 +535,7 @@ export function CheckoutFormModal() {
       </div>
 
       {/* Промокод */}
-      <div className="mb-6">
+      <div className="mb-3">
         <input
           type="text"
           placeholder="Промокод"
@@ -531,6 +544,10 @@ export function CheckoutFormModal() {
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
       </div>
+      <p className="text-sm text-muted-foreground mb-6">
+        В подарок мы упакуем ваш букет в транспортировочную коробку, добавим рекомендации по уходу, кризал и открытку по
+        желанию.
+      </p>
 
       {/* Чекбоксы согласий */}
       <div className="space-y-3">
@@ -589,6 +606,7 @@ export function CheckoutFormModal() {
         customer={{
           name: customerName,
           phone: customerPhone,
+          email: customerEmail.trim() || undefined,
           telegram: customerTelegram || undefined,
           recipientName: isRecipientSelf ? customerName : recipientName,
           recipientPhone: isRecipientSelf ? customerPhone : recipientPhone,

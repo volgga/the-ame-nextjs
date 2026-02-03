@@ -19,6 +19,10 @@ export const BREADCRUMB_SPACING = "mt-0 mb-3 md:mb-4";
 /** Вертикальный отступ между блоками (breadcrumb→контент, заголовок→след. блок и т.д.). Эталон: карточка товара. */
 export const SECTION_GAP = "mb-3 md:mb-4";
 
+/** Единый вертикальный зазор на главной: hero→РЕКОМЕНДУЕМ (+32px mobile / +40px md для лёгкого визуального разделения) */
+export const MAIN_PAGE_BLOCK_GAP = "pt-8 md:pt-10" as const;
+export const MAIN_PAGE_BLOCK_GAP_MARGIN = "mb-6 md:mb-8" as const;
+
 /**
  * Breadcrumbs — хлебные крошки навигации.
  * Формат: Главная / Каталог / {Название категории}

@@ -59,7 +59,8 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="overflow-y-auto h-full max-h-[90vh]">
-          <div className="flex justify-end pt-4 pr-4">
+          <div className="flex items-center justify-between px-6 pt-4 pb-2 border-b border-border-block">
+            <h2 className="text-lg font-bold uppercase tracking-wide text-color-text-main">Корзина</h2>
             <button
               type="button"
               onClick={onClose}
@@ -69,7 +70,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <X className="w-6 h-6" />
             </button>
           </div>
-          <div className="p-6 pt-2 space-y-4">
+          <div className="p-6 pt-4 space-y-4">
             <div>
               <h2 className="text-lg font-bold mb-4">Ваш заказ:</h2>
               {state.items.length === 0 ? (
@@ -84,12 +85,6 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 </>
               )}
             </div>
-            {state.items.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                В подарок мы упакуем ваш букет в транспортировочную коробку, добавим рекомендации по уходу, кризал и
-                открытку по желанию.
-              </p>
-            )}
             {state.items.length > 0 && <CheckoutFormModal />}
           </div>
         </div>

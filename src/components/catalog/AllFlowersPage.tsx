@@ -12,15 +12,25 @@ export type AllFlowersPageProps = {
   title: string;
   /** SEO/описательный текст под заголовком */
   description: string;
-  /** Текст в хлебных крошках для этой страницы */
+  /** Текст в хлебных крошках для этой страницы (если showBreadcrumbs true) */
   breadcrumbLabel: string;
+  /** Показывать хлебные крошки. По умолчанию true. Для страницы "Все цветы" — false */
+  showBreadcrumbs?: boolean;
+  /** Текущий роут для подсветки чипа: null = активен "Все цветы", "magazin" = ни один не активен, иначе slug категории */
+  currentSlug?: string | null;
 };
 
 /**
  * Общая разметка и логика страницы «все товары каталога».
  * Используется для /posmotret-vse-tsvety (Все цветы) и /magazin (Каталог).
  */
-export async function AllFlowersPage({ title, description, breadcrumbLabel }: AllFlowersPageProps) {
+export async function AllFlowersPage({
+  title,
+  description,
+  breadcrumbLabel,
+  showBreadcrumbs = true,
+  currentSlug = null,
+}: AllFlowersPageProps) {
   const [categories, products] = await Promise.all([getCategories(), getAllCatalogProducts()]);
 
   const priceBounds = (() => {
@@ -35,13 +45,15 @@ export async function AllFlowersPage({ title, description, breadcrumbLabel }: Al
 
   const chips = [
     { slug: "", name: ALL_CATALOG.title, isAll: true },
-    ...categories.map((c) => ({ slug: c.slug, name: c.name, isAll: false })),
+    ...categories
+      .filter((c) => c.slug !== "posmotret-vse-tsvety" && c.slug !== "magazin")
+      .map((c) => ({ slug: c.slug, name: c.name, isAll: false })),
   ];
 
   return (
     <div className="min-h-screen bg-page-bg">
       <div className="container px-6 pt-3 pb-8 md:pt-4 md:pb-10">
-        <Breadcrumbs items={breadcrumbItems} />
+        {showBreadcrumbs && <Breadcrumbs items={breadcrumbItems} />}
 
         <div className={`grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-8 md:items-start ${SECTION_GAP}`}>
           <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-color-text-main uppercase tracking-tight">
@@ -53,7 +65,7 @@ export async function AllFlowersPage({ title, description, breadcrumbLabel }: Al
         </div>
 
         <div className={SECTION_GAP}>
-          <CategoryChips categories={chips} currentSlug={null} />
+          <CategoryChips categories={chips} currentSlug={currentSlug ?? null} />
         </div>
 
         <div className={SECTION_GAP}>

@@ -348,10 +348,10 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
     setOpenedAccordion((prev) => (prev === id ? null : id));
   };
 
-  // Хлебные крошки (тот же стиль и позиция, что на каталоге)
+  // Хлебные крошки: Главная / Каталог / Товар (Каталог ведёт на /magazin)
   const breadcrumbItems = [
     { label: "Главная", href: "/" },
-    { label: "Все цветы", href: "/posmotret-vse-tsvety" },
+    { label: "Каталог", href: "/magazin" },
     { label: product.title },
   ];
 

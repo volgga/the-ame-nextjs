@@ -9,9 +9,11 @@ async function requireAdmin() {
 }
 
 const updateSchema = z.object({
-  title: z.string().min(1).optional(),
+  image_url: z.string().min(1).optional(),
+  name: z.string().min(1).optional(),
+  category_slug: z.string().min(1).optional(),
+  sort_order: z.number().int().optional(),
   is_active: z.boolean().optional(),
-  description: z.string().max(5000).optional().nullable(),
 });
 
 export async function PATCH(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -23,15 +25,11 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
     if (!parsed.success) {
       return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
-    const payload: { title?: string; is_active?: boolean; description?: string | null } = {};
-    if (parsed.data.title !== undefined) payload.title = parsed.data.title.trim();
-    if (parsed.data.is_active !== undefined) payload.is_active = parsed.data.is_active;
-    if (parsed.data.description !== undefined) payload.description = parsed.data.description?.trim() || null;
-
     const supabase = getSupabaseAdmin();
+    const payload: Record<string, unknown> = { ...parsed.data, updated_at: new Date().toISOString() };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
-      .from("catalog_pages")
+      .from("home_collections")
       .update(payload)
       .eq("id", id)
       .select()
@@ -42,8 +40,20 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
     if ((e as Error).message === "unauthorized") {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     }
-    console.error("[admin/catalog-pages PATCH]", e);
+    console.error("[admin/collections PATCH]", e);
     return NextResponse.json({ error: "Ошибка обновления" }, { status: 500 });
+  }
+}
+
+const BUCKET = "home-collections";
+
+function getStoragePathFromUrl(url: string): string | null {
+  try {
+    const u = new URL(url);
+    const match = u.pathname.match(/\/storage\/v1\/object\/public\/[^/]+\/(.+)/);
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch {
+    return null;
   }
 }
 
@@ -52,15 +62,31 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     await requireAdmin();
     const { id } = await params;
     const supabase = getSupabaseAdmin();
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any).from("catalog_pages").delete().eq("id", id);
+    const { data: collection } = await (supabase as any)
+      .from("home_collections")
+      .select("image_url")
+      .eq("id", id)
+      .single();
+
+    if (collection?.image_url) {
+      const path = getStoragePathFromUrl(collection.image_url);
+      if (path && !path.includes("..")) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase as any).storage.from(BUCKET).remove([path]);
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any).from("home_collections").delete().eq("id", id);
     if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     }
-    console.error("[admin/catalog-pages DELETE]", e);
+    console.error("[admin/collections DELETE]", e);
     return NextResponse.json({ error: "Ошибка удаления" }, { status: 500 });
   }
 }

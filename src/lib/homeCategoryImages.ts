@@ -8,21 +8,22 @@ import type { Category } from "@/lib/categories";
 
 const DEFAULT_CATEGORY_IMAGE = "https://theame.ru/placeholder.svg";
 
-/** Порядок и список категорий для плитки на главной (строго по ТЗ). 8 категорий. */
+/** Порядок и список категорий для плитки «КОЛЛЕКЦИИ THE ÁME». 6 карточек (5 из БД + статическая «Корзины цветов»). */
 export const HOME_CATEGORY_NAMES = [
   "14 февраля",
   "Сейчас сезон",
   "Авторские букеты",
   "Моно и дуо-букеты",
   "Цветы в коробке",
-  "Корзина с цветами",
-  "Премиум",
-  "Розы",
+  "Корзины цветов",
 ] as const;
 
-/** Варианты названий в БД для одной и той же позиции (например «Корзины с цветами» → слот «Корзина с цветами») */
+/** Варианты названий в БД для одной и той же позиции */
 const HOME_CATEGORY_ALIASES: Record<string, (typeof HOME_CATEGORY_NAMES)[number]> = {
-  "Корзины с цветами": "Корзина с цветами",
+  "Корзины с цветами": "Корзины цветов",
+  "Корзина с цветами": "Корзины цветов",
+  "Композиции в коробке": "Цветы в коробке",
+  "Моно букеты": "Моно и дуо-букеты",
 };
 
 /** slug (из БД или slugify названия) → URL картинки для плитки на главной */
@@ -50,13 +51,18 @@ export function getCategoryImageUrl(slug: string): string {
 export type HomeCategoryItem = Category & { displayName: string };
 
 /**
- * Отфильтровать и упорядочить категории для главной (плитка).
- * Учитывает алиасы: «Корзины с цветами» в БД → слот «Корзина с цветами».
+ * Отфильтровать и упорядочить категории для главной (плитка «КОЛЛЕКЦИИ THE ÁME»).
+ * Возвращает только 5 категорий: 14 февраля, Сейчас сезон, Авторские букеты, Моно и дуо-букеты, Цветы в коробке.
+ * Карточка «Корзины цветов» добавляется статически в HomeCategoryTiles.
  */
 export function getHomeCategoriesOrdered(allCategories: Category[]): HomeCategoryItem[] {
-  const orderMap = new Map<string, number>(HOME_CATEGORY_NAMES.map((name, i) => [name, i]));
+  const orderMap = new Map<string, number>(HOME_CATEGORY_NAMES.slice(0, 5).map((name, i) => [name, i]));
   return allCategories
     .filter((c) => orderMap.has(c.name) || orderMap.has(HOME_CATEGORY_ALIASES[c.name]))
+    .filter((c) => {
+      const displayName = HOME_CATEGORY_ALIASES[c.name] ?? c.name;
+      return orderMap.has(displayName);
+    })
     .map((c) => ({
       ...c,
       displayName: HOME_CATEGORY_ALIASES[c.name] ?? c.name,

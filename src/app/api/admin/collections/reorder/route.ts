@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     for (const item of parsed.data.items) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase as any)
-        .from("catalog_pages")
-        .update({ sort_order: item.sort_order })
+        .from("home_collections")
+        .update({ sort_order: item.sort_order, updated_at: new Date().toISOString() })
         .eq("id", item.id);
       if (error) throw error;
     }
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     if ((e as Error).message === "unauthorized") {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     }
-    console.error("[admin/catalog-pages/reorder POST]", e);
+    console.error("[admin/collections/reorder POST]", e);
     return NextResponse.json({ error: "Ошибка сохранения порядка" }, { status: 500 });
   }
 }

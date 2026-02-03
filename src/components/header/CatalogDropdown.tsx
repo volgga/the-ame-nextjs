@@ -11,23 +11,6 @@ const MAX_ITEMS = COLUMNS_COUNT * MAX_ROWS_PER_COLUMN; // 16
 
 type MenuItem = { label: string; href: string };
 
-type CatalogPageItem = { slug: string; title: string };
-
-async function fetchCatalogPages(): Promise<CatalogPageItem[]> {
-  try {
-    const res = await fetch("/api/catalog-pages");
-    if (!res.ok) return [];
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    return data.map((p: { slug?: string; title?: string }) => ({
-      slug: p.slug ?? "",
-      title: p.title ?? "",
-    }));
-  } catch {
-    return [];
-  }
-}
-
 async function fetchCategories(): Promise<{ name: string; slug: string }[]> {
   try {
     const res = await fetch("/api/categories");
@@ -43,20 +26,20 @@ async function fetchCategories(): Promise<{ name: string; slug: string }[]> {
   }
 }
 
-function buildMenuItems(
-  catalogPages: CatalogPageItem[],
-  categories: { name: string; slug: string }[]
-): MenuItem[] {
-  const categoryLinks =
-    categories.length > 0
-      ? categories.map((c) => ({ label: c.name, href: `/magazine/${c.slug}` }))
-      : FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` }));
-  const catalogPageLinks =
-    catalogPages.length > 0
-      ? catalogPages.map((p) => ({ label: p.title, href: `/${p.slug}` }))
-      : [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }];
-  const full = [...catalogPageLinks, ...categoryLinks];
-  return full.length > MAX_ITEMS ? full.slice(0, MAX_ITEMS) : full;
+/** slug → href: posmotret-vse-tsvety → страница "Все цветы", остальные → /magazine/[slug]. slug "magazin" в список не попадает. */
+function categoryHref(slug: string): string {
+  if (slug === "posmotret-vse-tsvety") return "/posmotret-vse-tsvety";
+  return `/magazine/${slug}`;
+}
+
+/** Список для выпадающего меню: первым "Все цветы", далее категории без magazin (кнопка "Каталог" ведёт на /magazin отдельно). */
+function buildMenuItems(categories: { name: string; slug: string }[]): MenuItem[] {
+  const withoutMagazin = categories.filter((c) => c.slug !== "magazin");
+  const list =
+    withoutMagazin.length > 0
+      ? [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...withoutMagazin.map((c) => ({ label: c.name, href: categoryHref(c.slug) }))]
+      : [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` }))];
+  return list.length > MAX_ITEMS ? list.slice(0, MAX_ITEMS) : list;
 }
 
 /** Раскладка строго по 4 колонкам: col0 = [0..3], col1 = [4..7], col2 = [8..11], col3 = [12..15]. */
@@ -80,21 +63,15 @@ type CatalogDropdownProps = {
 export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [catalogPages, setCatalogPages] = useState<CatalogPageItem[]>([]);
   const [categories, setCategories] = useState<{ name: string; slug: string }[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const menuItems = useMemo(() => buildMenuItems(catalogPages, categories), [catalogPages, categories]);
+  const menuItems = useMemo(() => buildMenuItems(categories), [categories]);
   const columns = useMemo(() => splitIntoFourColumns(menuItems), [menuItems]);
-  const triggerHref =
-    catalogPages.length > 0 ? `/${catalogPages[0].slug}` : CATALOG_PAGE.href;
 
   useEffect(() => {
-    Promise.all([fetchCatalogPages(), fetchCategories()]).then(([pages, cats]) => {
-      setCatalogPages(pages);
-      setCategories(cats);
-    });
+    fetchCategories().then(setCategories);
   }, []);
 
   useEffect(() => {
@@ -162,7 +139,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
       onMouseLeave={isTouch ? undefined : handleClose}
     >
       <Link
-        href={triggerHref}
+        href={CATALOG_PAGE.href}
         className={triggerClassName}
         aria-expanded={open}
         aria-haspopup="true"

@@ -96,7 +96,7 @@ export function FavoritesPageClient({ products }: FavoritesPageClientProps) {
               Добавляйте понравившиеся товары в избранное, нажимая на сердечко на карточке.
             </p>
             <Link
-              href="/posmotret-vse-tsvety"
+              href="/magazin"
               className="inline-block rounded-full px-6 py-3 text-sm font-medium text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active transition-colors"
             >
               Перейти в каталог

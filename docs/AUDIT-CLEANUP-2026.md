@@ -13,7 +13,6 @@ src/
 │   │   ├── one-click-order/# Заявки «Купить в 1 клик» → one_click_orders
 │   │   ├── orders/         # Заказы: POST, GET :id, quick (→ orders)
 │   │   └── payments/       # Tinkoff: init, notification
-│   ├── cart/               # Страница корзины
 │   ├── catalog/            # Редиректы /catalog → /posmotret-vse-tsvety
 │   ├── favorites/          # Страница избранного
 │   ├── magazine/[slug]/    # Каталог по категории
@@ -22,7 +21,7 @@ src/
 │   └── ...
 ├── components/
 │   ├── admin/              # Админка: CategoriesGrid, CategoryCard, SlideCard, SlidesGrid
-│   ├── cart/               # Корзина: Cart, CartDrawer, CartItemsList, CheckoutForm, CheckoutFormModal, QuickBuyModal, UpsellSection
+│   ├── cart/               # Корзина (модалка): CartDrawer, CartItemsList, CheckoutForm, CheckoutFormModal, QuickBuyModal, UpsellSection
 │   ├── catalog/            # Каталог: category-chips, FlowerCard, FlowerCatalog, product-toolbar
 │   ├── common/             # CookieConsent
 │   ├── header/             # CartIcon, CatalogDropdown, Header, HeaderMain, TopBar, TopMarquee
@@ -41,7 +40,7 @@ src/
 
 | Область           | Расположение |
 |-------------------|-------------|
-| Корзина           | `context/CartContext.tsx`, `components/cart/*`, `app/cart/page.tsx` |
+| Корзина           | `context/CartContext.tsx`, `components/cart/*` (только модалка, страницы /cart нет) |
 | Избранное         | `context/FavoritesContext.tsx`, `app/favorites/*`, header link |
 | Каталог           | `app/posmotret-vse-tsvety/`, `app/magazine/[slug]/`, `components/catalog/*`, `lib/catalogCategories.ts` |
 | Модалки           | `components/cart/QuickBuyModal.tsx`, `CheckoutFormModal.tsx`, `ContactsModal.tsx`; в ProductPageClient — локальная QuickOrderModal |

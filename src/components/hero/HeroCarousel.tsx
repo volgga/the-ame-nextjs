@@ -22,6 +22,12 @@ type HeroCarouselProps = {
 /**
  * HeroCarousel — слайды из Supabase (hero_slides) или fallback.
  * next/image обеспечивает оптимизацию (webp/avif, sizes) для быстрой загрузки.
+ *
+ * Высота хиро — уменьшённая, лёгкая, премиальная (быстрее к контенту):
+ * - mobile  (≤767px):  360px min 320px
+ * - tablet  (768–1199): 420px
+ * - laptop  (1200–1439): 500px
+ * - desktop (≥1440px):  560px, max 680px
  */
 export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
   const slides = propSlides && propSlides.length > 0 ? propSlides : FALLBACK_SLIDES;
@@ -43,7 +49,7 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
 
   return (
     <section className="relative w-full bg-[#fff8ea] overflow-hidden pb-4 md:pb-6">
-      <div className="relative w-full h-[75vh] min-h-[420px] sm:h-[78vh] md:h-[82vh] lg:h-[85vh] max-h-[1000px]">
+      <div className="relative w-full h-[360px] min-h-[320px] min-[768px]:h-[420px] min-[1200px]:h-[500px] min-[1440px]:h-[560px] min-[1440px]:max-h-[680px]">
         <div className="absolute inset-0 overflow-hidden bg-[#ece9e2]">
           <div
             className="flex h-full transition-transform ease-in-out"

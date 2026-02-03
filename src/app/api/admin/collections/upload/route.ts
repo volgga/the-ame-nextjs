@@ -1,0 +1,76 @@
+import { NextRequest, NextResponse } from "next/server";
+import { isAdminAuthenticated } from "@/lib/adminAuth";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+
+const BUCKET = "home-collections";
+const MAX_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp", "image/avif"];
+const EXT_MAP: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/avif": "avif",
+};
+
+async function requireAdmin() {
+  const ok = await isAdminAuthenticated();
+  if (!ok) throw new Error("unauthorized");
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    await requireAdmin();
+
+    const formData = await request.formData();
+    const file = formData.get("file") as File | null;
+    const collectionId = formData.get("collectionId") as string | null;
+
+    if (!file || !(file instanceof File)) {
+      return NextResponse.json({ error: "Файл не выбран" }, { status: 400 });
+    }
+
+    if (file.size > MAX_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: `Файл слишком большой. Максимум ${MAX_SIZE_BYTES / 1024 / 1024}MB` },
+        { status: 400 }
+      );
+    }
+
+    const mime = file.type?.toLowerCase();
+    if (!mime || !ALLOWED_TYPES.includes(mime)) {
+      return NextResponse.json({ error: "Допустимые форматы: JPEG, PNG, WebP, AVIF" }, { status: 400 });
+    }
+
+    const ext = EXT_MAP[mime] ?? "jpg";
+    const id = collectionId ?? crypto.randomUUID();
+    const timestamp = Date.now();
+    const safeName = `${id}-${timestamp}.${ext}`;
+
+    const supabase = getSupabaseAdmin();
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).storage.from(BUCKET).upload(safeName, buffer, {
+      contentType: mime,
+      upsert: true,
+    });
+
+    if (error) {
+      console.error("[admin/collections/upload]", error);
+      return NextResponse.json({ error: error.message ?? "Ошибка загрузки в Storage" }, { status: 500 });
+    }
+
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!url) throw new Error("NEXT_PUBLIC_SUPABASE_URL not set");
+    const publicUrl = `${url}/storage/v1/object/public/${BUCKET}/${data.path}`;
+
+    return NextResponse.json({ image_url: publicUrl, path: data.path });
+  } catch (e) {
+    if ((e as Error).message === "unauthorized") {
+      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
+    }
+    console.error("[admin/collections/upload POST]", e);
+    return NextResponse.json({ error: "Ошибка загрузки" }, { status: 500 });
+  }
+}

@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/header/Header";
-import { Footer } from "@/components/Footer";
-import { Providers } from "@/app/providers";
-import { FloatingSocialButton } from "@/components/FloatingSocialButton";
-import { CookieConsent } from "@/components/common/CookieConsent";
+import { AppShell } from "@/app/AppShell";
 
 // Подключаем шрифт Montserrat (как в старом проекте)
 const montserrat = Montserrat({
@@ -140,17 +136,8 @@ export default function RootLayout({
           }}
         />
 
-        {/* Основная структура: Header + контент + Footer */}
-        <Providers>
-          <div className="min-h-screen flex flex-col bg-page-bg">
-            <Header />
-            <main className="flex-1 bg-page-bg">{children}</main>
-            <Footer />
-            {/* Плавающая кнопка соцсетей */}
-            <FloatingSocialButton />
-            <CookieConsent />
-          </div>
-        </Providers>
+        {/* Основная структура: AppShell с провайдерами + контент */}
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

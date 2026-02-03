@@ -39,7 +39,15 @@ interface FavoritesContextType {
   items: string[];
 }
 
-const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
+const NOOP_FAVORITES: FavoritesContextType = {
+  toggle: () => {},
+  clearAll: () => {},
+  isFavorite: () => false,
+  count: 0,
+  items: [],
+};
+
+const FavoritesContext = createContext<FavoritesContextType>(NOOP_FAVORITES);
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(favoritesReducer, { favoriteIds: [] });
@@ -85,9 +93,5 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useFavorites() {
-  const context = useContext(FavoritesContext);
-  if (!context) {
-    throw new Error("useFavorites must be used within a FavoritesProvider");
-  }
-  return context;
+  return useContext(FavoritesContext);
 }

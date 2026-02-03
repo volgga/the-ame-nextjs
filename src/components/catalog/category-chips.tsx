@@ -12,19 +12,24 @@ export type CategoryChip = {
 
 type CategoryChipsProps = {
   categories: CategoryChip[];
-  /** Текущий slug категории или null для "Все цветы" */
+  /** Текущий роут: null = активен "Все цветы", "magazin" = ни один не активен, иначе slug категории */
   currentSlug: string | null;
 };
 
 /**
  * CategoryChips — горизонтальные кнопки-чипсы категорий.
- * Активная категория подсвечена, wrap на новую строку.
+ * Активная подсветка по currentSlug: null → "Все цветы", "magazin" → ни один, иначе — категория с этим slug.
+ * Чип "Каталог" (slug magazin) в блок не передаётся (фильтруется в AllFlowersPage / magazine/[slug]).
  */
 export function CategoryChips({ categories, currentSlug }: CategoryChipsProps) {
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-wrap justify-center gap-2.5" role="group" aria-label="Категории каталога">
       {categories.map((cat) => {
-        const href = cat.isAll ? ALL_CATALOG.href : `/magazine/${cat.slug}`;
+        const href = cat.isAll
+          ? ALL_CATALOG.href
+          : cat.slug === "posmotret-vse-tsvety"
+            ? "/posmotret-vse-tsvety"
+            : `/magazine/${cat.slug}`;
         const isActive = cat.isAll ? currentSlug === null : cat.slug === currentSlug;
 
         return (

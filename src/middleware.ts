@@ -5,16 +5,18 @@ import { validateSessionToken, getAdminCookieName } from "@/lib/adminAuth";
 const LOGIN_PATH = "/admin/login";
 const API_LOGIN = "/api/admin/login";
 
-/** Новый каталог всех товаров */
-const ALL_CATALOG = "/posmotret-vse-tsvety";
-/** Новый маршрут категории */
+/** Главная страница каталога (все товары) */
+const CATALOG_HOME = "/magazin";
+/** Страница "Все цветы" (отдельная) */
+const ALL_FLOWERS = "/posmotret-vse-tsvety";
+/** Маршрут категории */
 const MAGAZINE_PREFIX = "/magazine";
 
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   // ============================================================
-  // Редиректы на новый формат /magazine/<slug>
+  // Редиректы на новый формат /magazine/<slug> и главную каталога /magazin
   // ============================================================
 
   // /catalog?category=<slug> → /magazine/<slug>
@@ -23,8 +25,8 @@ export function middleware(request: NextRequest) {
     if (categoryParam) {
       return NextResponse.redirect(new URL(`${MAGAZINE_PREFIX}/${categoryParam}`, request.url), 308);
     }
-    // /catalog без параметра → /posmotret-vse-tsvety
-    return NextResponse.redirect(new URL(ALL_CATALOG, request.url), 308);
+    // /catalog без параметра → главная каталога /magazin
+    return NextResponse.redirect(new URL(CATALOG_HOME, request.url), 308);
   }
 
   // /catalog/<slug> → /magazine/<slug>
@@ -36,7 +38,7 @@ export function middleware(request: NextRequest) {
   }
 
   // /posmotret-vse-tsvety?category=<slug> → /magazine/<slug>
-  if (pathname === ALL_CATALOG) {
+  if (pathname === ALL_FLOWERS) {
     const categoryParam = searchParams.get("category");
     if (categoryParam) {
       return NextResponse.redirect(new URL(`${MAGAZINE_PREFIX}/${categoryParam}`, request.url), 308);
@@ -44,8 +46,8 @@ export function middleware(request: NextRequest) {
   }
 
   // /posmotret-vse-tsvety/<slug> → /magazine/<slug>
-  if (pathname.startsWith(ALL_CATALOG + "/")) {
-    const slug = pathname.slice((ALL_CATALOG + "/").length);
+  if (pathname.startsWith(ALL_FLOWERS + "/")) {
+    const slug = pathname.slice((ALL_FLOWERS + "/").length);
     if (slug) {
       return NextResponse.redirect(new URL(`${MAGAZINE_PREFIX}/${slug}`, request.url), 308);
     }
@@ -90,6 +92,7 @@ export const config = {
     "/api/admin/:path*",
     "/catalog",
     "/catalog/:path*",
+    "/magazin",
     "/posmotret-vse-tsvety",
     "/posmotret-vse-tsvety/:path*",
   ],

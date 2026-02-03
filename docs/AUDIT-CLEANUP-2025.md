@@ -4,7 +4,7 @@
 
 ### Роутинг
 - **App Router** (нет `pages/`)
-- Витрина: `/`, `/posmotret-vse-tsvety`, `/magazine/[slug]`, `/product/[slug]`, `/cart`, `/about`, `/contacts`, `/delivery-and-payments`, `/docs/*`, `/payment/*`
+- Витрина: `/`, `/posmotret-vse-tsvety`, `/magazine/[slug]`, `/product/[slug]`, `/about`, `/contacts`, `/delivery-and-payments`, `/docs/*`, `/payment/*` (корзина — модалка, отдельной страницы нет)
 - Админка: `/admin/*` (categories, products, slides, login)
 - Редиректы: `/catalog` → `/posmotret-vse-tsvety`, `/catalog/[category]` → `/magazine/[category]`, `/posmotret-vse-tsvety/[category]` → `/magazine/[category]`
 

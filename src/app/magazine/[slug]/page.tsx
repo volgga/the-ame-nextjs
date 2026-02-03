@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Breadcrumbs, SECTION_GAP } from "@/components/ui/breadcrumbs";
 import { CategoryChips } from "@/components/catalog/category-chips";
@@ -13,9 +13,13 @@ type MagazineCategoryPageProps = {
   params: Promise<{ slug: string }>;
 };
 
+const VIRTUAL_CATEGORY_SLUGS = ["magazin", "posmotret-vse-tsvety"] as const;
+
 export async function generateStaticParams() {
   const categories = await getCategories();
-  return categories.map((c) => ({ slug: c.slug }));
+  return categories
+    .filter((c) => !VIRTUAL_CATEGORY_SLUGS.includes(c.slug as (typeof VIRTUAL_CATEGORY_SLUGS)[number]))
+    .map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: MagazineCategoryPageProps): Promise<Metadata> {
@@ -36,6 +40,9 @@ export async function generateMetadata({ params }: MagazineCategoryPageProps): P
 
 export default async function MagazineCategoryPage({ params }: MagazineCategoryPageProps) {
   const { slug } = await params;
+
+  if (slug === "magazin") redirect("/magazin");
+  if (slug === "posmotret-vse-tsvety") redirect("/posmotret-vse-tsvety");
 
   const [categories, allProducts] = await Promise.all([getCategories(), getAllCatalogProducts()]);
 
@@ -65,7 +72,9 @@ export default async function MagazineCategoryPage({ params }: MagazineCategoryP
 
   const chips = [
     { slug: "", name: ALL_CATALOG.title, isAll: true },
-    ...categories.map((c) => ({ slug: c.slug, name: c.name, isAll: false })),
+    ...categories
+      .filter((c) => c.slug !== "posmotret-vse-tsvety" && c.slug !== "magazin")
+      .map((c) => ({ slug: c.slug, name: c.name, isAll: false })),
   ];
 
   return (

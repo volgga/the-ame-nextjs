@@ -13,6 +13,13 @@ export default function AdminPage() {
           <p className="mt-1 text-sm text-gray-500">Управление hero-слайдами на главной</p>
         </Link>
         <Link
+          href="/admin/home"
+          className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition"
+        >
+          <h3 className="font-medium text-[#111]">Главная страница</h3>
+          <p className="mt-1 text-sm text-gray-500">Коллекции The Áme и другое</p>
+        </Link>
+        <Link
           href="/admin/products"
           className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition"
         >

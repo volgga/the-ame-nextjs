@@ -31,7 +31,20 @@ type CartAction =
   | { type: "CLEAR_CART" }
   | { type: "LOAD_CART"; payload: CartItem[] };
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+const NOOP_CART: CartContextType = {
+  state: { items: [], total: 0, itemCount: 0 },
+  addToCart: () => {},
+  removeFromCart: () => {},
+  updateQuantity: () => {},
+  clearCart: () => {},
+  addAddonToCart: () => {},
+  isAddonInCart: () => false,
+  isCartDrawerOpen: false,
+  openCartDrawer: () => {},
+  closeCartDrawer: () => {},
+};
+
+const CartContext = createContext<CartContextType>(NOOP_CART);
 
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
@@ -161,10 +174,4 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
-    throw new Error("useCart must be used within a CartProvider");
-  }
-  return context;
-};
+export const useCart = () => useContext(CartContext);

@@ -29,10 +29,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Заказ уже оплачен" }, { status: 400 });
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
-    const successUrl = process.env.TINKOFF_SUCCESS_URL ?? `${siteUrl}/payment/success`;
-    const failUrl = process.env.TINKOFF_FAIL_URL ?? `${siteUrl}/payment/fail`;
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+    const baseSuccess = process.env.TINKOFF_SUCCESS_URL ?? `${baseUrl}/payment/success`;
+    const baseFail = process.env.TINKOFF_FAIL_URL ?? `${baseUrl}/payment/fail`;
+    const sep = (u: string) => (u.includes("?") ? "&" : "?");
+    const successUrl = `${baseSuccess}${sep(baseSuccess)}orderId=${order.id}`;
+    const failUrl = `${baseFail}${sep(baseFail)}orderId=${order.id}`;
+    if (!successUrl.startsWith("http") || !failUrl.startsWith("http")) {
+      return NextResponse.json(
+        { error: "Задайте NEXT_PUBLIC_SITE_URL или TINKOFF_SUCCESS_URL/TINKOFF_FAIL_URL (абсолютные URL) для редиректа после оплаты." },
+        { status: 502 }
+      );
+    }
     const notificationUrl = process.env.TINKOFF_NOTIFICATION_URL ?? "";
+
+    const c = order.customer ?? {};
+    const data: Record<string, string> = {};
+    if (c.deliveryAddress) data.Address = c.deliveryAddress;
+    if (c.deliveryDate) data.Date = c.deliveryDate;
+    if (c.deliveryTime) data.Time = c.deliveryTime;
+    if (c.name) data.CustomerName = c.name;
+    if (c.phone) data.Phone = c.phone;
 
     const initResult = await tinkoffInit({
       Amount: order.amount,
@@ -41,6 +58,7 @@ export async function POST(request: Request) {
       SuccessURL: successUrl,
       FailURL: failUrl,
       NotificationURL: notificationUrl || undefined,
+      Data: Object.keys(data).length > 0 ? data : undefined,
     });
 
     if ("error" in initResult) {
