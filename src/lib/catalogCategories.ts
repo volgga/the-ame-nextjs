@@ -13,6 +13,12 @@ export const ALL_CATALOG = {
   href: "/posmotret-vse-tsvety",
 } as const;
 
+/** Страница «Каталог» — главная страница каталога (/magazin) */
+export const CATALOG_PAGE = {
+  title: "Каталог",
+  href: "/magazin",
+} as const;
+
 /** Слаги категории «Популярное» — пробуем по порядку (в БД может быть populyarnoe или popularnoe) */
 export const POPULAR_CATEGORY_SLUG_CANDIDATES = ["populyarnoe", "popularnoe"] as const;
 

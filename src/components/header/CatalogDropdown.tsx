@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { ALL_CATALOG, FALLBACK_CATEGORIES } from "@/lib/catalogCategories";
+import { ALL_CATALOG, CATALOG_PAGE, FALLBACK_CATEGORIES } from "@/lib/catalogCategories";
 
 /** Строго 4 колонки, максимум 4 строки в колонке (4×4). */
 const COLUMNS_COUNT = 4;
@@ -10,6 +10,23 @@ const MAX_ROWS_PER_COLUMN = 4;
 const MAX_ITEMS = COLUMNS_COUNT * MAX_ROWS_PER_COLUMN; // 16
 
 type MenuItem = { label: string; href: string };
+
+type CatalogPageItem = { slug: string; title: string };
+
+async function fetchCatalogPages(): Promise<CatalogPageItem[]> {
+  try {
+    const res = await fetch("/api/catalog-pages");
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!Array.isArray(data)) return [];
+    return data.map((p: { slug?: string; title?: string }) => ({
+      slug: p.slug ?? "",
+      title: p.title ?? "",
+    }));
+  } catch {
+    return [];
+  }
+}
 
 async function fetchCategories(): Promise<{ name: string; slug: string }[]> {
   try {
@@ -26,12 +43,19 @@ async function fetchCategories(): Promise<{ name: string; slug: string }[]> {
   }
 }
 
-function buildMenuItems(categories: { name: string; slug: string }[]): MenuItem[] {
-  const list =
+function buildMenuItems(
+  catalogPages: CatalogPageItem[],
+  categories: { name: string; slug: string }[]
+): MenuItem[] {
+  const categoryLinks =
     categories.length > 0
       ? categories.map((c) => ({ label: c.name, href: `/magazine/${c.slug}` }))
       : FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` }));
-  const full = [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...list];
+  const catalogPageLinks =
+    catalogPages.length > 0
+      ? catalogPages.map((p) => ({ label: p.title, href: `/${p.slug}` }))
+      : [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }];
+  const full = [...catalogPageLinks, ...categoryLinks];
   return full.length > MAX_ITEMS ? full.slice(0, MAX_ITEMS) : full;
 }
 
@@ -56,15 +80,21 @@ type CatalogDropdownProps = {
 export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [catalogPages, setCatalogPages] = useState<CatalogPageItem[]>([]);
   const [categories, setCategories] = useState<{ name: string; slug: string }[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const menuItems = useMemo(() => buildMenuItems(categories), [categories]);
+  const menuItems = useMemo(() => buildMenuItems(catalogPages, categories), [catalogPages, categories]);
   const columns = useMemo(() => splitIntoFourColumns(menuItems), [menuItems]);
+  const triggerHref =
+    catalogPages.length > 0 ? `/${catalogPages[0].slug}` : CATALOG_PAGE.href;
 
   useEffect(() => {
-    fetchCategories().then(setCategories);
+    Promise.all([fetchCatalogPages(), fetchCategories()]).then(([pages, cats]) => {
+      setCatalogPages(pages);
+      setCategories(cats);
+    });
   }, []);
 
   useEffect(() => {
@@ -132,7 +162,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
       onMouseLeave={isTouch ? undefined : handleClose}
     >
       <Link
-        href={ALL_CATALOG.href}
+        href={triggerHref}
         className={triggerClassName}
         aria-expanded={open}
         aria-haspopup="true"

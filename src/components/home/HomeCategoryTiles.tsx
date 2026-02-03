@@ -19,6 +19,14 @@ export function HomeCategoryTiles({ categories }: HomeCategoryTilesProps) {
   return (
     <section className="bg-page-bg py-12 md:py-16" aria-label="Категории каталога">
       <div className="container mx-auto px-4 md:px-6">
+        <div className="flex justify-end mb-4 md:mb-6">
+          <Link
+            href="/magazin"
+            className="text-sm font-medium text-color-text-main hover:underline decoration-2 underline-offset-2"
+          >
+            Смотреть все
+          </Link>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
           {categories.map((cat) => {
             const imageUrl = getCategoryImageUrl(cat.slug);
