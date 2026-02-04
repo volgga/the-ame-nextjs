@@ -28,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <header className="h-14 sm:h-16 bg-page-bg border-b border-gray-200 flex items-end justify-center">
+      <header className="h-14 sm:h-16 bg-page-bg border-b border-gray-200 flex items-end justify-center relative z-10">
         <nav className="container mx-auto flex items-end justify-center gap-6 sm:gap-8 px-4 pb-3">
           {navItems.map(({ href, label }) => {
             const isActive = pathname === href || (href !== "/admin" && pathname.startsWith(href));

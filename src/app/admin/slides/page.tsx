@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { SlidesGrid } from "@/components/admin/slides/SlidesGrid";
 import type { Slide } from "@/components/admin/slides/SlideCard";
@@ -25,9 +26,14 @@ export default function AdminSlidesPage() {
     file: null as File | null,
     is_active: true,
     sort_order: 0,
+    button_text: "",
+    button_href: "",
+    button_variant: "filled" as "filled" | "transparent",
+    button_align: "center" as "left" | "center" | "right",
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isDirty = !areOrdersEqual(slidesFromServer, slidesDraft);
@@ -51,10 +57,36 @@ export default function AdminSlidesPage() {
     load();
   }, [load]);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Блокировка скролла при открытой модалке
+  useEffect(() => {
+    if (creating || editing) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [creating, editing]);
+
   function closeModal() {
     setCreating(false);
     setEditing(null);
-    setForm({ file: null, sort_order: 0, is_active: true });
+    setForm({ file: null, sort_order: 0, is_active: true, button_text: "", button_href: "", button_variant: "filled", button_align: "center" });
+  }
+
+  function setFormFromSlide(slide: Slide) {
+    setForm({
+      file: null,
+      sort_order: slide.sort_order,
+      is_active: slide.is_active,
+      button_text: slide.button_text ?? "",
+      button_href: slide.button_href ?? "",
+      button_variant: slide.button_variant === "transparent" ? "transparent" : "filled",
+      button_align: slide.button_align === "left" || slide.button_align === "center" || slide.button_align === "right" ? slide.button_align : "center",
+    });
   }
 
   useEffect(() => {
@@ -105,9 +137,34 @@ export default function AdminSlidesPage() {
     return data.image_url;
   }
 
+  function getButtonPayload() {
+    const hasText = Boolean(form.button_text?.trim());
+    const hasHref = Boolean(form.button_href?.trim());
+    if (!hasText && !hasHref) {
+      return { button_text: null, button_href: null, button_variant: null, button_align: null };
+    }
+    if (hasText && !hasHref) {
+      return null;
+    }
+    if (!hasText && hasHref) {
+      return null;
+    }
+    return {
+      button_text: form.button_text.trim(),
+      button_href: form.button_href.trim(),
+      button_variant: form.button_variant,
+      button_align: form.button_align,
+    };
+  }
+
   async function handleSaveForm(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    const buttonPayload = getButtonPayload();
+    if (buttonPayload === null) {
+      setError("Для кнопки нужно указать и текст, и ссылку (или оба оставить пустыми)");
+      return;
+    }
     try {
       if (creating) {
         if (!form.file) {
@@ -123,6 +180,7 @@ export default function AdminSlidesPage() {
             image_url,
             sort_order: slidesDraft.length,
             is_active: form.is_active,
+            ...buttonPayload,
           }),
         });
         const data = await res.json();
@@ -131,7 +189,7 @@ export default function AdminSlidesPage() {
         setSlidesFromServer((s) => [...s, newSlide].sort((a, b) => a.sort_order - b.sort_order));
         setSlidesDraft((s) => [...s, newSlide].sort((a, b) => a.sort_order - b.sort_order));
         setCreating(false);
-        setForm({ file: null, sort_order: slidesDraft.length, is_active: true });
+        setForm({ file: null, sort_order: slidesDraft.length, is_active: true, button_text: "", button_href: "", button_variant: "filled", button_align: "center" });
       } else if (editing) {
         let image_url = editing.image_url;
         if (form.file) {
@@ -145,15 +203,16 @@ export default function AdminSlidesPage() {
             image_url,
             sort_order: form.sort_order,
             is_active: form.is_active,
+            ...buttonPayload,
           }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Ошибка");
-        const updated = { ...editing, image_url, sort_order: form.sort_order, is_active: form.is_active };
+        const updated = { ...editing, image_url, sort_order: form.sort_order, is_active: form.is_active, ...buttonPayload };
         setSlidesFromServer((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setSlidesDraft((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setEditing(null);
-        setForm({ file: null, sort_order: 0, is_active: true });
+        setForm({ file: null, sort_order: 0, is_active: true, button_text: "", button_href: "", button_variant: "filled", button_align: "center" });
       }
     } catch (e) {
       setError(String(e));
@@ -237,7 +296,7 @@ export default function AdminSlidesPage() {
           onClick={() => {
             setCreating(true);
             setEditing(null);
-            setForm({ file: null, sort_order: slidesDraft.length, is_active: true });
+            setForm({ file: null, sort_order: slidesDraft.length, is_active: true, button_text: "", button_href: "", button_variant: "filled", button_align: "center" });
           }}
           className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
         >
@@ -245,8 +304,8 @@ export default function AdminSlidesPage() {
         </button>
       </div>
 
-      {(creating || editing) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {mounted && (creating || editing) && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
           <div
             className="relative w-full max-w-[720px] rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-xl"
@@ -303,6 +362,66 @@ export default function AdminSlidesPage() {
                     />
                   </div>
                 </div>
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <h4 className="text-sm font-medium text-[#111] mb-3">Кнопка на слайде</h4>
+                  <p className="text-xs text-gray-500 mb-3">Заполните текст и ссылку — кнопка появится на слайде. Оставьте оба пустыми — кнопки не будет.</p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm text-[#111]">Текст кнопки</label>
+                      <input
+                        type="text"
+                        value={form.button_text}
+                        onChange={(e) => setForm((f) => ({ ...f, button_text: e.target.value }))}
+                        placeholder="Например: В каталог"
+                        className="mt-1 w-full rounded border px-3 py-2"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-[#111]">Ссылка</label>
+                      <input
+                        type="text"
+                        value={form.button_href}
+                        onChange={(e) => setForm((f) => ({ ...f, button_href: e.target.value }))}
+                        placeholder="/catalog или https://..."
+                        className="mt-1 w-full rounded border px-3 py-2"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-4">
+                      <div>
+                        <label className="block text-sm text-[#111]">Вид</label>
+                        <select
+                          value={form.button_variant}
+                          onChange={(e) => setForm((f) => ({ ...f, button_variant: e.target.value as "filled" | "transparent" }))}
+                          className="mt-1 rounded border px-3 py-2"
+                        >
+                          <option value="filled">Залитая</option>
+                          <option value="transparent">Прозрачная с обводкой</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm text-[#111]">Положение</label>
+                        <select
+                          value={form.button_align}
+                          onChange={(e) => setForm((f) => ({ ...f, button_align: e.target.value as "left" | "center" | "right" }))}
+                          className="mt-1 rounded border px-3 py-2"
+                        >
+                          <option value="left">Слева</option>
+                          <option value="center">По центру</option>
+                          <option value="right">Справа</option>
+                        </select>
+                      </div>
+                    </div>
+                    {(form.button_text || form.button_href) && (
+                      <button
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, button_text: "", button_href: "", button_variant: "filled", button_align: "center" }))}
+                        className="text-sm text-red-600 hover:underline"
+                      >
+                        Удалить кнопку
+                      </button>
+                    )}
+                  </div>
+                </div>
                 <div className="flex gap-2 pt-2">
                   <button
                     type="submit"
@@ -331,7 +450,8 @@ export default function AdminSlidesPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {slidesDraft.length > 0 && (
@@ -341,11 +461,7 @@ export default function AdminSlidesPage() {
           onEdit={(slide) => {
             setEditing(slide);
             setCreating(false);
-            setForm({
-              file: null,
-              sort_order: slide.sort_order,
-              is_active: slide.is_active,
-            });
+            setFormFromSlide(slide);
           }}
         />
       )}
