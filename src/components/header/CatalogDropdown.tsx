@@ -32,9 +32,9 @@ function categoryHref(slug: string): string {
   return `/magazine/${slug}`;
 }
 
-/** Список для выпадающего меню: первым "Все цветы", далее категории без magazin (кнопка "Каталог" ведёт на /magazin отдельно). */
+/** Список для выпадающего меню: первым "Все цветы", далее категории без magazin и без дубликата posmotret-vse-tsvety. */
 function buildMenuItems(categories: { name: string; slug: string }[]): MenuItem[] {
-  const withoutMagazin = categories.filter((c) => c.slug !== "magazin");
+  const withoutMagazin = categories.filter((c) => c.slug !== "magazin" && c.slug !== "posmotret-vse-tsvety");
   const list =
     withoutMagazin.length > 0
       ? [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...withoutMagazin.map((c) => ({ label: c.name, href: categoryHref(c.slug) }))]
@@ -197,7 +197,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
                     const isFirst = colIdx === 0 && itemIdx === 0;
                     return (
                       <Link
-                        key={item.href + item.label}
+                        key={`col-${colIdx}-item-${itemIdx}-${item.href}`}
                         href={item.href}
                         role="menuitem"
                         className={

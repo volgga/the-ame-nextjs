@@ -17,15 +17,73 @@ type ContactsModalProps = {
   isOpen: boolean;
   onClose: () => void;
   providers: Provider[];
+  /** Если true — только соцсети и «позвоните нам», без формы «Отправить сообщение». Для нижнего плавающего кружка. */
+  socialOnly?: boolean;
 };
 
+const inputBaseClass =
+  "w-full px-4 py-2.5 border rounded-lg bg-white text-[var(--color-text-main)] placeholder:text-[var(--color-text-secondary)]/60 focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block";
+const inputErrorClass = "border-red-500";
+
 /**
- * ContactsModal — модалка с контактами и соцсетями.
- * Закрывается по X, overlay, Esc.
+ * ContactsModal — модалка с контактами (соцсети, телефон). При socialOnly=false также показывает форму «Отправить сообщение».
+ * Используется нижним плавающим кружком с socialOnly=true (только соцсети/позвонить). Закрывается по X, overlay, Esc.
  */
-export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps) {
+export function ContactsModal({ isOpen, onClose, providers, socialOnly = false }: ContactsModalProps) {
   const [mounted, setMounted] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [message, setMessage] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [consentError, setConsentError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
   useEffect(() => setMounted(true), []);
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^\d+\s()\-]/g, "");
+    setPhone(value);
+    if (phoneError) setPhoneError("");
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setNameError("");
+    setPhoneError("");
+    setConsentError("");
+    let isValid = true;
+    if (!name.trim()) {
+      setNameError("Укажите ваше имя");
+      isValid = false;
+    }
+    if (!phone.trim()) {
+      setPhoneError("Укажите номер телефона");
+      isValid = false;
+    } else if (phone.replace(/\D/g, "").length < 7) {
+      setPhoneError("Введите корректный номер телефона");
+      isValid = false;
+    }
+    if (!consent) {
+      setConsentError("Необходимо согласие на обработку персональных данных");
+      isValid = false;
+    }
+    if (!isValid) return;
+    setSubmitting(true);
+    setTimeout(() => {
+      setSubmitting(false);
+      setSubmitted(true);
+      setTimeout(() => {
+        setName("");
+        setPhone("");
+        setMessage("");
+        setConsent(false);
+        setSubmitted(false);
+      }, 3000);
+    }, 500);
+  };
 
   // Блокировка скролла страницы при открытой модалке
   useEffect(() => {
@@ -90,12 +148,96 @@ export function ContactsModal({ isOpen, onClose, providers }: ContactsModalProps
 
           {/* Контент модалки */}
           <div className="px-6 pb-6 space-y-6">
-            {/* Текст */}
-            <div className="text-center space-y-2 text-sm text-foreground">
-              <p>Ответим Вам в течение 10 минут. Мы на связи с 9:00 до 21:00.</p>
-              <p>Круглосуточная доставка при заказе до 21:00.</p>
-              <p className="text-muted-foreground italic">(Наблюдаются сбои в работе WhatsApp)</p>
-            </div>
+            {/* Текст над кнопками: при socialOnly показываем только его, при полной модалке — перед формой */}
+            {socialOnly && (
+              <div className="text-center space-y-2 text-sm text-foreground">
+                <p>Ответим Вам в течение 10 минут. Мы на связи с 9:00 до 21:00.</p>
+                <p>Круглосуточная доставка при заказе до 21:00.</p>
+                <p className="text-muted-foreground italic">(Наблюдаются сбои в работе WhatsApp)</p>
+              </div>
+            )}
+            {!socialOnly && (
+              <>
+                {/* Текст */}
+                <div className="text-center space-y-2 text-sm text-foreground">
+                  <p>Ответим Вам в течение 10 минут. Мы на связи с 9:00 до 21:00.</p>
+                  <p>Круглосуточная доставка при заказе до 21:00.</p>
+                  <p className="text-muted-foreground italic">(Наблюдаются сбои в работе WhatsApp)</p>
+                </div>
+
+                {/* Форма «Отправить сообщение» — только когда не socialOnly */}
+                <form onSubmit={handleFormSubmit} className="space-y-3">
+                  <h3 className="text-base font-semibold text-color-text-main">Отправить сообщение</h3>
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Ваше имя"
+                      value={name}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        if (nameError) setNameError("");
+                      }}
+                      className={`${inputBaseClass} ${nameError ? inputErrorClass : "border-gray-300"}`}
+                      autoComplete="name"
+                    />
+                    {nameError && <p className="mt-1 text-sm text-red-600">{nameError}</p>}
+                  </div>
+                  <div>
+                    <div className="relative">
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none">🇷🇺</span>
+                      <input
+                        type="tel"
+                        placeholder="+7 (000) 000-00-00"
+                        value={phone}
+                        onChange={handlePhoneChange}
+                        className={`${inputBaseClass} pl-12 pr-4 ${phoneError ? inputErrorClass : "border-gray-300"}`}
+                        autoComplete="tel"
+                      />
+                    </div>
+                    {phoneError && <p className="mt-1 text-sm text-red-600">{phoneError}</p>}
+                  </div>
+                  <div>
+                    <textarea
+                      placeholder="Сообщение (необязательно)"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      rows={3}
+                      className={`${inputBaseClass} resize-none border-gray-300`}
+                    />
+                  </div>
+                  <div>
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={consent}
+                        onChange={(e) => {
+                          setConsent(e.target.checked);
+                          if (consentError) setConsentError("");
+                        }}
+                        className="mt-1 w-4 h-4 accent-[var(--color-accent-btn)] cursor-pointer"
+                        required
+                      />
+                      <span className="text-sm text-[var(--color-text-main)]">
+                        Нажимая кнопку, вы подтверждаете свое согласие на обработку персональных данных.
+                      </span>
+                    </label>
+                    {consentError && <p className="mt-1 text-sm text-red-600">{consentError}</p>}
+                  </div>
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={submitting || submitted}
+                      className="w-full py-3 rounded-full text-white font-medium uppercase tracking-tight transition-colors disabled:opacity-70 disabled:cursor-not-allowed bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+                    >
+                      {submitting ? "Отправка…" : submitted ? "Заявка отправлена" : "Отправить"}
+                    </button>
+                  </div>
+                </form>
+
+                {/* Разделитель */}
+                <div className="border-t border-border-block" />
+              </>
+            )}
 
             {/* Кнопки мессенджеров: единый шаблон — слева иконка в подложке, по центру текст */}
             <div className="grid grid-cols-2 gap-3">

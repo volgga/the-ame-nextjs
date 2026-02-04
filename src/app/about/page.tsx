@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="bg-page-bg">
-      <div className="container mx-auto max-w-[980px] px-4 pb-12 pt-6 md:px-6">
+      <div className="container mx-auto max-w-[980px] px-5 pb-12 pt-6 md:px-7">
         {/* A) Заголовок по центру */}
         <h1 className="mb-8 text-center text-4xl font-semibold tracking-tight text-black sm:text-5xl">О НАС</h1>
 

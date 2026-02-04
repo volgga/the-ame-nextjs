@@ -1,8 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useCart } from "@/context/CartContext";
 import type { OrderCustomerPayload } from "@/types/order";
+
+const STORAGE_KEY = "theame.checkout.form";
+
+interface SavedFormData {
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  customerTelegram?: string;
+  recipientName?: string;
+  recipientPhone?: string;
+  isRecipientSelf?: boolean;
+  deliveryType?: string | null;
+  isPickup?: boolean;
+  deliveryAddress?: string;
+  deliveryDate?: string;
+  deliveryTime?: string;
+  cardText?: string;
+  notes?: string;
+}
 
 /** Кнопка «Оплатить»: создаёт заказ на сервере (сумма пересчитывается по каталогу), инициирует платёж Tinkoff, редирект на страницу оплаты. */
 function PayButton({
@@ -102,6 +121,104 @@ export function CheckoutFormModal() {
   // Чекбоксы для "Получатель другой человек"
   const [askRecipientForDetails, setAskRecipientForDetails] = useState(false);
   const [deliverAnonymously, setDeliverAnonymously] = useState(false);
+
+  // Debounce для сохранения в localStorage
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const saveToStorage = useCallback(() => {
+    // Сохранение только если включен чекбокс "Запомнить контакты"
+    if (!rememberContacts) {
+      // Если чекбокс выключен, очищаем сохранённые данные
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // localStorage недоступен - игнорируем
+      }
+      return;
+    }
+
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      try {
+        const data: SavedFormData = {
+          customerName: customerName || undefined,
+          customerPhone: customerPhone !== "+7 (" ? customerPhone : undefined,
+          customerEmail: customerEmail.trim() || undefined,
+          customerTelegram: customerTelegram || undefined,
+          recipientName: recipientName || undefined,
+          recipientPhone: recipientPhone !== "+7 (" ? recipientPhone : undefined,
+          isRecipientSelf,
+          deliveryType,
+          isPickup,
+          deliveryAddress: deliveryAddress || undefined,
+          deliveryDate: deliveryDate || undefined,
+          deliveryTime: deliveryTime || undefined,
+          // Для многострочного текста сохраняем как есть (без trim), чтобы сохранить переносы строк
+          cardText: cardText || undefined,
+          notes: notes || undefined,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (error) {
+        // localStorage недоступен или переполнен - игнорируем
+        console.warn("Failed to save form data to localStorage", error);
+      }
+    }, 400);
+  }, [
+    rememberContacts,
+    customerName,
+    customerPhone,
+    customerEmail,
+    customerTelegram,
+    recipientName,
+    recipientPhone,
+    isRecipientSelf,
+    deliveryType,
+    isPickup,
+    deliveryAddress,
+    deliveryDate,
+    deliveryTime,
+    cardText,
+    notes,
+  ]);
+
+  // Загрузка данных из localStorage при монтировании
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data: SavedFormData = JSON.parse(saved);
+        if (data.customerName) setCustomerName(data.customerName);
+        if (data.customerPhone) setCustomerPhone(data.customerPhone);
+        if (data.customerEmail) setCustomerEmail(data.customerEmail);
+        if (data.customerTelegram) setCustomerTelegram(data.customerTelegram);
+        if (data.recipientName) setRecipientName(data.recipientName);
+        if (data.recipientPhone) setRecipientPhone(data.recipientPhone);
+        if (typeof data.isRecipientSelf === "boolean") setIsRecipientSelf(data.isRecipientSelf);
+        if (data.deliveryType !== undefined) setDeliveryType(data.deliveryType);
+        if (typeof data.isPickup === "boolean") setIsPickup(data.isPickup);
+        if (data.deliveryAddress) setDeliveryAddress(data.deliveryAddress);
+        if (data.deliveryDate) setDeliveryDate(data.deliveryDate);
+        if (data.deliveryTime) setDeliveryTime(data.deliveryTime);
+        if (data.cardText) setCardText(data.cardText);
+        if (data.notes) setNotes(data.notes);
+      }
+    } catch (error) {
+      // localStorage недоступен или повреждён - игнорируем
+      console.warn("Failed to load form data from localStorage", error);
+    }
+  }, []);
+
+  // Сохранение при изменении полей
+  useEffect(() => {
+    saveToStorage();
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        saveTimeoutRef.current = null;
+      }
+    };
+  }, [saveToStorage]);
 
   // Данные районов доставки строго по скриншоту (9 зон; самовывоза в списке нет)
   const deliveryZones = [
@@ -225,11 +342,10 @@ export function CheckoutFormModal() {
 
   return (
     <div className="pt-3 border-t border-border-block">
-      {/* Ваши данные: 2 колонки на desktop, компактная ширина по эталону телефона */}
-      <div className="max-w-[480px]">
+      {/* Ваши данные: сетка 2x2 на desktop */}
+      <div>
         <h3 className="text-base font-semibold mb-2 text-color-text-main">Ваши данные</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Слева: обязательные */}
           <div>
             <label className="block text-sm mb-1">
               Имя и фамилия <span className="text-red-500">*</span>
@@ -246,7 +362,7 @@ export function CheckoutFormModal() {
             <label className="block text-sm mb-1">
               Телефон <span className="text-red-500">*</span>
             </label>
-            <div className="relative w-full min-w-0">
+            <div className="relative w-full">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none">🇷🇺</span>
               <input
                 type="tel"
@@ -257,7 +373,6 @@ export function CheckoutFormModal() {
               />
             </div>
           </div>
-          {/* Справа: необязательные */}
           <div>
             <label className="block text-sm mb-1">Ник в Telegram (необязательное)</label>
             <input
@@ -312,10 +427,10 @@ export function CheckoutFormModal() {
 
         {/* Данные получателя (показываем только если выбран "другой человек") */}
         {!isRecipientSelf && (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label className="block text-sm mb-1">
-                Имя <span className="text-red-500">*</span>
+                Имя получателя <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -327,10 +442,10 @@ export function CheckoutFormModal() {
             </div>
             <div>
               <label className="block text-sm mb-1">
-                Телефон <span className="text-red-500">*</span>
+                Телефон получателя <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">🇷🇺</span>
+              <div className="relative w-full">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none">🇷🇺</span>
                 <input
                   type="tel"
                   placeholder="+7 (000) 000-00-00"
@@ -348,50 +463,6 @@ export function CheckoutFormModal() {
       <div className={dividerClass} />
       <div>
         <h3 className="text-base font-semibold mb-2 text-color-text-main">Доставка</h3>
-
-        {/* Самовывоз (только если "Я получатель"); при выборе скрываем районы и адрес, дата и время остаются */}
-        {isRecipientSelf && (
-          <div className="mb-3">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isPickup}
-                onChange={handlePickupToggle}
-                className="w-4 h-4 accent-primary"
-              />
-              <span className="text-sm">Самовывоз</span>
-            </label>
-            {isPickup && (
-              <p className="text-sm mt-2 ml-6" style={{ color: "#4a5568" }}>
-                Забрать заказ можно по адресу: Пластунская 123а, к2, 2 этаж, 84 офис
-              </p>
-            )}
-          </div>
-        )}
-
-        {/* Чекбоксы для "Получатель другой человек" (независимы друг от друга) */}
-        {!isRecipientSelf && (
-          <div className="mb-3 space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={askRecipientForDetails}
-                onChange={(e) => setAskRecipientForDetails(e.target.checked)}
-                className="w-4 h-4 accent-primary"
-              />
-              <span className="text-sm">Уточнить время и адрес у получателя</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={deliverAnonymously}
-                onChange={(e) => setDeliverAnonymously(e.target.checked)}
-                className="w-4 h-4 accent-primary"
-              />
-              <span className="text-sm">Доставить анонимно</span>
-            </label>
-          </div>
-        )}
 
         {/* Селект района доставки: скрыт при самовывозе и при "Уточнить время и адрес у получателя" */}
         {!isPickup && !(!isRecipientSelf && askRecipientForDetails) && (
@@ -451,6 +522,50 @@ export function CheckoutFormModal() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* Самовывоз (только если "Я получатель"); при выборе скрываем районы и адрес, дата и время остаются */}
+        {isRecipientSelf && (
+          <div className="mb-3">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isPickup}
+                onChange={handlePickupToggle}
+                className="w-4 h-4 accent-primary"
+              />
+              <span className="text-sm">Самовывоз</span>
+            </label>
+            {isPickup && (
+              <p className="text-sm mt-2 ml-6" style={{ color: "#4a5568" }}>
+                Забрать заказ можно по адресу: Пластунская 123а, к2, 2 этаж, 84 офис
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Чекбоксы для "Получатель другой человек" (независимы друг от друга) - под селектом района */}
+        {!isRecipientSelf && (
+          <div className="mb-3 space-y-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={askRecipientForDetails}
+                onChange={(e) => setAskRecipientForDetails(e.target.checked)}
+                className="w-4 h-4 accent-primary"
+              />
+              <span className="text-sm">Уточнить время и адрес у получателя</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={deliverAnonymously}
+                onChange={(e) => setDeliverAnonymously(e.target.checked)}
+                className="w-4 h-4 accent-primary"
+              />
+              <span className="text-sm">Доставить анонимно</span>
+            </label>
           </div>
         )}
 

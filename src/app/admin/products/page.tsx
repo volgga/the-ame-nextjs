@@ -1,9 +1,29 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { slugify } from "@/utils/slugify";
-import { ProductsList } from "@/components/admin/products/ProductsList";
+
+const ProductsList = dynamic(
+  () => import("@/components/admin/products/ProductsList").then((m) => ({ default: m.ProductsList })),
+  {
+    loading: () => (
+      <div className="overflow-hidden rounded-xl border border-gray-200">
+        <div className="h-12 animate-pulse bg-gray-100" />
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="flex h-14 border-t border-gray-100">
+            <div className="w-14 shrink-0 animate-pulse bg-gray-50" />
+            <div className="flex-1 space-y-2 p-3">
+              <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
+              <div className="h-3 w-24 animate-pulse rounded bg-gray-50" />
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+  }
+);
 
 type Product = {
   id: string;
@@ -310,7 +330,7 @@ function AdminProductsPageContent() {
     }
   }
 
-  function closeCreateModal() {
+  const closeCreateModal = useCallback(() => {
     productImages.forEach((item) => URL.revokeObjectURL(item.previewUrl));
     setProductImages([]);
     setProductImagesMainIndex(0);
@@ -332,7 +352,7 @@ function AdminProductsPageContent() {
     setExpandedVariants(new Set());
     if (variantMainImage) URL.revokeObjectURL(variantMainImage.previewUrl);
     setVariantMainImage(null);
-  }
+  }, [productImages, variants, variantMainImage]);
 
   /** Валидация обязательных полей для обычного товара. Возвращает объект с ключами полей и текстами ошибок (пустой — если всё ок). */
   function validateCreateForm(): Record<string, string> {
@@ -522,7 +542,7 @@ function AdminProductsPageContent() {
     };
     window.addEventListener("keydown", onEsc);
     return () => window.removeEventListener("keydown", onEsc);
-  }, [createModalOpen]);
+  }, [createModalOpen, closeCreateModal]);
 
   useEffect(() => {
     if (!createModalOpen) return;

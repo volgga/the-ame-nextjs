@@ -13,8 +13,6 @@ export async function POST(request: Request) {
   let payload: Record<string, unknown> = {};
   try {
     payload = (await request.json()) as Record<string, unknown>;
-    // Логируем сырой входящий запрос (без паролей)
-    console.log("[tinkoff-callback] payload:", JSON.stringify(payload, null, 2));
   } catch {
     console.warn("[tinkoff-callback] invalid JSON");
     return new NextResponse("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
@@ -49,18 +47,6 @@ export async function POST(request: Request) {
         newStatus = order.status === "payment_pending" ? "failed" : "canceled";
         await updateOrderStatus(orderId, newStatus);
       }
-
-      // Структура для будущей отправки в Telegram (пока только логируем)
-      const telegramReady = {
-        orderId: order.id,
-        status: newStatus ?? order.status,
-        amount: order.amount,
-        customer: order.customer,
-        items: order.items,
-        paymentStatus: status,
-        success,
-      };
-      console.log("[tinkoff-callback] telegramReady:", JSON.stringify(telegramReady, null, 2));
     }
   }
 

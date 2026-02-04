@@ -16,7 +16,7 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("hero_slides")
-      .select("id, image_url, sort_order, is_active")
+      .select("id, image_url, sort_order, is_active, button_text, button_href, button_variant, button_align")
       .order("sort_order", { ascending: true });
     if (error) throw error;
     return NextResponse.json(data ?? []);
@@ -29,11 +29,28 @@ export async function GET() {
   }
 }
 
-const createSchema = z.object({
-  image_url: z.string().min(1),
-  sort_order: z.number().int().default(0),
-  is_active: z.boolean().default(true),
-});
+const buttonVariantSchema = z.enum(["filled", "transparent"]).optional().nullable();
+const buttonAlignSchema = z.enum(["left", "center", "right"]).optional().nullable();
+
+const createSchema = z
+  .object({
+    image_url: z.string().min(1),
+    sort_order: z.number().int().default(0),
+    is_active: z.boolean().default(true),
+    button_text: z.string().optional().nullable(),
+    button_href: z.string().optional().nullable(),
+    button_variant: buttonVariantSchema,
+    button_align: buttonAlignSchema,
+  })
+  .refine(
+    (data) => {
+      const hasText = Boolean(data.button_text?.trim());
+      const hasHref = Boolean(data.button_href?.trim());
+      if (!hasText && !hasHref) return true;
+      return hasText && hasHref;
+    },
+    { message: "Для кнопки нужно указать и текст, и ссылку (или оба оставить пустыми)", path: ["button_text"] }
+  );
 
 export async function POST(request: NextRequest) {
   try {

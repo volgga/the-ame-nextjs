@@ -172,11 +172,20 @@ All colors MUST be HSL.
 
   html {
     background-color: var(--page-bg);
+    /* Плавная прокрутка для якорей и programmatic scroll */
+    scroll-behavior: smooth;
   }
 
   body {
     background-color: var(--page-bg);
     @apply text-foreground font-montserrat;
+  }
+
+  /* Отключаем smooth scroll при prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 }
 
@@ -381,6 +390,16 @@ All colors MUST be HSL.
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* Компенсация padding для full-width элементов (Hero) */
+  .hero-full-width {
+    width: calc(100% + 3rem);
+  }
+  @media (min-width: 768px) {
+    .hero-full-width {
+      width: calc(100% + 4rem);
+    }
+  }
 }
 
 @layer utilities {
@@ -401,5 +420,106 @@ All colors MUST be HSL.
     transition:
       opacity 1300ms ease-in-out,
       transform 1300ms ease-in-out;
+  }
+
+  /* ============================================
+     PREMIUM REVEAL ANIMATIONS
+     ============================================ */
+
+  /* Page enter: эффект первого входа на сайт */
+  .page-enter {
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .page-enter.page-enter--active {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Hero reveal: эффект появления hero слайдера слева направо (без затемнения) */
+  .hero-reveal {
+    opacity: 1;
+    transform: translateX(-12px);
+    transition:
+      opacity 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .hero-reveal.hero-reveal--active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* Reveal base: базовая анимация появления (премиум, мягче и плавнее) */
+  /* На SSR карточки видимы, скрытие применяется только после mount через reveal-ready */
+  .reveal {
+    opacity: 1;
+    transform: translateY(0);
+    transition:
+      opacity 580ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 580ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  /* Состояние готовности: скрытие применяется только после mount на клиенте */
+  /* will-change добавляется только на время анимации для оптимизации */
+  .reveal-ready .reveal {
+    opacity: 0;
+    transform: translateY(9px);
+    will-change: transform, opacity;
+  }
+  
+  .reveal.reveal--in {
+    opacity: 1;
+    transform: translateY(0);
+    /* will-change остается до конца анимации, затем можно убрать через JS (опционально) */
+  }
+
+  /* Stagger delay через CSS переменную (премиум, медленнее) */
+  .reveal--stagger {
+    transition-delay: var(--stagger-delay, 0ms);
+  }
+
+  /* Section divider: тонкая линия, почти на всю ширину, сужение только у краёв, тёмно-зелёный */
+  .section-divider-line {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--color-text-main) 4%,
+      var(--color-text-main) 96%,
+      transparent 100%
+    );
+    transform-origin: center;
+    animation: section-divider-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes section-divider-in {
+    from {
+      opacity: 0;
+      transform: scaleX(0.6);
+    }
+    to {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+  }
+
+  /* Уважаем prefers-reduced-motion: отключаем все анимации */
+  @media (prefers-reduced-motion: reduce) {
+    .page-enter,
+    .hero-reveal,
+    .reveal {
+      opacity: 1 !important;
+      transform: none !important;
+      filter: none !important;
+      transition: none !important;
+      will-change: auto !important;
+    }
+    .section-divider-line {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
   }
 }

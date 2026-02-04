@@ -92,10 +92,10 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
   };
 
   return (
-    <div className="group relative flex flex-col h-full">
+    <div className="relative flex flex-col h-full">
       <Link href={productUrl} aria-label={flower.name} className="block flex-1">
-        {/* 📸 Фото + сердечко overlay */}
-        <div className="relative overflow-hidden rounded-2xl aspect-square">
+        {/* 📸 Фото + hover-иконки (лупа, сердечко) — group на контейнере фото */}
+        <div className="group relative overflow-hidden rounded-2xl aspect-square">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={flower.image}
@@ -103,8 +103,10 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
-          {/* ❤️ Избранное и 🔍 Быстрый просмотр — вертикально выровнены */}
-          <div className="absolute top-2 right-2 z-10 flex flex-col gap-1.5">
+          {/* ❤️ Избранное и 🔍 Быстрый просмотр — показываются только при hover на фото (slide-in + fade), на touch скрыты */}
+          <div
+            className="absolute top-3 right-3 z-10 flex flex-col gap-1.5 opacity-0 translate-x-2 pointer-events-none transition-[opacity,transform] duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:translate-x-0 [@media(hover:hover)]:group-hover:pointer-events-auto"
+          >
             <button
               type="button"
               onClick={handleToggleFavorite}

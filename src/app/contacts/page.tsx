@@ -80,7 +80,7 @@ const SOCIAL_LINKS: { Icon: LucideIcon; label: string; href: string; text: strin
 export default function ContactsPage() {
   return (
     <div className="bg-page-bg">
-      <div className="container mx-auto px-4 pt-12 pb-10">
+      <div className="container mx-auto px-5 md:px-6 pt-12 pb-10">
         <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:items-stretch">
           <div className="order-2 h-[320px] w-full overflow-hidden rounded-lg lg:order-1 lg:h-full">
             <iframe
@@ -145,7 +145,7 @@ export default function ContactsPage() {
                       <Icon className={ICON_CLASS} />
                       <span>
                         {label}:{" "}
-                        <a href={href} className={LINK_CLASS} target="_blank" rel="noreferrer">
+                        <a href={href} className={LINK_CLASS} target="_blank" rel="noopener noreferrer">
                           {text}
                         </a>
                       </span>

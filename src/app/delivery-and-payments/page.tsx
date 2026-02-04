@@ -69,14 +69,14 @@ export default function DeliveryAndPaymentsPage() {
     <div className="min-h-screen bg-page-bg">
       {/* Hero */}
       <section className="py-6 md:py-8">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-5 md:px-6 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-2 md:mb-3 text-[#000] uppercase tracking-tight">
             Доставка и оплата
           </h1>
         </div>
       </section>
 
-      <div className="container mx-auto px-4 pb-16 md:pb-20">
+      <div className="container mx-auto px-5 md:px-6 pb-16 md:pb-20">
         {/* Блок 1: Условия доставки */}
         <section className="mb-12 md:mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-[#000] uppercase tracking-tight text-center">

@@ -156,9 +156,13 @@ export function RecommendSection({ products }: RecommendSectionProps) {
       aria-labelledby="recommend-heading"
     >
       <div className="container mx-auto px-4 md:px-6">
-        {/* headerRow: заголовок слева, кнопка справа */}
+        {/* Разделительная линия над секцией */}
+        <div className="flex justify-center mb-6 md:mb-8">
+          <div className="w-full max-w-5xl section-divider-line" aria-hidden />
+        </div>
+        {/* headerRow: заголовок слева, кнопка справа (эталон контейнера как у остальных секций) */}
         <div className={MAIN_PAGE_BLOCK_GAP_MARGIN}>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
             <h2
               id="recommend-heading"
               className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)] uppercase tracking-tight"
@@ -169,14 +173,14 @@ export function RecommendSection({ products }: RecommendSectionProps) {
               href="/magazin"
               className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full border border-[var(--color-outline-border)] bg-transparent px-4 py-2 text-sm font-medium uppercase tracking-tight text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 shrink-0"
             >
-              СМОТРЕТЬ ВСЁ
               <ArrowRight className="w-4 h-4" strokeWidth={2} aria-hidden />
+              СМОТРЕТЬ ВСЕ
             </Link>
           </div>
         </div>
 
         {/* controlsRow: стрелки прижаты к карточкам, над ними, справа */}
-        <div className="flex justify-end -mx-4 px-6 md:-mx-6 md:px-8 mb-2">
+        <div className="flex justify-end -mx-4 px-4 md:-mx-6 md:px-6 mb-2">
             <div className="flex items-center gap-0.5">
               <button
                 type="button"
@@ -206,7 +210,7 @@ export function RecommendSection({ products }: RecommendSectionProps) {
           onWheel={handleInteraction}
           onMouseEnter={handleInteraction}
           onScroll={handleUserScroll}
-          className="flex gap-5 md:gap-6 overflow-x-auto overflow-y-hidden py-2 -mx-4 px-6 md:-mx-6 md:px-8 scrollbar-hide"
+          className="flex gap-5 md:gap-6 overflow-x-auto overflow-y-hidden py-2 -mx-4 px-4 md:-mx-6 md:px-6 scrollbar-hide"
           style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}
         >
           {flowers.map((flower) => {

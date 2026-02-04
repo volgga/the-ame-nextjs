@@ -50,7 +50,7 @@ export function Header() {
         }}
       >
         <div
-          className="w-full relative z-10 bg-header-bg"
+          className="w-full relative z-10 bg-header-bg border-b border-header-foreground-secondary"
           style={{
             height: MARQUEE_H,
             margin: 0,
@@ -67,16 +67,15 @@ export function Header() {
         </div>
 
         <div
-          className="w-full bg-header-bg"
+          className="w-full bg-header-bg relative z-50"
           style={{
             height: isExpanded ? topBarHeight : 0,
             margin: 0,
             padding: 0,
-            overflow: "hidden",
+            overflow: "visible",
             opacity: isExpanded ? 1 : 0,
             transition: `height ${HEADER_TRANSITION_MS}ms ease, opacity ${HEADER_TRANSITION_MS}ms ease`,
             boxSizing: "border-box",
-            borderBottom: isExpanded ? "1px solid rgba(31, 42, 31, 0.65)" : "none",
             pointerEvents: isExpanded ? "auto" : "none",
             willChange: "transform",
           }}
@@ -85,6 +84,14 @@ export function Header() {
             <TopBar />
           </div>
         </div>
+
+        {/* Разделитель между верхней и нижней зелёной полосой: отдельный div, цвет как у вертикальных разделителей в TopBar */}
+        {isExpanded && (
+          <div
+            className="h-px w-full shrink-0 bg-header-foreground"
+            aria-hidden
+          />
+        )}
 
         {/* Main bar: всегда видим, не двигаем — при compact topBar уже height:0, main bar остаётся под marquee */}
         <div

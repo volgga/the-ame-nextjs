@@ -10,8 +10,9 @@ const FOOTER_LINK = "block text-[#7e7e7e] hover:text-black transition-colors py-
 export function Footer() {
   return (
     <footer className="bg-page-bg border-t mt-auto">
-      <div className="w-full px-4 md:px-6 lg:px-8 py-8 md:py-10">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
+      <div className="w-full px-6 md:px-8 py-8 md:py-10">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* 1. Лого: логотип + подпись + копирайт + бейдж Яндекса (ниже копирайта) */}
           <div className="flex flex-col items-start text-left space-y-4 min-w-0">
             <div className="leading-tight" style={{ fontFamily: "Forum, serif" }}>
@@ -114,6 +115,7 @@ export function Footer() {
               </Link>
             </nav>
           </div>
+        </div>
         </div>
       </div>
     </footer>

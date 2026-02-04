@@ -12,12 +12,12 @@ export const metadata: Metadata = {
 export default function MarketingConsentPage() {
   return (
     <div className="min-h-screen bg-page-bg">
-      <article className="container mx-auto px-4 py-10 md:py-12 max-w-full">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#000] mb-5 md:mb-6">
+      <article className="container mx-auto px-5 md:px-6 py-10 md:py-12 max-w-full">
+        <h1 className="text-2xl md:text-3xl font-bold text-color-text-main mb-5 md:mb-6">
           Согласие на получение рекламно-информационных сообщений The Áme
         </h1>
 
-        <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed mb-8 md:mb-10">
+        <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed mb-8 md:mb-10">
           <p>
             Я, являясь субъектом персональных данных, свободно, своей волей и в своём интересе даю согласие
             Индивидуальному предпринимателю Волгину Александру Александровичу (ИНН 741514757204, ОГРНИП 325745600059155)
@@ -33,8 +33,8 @@ export default function MarketingConsentPage() {
 
         {/* 1. Цели рассылки */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">1. Цели рассылки</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">1. Цели рассылки</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>Сообщения направляются для:</p>
             <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>информирования о специальных предложениях и скидках</li>
@@ -48,8 +48,8 @@ export default function MarketingConsentPage() {
 
         {/* 2. Характер сообщений */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">2. Характер сообщений</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">2. Характер сообщений</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>Рекламная рассылка не включает сервисные уведомления, необходимые для исполнения заказа:</p>
             <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>уведомления о статусе заказа</li>
@@ -61,8 +61,8 @@ export default function MarketingConsentPage() {
 
         {/* 3. Порядок отзыва согласия */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">3. Порядок отзыва согласия</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">3. Порядок отзыва согласия</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>Я уведомлён(а), что могу в любой момент отказаться от получения рекламных сообщений:</p>
             <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>по ссылке «Отписаться» в письме</li>
@@ -87,8 +87,8 @@ export default function MarketingConsentPage() {
 
         {/* 4. Правовые основания обработки */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">4. Правовые основания обработки</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">4. Правовые основания обработки</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>Обработка моих данных в целях рекламной рассылки осуществляется на основании:</p>
             <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>настоящего согласия</li>
@@ -100,8 +100,8 @@ export default function MarketingConsentPage() {
 
         {/* 5. Фиксация согласия */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">5. Фиксация согласия</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">5. Фиксация согласия</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>Дата и факт предоставления согласия фиксируются автоматически:</p>
             <ul className="list-disc pl-6 space-y-2 mt-3">
               <li>при установке чекбокса на сайте</li>
@@ -116,8 +116,8 @@ export default function MarketingConsentPage() {
 
         {/* 6. Ознакомление с Политикой */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">6. Ознакомление с Политикой</h2>
-          <p className="text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">6. Ознакомление с Политикой</h2>
+          <p className="text-base md:text-lg text-color-text-main leading-relaxed">
             Я подтверждаю, что ознакомился(лась) с Политикой конфиденциальности, размещённой на сайте:{" "}
             <Link
               href="https://theame.ru/privacy-policy"

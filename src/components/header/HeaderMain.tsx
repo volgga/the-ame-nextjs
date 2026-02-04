@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CartIcon } from "./CartIcon";
 import { CatalogDropdown } from "./CatalogDropdown";
+import { SearchDropdown } from "./SearchDropdown";
 import { useFavorites } from "@/context/FavoritesContext";
 
 const SIDEBAR_OPEN_MS = 420;
@@ -145,7 +146,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
           lineHeight: "normal",
         }}
       >
-        <div className="w-full flex items-center justify-between px-4 md:px-6 gap-4">
+        <div className="w-full flex items-center justify-between px-5 md:px-7 gap-4">
           <div className="relative z-10 flex items-center gap-2 md:gap-3 shrink-0 -ml-1 md:-ml-0.5">
             <button
               type="button"
@@ -170,22 +171,8 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
             </Link>
           </div>
 
-          <div className="relative z-10 flex items-center gap-2 md:gap-3 shrink-0" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
-            <Link href={CATALOG_HREF} aria-label="Поиск / Каталог" className={iconLinkClass}>
-              <svg
-                className="w-[18px] h-[18px] md:w-5 md:h-5 shrink-0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.6}
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                />
-              </svg>
-            </Link>
+          <div className="relative z-10 flex items-center gap-1.5 md:gap-2 shrink-0" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
+            <SearchDropdown />
             <Link
               id="header-favorites"
               href="/favorites"

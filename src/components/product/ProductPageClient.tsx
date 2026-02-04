@@ -359,7 +359,7 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
     <>
       <div className="bg-page-bg">
         {/* Контейнер с нормальным отступом сверху, компактным снизу */}
-        <div className="container mx-auto px-6 pt-3 pb-8 md:pt-4 md:pb-10">
+        <div className="container mx-auto px-6 md:px-8 pt-3 pb-8 md:pt-4 md:pb-10">
           {/* Хлебные крошки — минимальный отступ до контента */}
           <Breadcrumbs items={breadcrumbItems} className={BREADCRUMB_SPACING} />
 

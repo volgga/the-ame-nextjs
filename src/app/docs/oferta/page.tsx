@@ -13,19 +13,19 @@ export const metadata: Metadata = {
 export default function OfertaPage() {
   return (
     <div className="min-h-screen bg-page-bg">
-      <article className="container mx-auto px-4 py-10 md:py-12 max-w-full">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#000] mb-5 md:mb-6">
+      <article className="container mx-auto px-5 md:px-6 py-10 md:py-12 max-w-full">
+        <h1 className="text-2xl md:text-3xl font-bold text-color-text-main mb-5 md:mb-6">
           Публичная оферта на заключение договора розничной купли-продажи
         </h1>
 
-        <p className="text-base md:text-lg text-[#000] leading-relaxed mb-6">
+        <p className="text-base md:text-lg text-color-text-main leading-relaxed mb-6">
           В настоящей публичной Оферте нижеприведенные термины используются в следующем значении:
         </p>
 
         {/* 1. Термины и определения */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">1. Термины и определения</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">1. Термины и определения</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>1.1. «Покупатель»</strong> — любое лицо (гражданин, индивидуальный предприниматель либо
               юридическое лицо), которое оформляя заказ (именуемый в дальнейшем «Заказ») на приобретение и доставку
@@ -67,7 +67,7 @@ export default function OfertaPage() {
           </div>
         </section>
 
-        <p className="text-base md:text-lg text-[#000] leading-relaxed mb-8 md:mb-10">
+        <p className="text-base md:text-lg text-color-text-main leading-relaxed mb-8 md:mb-10">
           С момента подтверждения Заказа на приобретение и доставку Товара, оформленного в соответствии с размещенными
           на Интернет-сайте правилами, между Продавцом и Покупателем заключен Договор розничной купли-продажи о
           нижеследующем:
@@ -75,8 +75,8 @@ export default function OfertaPage() {
 
         {/* 2. Предмет Договора */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">2. Предмет Договора</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">2. Предмет Договора</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>2.1.</strong> Продавец обязуется заключить Договор в соответствии с действующим прейскурантом и
               каталогами, опубликованными на Интернет-сайте, и организовать доставку товара Получателям, а Покупатель
@@ -153,8 +153,8 @@ export default function OfertaPage() {
 
         {/* 3. Права и обязанности Сторон */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">3. Права и обязанности Сторон</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">3. Права и обязанности Сторон</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>3.1. Продавец обязан:</strong>
             </p>
@@ -223,8 +223,8 @@ export default function OfertaPage() {
 
         {/* 4. Дополнительные условия */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">4. Дополнительные условия</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">4. Дополнительные условия</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>4.1.</strong> Настоящий Договор вступает в силу с момента получения Продавцом Заказа Покупателя и
               действует до полного исполнения Сторонами обязательств, предусмотренных Договором и вытекающих из него.
@@ -262,8 +262,8 @@ export default function OfertaPage() {
 
         {/* 5. Составление букета и замена цветов */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">5. Составление букета и замена цветов</h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">5. Составление букета и замена цветов</h2>
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>5.1.</strong> Букет (корзина), который Покупатель выбрали в нашем каталоге, будет изготовлен
               флористами максимально похожим на фото с сайта. Но хотим обратить внимание, что все букеты (корзины)
@@ -297,10 +297,10 @@ export default function OfertaPage() {
 
         {/* Возврат и обмен */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4 uppercase">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4 uppercase">
             Возврат и обмен срезанных цветов и горшечных растений
           </h2>
-          <div className="space-y-4 text-base md:text-lg text-[#000] leading-relaxed">
+          <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               Цветы являются живым товаром. К отношениям между Покупателем и Продавцом применяется право Российской
               Федерации.
@@ -330,7 +330,7 @@ export default function OfertaPage() {
         </section>
 
         {/* Политика персональных данных */}
-        <p className="text-base md:text-lg text-[#000] leading-relaxed mb-8 md:mb-10">
+        <p className="text-base md:text-lg text-color-text-main leading-relaxed mb-8 md:mb-10">
           <Link href="/docs/privacy" className="text-color-text-main underline hover:no-underline">
             Политика конфиденциальности
           </Link>{" "}
@@ -339,8 +339,8 @@ export default function OfertaPage() {
 
         {/* Реквизиты */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-[#000] mb-4">Реквизиты Продавца</h2>
-          <div className="text-base md:text-lg text-[#000] leading-relaxed space-y-2">
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">Реквизиты Продавца</h2>
+          <div className="text-base md:text-lg text-color-text-main leading-relaxed space-y-2">
             <p>Интернет-магазин theame.ru</p>
             <p>ИП Волгин Александр Александрович</p>
             <p>ИНН 741514757204 ОГРНИП 325745600059155</p>

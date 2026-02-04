@@ -50,7 +50,7 @@ export function FavoritesPageClient({ products }: FavoritesPageClientProps) {
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-6 pt-3 pb-8 md:pt-4 md:pb-10">
+      <div className="container px-6 md:px-8 pt-3 pb-8 md:pt-4 md:pb-10">
         <Breadcrumbs items={[{ label: "Главная", href: "/" }, { label: "Избранное" }]} />
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 md:mb-10">

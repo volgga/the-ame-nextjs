@@ -33,9 +33,26 @@ export default function AdminHomeCollectionsPage() {
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [modalFormDirty, setModalFormDirty] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const saveThenCloseRef = useRef(false);
+  const initialFormSnapshotRef = useRef<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isDirty = !areOrdersEqual(collectionsFromServer, collectionsDraft);
+
+  function formSnapshot(f: { name: string; category_slug: string; is_active: boolean; sort_order: number }, hasFile: boolean) {
+    return JSON.stringify({ name: f.name, category_slug: f.category_slug, is_active: f.is_active, sort_order: f.sort_order, fileSelected: hasFile });
+  }
+
+  const isFormDirty =
+    (creating || editing) &&
+    initialFormSnapshotRef.current !== "" &&
+    formSnapshot(form, !!form.file) !== initialFormSnapshotRef.current;
+
+  useEffect(() => {
+    setModalFormDirty(Boolean(isFormDirty));
+  }, [isFormDirty]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,19 +89,74 @@ export default function AdminHomeCollectionsPage() {
   }, [load]);
 
   function closeModal() {
+    setShowCloseConfirm(false);
     setCreating(false);
     setEditing(null);
     setForm({ file: null, name: "", category_slug: "magazin", sort_order: 0, is_active: true });
+    initialFormSnapshotRef.current = "";
   }
+
+  function requestClose() {
+    if (modalFormDirty) {
+      setShowCloseConfirm(true);
+    } else {
+      closeModal();
+    }
+  }
+  const requestCloseRef = useRef(requestClose);
+  requestCloseRef.current = requestClose;
+
+  function confirmSaveAndClose() {
+    setShowCloseConfirm(false);
+    saveThenCloseRef.current = true;
+    const formEl = document.getElementById("collections-modal-form") as HTMLFormElement | null;
+    if (formEl) formEl.requestSubmit();
+  }
+
+  function resetModalFormToInitial() {
+    try {
+      const parsed = JSON.parse(initialFormSnapshotRef.current) as {
+        name: string;
+        category_slug: string;
+        is_active: boolean;
+        sort_order: number;
+      };
+      setForm((prev) => ({
+        ...prev,
+        name: parsed.name ?? "",
+        category_slug: parsed.category_slug ?? "magazin",
+        is_active: parsed.is_active ?? true,
+        sort_order: parsed.sort_order ?? 0,
+        file: null,
+      }));
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (editing?.image_url) setPreviewUrl(editing.image_url);
+      else setPreviewUrl(null);
+    } catch {
+      // ignore
+    }
+  }
+
+  const modalWasOpenRef = useRef(false);
+  useEffect(() => {
+    const open = creating || editing;
+    if (open && !modalWasOpenRef.current) {
+      initialFormSnapshotRef.current = formSnapshot(form, !!form.file);
+    }
+    modalWasOpenRef.current = !!open;
+  }, [creating, editing, form.name, form.category_slug, form.is_active, form.sort_order, form.file]);
 
   useEffect(() => {
     if (!creating && !editing) return;
     const onEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeModal();
+      if (e.key === "Escape") {
+        if (showCloseConfirm) setShowCloseConfirm(false);
+        else requestCloseRef.current();
+      }
     };
     window.addEventListener("keydown", onEsc);
     return () => window.removeEventListener("keydown", onEsc);
-  }, [creating, editing]);
+  }, [creating, editing, showCloseConfirm]);
 
   useEffect(() => {
     if (form.file) {
@@ -157,6 +229,10 @@ export default function AdminHomeCollectionsPage() {
         setCollectionsDraft((s) => [...s, newCol].sort((a, b) => a.sort_order - b.sort_order));
         setCreating(false);
         setForm({ file: null, name: "", category_slug: "magazin", sort_order: collectionsDraft.length, is_active: true });
+        if (saveThenCloseRef.current) {
+          saveThenCloseRef.current = false;
+          closeModal();
+        }
       } else if (editing) {
         let image_url = editing.image_url;
         if (form.file) {
@@ -188,9 +264,14 @@ export default function AdminHomeCollectionsPage() {
         setCollectionsDraft((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setEditing(null);
         setForm({ file: null, name: "", category_slug: "magazin", sort_order: 0, is_active: true });
+        if (saveThenCloseRef.current) {
+          saveThenCloseRef.current = false;
+          closeModal();
+        }
       }
     } catch (e) {
       setError(String(e));
+      saveThenCloseRef.current = false;
     } finally {
       setUploading(false);
     }
@@ -281,12 +362,12 @@ export default function AdminHomeCollectionsPage() {
 
       {(creating || editing) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
+          <div className="absolute inset-0 bg-black/40" onClick={requestClose} aria-hidden />
           <div
             className="relative w-full max-w-[720px] rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <form onSubmit={handleSaveForm}>
+            <form id="collections-modal-form" onSubmit={handleSaveForm}>
               <h3 className="mb-4 font-medium text-[#111]">
                 {creating ? "Новая коллекция" : "Редактирование"}
               </h3>
@@ -373,7 +454,7 @@ export default function AdminHomeCollectionsPage() {
                     />
                   </div>
                 </div>
-                <div className="flex gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-2">
                   <button
                     type="submit"
                     disabled={uploading || (creating && (!form.file || !form.name.trim()))}
@@ -383,7 +464,15 @@ export default function AdminHomeCollectionsPage() {
                   </button>
                   <button
                     type="button"
-                    onClick={closeModal}
+                    onClick={resetModalFormToInitial}
+                    disabled={!modalFormDirty || uploading}
+                    className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Отменить изменения
+                  </button>
+                  <button
+                    type="button"
+                    onClick={requestClose}
                     className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
                   >
                     Отмена
@@ -400,6 +489,29 @@ export default function AdminHomeCollectionsPage() {
                 </div>
               </div>
             </form>
+            {showCloseConfirm && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/30 z-10">
+                <div className="bg-white rounded-xl border border-border-block p-4 shadow-xl max-w-sm w-full mx-4">
+                  <p className="text-[#111] font-medium mb-3">Сохранить изменения?</p>
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setShowCloseConfirm(false)}
+                      className="rounded border border-gray-300 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
+                    >
+                      Нет
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmSaveAndClose}
+                      className="rounded px-3 py-1.5 text-sm text-white bg-accent-btn hover:bg-accent-btn-hover"
+                    >
+                      Да
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

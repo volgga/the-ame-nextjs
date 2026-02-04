@@ -8,11 +8,28 @@ async function requireAdmin() {
   if (!ok) throw new Error("unauthorized");
 }
 
-const updateSchema = z.object({
-  image_url: z.string().min(1).optional(),
-  sort_order: z.number().int().optional(),
-  is_active: z.boolean().optional(),
-});
+const buttonVariantSchema = z.enum(["filled", "transparent"]).optional().nullable();
+const buttonAlignSchema = z.enum(["left", "center", "right"]).optional().nullable();
+
+const updateSchema = z
+  .object({
+    image_url: z.string().min(1).optional(),
+    sort_order: z.number().int().optional(),
+    is_active: z.boolean().optional(),
+    button_text: z.string().optional().nullable(),
+    button_href: z.string().optional().nullable(),
+    button_variant: buttonVariantSchema,
+    button_align: buttonAlignSchema,
+  })
+  .refine(
+    (data) => {
+      const hasText = Boolean(data.button_text?.trim());
+      const hasHref = Boolean(data.button_href?.trim());
+      if (!hasText && !hasHref) return true;
+      return hasText && hasHref;
+    },
+    { message: "Для кнопки нужно указать и текст, и ссылку (или оба оставить пустыми)", path: ["button_text"] }
+  );
 
 export async function PATCH(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

@@ -2,6 +2,7 @@
 
 import { useCart } from "@/context/CartContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
+import { formatPrice } from "@/utils/formatPrice";
 
 /** Единый стиль иконок в шапке (поиск, избранное, корзина): размер, цвет, hover. */
 const HEADER_ICON_CLASS =
@@ -12,37 +13,42 @@ export function CartIcon() {
 
   return (
     <>
-      <button
-        id="header-cart"
-        type="button"
-        onClick={openCartDrawer}
-        aria-label="Корзина"
-        className={HEADER_ICON_CLASS}
-      >
-        <svg
-          className="w-[18px] h-[18px] md:w-5 md:h-5 shrink-0"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.6}
-          viewBox="0 0 24 24"
-          aria-hidden
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          id="header-cart"
+          type="button"
+          onClick={openCartDrawer}
+          aria-label="Корзина"
+          className={HEADER_ICON_CLASS}
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-        {state.itemCount > 0 && (
-          <span
-            className="absolute z-10 min-w-[16px] h-[16px] px-1 text-[10px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text pointer-events-none select-none leading-[16px]"
-            style={{ top: "4px", right: "2px", transform: "translate(35%, -25%)" }}
+          <svg
+            className="w-[18px] h-[18px] md:w-5 md:h-5 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.6}
+            viewBox="0 0 24 24"
             aria-hidden
           >
-            {state.itemCount > 99 ? "99+" : state.itemCount}
-          </span>
-        )}
-      </button>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+            />
+          </svg>
+          {state.itemCount > 0 && (
+            <span
+              className="absolute z-10 min-w-[16px] h-[16px] px-1 text-[10px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text pointer-events-none select-none leading-[16px]"
+              style={{ top: "4px", right: "2px", transform: "translate(35%, -25%)" }}
+              aria-hidden
+            >
+              {state.itemCount > 99 ? "99+" : state.itemCount}
+            </span>
+          )}
+        </button>
+        <span className="text-sm font-medium text-header-foreground tabular-nums">
+          {formatPrice(state.total)}
+        </span>
+      </div>
       <CartDrawer isOpen={isCartDrawerOpen} onClose={closeCartDrawer} />
     </>
   );

@@ -2,58 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ContactsModal } from "./ContactsModal";
-
-type ProviderType = "telegram" | "whatsapp" | "instagram" | "max" | "phone";
-
-const providers: Array<{
-  type: ProviderType;
-  src: string;
-  srcModal: string;
-  label: string;
-  background: string;
-  url?: string;
-}> = [
-  {
-    type: "telegram",
-    src: "/icons/telegram-white.svg",
-    srcModal: "/icons/telegram-white.svg",
-    label: "Telegram",
-    background: "linear-gradient(135deg, #229ED9, #1C7FC2)",
-    url: "https://t.me/the_ame_flowers",
-  },
-  {
-    type: "whatsapp",
-    src: "/icons/whatsapp-white.svg",
-    srcModal: "/icons/whatsapp.svg",
-    label: "WhatsApp",
-    background: "linear-gradient(135deg, #25D366, #1EBE5B)",
-    url: "https://wa.me/message/XQDDWGSEL35LP1",
-  },
-  {
-    type: "instagram",
-    src: "/icons/instagram-white.svg",
-    srcModal: "/icons/instagram.svg",
-    label: "Instagram",
-    background: "linear-gradient(135deg, #F58529, #DD2A7B)",
-    url: "https://www.instagram.com/theame.flowers",
-  },
-  {
-    type: "max",
-    src: "/icons/max4-messenger-color-icon.png",
-    srcModal: "/icons/max4-messenger-color-icon.png",
-    label: "MAX",
-    background: "linear-gradient(135deg, #2F6BFF, #6A3DF0)",
-    url: "https://max.ru/u/f9LHodD0cOJJBRShH_taOp567aS5B7oZt4PZHqOvsl782HDW1tNY1II4OTY",
-  },
-  {
-    type: "phone",
-    src: "/icons/phone-white.svg",
-    srcModal: "/icons/phone-white.svg",
-    label: "Телефон",
-    background: "linear-gradient(135deg, #6B7F5E, #C2B59B)",
-    url: "tel:+79939326095",
-  },
-];
+import { contactProviders } from "@/lib/contactProviders";
 
 const TRANSITION_MS = 1300;
 const HOLD_MS = 2000;
@@ -83,7 +32,7 @@ export function FloatingSocialButton() {
     const changeProvider = () => {
       if (stateRef.current.isTransitioning) return;
       const idx = stateRef.current.currentIndex;
-      const nextIdx = (idx + 1) % providers.length;
+      const nextIdx = (idx + 1) % contactProviders.length;
       setPrevIndex(idx);
       setCurrentIndex(nextIdx);
       setIsTransitioning(true);
@@ -119,8 +68,8 @@ export function FloatingSocialButton() {
     return () => clearTimeout(t);
   }, [transitionPhase, isTransitioning, currentIndex]);
 
-  const currentProvider = providers[currentIndex];
-  const prevProvider = providers[prevIndex];
+  const currentProvider = contactProviders[currentIndex];
+  const prevProvider = contactProviders[prevIndex];
   const showTwoLayers = isTransitioning && prevIndex !== currentIndex;
   const outOpacity = transitionPhase === "start" ? 1 : 0;
   const inOpacity = transitionPhase === "start" ? 0 : 1;
@@ -209,7 +158,7 @@ export function FloatingSocialButton() {
         />
       </button>
 
-      <ContactsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} providers={providers} />
+      <ContactsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} providers={contactProviders} socialOnly />
     </>
   );
 }

@@ -1,10 +1,23 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { SlidesGrid } from "@/components/admin/slides/SlidesGrid";
 import type { Slide } from "@/components/admin/slides/SlideCard";
+
+const SlidesGrid = dynamic(
+  () => import("@/components/admin/slides/SlidesGrid").then((m) => ({ default: m.SlidesGrid })),
+  {
+    loading: () => (
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="aspect-video animate-pulse rounded-xl bg-gray-200" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 const RECOMMENDED_SIZE = "1920×900";
 const ACCEPT = "image/jpeg,image/jpg,image/png,image/webp,image/avif";
@@ -308,13 +321,14 @@ export default function AdminSlidesPage() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
           <div
-            className="relative w-full max-w-[720px] rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-xl"
+            className="relative w-full max-w-[720px] max-h-[85vh] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl hover:border-border-block-hover"
             onClick={(e) => e.stopPropagation()}
           >
-            <form onSubmit={handleSaveForm}>
-              <h3 className="mb-4 font-medium text-[#111]">{creating ? "Новый слайд" : "Редактирование"}</h3>
-              {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
-              <div className="space-y-3">
+            <div className="flex-1 min-h-0 overflow-y-auto p-6">
+              <form onSubmit={handleSaveForm} className="space-y-3">
+                <h3 className="mb-4 font-medium text-[#111]">{creating ? "Новый слайд" : "Редактирование"}</h3>
+                {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
+                <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-[#111]">Изображение</label>
                   <p className="mt-0.5 text-xs text-gray-500">
@@ -449,6 +463,7 @@ export default function AdminSlidesPage() {
                 </div>
               </div>
             </form>
+            </div>
           </div>
         </div>,
         document.body

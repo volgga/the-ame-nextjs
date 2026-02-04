@@ -59,13 +59,13 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="overflow-y-auto h-full max-h-[90vh]">
-          <div className="flex items-center justify-between px-6 pt-4 pb-2 border-b border-border-block">
-            <h2 className="text-lg font-bold uppercase tracking-wide text-color-text-main">Корзина</h2>
+          <div className="relative flex items-center justify-center px-6 pt-4 pb-3 border-b border-border-block">
+            <h2 className="text-xl md:text-2xl font-bold uppercase tracking-wide text-color-text-main">Корзина</h2>
             <button
               type="button"
               onClick={onClose}
               aria-label="Закрыть"
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:opacity-80 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-color-text-main/30 focus-visible:ring-offset-2 text-color-text-main"
+              className="absolute right-6 top-4 w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:opacity-80 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-color-text-main/30 focus-visible:ring-offset-2 text-color-text-main"
             >
               <X className="w-6 h-6" />
             </button>

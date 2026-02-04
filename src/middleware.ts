@@ -60,9 +60,12 @@ export function middleware(request: NextRequest) {
     if (pathname === LOGIN_PATH) {
       const token = request.cookies.get(getAdminCookieName())?.value;
       if (validateSessionToken(token)) {
-        return NextResponse.redirect(new URL("/admin", request.url));
+        return NextResponse.redirect(new URL("/admin/slides", request.url));
       }
       return NextResponse.next();
+    }
+    if (pathname === "/admin") {
+      return NextResponse.redirect(new URL("/admin/slides", request.url));
     }
     const token = request.cookies.get(getAdminCookieName())?.value;
     if (!validateSessionToken(token)) {

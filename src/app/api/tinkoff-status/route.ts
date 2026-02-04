@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "orderId or paymentId required" }, { status: 400 });
   }
 
-  let order = orderId ? await getOrderById(orderId) : null;
+  const order = orderId ? await getOrderById(orderId) : null;
   const pid = paymentId ?? order?.tinkoffPaymentId ?? order?.paymentId ?? null;
 
   if (pid) {

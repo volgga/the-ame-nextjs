@@ -70,16 +70,24 @@ export default async function MagazineCategoryPage({ params }: MagazineCategoryP
     { label: category.name },
   ];
 
+  // Фильтруем категории и убираем дубликаты по slug
+  const filteredCategories = categories
+    .filter((c) => c.slug !== "posmotret-vse-tsvety" && c.slug !== "magazin" && c.slug.trim() !== "")
+    .map((c) => ({ slug: c.slug, name: c.name, isAll: false }));
+  
+  // Убираем дубликаты по slug на случай, если они есть
+  const uniqueCategories = Array.from(
+    new Map(filteredCategories.map((cat) => [cat.slug, cat])).values()
+  );
+
   const chips = [
     { slug: "", name: ALL_CATALOG.title, isAll: true },
-    ...categories
-      .filter((c) => c.slug !== "posmotret-vse-tsvety" && c.slug !== "magazin")
-      .map((c) => ({ slug: c.slug, name: c.name, isAll: false })),
+    ...uniqueCategories,
   ];
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-6 pt-3 pb-8 md:pt-4 md:pb-10">
+      <div className="container px-6 md:px-8 pt-3 pb-8 md:pt-4 md:pb-10">
         {/* A) Breadcrumb — отступы совпадают с карточкой товара */}
         <Breadcrumbs items={breadcrumbItems} />
 

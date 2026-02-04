@@ -1,8 +1,21 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
-import { CategoriesGrid } from "@/components/admin/categories/CategoriesGrid";
 import type { Category } from "@/components/admin/categories/CategoryCard";
+
+const CategoriesGrid = dynamic(
+  () => import("@/components/admin/categories/CategoriesGrid").then((m) => ({ default: m.CategoriesGrid })),
+  {
+    loading: () => (
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-[100px] animate-pulse rounded-xl bg-gray-200" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 function areOrdersEqual(a: Category[], b: Category[]): boolean {
   if (a.length !== b.length) return false;

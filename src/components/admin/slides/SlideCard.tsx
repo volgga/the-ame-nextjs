@@ -9,6 +9,10 @@ export type Slide = {
   image_url: string;
   sort_order: number;
   is_active: boolean;
+  button_text?: string | null;
+  button_href?: string | null;
+  button_variant?: "filled" | "transparent" | null;
+  button_align?: "left" | "center" | "right" | null;
 };
 
 type SlideCardProps = {
