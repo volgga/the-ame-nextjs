@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Flower } from "@/types/flower";
 import { Heart, ShoppingCart, Search } from "lucide-react";
 import { useCart } from "@/context/CartContext";
@@ -96,11 +97,12 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
       <Link href={productUrl} aria-label={flower.name} className="block flex-1">
         {/* 📸 Фото + hover-иконки (лупа, сердечко) — group на контейнере фото */}
         <div className="group relative overflow-hidden rounded-2xl aspect-square">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={flower.image}
             alt={flower.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
           {/* ❤️ Избранное и 🔍 Быстрый просмотр — показываются только при hover на фото (slide-in + fade), на touch скрыты */}

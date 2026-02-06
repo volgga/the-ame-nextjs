@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [{ source: "/privacy", destination: "/docs/privacy", permanent: true }];
   },
+  async headers() {
+    return [
+      {
+        source: "/icons/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
