@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { HeroCarousel } from "@/components/hero/HeroCarousel";
 import { RecommendSection } from "@/components/home/RecommendSection";
 import { HomeCategoryTiles } from "@/components/home/HomeCategoryTiles";
@@ -14,6 +15,44 @@ import { getHomeReviews } from "@/lib/homeReviews";
 import { getHomeAbout } from "@/lib/homeAbout";
 import { getHomeFaq } from "@/lib/homeFaq";
 import { getHomeOrderBlock } from "@/lib/homeOrderBlock";
+import {
+  CANONICAL_BASE,
+  SITE_NAME,
+  LOCALE,
+  ROBOTS_INDEX_FOLLOW,
+  canonicalUrl,
+} from "@/lib/seo";
+
+const HOME_TITLE = "Доставка цветов Сочи — купить цветы с доставкой | The Ame";
+const HOME_DESCRIPTION =
+  "Купить цветы с доставкой в Сочи — розы, монобукеты и авторские букеты. Быстрая доставка, свежие цветы и удобный заказ в The Ame.";
+const HOME_KEYWORDS =
+  "доставка цветов сочи, цветы сочи, купить цветы сочи, букеты с доставкой, розы сочи, монобукеты сочи, доставка букетов";
+
+export const metadata: Metadata = {
+  title: HOME_TITLE,
+  description: HOME_DESCRIPTION,
+  keywords: HOME_KEYWORDS,
+  alternates: {
+    canonical: canonicalUrl("/"),
+  },
+  robots: ROBOTS_INDEX_FOLLOW,
+  openGraph: {
+    type: "website",
+    locale: LOCALE,
+    url: canonicalUrl("/"),
+    siteName: SITE_NAME,
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    images: [{ url: `${CANONICAL_BASE}/og-image.jpg`, width: 1200, height: 630, alt: HOME_TITLE }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: HOME_TITLE,
+    description: HOME_DESCRIPTION,
+    images: [`${CANONICAL_BASE}/og-image.jpg`],
+  },
+};
 
 /**
  * Главная страница: hero → «Рекомендуем» → «КОЛЛЕКЦИИ THE ÁME» → «О нас» → «Заказать букет» → «Часто задаваемые вопросы» → «Отзывы клиентов» → «Карта».

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/app/AppShell";
+import { CANONICAL_BASE, SITE_NAME, LOCALE, TITLE_TEMPLATE, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 
 // Подключаем шрифт Montserrat (как в старом проекте)
 const montserrat = Montserrat({
@@ -10,13 +11,10 @@ const montserrat = Montserrat({
   display: "swap",
 });
 
-const SITE_URL = "https://theame.ru";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  // Шаблон для title (будет использоваться на всех страницах)
+  metadataBase: new URL(CANONICAL_BASE),
   title: {
-    template: "%s | The Ame",
+    template: TITLE_TEMPLATE,
     default: "The Ame — премиальные букеты в Сочи",
   },
   description:
@@ -33,36 +31,33 @@ export const metadata: Metadata = {
     "цветы онлайн",
     "цветы в подарок",
   ],
-  authors: [{ name: "The Ame" }],
-  creator: "The Ame",
-  publisher: "The Ame",
-  applicationName: "The Ame",
-  // Open Graph метаданные (для соцсетей)
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  applicationName: SITE_NAME,
   openGraph: {
     type: "website",
-    locale: "ru_RU",
-    url: "https://theame.ru/",
-    siteName: "The Ame",
+    locale: LOCALE,
+    url: `${CANONICAL_BASE}/`,
+    siteName: SITE_NAME,
     title: "The Ame — премиальные букеты в Сочи",
     description:
       "Премиальные букеты, свежие цветы и идеальный сервис. Закажите доставку по Сочи от 45 минут — создаём настроение в каждом букете.",
     images: [
       {
-        url: "https://theame.ru/og-image.jpg",
+        url: `${CANONICAL_BASE}/og-image.jpg`,
         width: 1200,
         height: 630,
         alt: "The Ame — премиальные букеты в Сочи",
       },
     ],
   },
-  // Twitter метаданные
   twitter: {
     card: "summary_large_image",
     title: "The Ame — премиальные букеты в Сочи",
     description: "Премиальные букеты, свежие цветы и идеальный сервис. Закажите доставку по Сочи от 45 минут.",
-    images: ["https://theame.ru/og-image.jpg"],
+    images: [`${CANONICAL_BASE}/og-image.jpg`],
   },
-  // Иконки (favicon)
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -71,17 +66,12 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
-  // Другие метаданные
   manifest: "/site.webmanifest",
-  // themeColor в Next 16 нужно указывать через export const viewport (см. ниже)
-  // Canonical URL главной (остальные страницы задают свой в metadata)
   alternates: {
     canonical: "/",
   },
-  // Robots (для поисковых систем)
   robots: {
-    index: true,
-    follow: true,
+    ...ROBOTS_INDEX_FOLLOW,
     googleBot: {
       index: true,
       follow: true,
