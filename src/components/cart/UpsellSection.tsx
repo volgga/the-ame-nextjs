@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Flower } from "@/types/flower";
 
-const PLACEHOLDER_IMAGE = "https://theame.ru/placeholder.svg";
+const PLACEHOLDER_IMAGE = "/placeholder.svg";
 
 type AddOnProductItem = {
   id: string;
@@ -37,7 +37,7 @@ export function UpsellSection() {
     let cancelled = false;
     setLoading(true);
     setError(false);
-    fetch("/api/add-on-products", { cache: "no-store" })
+    fetch("/api/add-on-products")
       .then((res) => {
         if (cancelled) return res;
         if (!res.ok) {
@@ -140,7 +140,13 @@ export function UpsellSection() {
                   className="flex-shrink-0 w-[140px] md:w-[160px] border border-gray-200 rounded-lg p-3 bg-white"
                 >
                   <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#ece9e2] mb-2">
-                    <Image src={addon.image?.trim() || PLACEHOLDER_IMAGE} alt={addon.title} fill className="object-cover" />
+                    <Image
+                      src={addon.image?.trim() || PLACEHOLDER_IMAGE}
+                      alt={addon.title}
+                      fill
+                      sizes="160px"
+                      className="object-cover"
+                    />
                   </div>
                   <h4 className="text-sm font-medium mb-1 line-clamp-2">{addon.title}</h4>
                   <p className="text-sm font-semibold text-gray-900 mb-2">{addon.price.toLocaleString("ru-RU")} ₽</p>

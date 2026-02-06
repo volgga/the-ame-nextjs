@@ -22,6 +22,7 @@
 
 # misc
 .DS_Store
+deploy.log
 *.pem
 *.backup
 dump.backup

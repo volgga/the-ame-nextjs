@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Flower } from "@/types/flower";
+import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
 import { Heart, ShoppingCart, Search } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -24,8 +25,11 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
   const [quickBuyOpen, setQuickBuyOpen] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  const imageSrc = !isValidImageUrl(flower.image) || imgError ? PLACEHOLDER_IMAGE : flower.image!.trim();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -96,14 +100,15 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
     <div className="relative flex flex-col h-full">
       <Link href={productUrl} aria-label={flower.name} className="block flex-1">
         {/* 📸 Фото + hover-иконки (лупа, сердечко) — group на контейнере фото */}
-        <div className="group relative overflow-hidden rounded-2xl aspect-square">
+        <div className="group relative overflow-hidden rounded-2xl aspect-square bg-[#ece9e2]">
           <Image
-            src={flower.image}
+            src={imageSrc}
             alt={flower.name}
             fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes="(max-width: 430px) 50vw, (max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
+            onError={() => setImgError(true)}
           />
           {/* ❤️ Избранное и 🔍 Быстрый просмотр — показываются только при hover на фото (slide-in + fade), на touch скрыты */}
           <div
@@ -172,7 +177,7 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
           <button
             type="button"
             onClick={handleToggleFavorite}
-            className={`product-cta h-6 w-6 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation md:hidden ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
+            className={`product-cta h-11 w-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation md:hidden ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
             title={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
             aria-label={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
           >
@@ -184,14 +189,14 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
           <button
             type="button"
             onClick={openQuickBuyModal}
-            className="product-cta min-h-[36px] py-1 rounded-full pl-2.5 pr-2 text-sm font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation hidden md:inline-flex"
+            className="product-cta min-h-[44px] py-1 rounded-full pl-2.5 pr-2 text-sm font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation hidden md:inline-flex"
           >
             Купить в 1 клик
           </button>
           <button
             type="button"
             onClick={handleCartClick}
-            className="product-cta h-6 w-6 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
+            className="product-cta h-11 w-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
             title={flower.inStock ? "В корзину" : "Предзаказ"}
             aria-label={flower.inStock ? "В корзину" : "Предзаказ"}
           >

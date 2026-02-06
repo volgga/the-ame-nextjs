@@ -3,6 +3,7 @@
  * Использует anon-клиент. RLS разрешает SELECT для всех.
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 
 export type HomeReviews = {
@@ -19,7 +20,7 @@ const DEFAULT_REVIEWS: HomeReviews = {
     "Всем сердцем люблю Flowerna ❤️ Цветочный с особенной, теплой атмосферой 😊 Букеты как произведение искусства, каждый создан с душой и тонким чувством прекрасного 😊 Сервис Flowerna – это высший уровень, такого дружелюбного и молниеносного взаимодействия с клиентом я ранее не встречала 😊 Flowerna, Вы просто разрыв сердца ❤️ Желаю процветания такому крутому бизнесу!!! ❤️",
 };
 
-export async function getHomeReviews(): Promise<HomeReviews> {
+async function getHomeReviewsUncached(): Promise<HomeReviews> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return DEFAULT_REVIEWS;
@@ -31,13 +32,7 @@ export async function getHomeReviews(): Promise<HomeReviews> {
       .limit(1)
       .single();
 
-    if (error) {
-      if (error.code === "42P01" || error.code === "PGRST116") return DEFAULT_REVIEWS; // таблица не существует или нет записей
-      console.warn("[homeReviews] Ошибка загрузки:", error.message);
-      return DEFAULT_REVIEWS;
-    }
-
-    if (!data) return DEFAULT_REVIEWS;
+    if (error || !data) return DEFAULT_REVIEWS;
 
     return {
       ratingCount: data.rating_count ?? DEFAULT_REVIEWS.ratingCount,
@@ -47,4 +42,8 @@ export async function getHomeReviews(): Promise<HomeReviews> {
   } catch {
     return DEFAULT_REVIEWS;
   }
+}
+
+export async function getHomeReviews(): Promise<HomeReviews> {
+  return unstable_cache(getHomeReviewsUncached, ["home-reviews"], { revalidate: 300 })();
 }

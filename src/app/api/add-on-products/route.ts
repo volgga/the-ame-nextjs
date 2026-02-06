@@ -4,7 +4,7 @@ import { getCategories } from "@/lib/categories";
 import { getAllCatalogProducts } from "@/lib/products";
 import type { Product } from "@/lib/products";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 /** Элемент товара для блока «Добавить к заказу» в корзине */
 export type AddOnProductItem = {
@@ -89,10 +89,7 @@ export async function GET() {
       groups.push({ categorySlug: slug, categoryName, products: items });
     }
 
-    return NextResponse.json(
-      { groups } satisfies AddOnProductsResponse,
-      { headers: { "Cache-Control": "no-store" } }
-    );
+    return NextResponse.json({ groups } satisfies AddOnProductsResponse);
   } catch (e) {
     console.error("[api/add-on-products]", e);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

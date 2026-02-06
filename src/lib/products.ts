@@ -248,29 +248,28 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   }
 }
 
-/**
- * Единый каталог: products + variant_products.
- * Сортировка по sort_order ASC, затем по createdAt ASC (если есть) для стабильности при равных позициях.
- */
-export async function getAllCatalogProducts(): Promise<Product[]> {
-  try {
-    const [fromProducts, fromVariants] = await Promise.all([getAllProducts(), getAllVariantProducts()]);
-    const combined = [...fromProducts, ...fromVariants];
-
-    // Сортируем объединённый массив по sortOrder (primary) и createdAt (secondary, fallback id)
-    return combined.sort((a, b) => {
+async function _getAllCatalogProductsUncached(): Promise<Product[]> {
+  const [fromProducts, fromVariants] = await Promise.all([getAllProducts(), getAllVariantProducts()]);
+  const combined = [...fromProducts, ...fromVariants];
+  return combined.sort((a, b) => {
     const orderA = a.sortOrder ?? 0;
     const orderB = b.sortOrder ?? 0;
     if (orderA !== orderB) return orderA - orderB;
-    
-    // Вторичная сортировка по createdAt для стабильности
     const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     if (dateA !== dateB) return dateA - dateB;
-    
-    // Третичная по id для полной детерминированности
     return a.id.localeCompare(b.id);
   });
+}
+
+/**
+ * Единый каталог: products + variant_products.
+ * Кэшируется 60 сек для быстрой навигации.
+ */
+export async function getAllCatalogProducts(): Promise<Product[]> {
+  const { unstable_cache } = await import("next/cache");
+  try {
+    return await unstable_cache(_getAllCatalogProductsUncached, ["catalog-products"], { revalidate: 60 })();
   } catch (e) {
     console.error("[getAllCatalogProducts]", e instanceof Error ? e.message : String(e));
     return [];

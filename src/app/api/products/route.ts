@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getAllCatalogProducts } from "@/lib/products";
 
+export const revalidate = 60;
+
 export type SearchProductItem = {
   id: string;
   slug: string;

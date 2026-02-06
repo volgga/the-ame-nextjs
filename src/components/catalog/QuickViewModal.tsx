@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import Link from "next/link";
+import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
 import { X, ChevronLeft, ChevronRight, ShoppingCart, Plus, Minus } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { QuickBuyModal } from "@/components/cart/QuickBuyModal";
@@ -66,10 +68,14 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
 
   if (!mounted || !isOpen || !product) return null;
 
-  // Формируем массив изображений: если есть images[], используем его, иначе [image]
-  const images = product.images && product.images.length > 0 ? product.images : [product.image];
-  const canGoPrev = images.length > 1 && currentImageIndex > 0;
-  const canGoNext = images.length > 1 && currentImageIndex < images.length - 1;
+  // Формируем массив изображений; невалидные заменяем placeholder
+  const raw = product.images && product.images.length > 0 ? product.images : [product.image];
+  const images = raw
+    .filter((u) => typeof u === "string" && u.trim())
+    .map((u) => (isValidImageUrl(u) ? u!.trim() : PLACEHOLDER_IMAGE));
+  const displayImages = images.length > 0 ? images : [PLACEHOLDER_IMAGE];
+  const canGoPrev = displayImages.length > 1 && currentImageIndex > 0;
+  const canGoNext = displayImages.length > 1 && currentImageIndex < displayImages.length - 1;
 
   const handlePrevImage = () => {
     if (canGoPrev) {
@@ -157,16 +163,16 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
             {/* Галерея фото */}
             <div className="relative">
               <div className="relative aspect-square rounded-xl overflow-hidden bg-black/5">
-                {images.length > 0 ? (
+                {displayImages.length > 0 ? (
                   <>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={images[currentImageIndex]}
+                    <Image
+                      src={displayImages[currentImageIndex]}
                       alt={`${product.name} — фото ${currentImageIndex + 1}`}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover"
                     />
-                    {/* Стрелки навигации — показываем только если больше одного фото */}
-                    {images.length > 1 && (
+                    {displayImages.length > 1 && (
                       <>
                         <button
                           type="button"
@@ -192,10 +198,9 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                         </button>
                       </>
                     )}
-                    {/* Индикатор фото — показываем только если больше одного фото */}
-                    {images.length > 1 && (
+                    {displayImages.length > 1 && (
                       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-                        {images.map((_, idx) => (
+                        {displayImages.map((_, idx) => (
                           <button
                             key={idx}
                             type="button"

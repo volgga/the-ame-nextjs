@@ -3,6 +3,7 @@
  * Использует anon-клиент. RLS разрешает SELECT только для is_active=true.
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 
 export type HeroSlide = {
@@ -16,7 +17,7 @@ export type HeroSlide = {
   buttonAlign?: "left" | "center" | "right" | null;
 };
 
-export async function getActiveHeroSlides(): Promise<HeroSlide[]> {
+async function getActiveHeroSlidesUncached(): Promise<HeroSlide[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return [];
@@ -28,11 +29,7 @@ export async function getActiveHeroSlides(): Promise<HeroSlide[]> {
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
 
-    if (error) {
-      if (error.code === "42P01") return []; // таблица не существует
-      console.warn("[heroSlides] Ошибка загрузки:", error.message);
-      return [];
-    }
+    if (error) return [];
 
     return (data ?? []).map((r: Record<string, unknown>) => ({
       id: String(r.id),
@@ -46,4 +43,9 @@ export async function getActiveHeroSlides(): Promise<HeroSlide[]> {
   } catch {
     return [];
   }
+}
+
+/** Кэш 5 мин — слайды меняются редко */
+export async function getActiveHeroSlides(): Promise<HeroSlide[]> {
+  return unstable_cache(getActiveHeroSlidesUncached, ["hero-slides"], { revalidate: 300 })();
 }

@@ -3,6 +3,7 @@
  * Fallback на статический список, если таблица пуста или отсутствует.
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 
 export type Category = {
@@ -26,7 +27,7 @@ const FALLBACK_CATEGORIES: Category[] = [
   { id: "4", name: "Вазы", slug: "vazy", sort_order: 3, is_active: true },
 ];
 
-export async function getCategories(): Promise<Category[]> {
+async function getCategoriesUncached(): Promise<Category[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return FALLBACK_CATEGORIES;
@@ -38,11 +39,7 @@ export async function getCategories(): Promise<Category[]> {
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
 
-    if (error) {
-      if (error.code === "42P01") return FALLBACK_CATEGORIES;
-      return FALLBACK_CATEGORIES;
-    }
-    if (!data?.length) return FALLBACK_CATEGORIES;
+    if (error || !data?.length) return FALLBACK_CATEGORIES;
 
     return data.map((r) => ({
       id: String(r.id),
@@ -55,6 +52,11 @@ export async function getCategories(): Promise<Category[]> {
   } catch {
     return FALLBACK_CATEGORIES;
   }
+}
+
+/** Кэш 5 мин — категории редко меняются */
+export async function getCategories(): Promise<Category[]> {
+  return unstable_cache(getCategoriesUncached, ["categories"], { revalidate: 300 })();
 }
 
 export function getCategoryBySlug(categories: Category[], slug: string): Category | null {

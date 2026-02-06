@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { X } from "lucide-react";
 
 export type QuickBuyProduct = {
@@ -140,9 +141,14 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
         <div className="overflow-y-auto flex-1 p-4">
           {/* Позиция: мини-фото, название, количество, цена */}
           <div className="flex items-center gap-3 p-3 bg-[rgba(31,42,31,0.06)] rounded-xl mb-6">
-            <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-black/5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+            <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-[#ece9e2]">
+              <Image
+                src={product.image?.trim() && (product.image.startsWith("http") || product.image.startsWith("/")) ? product.image : "/placeholder.svg"}
+                alt={product.name}
+                fill
+                sizes="56px"
+                className="object-cover"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-color-text-main line-clamp-2">{product.name}</p>

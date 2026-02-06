@@ -3,6 +3,7 @@
  * Использует anon-клиент. RLS разрешает SELECT для всех.
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 
 export type FaqItem = {
@@ -61,7 +62,7 @@ const DEFAULT_FAQ_ITEMS: FaqItem[] = [
   },
 ];
 
-export async function getHomeFaq(): Promise<FaqItem[]> {
+async function getHomeFaqUncached(): Promise<FaqItem[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return DEFAULT_FAQ_ITEMS;
@@ -73,33 +74,26 @@ export async function getHomeFaq(): Promise<FaqItem[]> {
       .limit(1)
       .single();
 
-    if (error) {
-      if (error.code === "42P01" || error.code === "PGRST116") return DEFAULT_FAQ_ITEMS;
-      console.warn("[homeFaq] Ошибка загрузки:", error.message);
-      return DEFAULT_FAQ_ITEMS;
-    }
+    if (error || !data?.faq_items) return DEFAULT_FAQ_ITEMS;
 
-    if (!data || !data.faq_items) return DEFAULT_FAQ_ITEMS;
-
-    try {
-      const items = Array.isArray(data.faq_items) ? data.faq_items : [];
-      // Валидация структуры
-      const validItems = items.filter(
-        (item: unknown) =>
-          typeof item === "object" &&
-          item !== null &&
-          "id" in item &&
-          "question" in item &&
-          "answer" in item &&
-          typeof (item as { id: string }).id === "string" &&
-          typeof (item as { question: string }).question === "string" &&
-          typeof (item as { answer: string }).answer === "string"
-      ) as FaqItem[];
-      return validItems.length > 0 ? validItems : DEFAULT_FAQ_ITEMS;
-    } catch {
-      return DEFAULT_FAQ_ITEMS;
-    }
+    const items = Array.isArray(data.faq_items) ? data.faq_items : [];
+    const validItems = items.filter(
+      (item: unknown) =>
+        typeof item === "object" &&
+        item !== null &&
+        "id" in item &&
+        "question" in item &&
+        "answer" in item &&
+        typeof (item as { id: string }).id === "string" &&
+        typeof (item as { question: string }).question === "string" &&
+        typeof (item as { answer: string }).answer === "string"
+    ) as FaqItem[];
+    return validItems.length > 0 ? validItems : DEFAULT_FAQ_ITEMS;
   } catch {
     return DEFAULT_FAQ_ITEMS;
   }
+}
+
+export async function getHomeFaq(): Promise<FaqItem[]> {
+  return unstable_cache(getHomeFaqUncached, ["home-faq"], { revalidate: 300 })();
 }
