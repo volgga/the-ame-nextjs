@@ -53,6 +53,11 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // /magazin/katalog и прочие подпути — на главную каталога (основной путь каталога: /magazin)
+  if (pathname.startsWith("/magazin/")) {
+    return NextResponse.redirect(new URL(CATALOG_HOME, request.url), 308);
+  }
+
   // Корзина — только модалка в шапке; отдельной страницы нет
   if (pathname === "/cart" || pathname === "/korzina") {
     return NextResponse.redirect(new URL("/", request.url), 308);
@@ -103,6 +108,7 @@ export const config = {
     "/catalog",
     "/catalog/:path*",
     "/magazin",
+    "/magazin/:path*",
     "/posmotret-vse-tsvety",
     "/posmotret-vse-tsvety/:path*",
   ],

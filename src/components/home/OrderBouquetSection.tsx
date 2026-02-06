@@ -112,7 +112,7 @@ export function OrderBouquetSection({
           </div>
           {/* Заголовок слева, кнопка «Написать нам» справа (как «Подробнее о нас» выше) */}
           <div className={MAIN_PAGE_BLOCK_GAP_MARGIN}>
-            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
+            <div className="flex flex-col items-start gap-2 md:flex-row md:items-baseline md:justify-between md:gap-4">
               <h2
                 id="order-bouquet-heading"
                 className="text-3xl md:text-4xl font-bold text-[var(--color-text-main)] uppercase tracking-tight"
@@ -122,7 +122,7 @@ export function OrderBouquetSection({
               <button
                 type="button"
                 onClick={() => setSocialModalOpen(true)}
-                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full border border-[var(--color-outline-border)] bg-transparent px-4 py-2 text-sm font-medium uppercase tracking-tight text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 shrink-0"
+                className="inline-flex items-center gap-1.5 self-start md:self-auto rounded-full border border-[var(--color-outline-border)] bg-transparent px-4 py-2 text-sm font-medium uppercase tracking-tight text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 shrink-0"
               >
                 <ArrowRight className="w-4 h-4" strokeWidth={2} aria-hidden />
                 НАПИСАТЬ НАМ
@@ -166,7 +166,7 @@ export function OrderBouquetSection({
                   )}
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-3 w-full">
+                <form onSubmit={handleSubmit} className="space-y-3 w-full" suppressHydrationWarning>
                   <div>
                     <input
                       type="text"
@@ -211,7 +211,7 @@ export function OrderBouquetSection({
                         className="mt-1 w-4 h-4 accent-[var(--color-accent-btn)] cursor-pointer"
                         required
                       />
-                      <span className="text-sm text-[var(--color-text-main)]">
+                      <span className="text-xs leading-snug text-[var(--color-text-main)]">
                         Нажимая кнопку «Отправить», Вы принимаете условия{" "}
                         <Link href="/docs/oferta" className="underline hover:no-underline">
                           Пользовательского соглашения

@@ -22,7 +22,7 @@ export function CartIcon() {
       >
         <span className={`${HEADER_ICON_CLASS} pointer-events-none`}>
           <svg
-            className="w-4 h-4 md:w-5 md:h-5 shrink-0"
+            className="w-6 h-6 md:w-5 md:h-5 shrink-0"
             fill="none"
             stroke="currentColor"
             strokeWidth={1.6}
@@ -37,7 +37,7 @@ export function CartIcon() {
           </svg>
           {state.itemCount > 0 && (
             <span
-              className="absolute z-10 min-w-[16px] h-[16px] px-1 text-[10px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text pointer-events-none select-none leading-[16px]"
+              className="header-icon-badge absolute z-10 min-w-[16px] h-[16px] px-1 text-[10px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text pointer-events-none select-none leading-[16px]"
               style={{ top: "4px", right: "2px", transform: "translate(35%, -25%)" }}
               aria-hidden
             >

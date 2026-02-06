@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -78,18 +79,32 @@ function searchProducts(products: SearchProductItem[], query: string): SearchPro
 const HEADER_ICON_CLASS =
   "relative inline-flex items-center justify-center w-9 h-9 min-w-[44px] min-h-[44px] md:w-10 md:h-10 md:min-w-0 md:min-h-0 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
 
+const HEADER_HEIGHT_MOBILE_PX = 76; // marquee 32 + main bar 44
+
 type SearchDropdownProps = {
   onClose?: () => void;
+  /** На мобиле при скрытии хедера (scroll) закрываем поиск */
+  isHeaderBarVisible?: boolean;
 };
 
-export function SearchDropdown({ onClose }: SearchDropdownProps) {
+export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [products, setProducts] = useState<SearchProductItem[]>([]);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const m = window.matchMedia("(max-width: 767px)");
+    setIsMobile(m.matches);
+    const handler = () => setIsMobile(m.matches);
+    m.addEventListener("change", handler);
+    return () => m.removeEventListener("change", handler);
+  }, []);
 
   const results = useMemo(
     () => (query.trim() ? searchProducts(products, query) : []),
@@ -124,6 +139,10 @@ export function SearchDropdown({ onClose }: SearchDropdownProps) {
     onClose?.();
   }, [onClose]);
 
+  useEffect(() => {
+    if (isHeaderBarVisible === false) close();
+  }, [isHeaderBarVisible, close]);
+
   const handleProductClick = useCallback(
     (e: React.MouseEvent, product: SearchProductItem) => {
       e.preventDefault();
@@ -140,9 +159,10 @@ export function SearchDropdown({ onClose }: SearchDropdownProps) {
   useEffect(() => {
     if (!isOpen) return;
     const handleClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        close();
-      }
+      const target = e.target as Node;
+      const inContainer = containerRef.current?.contains(target);
+      const inPanel = panelRef.current?.contains(target);
+      if (!inContainer && !inPanel) close();
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -158,7 +178,7 @@ export function SearchDropdown({ onClose }: SearchDropdownProps) {
   }, [isOpen, close]);
 
   return (
-    <div ref={containerRef} className="relative shrink-0">
+    <div ref={containerRef} className="relative z-20 shrink-0">
       <button
         type="button"
         onClick={open}
@@ -168,11 +188,12 @@ export function SearchDropdown({ onClose }: SearchDropdownProps) {
         className={HEADER_ICON_CLASS}
       >
         <svg
-          className="w-4 h-4 md:w-5 md:h-5 shrink-0"
+          className="w-6 h-6 md:w-5 md:h-5 shrink-0"
           fill="none"
           stroke="currentColor"
           strokeWidth={1.6}
           viewBox="0 0 24 24"
+          aria-hidden
         >
           <path
             strokeLinecap="round"
@@ -182,78 +203,155 @@ export function SearchDropdown({ onClose }: SearchDropdownProps) {
         </svg>
       </button>
 
-      {isOpen && (
-        <div
-          className="absolute right-0 top-full z-[75] mt-2 w-[min(400px,calc(100vw-32px))] bg-white border border-[#1F2A1F] rounded-xl shadow-xl overflow-hidden"
-          role="dialog"
-          aria-label="Поиск товаров"
-        >
-          <div className="p-3 border-b border-gray-200">
-            <input
-              ref={inputRef}
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Поиск товаров…"
-              className="w-full px-3 py-2 text-sm text-color-text-main bg-page-bg border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-header-foreground focus:ring-offset-1"
-              autoComplete="off"
-              aria-label="Поисковый запрос"
-            />
-          </div>
-          <div className="max-h-[320px] overflow-y-auto">
-            {loading ? (
-              <div className="py-8 text-center text-sm text-color-text-secondary">
-                Загрузка…
+      {isOpen &&
+        (isMobile
+          ? createPortal(
+              <div
+                ref={panelRef}
+                className="fixed left-2 right-2 z-[75] w-[calc(100vw-16px)] max-w-[400px] mx-auto bg-white border border-[#1F2A1F] rounded-xl shadow-xl overflow-hidden"
+                style={{ top: HEADER_HEIGHT_MOBILE_PX + 8 }}
+                role="dialog"
+                aria-label="Поиск товаров"
+              >
+                <div className="p-3 border-b border-gray-200">
+                  <input
+                    ref={inputRef}
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Поиск товаров…"
+                    className="w-full px-3 py-2 text-sm text-color-text-main bg-page-bg border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-header-foreground focus:ring-offset-1"
+                    autoComplete="off"
+                    aria-label="Поисковый запрос"
+                  />
+                </div>
+                <div className="max-h-[320px] overflow-y-auto">
+                  {loading ? (
+                    <div className="py-8 text-center text-sm text-color-text-secondary">
+                      Загрузка…
+                    </div>
+                  ) : query.trim() === "" ? (
+                    <div className="py-6 text-center text-sm text-color-text-secondary">
+                      Введите запрос для поиска
+                    </div>
+                  ) : results.length === 0 ? (
+                    <div className="py-8 text-center text-sm text-color-text-secondary">
+                      Ничего не найдено
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-gray-100">
+                      {results.slice(0, 8).map((product) => (
+                        <li key={product.id}>
+                          <Link
+                            href={buildProductUrl({
+                              name: product.title,
+                              productSlug: product.slug ?? null,
+                            })}
+                            onClick={(e) => handleProductClick(e, product)}
+                            className="flex gap-3 p-3 hover:bg-gray-50 transition-colors"
+                          >
+                            <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#ece9e2] shrink-0">
+                              {product.image ? (
+                                <Image
+                                  src={product.image}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                  sizes="48px"
+                                />
+                              ) : (
+                                <div className="w-full h-full bg-gray-200" />
+                              )}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-color-text-main line-clamp-2">
+                                {product.title}
+                              </p>
+                              <p className="text-xs text-color-text-secondary mt-0.5">
+                                {formatPrice(product.price)}
+                              </p>
+                            </div>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>,
+              document.body
+            )
+          : (
+            <div
+              className="absolute right-0 top-full z-[75] mt-2 w-[min(400px,calc(100vw-32px))] bg-white border border-[#1F2A1F] rounded-xl shadow-xl overflow-hidden"
+              role="dialog"
+              aria-label="Поиск товаров"
+            >
+              <div className="p-3 border-b border-gray-200">
+                <input
+                  ref={inputRef}
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Поиск товаров…"
+                  className="w-full px-3 py-2 text-sm text-color-text-main bg-page-bg border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-header-foreground focus:ring-offset-1"
+                  autoComplete="off"
+                  aria-label="Поисковый запрос"
+                />
               </div>
-            ) : query.trim() === "" ? (
-              <div className="py-6 text-center text-sm text-color-text-secondary">
-                Введите запрос для поиска
+              <div className="max-h-[320px] overflow-y-auto">
+                {loading ? (
+                  <div className="py-8 text-center text-sm text-color-text-secondary">
+                    Загрузка…
+                  </div>
+                ) : query.trim() === "" ? (
+                  <div className="py-6 text-center text-sm text-color-text-secondary">
+                    Введите запрос для поиска
+                  </div>
+                ) : results.length === 0 ? (
+                  <div className="py-8 text-center text-sm text-color-text-secondary">
+                    Ничего не найдено
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-gray-100">
+                    {results.slice(0, 8).map((product) => (
+                      <li key={product.id}>
+                        <Link
+                          href={buildProductUrl({
+                            name: product.title,
+                            productSlug: product.slug ?? null,
+                          })}
+                          onClick={(e) => handleProductClick(e, product)}
+                          className="flex gap-3 p-3 hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#ece9e2] shrink-0">
+                            {product.image ? (
+                              <Image
+                                src={product.image}
+                                alt=""
+                                fill
+                                className="object-cover"
+                                sizes="48px"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-color-text-main line-clamp-2">
+                              {product.title}
+                            </p>
+                            <p className="text-xs text-color-text-secondary mt-0.5">
+                              {formatPrice(product.price)}
+                            </p>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            ) : results.length === 0 ? (
-              <div className="py-8 text-center text-sm text-color-text-secondary">
-                Ничего не найдено
-              </div>
-            ) : (
-              <ul className="divide-y divide-gray-100">
-                {results.slice(0, 8).map((product) => (
-                  <li key={product.id}>
-                    <Link
-                      href={buildProductUrl({
-                        name: product.title,
-                        productSlug: product.slug ?? null,
-                      })}
-                      onClick={(e) => handleProductClick(e, product)}
-                      className="flex gap-3 p-3 hover:bg-gray-50 transition-colors"
-                    >
-                      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#ece9e2] shrink-0">
-                        {product.image ? (
-                          <Image
-                            src={product.image}
-                            alt=""
-                            fill
-                            className="object-cover"
-                            sizes="48px"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-color-text-main line-clamp-2">
-                          {product.title}
-                        </p>
-                        <p className="text-xs text-color-text-secondary mt-0.5">
-                          {formatPrice(product.price)}
-                        </p>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-      )}
+            </div>
+          ))}
     </div>
   );
 }

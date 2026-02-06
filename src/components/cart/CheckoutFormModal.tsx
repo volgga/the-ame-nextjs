@@ -23,13 +23,29 @@ interface SavedFormData {
   notes?: string;
 }
 
-/** Кнопка «Оплатить»: создаёт заказ на сервере (сумма пересчитывается по каталогу), инициирует платёж Tinkoff, редирект на страницу оплаты. */
+const FIELD_IDS = {
+  customerName: "checkout-customerName",
+  customerPhone: "checkout-customerPhone",
+  recipientName: "checkout-recipientName",
+  recipientPhone: "checkout-recipientPhone",
+  agreePrivacy: "checkout-agreePrivacy",
+  deliveryZone: "checkout-deliveryZone",
+  deliveryAddress: "checkout-deliveryAddress",
+  deliveryDate: "checkout-deliveryDate",
+  deliveryTime: "checkout-deliveryTime",
+} as const;
+
+/** Кнопка «Оплатить»: при невалидной форме — onInvalidSubmit(firstInvalidId); иначе создаёт заказ и редирект на оплату. */
 function PayButton({
-  disabled,
+  isFormValid,
+  getFirstInvalidFieldId,
+  onInvalidSubmit,
   items,
   customer,
 }: {
-  disabled: boolean;
+  isFormValid: () => boolean;
+  getFirstInvalidFieldId: () => string | null;
+  onInvalidSubmit: (fieldId: string) => void;
   items: { id: string; quantity: number }[];
   customer: OrderCustomerPayload;
 }) {
@@ -37,6 +53,11 @@ function PayButton({
   const [error, setError] = useState<string | null>(null);
 
   const handlePay = async () => {
+    if (!isFormValid()) {
+      const firstId = getFirstInvalidFieldId();
+      if (firstId) onInvalidSubmit(firstId);
+      return;
+    }
     if (items.length === 0) {
       setError("Корзина пуста");
       return;
@@ -84,7 +105,7 @@ function PayButton({
       <button
         type="button"
         onClick={handlePay}
-        disabled={disabled || loading}
+        disabled={loading}
         className="w-full py-4 mt-6 rounded-full font-semibold text-white uppercase transition-colors disabled:cursor-not-allowed bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
       >
         {loading ? "Подготовка…" : "ПЕРЕЙТИ К ОПЛАТЕ"}
@@ -121,6 +142,8 @@ export function CheckoutFormModal() {
   // Чекбоксы для "Получатель другой человек"
   const [askRecipientForDetails, setAskRecipientForDetails] = useState(false);
   const [deliverAnonymously, setDeliverAnonymously] = useState(false);
+  /** Id первого незаполненного обязательного поля (для scroll+focus+red после клика «Оплатить»). */
+  const [firstInvalidField, setFirstInvalidField] = useState<string | null>(null);
 
   // Debounce для сохранения в localStorage
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -306,7 +329,6 @@ export function CheckoutFormModal() {
     }
     if (!agreePrivacy) return false;
 
-    // Должен быть выбран способ: самовывоз, район доставки или «уточнить у получателя»
     const hasDeliveryChoice = deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails);
     if (!hasDeliveryChoice) return false;
 
@@ -322,6 +344,44 @@ export function CheckoutFormModal() {
     }
 
     return true;
+  };
+
+  // Первое незаполненное поле (порядок как в isFormValid) для scroll+focus+highlight
+  const getFirstInvalidFieldId = (): string | null => {
+    if (!customerName.trim()) return FIELD_IDS.customerName;
+    if (!customerPhone || customerPhone.length < 18) return FIELD_IDS.customerPhone;
+    if (!isRecipientSelf) {
+      if (!recipientName.trim()) return FIELD_IDS.recipientName;
+      if (!recipientPhone || recipientPhone.length < 18) return FIELD_IDS.recipientPhone;
+    }
+    if (!agreePrivacy) return FIELD_IDS.agreePrivacy;
+    const hasDeliveryChoice = deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails);
+    if (!hasDeliveryChoice) return FIELD_IDS.deliveryZone;
+    const needDate = deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails);
+    if (needDate && !deliveryDate.trim()) return FIELD_IDS.deliveryDate;
+    const needTime = (deliveryType || isPickup) && !(!isRecipientSelf && askRecipientForDetails);
+    if (needTime && !deliveryTime.trim()) return FIELD_IDS.deliveryTime;
+    if (!isPickup && !(!isRecipientSelf && askRecipientForDetails)) {
+      if (!deliveryType) return FIELD_IDS.deliveryZone;
+      if (!deliveryAddress.trim()) return FIELD_IDS.deliveryAddress;
+    }
+    return null;
+  };
+
+  const handleInvalidSubmit = (fieldId: string) => {
+    setFirstInvalidField(fieldId);
+    setTimeout(() => {
+      const el = document.getElementById(fieldId);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        const toFocus = el instanceof HTMLLabelElement ? el.querySelector<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input, select, button, textarea") : el;
+        (toFocus as HTMLElement)?.focus?.();
+      }
+    }, 100);
+  };
+
+  const clearFieldError = (fieldId: string) => {
+    if (firstInvalidField === fieldId) setFirstInvalidField(null);
   };
 
   // Минимальная дата (сегодня)
@@ -358,12 +418,14 @@ export function CheckoutFormModal() {
               Имя и фамилия <span className="text-red-500">*</span>
             </label>
             <input
+              id={FIELD_IDS.customerName}
               type="text"
               placeholder="Имя и фамилия"
               value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              onChange={(e) => { setCustomerName(e.target.value); clearFieldError(FIELD_IDS.customerName); }}
+              className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.customerName ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
             />
+            {firstInvalidField === FIELD_IDS.customerName && <p className="text-sm text-red-600 mt-1">Заполните имя и фамилию</p>}
           </div>
           <div>
             <label className="block text-sm mb-1">
@@ -372,12 +434,14 @@ export function CheckoutFormModal() {
             <div className="relative w-full">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none">🇷🇺</span>
               <input
+                id={FIELD_IDS.customerPhone}
                 type="tel"
                 placeholder="+7 (000) 000-00-00"
                 value={customerPhone}
-                onChange={(e) => handlePhoneChange(e, setCustomerPhone)}
-                className="w-full pl-12 pr-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                onChange={(e) => { handlePhoneChange(e, setCustomerPhone); clearFieldError(FIELD_IDS.customerPhone); }}
+                className={`w-full pl-12 pr-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.customerPhone ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
               />
+              {firstInvalidField === FIELD_IDS.customerPhone && <p className="text-sm text-red-600 mt-1">Введите корректный номер телефона</p>}
             </div>
           </div>
           <div>
@@ -440,12 +504,14 @@ export function CheckoutFormModal() {
                 Имя получателя <span className="text-red-500">*</span>
               </label>
               <input
+                id={FIELD_IDS.recipientName}
                 type="text"
                 placeholder="Имя получателя"
                 value={recipientName}
-                onChange={(e) => setRecipientName(e.target.value)}
-                className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                onChange={(e) => { setRecipientName(e.target.value); clearFieldError(FIELD_IDS.recipientName); }}
+                className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.recipientName ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
               />
+              {firstInvalidField === FIELD_IDS.recipientName && <p className="text-sm text-red-600 mt-1">Заполните имя получателя</p>}
             </div>
             <div>
               <label className="block text-sm mb-1">
@@ -454,12 +520,14 @@ export function CheckoutFormModal() {
               <div className="relative w-full">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none">🇷🇺</span>
                 <input
+                  id={FIELD_IDS.recipientPhone}
                   type="tel"
                   placeholder="+7 (000) 000-00-00"
                   value={recipientPhone}
-                  onChange={(e) => handlePhoneChange(e, setRecipientPhone)}
-                  className="w-full pl-12 pr-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  onChange={(e) => { handlePhoneChange(e, setRecipientPhone); clearFieldError(FIELD_IDS.recipientPhone); }}
+                  className={`w-full pl-12 pr-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.recipientPhone ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
                 />
+                {firstInvalidField === FIELD_IDS.recipientPhone && <p className="text-sm text-red-600 mt-1">Введите корректный номер телефона получателя</p>}
               </div>
             </div>
           </div>
@@ -475,9 +543,10 @@ export function CheckoutFormModal() {
         {!isPickup && !(!isRecipientSelf && askRecipientForDetails) && (
           <div className="relative mb-3">
             <button
+              id={FIELD_IDS.deliveryZone}
               type="button"
-              onClick={() => setIsDeliveryDropdownOpen(!isDeliveryDropdownOpen)}
-              className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-left flex items-center justify-between bg-white ${isDeliveryDropdownOpen ? "border-border-block" : "border-gray-300"}`}
+              onClick={() => { setIsDeliveryDropdownOpen(!isDeliveryDropdownOpen); clearFieldError(FIELD_IDS.deliveryZone); }}
+              className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-left flex items-center justify-between bg-white ${firstInvalidField === FIELD_IDS.deliveryZone ? "border-red-500 focus:ring-red-500/30" : isDeliveryDropdownOpen ? "border-border-block" : "border-gray-300"}`}
             >
               <span className={selectedZone ? "text-gray-900" : "text-gray-500"}>
                 {selectedZone
@@ -499,6 +568,7 @@ export function CheckoutFormModal() {
               </svg>
             </button>
 
+            {firstInvalidField === FIELD_IDS.deliveryZone && <p className="text-sm text-red-600 mt-1">Выберите район доставки или самовывоз</p>}
             {isDeliveryDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setIsDeliveryDropdownOpen(false)} />
@@ -580,12 +650,14 @@ export function CheckoutFormModal() {
         {!isPickup && deliveryType && !(!isRecipientSelf && askRecipientForDetails) && (
           <div className="mb-3">
             <input
+              id={FIELD_IDS.deliveryAddress}
               type="text"
-          placeholder="Улица, номер дома, подъезд, квартира, этаж"
-          value={deliveryAddress}
-          onChange={(e) => setDeliveryAddress(e.target.value)}
-          className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
+              placeholder="Улица, номер дома, подъезд, квартира, этаж"
+              value={deliveryAddress}
+              onChange={(e) => { setDeliveryAddress(e.target.value); clearFieldError(FIELD_IDS.deliveryAddress); }}
+              className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryAddress ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
+            />
+            {firstInvalidField === FIELD_IDS.deliveryAddress && <p className="text-sm text-red-600 mt-1">Укажите адрес доставки</p>}
           </div>
         )}
 
@@ -595,22 +667,25 @@ export function CheckoutFormModal() {
             <div className="w-full min-w-0 md:flex-1">
               <label className="block text-sm mb-1 text-color-text-main">Дата доставки</label>
               <input
+                id={FIELD_IDS.deliveryDate}
                 type="date"
                 value={deliveryDate}
-                onChange={(e) => setDeliveryDate(e.target.value)}
+                onChange={(e) => { setDeliveryDate(e.target.value); clearFieldError(FIELD_IDS.deliveryDate); }}
                 min={getMinDate()}
                 lang="ru"
-                className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
               />
+              {firstInvalidField === FIELD_IDS.deliveryDate && <p className="text-sm text-red-600 mt-1">Выберите дату доставки</p>}
             </div>
             {/* Время доставки: скрыто при "Уточнить время и адрес у получателя"; при самовывозе — показываем */}
             {!(!isRecipientSelf && askRecipientForDetails) && (
               <div className="w-full min-w-0 md:flex-1">
                 <label className="block text-sm mb-1 text-color-text-main">Время доставки</label>
                 <select
+                  id={FIELD_IDS.deliveryTime}
                   value={deliveryTime}
-                  onChange={(e) => setDeliveryTime(e.target.value)}
-                  className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  onChange={(e) => { setDeliveryTime(e.target.value); clearFieldError(FIELD_IDS.deliveryTime); }}
+                  className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryTime ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
                 >
                   <option value="">Выберите время</option>
                   {getTimeIntervals().map((interval) => (
@@ -619,6 +694,7 @@ export function CheckoutFormModal() {
                     </option>
                   ))}
                 </select>
+                {firstInvalidField === FIELD_IDS.deliveryTime && <p className="text-sm text-red-600 mt-1">Выберите время доставки</p>}
                 {deliveryTime === "Доставка ночью" && (
                   <p className="text-xs mt-1" style={{ color: "#6b7280" }}>
                     Мы свяжемся с вами для уточнения времени
@@ -682,16 +758,17 @@ export function CheckoutFormModal() {
           />
           <span className="text-sm">Согласие на получение рассылки</span>
         </label>
-        <label className="flex items-start gap-2 cursor-pointer">
+        <label id={FIELD_IDS.agreePrivacy} className={`flex items-start gap-2 cursor-pointer ${firstInvalidField === FIELD_IDS.agreePrivacy ? "rounded ring-2 ring-red-500 ring-offset-1" : ""}`}>
           <input
             type="checkbox"
             checked={agreePrivacy}
-            onChange={(e) => setAgreePrivacy(e.target.checked)}
+            onChange={(e) => { setAgreePrivacy(e.target.checked); clearFieldError(FIELD_IDS.agreePrivacy); }}
             className="mt-1 w-4 h-4 accent-primary"
             required
           />
           <span className="text-sm">Согласие с политикой конфиденциальности и договором оферты</span>
         </label>
+        {firstInvalidField === FIELD_IDS.agreePrivacy && <p className="text-sm text-red-600 mt-1">Необходимо согласие с политикой конфиденциальности</p>}
         <label className="flex items-start gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -721,9 +798,11 @@ export function CheckoutFormModal() {
         </div>
       </div>
 
-      {/* Кнопка оплаты: создаём заказ на сервере (сумма пересчитывается по каталогу), инициируем платёж Tinkoff, редирект на страницу оплаты */}
+      {/* Кнопка оплаты: при невалидной форме — scroll+focus+highlight первого поля; иначе создаём заказ и редирект на оплату */}
       <PayButton
-        disabled={!isFormValid()}
+        isFormValid={isFormValid}
+        getFirstInvalidFieldId={getFirstInvalidFieldId}
+        onInvalidSubmit={handleInvalidSubmit}
         items={state.items.map((item) => ({ id: item.id, quantity: item.cartQuantity }))}
         customer={{
           name: customerName,

@@ -10,7 +10,11 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			// На мобильной отступ только от main; на md+ — привычные 2rem
+			padding: {
+				DEFAULT: '0',
+				md: '2rem',
+			},
 			screens: {
 				'2xl': '100%'
 			}

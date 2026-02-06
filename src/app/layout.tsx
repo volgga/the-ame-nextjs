@@ -101,8 +101,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru">
-      <body className={`${montserrat.variable} antialiased`}>
+    <html lang="ru" suppressHydrationWarning>
+      <body className={`${montserrat.variable} antialiased`} suppressHydrationWarning>
         {/* Структурированные данные для SEO (Organization) */}
         <script
           type="application/ld+json"

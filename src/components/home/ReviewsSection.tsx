@@ -25,14 +25,14 @@ export function ReviewsSection({ reviews }: ReviewsSectionProps) {
           <div className="w-full max-w-5xl section-divider-line" aria-hidden />
         </div>
         <div className={MAIN_PAGE_BLOCK_GAP_MARGIN}>
-          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
+          <div className="flex flex-col items-start gap-2 md:flex-row md:items-baseline md:justify-between md:gap-4">
             <h2
               id="reviews-heading"
               className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)] uppercase tracking-tight"
             >
               ОТЗЫВЫ КЛИЕНТОВ
             </h2>
-            <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div className="flex items-center gap-2 self-start md:self-auto">
               <Link
                 href="https://2gis.ru/sochi/firm/70000001098591027/tab/reviews?m=39.738377%2C43.615292%2F17.69"
                 target="_blank"

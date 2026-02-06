@@ -5,7 +5,7 @@ import { ProductToolbar } from "@/components/catalog/product-toolbar";
 import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
 import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
-import { ALL_CATALOG } from "@/lib/catalogCategories";
+import { ALL_CATALOG, CATALOG_PAGE } from "@/lib/catalogCategories";
 
 export type AllFlowersPageProps = {
   /** Заголовок страницы (H1) */
@@ -43,12 +43,18 @@ export async function AllFlowersPage({
 
   const breadcrumbItems = [{ label: "Главная", href: "/" }, { label: breadcrumbLabel }];
 
-  // Фильтруем категории и убираем дубликаты по slug
+  // Фильтруем категории: убираем виртуальные (Все цветы, Каталог) и дубли по slug
   const filteredCategories = categories
-    .filter((c) => c.slug !== "posmotret-vse-tsvety" && c.slug !== "magazin" && c.slug.trim() !== "")
+    .filter(
+      (c) =>
+        c.slug !== "posmotret-vse-tsvety" &&
+        c.slug !== "magazin" &&
+        c.slug.trim() !== "" &&
+        c.name !== ALL_CATALOG.title &&
+        c.name !== CATALOG_PAGE.title
+    )
     .map((c) => ({ slug: c.slug, name: c.name, isAll: false }));
-  
-  // Убираем дубликаты по slug на случай, если они есть
+
   const uniqueCategories = Array.from(
     new Map(filteredCategories.map((cat) => [cat.slug, cat])).values()
   );
@@ -60,15 +66,15 @@ export async function AllFlowersPage({
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-6 md:px-8 pt-3 pb-8 md:pt-4 md:pb-10">
-        {showBreadcrumbs && <Breadcrumbs items={breadcrumbItems} />}
+      <div className="container px-6 md:px-8 pt-2 pb-8 md:pt-4 md:pb-10">
+        {showBreadcrumbs && <Breadcrumbs items={breadcrumbItems} className="mt-0 mb-2 md:mb-4" />}
 
-        <div className={`grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-6 md:gap-8 md:items-start ${SECTION_GAP}`}>
+        <div className={`grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-3 md:gap-8 md:items-start ${SECTION_GAP}`}>
           <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-color-text-main uppercase tracking-tight">
             {title}
           </h1>
-          <div className="max-h-[96px] md:max-h-[120px] overflow-y-auto mt-3 md:mt-0">
-            <p className="text-base md:text-[15px] leading-relaxed text-color-text-secondary">{description}</p>
+          <div className="mt-1 md:mt-0 md:max-h-[120px] md:overflow-y-auto">
+            <p className="text-xs md:text-[15px] leading-snug md:leading-relaxed text-color-text-secondary">{description}</p>
           </div>
         </div>
 

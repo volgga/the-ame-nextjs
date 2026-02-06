@@ -150,7 +150,7 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
     "absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] text-white transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
 
   return (
-    <section className="relative hero-full-width bg-[#fff8ea] overflow-hidden pb-4 md:pb-6 -mx-3 md:-mx-8">
+    <section className="relative hero-full-width bg-[#fff8ea] overflow-hidden pb-4 md:pb-6 -mx-0.5 md:-mx-8">
       <div className="relative w-full h-[510px] min-[768px]:h-[420px] min-[1200px]:h-[500px] min-[1440px]:h-[560px] min-[1440px]:max-h-[680px]">
         <div className={`absolute inset-0 overflow-hidden bg-[#ece9e2] hero-reveal ${isRevealActive ? "hero-reveal--active" : ""}`}>
           <div

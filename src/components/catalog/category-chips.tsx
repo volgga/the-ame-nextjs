@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ALL_CATALOG } from "@/lib/catalogCategories";
+import { ALL_CATALOG, CATALOG_PAGE } from "@/lib/catalogCategories";
 
 export type CategoryChip = {
   slug: string;
@@ -22,11 +22,11 @@ type CategoryChipsProps = {
  * Чип "Каталог" (slug magazin) в блок не передаётся (фильтруется в AllFlowersPage / magazine/[slug]).
  */
 export function CategoryChips({ categories, currentSlug }: CategoryChipsProps) {
-  // Убираем дубликаты: если есть isAll=true, удаляем любые категории с slug "posmotret-vse-tsvety"
+  // Один "Все цветы": при наличии isAll убираем дубли по slug; чип "Каталог" не показываем
   const hasAllCategory = categories.some((cat) => cat.isAll);
-  const filteredCategories = hasAllCategory
-    ? categories.filter((cat) => cat.slug !== "posmotret-vse-tsvety")
-    : categories;
+  const filteredCategories = categories
+    .filter((cat) => cat.name !== CATALOG_PAGE.title)
+    .filter((cat) => !hasAllCategory || cat.slug !== "posmotret-vse-tsvety");
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-wrap justify-center gap-2.5" role="group" aria-label="Категории каталога">

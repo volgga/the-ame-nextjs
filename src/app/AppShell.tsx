@@ -47,7 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="min-h-screen flex flex-col bg-page-bg overflow-x-hidden">
           <Header />
           <main
-            className={`flex-1 bg-page-bg px-3 md:px-8 page-enter ${isPageEnterActive ? "page-enter--active" : ""}`}
+            className={`flex-1 bg-page-bg px-0.5 md:px-8 page-enter ${isPageEnterActive ? "page-enter--active" : ""}`}
           >
             {children}
           </main>

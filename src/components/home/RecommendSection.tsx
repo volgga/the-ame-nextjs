@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { FlowerCard } from "@/components/catalog/FlowerCard";
-import { MAIN_PAGE_BLOCK_GAP, MAIN_PAGE_BLOCK_GAP_MARGIN } from "@/components/ui/breadcrumbs";
+import { MAIN_PAGE_BLOCK_GAP } from "@/components/ui/breadcrumbs";
 import type { Product } from "@/lib/products";
 import type { Flower } from "@/types/flower";
 
@@ -160,28 +160,34 @@ export function RecommendSection({ products }: RecommendSectionProps) {
         <div className="flex justify-center mb-6 md:mb-8">
           <div className="w-full max-w-5xl section-divider-line" aria-hidden />
         </div>
-        {/* headerRow: заголовок слева, кнопка справа (эталон контейнера как у остальных секций) */}
-        <div className={MAIN_PAGE_BLOCK_GAP_MARGIN}>
-          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
+        {/* headerRow: на мобильной заголовок сверху, затем одна строка [кнопка СМОТРЕТЬ ВСЕ | стрелки]; на md+ как раньше */}
+        <div className="mb-2 md:mb-8">
+          <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between md:gap-4 md:items-baseline">
             <h2
               id="recommend-heading"
-              className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)] uppercase tracking-tight"
+              className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)] uppercase tracking-tight shrink-0 min-w-0"
             >
               Рекомендуем
             </h2>
+            {/* На md+: кнопка в одной строке с заголовком */}
             <Link
               href="/magazin"
-              className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full border border-[var(--color-outline-border)] bg-transparent px-4 py-2 text-sm font-medium uppercase tracking-tight text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 shrink-0"
+              className="hidden md:inline-flex items-center gap-1.5 shrink-0 rounded-full border border-[var(--color-outline-border)] bg-transparent px-4 py-2 text-sm font-medium uppercase tracking-tight text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
             >
-              <ArrowRight className="w-4 h-4" strokeWidth={2} aria-hidden />
-              СМОТРЕТЬ ВСЕ
+              <ArrowRight className="w-4 h-4 shrink-0" strokeWidth={2} aria-hidden />
+              <span className="whitespace-nowrap">СМОТРЕТЬ ВСЕ</span>
             </Link>
           </div>
-        </div>
-
-        {/* controlsRow: стрелки прижаты к карточкам, над ними, справа */}
-        <div className="flex justify-end -mx-4 px-4 md:-mx-6 md:px-6 mb-2">
-            <div className="flex items-center gap-0.5">
+          {/* Mobile only: кнопка и стрелки в одной строке под заголовком */}
+          <div className="flex md:hidden flex-row items-center justify-between gap-2 mt-0 w-full">
+            <Link
+              href="/magazin"
+              className="inline-flex items-center gap-1 shrink-0 rounded-full border border-[var(--color-outline-border)] bg-transparent px-2.5 py-1.5 text-xs font-medium uppercase tracking-tight text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+            >
+              <ArrowRight className="w-3.5 h-3.5 shrink-0" strokeWidth={2} aria-hidden />
+              <span className="whitespace-nowrap">СМОТРЕТЬ ВСЕ</span>
+            </Link>
+            <div className="flex items-center gap-0.5 shrink-0">
               <button
                 type="button"
                 onClick={() => scrollBy("left")}
@@ -201,16 +207,41 @@ export function RecommendSection({ products }: RecommendSectionProps) {
                 <ChevronRight className="w-5 h-5" strokeWidth={2} />
               </button>
             </div>
+          </div>
         </div>
 
-        {/* carousel: горизонтальная лента с паддингами, чтобы карточки не обрезались */}
+        {/* md+: стрелки над каруселью (визуально над карточками) */}
+        <div className="hidden md:flex justify-end -mx-4 px-4 md:-mx-6 md:px-6 mb-2">
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => scrollBy("left")}
+              disabled={!canScrollLeft}
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-[var(--color-outline-border)] bg-transparent text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+              aria-label="Прокрутить влево"
+            >
+              <ChevronLeft className="w-5 h-5" strokeWidth={2} />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollBy("right")}
+              disabled={!canScrollRight}
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-[var(--color-outline-border)] bg-transparent text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+              aria-label="Прокрутить вправо"
+            >
+              <ChevronRight className="w-5 h-5" strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+
+        {/* carousel: на мобильной меньше отступ сверху */}
         <div
           ref={scrollRef}
           onPointerDown={handleInteraction}
           onWheel={handleInteraction}
           onMouseEnter={handleInteraction}
           onScroll={handleUserScroll}
-          className="flex gap-5 md:gap-6 overflow-x-auto overflow-y-hidden py-2 -mx-4 px-4 md:-mx-6 md:px-6 scrollbar-hide"
+          className="flex gap-5 md:gap-6 overflow-x-auto overflow-y-hidden py-0 md:py-2 -mx-4 px-4 md:-mx-6 md:px-6 scrollbar-hide"
           style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}
         >
           {flowers.map((flower) => {
@@ -218,7 +249,7 @@ export function RecommendSection({ products }: RecommendSectionProps) {
             return (
               <div
                 key={flower.id}
-                className="flex-shrink-0 w-[260px] sm:w-[280px] md:w-[300px] lg:w-[320px]"
+                className="flex-shrink-0 w-[230px] sm:w-[280px] md:w-[300px] lg:w-[320px]"
               >
                 <FlowerCard flower={flower} product={product} />
               </div>

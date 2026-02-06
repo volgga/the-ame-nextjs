@@ -66,7 +66,7 @@ export function AboutSection({ about }: AboutSectionProps) {
         </div>
         {/* Заголовок + кнопка: отступ заголовок→текст = отступ разделитель→заголовок (mb-6 md:mb-8) */}
         <div className="mb-6 md:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
+          <div className="flex flex-col items-start gap-2 md:flex-row md:items-baseline md:justify-between md:gap-4">
             <h2
               id="about-heading"
               className="text-3xl md:text-4xl font-bold text-[var(--color-text-main)] uppercase tracking-tight"
@@ -75,7 +75,7 @@ export function AboutSection({ about }: AboutSectionProps) {
             </h2>
             <Link
               href="/about"
-              className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full border border-[var(--color-outline-border)] bg-transparent px-4 py-2 text-sm font-medium uppercase tracking-tight text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 shrink-0"
+              className="inline-flex items-center gap-1.5 self-start md:self-auto rounded-full border border-[var(--color-outline-border)] bg-transparent px-4 py-2 text-sm font-medium uppercase tracking-tight text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 shrink-0"
             >
               <ArrowRight className="w-4 h-4" strokeWidth={2} aria-hidden />
               ПОДРОБНЕЕ О НАС

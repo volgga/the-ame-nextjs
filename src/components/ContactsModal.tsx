@@ -124,15 +124,18 @@ export function ContactsModal({ isOpen, onClose, providers, socialOnly = false }
       <div
         className="fixed left-1/2 top-1/2 z-[60] -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-[500px] max-h-[90vh] bg-white shadow-2xl rounded-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
+        data-social-only={socialOnly || undefined}
       >
         {/* Скроллируемый контент */}
         <div className="overflow-y-auto h-full max-h-[90vh]">
-          {/* Шапка: 3 колонки — пусто / заголовок по центру / крестик справа */}
-          <div className="grid grid-cols-3 items-center gap-2 pt-4 px-6 sticky top-0 bg-white z-10 pb-2">
+          {/* Шапка: 3 колонки — пусто / заголовок по центру / крестик справа; при socialOnly — прижата к верху */}
+          <div
+            className={`grid grid-cols-3 items-center gap-2 px-6 sticky top-0 bg-white z-10 pb-2 ${socialOnly ? "pt-2" : "pt-4"}`}
+          >
             <div className="w-10" aria-hidden />
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-1 text-color-text-main">The Áme</h2>
-              <p className="text-sm text-muted-foreground">ЦВЕТЫ × ЧУВСТВА</p>
+            <div className="flex flex-col items-center justify-center gap-1 min-h-0">
+              <p className="text-xl md:text-2xl font-bold leading-tight text-color-text-main m-0 text-center whitespace-nowrap">The Áme</p>
+              <p className="text-xs md:text-sm text-muted-foreground leading-tight m-0 text-center whitespace-nowrap tracking-normal">ЦВЕТЫ × ЧУВСТВА</p>
             </div>
             <div className="flex justify-end">
               <button
@@ -146,8 +149,8 @@ export function ContactsModal({ isOpen, onClose, providers, socialOnly = false }
             </div>
           </div>
 
-          {/* Контент модалки */}
-          <div className="px-6 pb-6 space-y-6">
+          {/* Контент модалки: единый padding-x для текста и блока кнопок (при socialOnly — px-4, иначе px-6) */}
+          <div className={socialOnly ? "px-4 pb-6 space-y-6" : "px-6 pb-6 space-y-6"}>
             {/* Текст над кнопками: при socialOnly показываем только его, при полной модалке — перед формой */}
             {socialOnly && (
               <div className="text-center space-y-2 text-sm text-foreground">
@@ -239,7 +242,7 @@ export function ContactsModal({ isOpen, onClose, providers, socialOnly = false }
               </>
             )}
 
-            {/* Кнопки мессенджеров: единый шаблон — слева иконка в подложке, по центру текст */}
+            {/* Кнопки мессенджеров: flex-row, иконка слева, текст влево (justify-start), без обрезания */}
             <div className="grid grid-cols-2 gap-3">
               {providers
                 .filter((p) => p.type !== "phone")
@@ -249,22 +252,24 @@ export function ContactsModal({ isOpen, onClose, providers, socialOnly = false }
                     href={provider.url || "#"}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-3 h-[76px] min-h-[76px] rounded-xl text-white transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-white/30"
+                    className="flex items-center h-[76px] min-h-[76px] rounded-xl text-white transition-transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-white/30 gap-1.5 pl-3"
                     style={{
                       backgroundImage: provider.background,
                       backgroundSize: "100% 100%",
                       backgroundColor: "transparent",
                     }}
                   >
-                    {/* Левый слот: фиксированная ширина 68px, иконка по центру с подложкой для читаемости */}
-                    <div className="w-[68px] min-w-[68px] flex items-center justify-center flex-shrink-0">
+                    {/* Левый слот: иконка с подложкой, отступ слева внутри кнопки */}
+                    <div className="w-[52px] min-w-[52px] flex items-center justify-center flex-shrink-0">
                       <span className="w-10 h-10 rounded-full bg-white/25 flex items-center justify-center flex-shrink-0">
                         <img src={provider.src} alt={provider.label} className="w-7 h-7 object-contain block" />
                       </span>
                     </div>
-                    {/* Название рядом с иконкой */}
-                    <div className="flex-1 flex items-center min-w-0 pr-4">
-                      <span className="font-semibold text-xl text-white truncate text-left">{provider.label}</span>
+                    {/* Название: по левому краю, без truncate, помещается целиком */}
+                    <div className="flex-1 flex items-center justify-start min-w-0 pr-2">
+                      <span className="font-semibold text-white text-left text-sm min-w-0">
+                        {provider.label}
+                      </span>
                     </div>
                   </a>
                 ))}

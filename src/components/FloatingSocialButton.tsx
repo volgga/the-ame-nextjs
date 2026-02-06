@@ -78,7 +78,7 @@ export function FloatingSocialButton() {
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className={`fixed bottom-6 right-6 w-16 h-16 rounded-full flex items-center justify-center shadow-xl z-[150] overflow-hidden ${
+        className={`fixed bottom-6 right-6 w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-xl z-[150] overflow-hidden ${
           isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
         } hover:scale-110 hover:shadow-2xl transition-[transform,box-shadow] duration-300`}
         style={{
@@ -122,16 +122,16 @@ export function FloatingSocialButton() {
           </>
         )}
 
-        {/* Иконки: crossfade prev / next */}
+        {/* Иконки: crossfade prev / next; на мобильной меньше */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           {!showTwoLayers ? (
-            <img src={currentProvider.src} alt={currentProvider.label} className="w-8 h-8 object-contain block" />
+            <img src={currentProvider.src} alt={currentProvider.label} className="w-7 h-7 md:w-8 md:h-8 object-contain block" />
           ) : (
             <>
               <img
                 src={prevProvider.src}
                 alt=""
-                className="absolute w-8 h-8 object-contain block floating-icon-transition"
+                className="absolute w-7 h-7 md:w-8 md:h-8 object-contain block floating-icon-transition"
                 style={{
                   opacity: outOpacity,
                   transform: transitionPhase === "start" ? "scale(1)" : "scale(0.92)",
@@ -141,7 +141,7 @@ export function FloatingSocialButton() {
               <img
                 src={currentProvider.src}
                 alt={currentProvider.label}
-                className="absolute w-8 h-8 object-contain block floating-icon-transition"
+                className="absolute w-7 h-7 md:w-8 md:h-8 object-contain block floating-icon-transition"
                 style={{
                   opacity: inOpacity,
                   transform: transitionPhase === "start" ? "scale(0.92)" : "scale(1)",

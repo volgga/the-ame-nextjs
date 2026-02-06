@@ -287,7 +287,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                 <button
                   type="button"
                   onClick={handleQuickBuy}
-                  className="w-full py-3 px-4 rounded-full border border-[var(--color-outline-border)] bg-white hover:bg-[rgba(31,42,31,0.06)] active:bg-[rgba(31,42,31,0.1)] text-color-text-main font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+                  className="hidden md:block w-full py-3 px-4 rounded-full border border-[var(--color-outline-border)] bg-white hover:bg-[rgba(31,42,31,0.06)] active:bg-[rgba(31,42,31,0.1)] text-color-text-main font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
                 >
                   Купить в 1 клик
                 </button>

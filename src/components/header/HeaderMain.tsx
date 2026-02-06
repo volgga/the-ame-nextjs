@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { CartIcon } from "./CartIcon";
 import { CatalogDropdown } from "./CatalogDropdown";
@@ -10,6 +11,7 @@ import { ClientsDropdown } from "./ClientsDropdown";
 import { SearchDropdown } from "./SearchDropdown";
 import { CLIENT_LINKS } from "@/lib/navLinks";
 import { useFavorites } from "@/context/FavoritesContext";
+import { ALL_CATALOG, CATALOG_PAGE, FALLBACK_CATEGORIES } from "@/lib/catalogCategories";
 
 const SIDEBAR_OPEN_MS = 420;
 const SIDEBAR_CLOSE_MS = 380;
@@ -19,7 +21,7 @@ const OVERLAY_MS = 320;
 const Z_MENU_OVERLAY = 80;
 const Z_MENU_SIDEBAR = 85;
 
-const CATALOG_HREF = "/posmotret-vse-tsvety";
+const CATALOG_HREF = "/magazin";
 
 const NAV_LINKS = [
   { href: CATALOG_HREF, label: "Каталог", isCatalog: true, isClients: false },
@@ -28,28 +30,23 @@ const NAV_LINKS = [
   { href: "/delivery-and-payments", label: "Клиентам", isCatalog: false, isClients: true },
 ] as const;
 
-/** Ссылки сайдбара: Top-зона (лого + этот список) + Center (соц-блок) + Bottom (адрес). */
+/** Обычные ссылки сайдбара (без аккордеонов «Каталог» и «Клиентам»). */
 const SIDEBAR_LINKS: { href: string; label: string }[] = [
-  { href: "/", label: "Главная" },
-  { href: CATALOG_HREF, label: "Каталог" },
   { href: "/about", label: "О нас" },
   { href: "/contacts", label: "Контакты" },
-  { href: "/delivery-and-payments", label: "Клиентам" },
-  { href: "/delivery-and-payments", label: "Доставка и оплата" },
-  { href: "/docs/return", label: "Условия возврата" },
-  { href: "/docs/care", label: "Инструкция по уходу" },
-  { href: "/docs/corporate", label: "Корпоративные заказы" },
 ];
 
 export type HeaderMainProps = {
   isMenuOpen: boolean;
   setIsMenuOpen: (v: boolean) => void;
+  /** На мобиле при скрытии хедера (scroll) поиск закрывается */
+  mainBarVisible?: boolean;
 };
 
 /**
  * HeaderMain — 2-я строка: бургер+лого слева, nav по центру, поиск/лайк/корзина справа.
  */
-export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
+export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }: HeaderMainProps) {
   const pathname = usePathname();
   const { count: favoritesCount } = useFavorites();
   const [isClosing, setIsClosing] = useState(false);
@@ -57,6 +54,9 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
   const [mounted, setMounted] = useState(false);
   const prevOpenRef = useRef(false);
+  /** Одна открытая секция: "catalog" | "clients" | null (взаимоисключающие аккордеоны) */
+  const [openSection, setOpenSection] = useState<"catalog" | "clients" | null>(null);
+  const [catalogItems, setCatalogItems] = useState<{ label: string; href: string }[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -73,6 +73,47 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
     m.addEventListener("change", handler);
     return () => m.removeEventListener("change", handler);
   }, []);
+
+  // При закрытии меню — сворачиваем аккордеоны
+  useEffect(() => {
+    if (!isMenuOpen) setOpenSection(null);
+  }, [isMenuOpen]);
+
+  // При открытии сайдбара подгружаем категории каталога (тот же источник, что в чипах/фильтрах)
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    let cancelled = false;
+    fetch("/api/categories")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: { name?: string; slug?: string }[]) => {
+        if (cancelled || !Array.isArray(data)) return;
+        const filtered = data.filter(
+          (c) =>
+            c.slug !== "magazin" &&
+            c.slug !== "posmotret-vse-tsvety" &&
+            c.name !== CATALOG_PAGE.title &&
+            c.name !== ALL_CATALOG.title
+        );
+        const list =
+          filtered.length > 0
+            ? [
+                { label: ALL_CATALOG.title, href: ALL_CATALOG.href },
+                ...filtered.map((c) => ({
+                  label: c.name ?? "",
+                  href: c.slug === "posmotret-vse-tsvety" ? ALL_CATALOG.href : `/magazine/${c.slug ?? ""}`,
+                })),
+              ]
+            : [
+                { label: ALL_CATALOG.title, href: ALL_CATALOG.href },
+                ...FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` })),
+              ];
+        setCatalogItems(list);
+      })
+      .catch(() => setCatalogItems([{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` }))]));
+    return () => {
+      cancelled = true;
+    };
+  }, [isMenuOpen]);
 
   // При открытии: после монтирования запускаем анимацию выезда
   useEffect(() => {
@@ -150,8 +191,8 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
           lineHeight: "normal",
         }}
       >
-        <div className="w-full flex items-center justify-between px-3 md:px-7 gap-4">
-          <div className="relative z-10 flex items-center gap-2 md:gap-3 shrink-0 -ml-0.5 md:-ml-0.5">
+        <div className="relative z-10 w-full flex items-center justify-between pl-3 pr-0.5 md:pl-0 md:pr-0 md:px-7 gap-4">
+          <div className="relative z-10 flex items-center gap-1.5 md:gap-3 shrink-0 md:-ml-0.5">
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}
@@ -159,7 +200,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
               aria-label="Открыть меню"
             >
               <svg
-                className="w-4 h-4 md:w-6 md:h-6"
+                className="w-6 h-6 md:w-6 md:h-6"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
@@ -169,14 +210,14 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
               </svg>
             </button>
             <Link href="/" className="shrink-0 flex items-center" style={{ fontFamily: "Forum, serif", lineHeight: 1 }}>
-              <span className="text-[1.6rem] md:text-[1.9rem] text-header-foreground tracking-wide leading-none">
+              <span className="text-[1.8rem] md:text-[1.9rem] text-header-foreground tracking-wide leading-none">
                 The Áme
               </span>
             </Link>
           </div>
 
-          <div className="relative z-10 flex items-center gap-1 md:gap-2 shrink-0" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
-            <SearchDropdown />
+          <div className="relative z-10 flex items-center gap-0.5 md:gap-2 shrink-0 pr-3 md:pr-6" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
+            <SearchDropdown isHeaderBarVisible={mainBarVisible} />
             <Link
               id="header-favorites"
               href="/favorites"
@@ -184,7 +225,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
               className={`${iconLinkClass} relative`}
             >
               <svg
-                className="w-4 h-4 md:w-5 md:h-5 shrink-0"
+                className="w-6 h-6 md:w-5 md:h-5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.6}
@@ -198,7 +239,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
               </svg>
               {favoritesCount > 0 && (
                 <span
-                  className="absolute z-10 min-w-[16px] h-[16px] px-1 text-[10px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text pointer-events-none select-none leading-[16px]"
+                  className="header-icon-badge absolute z-10 min-w-[16px] h-[16px] px-1 text-[10px] font-medium flex items-center justify-center rounded-full bg-badge-bg text-badge-text pointer-events-none select-none leading-[16px]"
                   style={{ top: "4px", right: "2px", transform: "translate(35%, -25%)" }}
                   aria-hidden
                 >
@@ -211,7 +252,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
         </div>
 
         <nav
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center justify-center pointer-events-none"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center justify-center pointer-events-none z-20"
           aria-label="Основное меню"
         >
           <div className="pointer-events-auto flex items-center gap-5 lg:gap-8">
@@ -274,12 +315,46 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
               aria-modal="true"
               aria-label="Меню навигации"
             >
-              {/* A) Top: лого + ссылки (pt-6 — верхний отступ, чтобы лого не прилипало к краю) */}
+              {/* A) Top: лого (ссылка на главную) + ссылки */}
               <div className="shrink-0 pt-6 pb-4" style={{ fontFamily: "Forum, serif" }}>
-                <div className="text-4xl leading-none">The Áme</div>
+                <Link href="/" onClick={() => setIsMenuOpen(false)} className="block text-4xl leading-none text-header-foreground">
+                  The Áme
+                </Link>
               </div>
               <nav className="shrink-0" aria-label="Навигация">
                 <ul className="space-y-2">
+                  {/* Каталог — раскрывающийся список категорий (без навигации по клику на заголовок) */}
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => setOpenSection((s) => (s === "catalog" ? null : "catalog"))}
+                      className={`${sidebarLinkClass} w-full text-left flex items-center justify-between gap-2`}
+                      aria-expanded={openSection === "catalog"}
+                      aria-controls="sidebar-catalog-list"
+                    >
+                      <span>Каталог</span>
+                      <ChevronDown className={`w-4 h-4 shrink-0 text-header-foreground ${openSection === "catalog" ? "rotate-180" : ""}`} strokeWidth={2} aria-hidden />
+                    </button>
+                    <div
+                      className="grid overflow-hidden"
+                      style={{
+                        gridTemplateRows: openSection === "catalog" ? "1fr" : "0fr",
+                        transition: reducedMotion ? "none" : "grid-template-rows 0.25s ease-out",
+                      }}
+                    >
+                      <div className="min-h-0">
+                        <ul id="sidebar-catalog-list" className="mt-1 space-y-1 pl-4 border-l-2 border-header-foreground" aria-label="Подменю Каталог">
+                          {catalogItems.map((item) => (
+                            <li key={item.href + item.label}>
+                              <Link href={item.href} onClick={() => setIsMenuOpen(false)} className={sidebarLinkClass}>
+                                {item.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </li>
                   {SIDEBAR_LINKS.map(({ href, label }) => (
                     <li key={href + label}>
                       <Link href={href} onClick={() => setIsMenuOpen(false)} className={sidebarLinkClass}>
@@ -287,6 +362,38 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
                       </Link>
                     </li>
                   ))}
+                  {/* Клиентам — раскрывающийся список (без навигации по клику на заголовок) */}
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => setOpenSection((s) => (s === "clients" ? null : "clients"))}
+                      className={`${sidebarLinkClass} w-full text-left flex items-center justify-between gap-2`}
+                      aria-expanded={openSection === "clients"}
+                      aria-controls="sidebar-clients-list"
+                    >
+                      <span>Клиентам</span>
+                      <ChevronDown className={`w-4 h-4 shrink-0 text-header-foreground ${openSection === "clients" ? "rotate-180" : ""}`} strokeWidth={2} aria-hidden />
+                    </button>
+                    <div
+                      className="grid overflow-hidden"
+                      style={{
+                        gridTemplateRows: openSection === "clients" ? "1fr" : "0fr",
+                        transition: reducedMotion ? "none" : "grid-template-rows 0.25s ease-out",
+                      }}
+                    >
+                      <div className="min-h-0">
+                        <ul id="sidebar-clients-list" className="mt-1 space-y-1 pl-4 border-l-2 border-header-foreground" aria-label="Подменю Клиентам">
+                          {CLIENT_LINKS.map(({ href, label }) => (
+                            <li key={href + label}>
+                              <Link href={href} onClick={() => setIsMenuOpen(false)} className={sidebarLinkClass}>
+                                {label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </li>
                 </ul>
               </nav>
 

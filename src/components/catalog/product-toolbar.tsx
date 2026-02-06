@@ -61,6 +61,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
 
   const [searchInput, setSearchInput] = useState(qParam);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [localMin, setLocalMin] = useState(minPriceParam ? Number(minPriceParam) : priceMin);
   const [localMax, setLocalMax] = useState(maxPriceParam ? Number(maxPriceParam) : priceMax);
 
@@ -164,10 +165,34 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
 
   return (
     <div
-      className="flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center justify-between gap-3"
+      className="flex flex-col gap-1.5 md:gap-3"
       role="group"
       aria-label="Фильтры и поиск"
     >
+      {/* На мобильной: строка «Фильтры» (раскрывается по нажатию) + лупа; на md+ скрыта */}
+      <button
+        type="button"
+        onClick={() => setMobileFiltersOpen((o) => !o)}
+        className="flex md:hidden items-center justify-between w-full py-2.5 px-0 border-0 bg-transparent text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 rounded"
+        aria-expanded={mobileFiltersOpen}
+        aria-label={mobileFiltersOpen ? "Свернуть фильтры" : "Развернуть фильтры"}
+      >
+        <span className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-color-text-main">
+          <ChevronDown
+            className={`h-5 w-5 shrink-0 text-color-text-secondary transition-transform ${mobileFiltersOpen ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+          Фильтры
+        </span>
+        <span className="flex items-center justify-center w-9 h-9 rounded text-color-text-secondary pointer-events-none" aria-hidden>
+          <Search className="h-5 w-5" />
+        </span>
+      </button>
+
+      {/* Панель Цена + Порядок: на мобильной показывается при раскрытии; на md+ всегда */}
+      <div
+        className={`flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center justify-between gap-3 ${!mobileFiltersOpen ? "hidden md:flex" : ""}`}
+      >
       {/* Левая зона: Цена (trigger + popover) */}
       <div className="relative" ref={popoverRef}>
         <button
@@ -278,9 +303,9 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
 
       {/* Правая зона: Поиск + Порядок */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 md:flex-initial min-w-0">
-        {/* Поиск: input с встроенной кнопкой-лупой */}
+        {/* Поиск: на мобильной скрыт, только Цена и Порядок */}
         <div
-          className={`flex ${controlH} w-full sm:w-[180px] md:w-[200px] rounded-full border border-[var(--color-outline-border)] bg-white overflow-hidden transition-colors focus-within:ring-2 focus-within:ring-color-bg-main focus-within:ring-offset-2`}
+          className={`hidden md:flex ${controlH} w-full sm:w-[180px] md:w-[200px] rounded-full border border-[var(--color-outline-border)] bg-white overflow-hidden transition-colors focus-within:ring-2 focus-within:ring-color-bg-main focus-within:ring-offset-2`}
         >
           <input
             type="search"
@@ -316,17 +341,18 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
         </select>
       </div>
 
-      {/* Сброс всех фильтров */}
+      {/* Сброс всех фильтров — на мобильной скрыт */}
       {hasFilters && (
         <button
           type="button"
           onClick={handleReset}
-          className={`${controlH} rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
+          className={`hidden md:inline-flex ${controlH} rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
           aria-label="Сбросить фильтры"
         >
           Сброс
         </button>
       )}
+      </div>
     </div>
   );
 }

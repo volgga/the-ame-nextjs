@@ -171,7 +171,7 @@ export function Header() {
               pointerEvents: mainBarVisible ? "auto" : "none",
             }}
           >
-            <HeaderMain isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+            <HeaderMain isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} mainBarVisible={mainBarVisible} />
           </div>
         </div>
       </header>
