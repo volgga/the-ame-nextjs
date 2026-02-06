@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { canonicalUrl, ROBOTS_NOINDEX_FOLLOW } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Инструкция по уходу за цветами | The Ame",
   description: "Рекомендации по уходу за срезанными цветами и букетами от The Ame.",
   alternates: {
-    canonical: "https://theame.ru/docs/care",
+    canonical: canonicalUrl("/docs/care"),
   },
+  robots: ROBOTS_NOINDEX_FOLLOW,
 };
 
 export default function CarePage() {

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { canonicalUrl, ROBOTS_NOINDEX_FOLLOW } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Корпоративные заказы | The Ame",
   description: "Корпоративные заказы цветов от The Ame.",
   alternates: {
-    canonical: "https://theame.ru/docs/corporate",
+    canonical: canonicalUrl("/docs/corporate"),
   },
+  robots: ROBOTS_NOINDEX_FOLLOW,
 };
 
 export default function CorporatePage() {
