@@ -10,6 +10,6 @@ export default function robots(): MetadataRoute.Robots {
       disallow: ["/api/", "/_next/", "/admin/"],
     },
     sitemap: `${BASE_URL}/sitemap.xml`,
-    host: BASE_URL,
+    host: "theame.ru",
   };
 }
