@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { Clock, MapPin, Phone, MessageCircle, Send, Sparkles, Mail, Instagram } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Контакты The Ame — цветочный магазин в Сочи, телефон и адрес",
+  title: "Контакты — доставка цветов в Сочи | The Ame",
   description:
-    "Контакты цветочного магазина The Ame в Сочи: адрес на Пластунской, телефон, WhatsApp и Telegram. Задайте вопрос или оформите заказ букета.",
+    "Контакты и способы связи с The Ame. Заказ цветов с доставкой по Сочи, адрес, телефон и соцсети.",
   alternates: {
-    canonical: "https://theame.ru/contacts",
+    canonical: canonicalUrl("/contacts"),
   },
+  robots: ROBOTS_INDEX_FOLLOW,
 };
 
 const YANDEX_MAP_SRC = "https://yandex.ru/map-widget/v1/?z=16&ol=biz&oid=77269998905";

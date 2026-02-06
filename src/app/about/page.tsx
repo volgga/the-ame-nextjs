@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 
 const PROSE_CLASS = "space-y-5 text-[18px] leading-relaxed text-neutral-700";
 
 export const metadata: Metadata = {
-  title: "О нас",
+  title: "О нас — доставка цветов в Сочи | The Ame",
   description:
-    "The Áme — цветочный магазин в Сочи. Классические сочетания, понятные формы, аккуратные букеты для важных моментов.",
-  alternates: { canonical: "https://theame.ru/about" },
+    "The Ame — сервис доставки цветов в Сочи. Свежие букеты, внимание к деталям и забота о каждом заказе.",
+  alternates: { canonical: canonicalUrl("/about") },
+  robots: ROBOTS_INDEX_FOLLOW,
 };
 
 export default function AboutPage() {

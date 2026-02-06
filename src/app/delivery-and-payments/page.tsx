@@ -17,21 +17,16 @@ import {
 } from "lucide-react";
 import { getDeliveryZones } from "@/lib/deliveryZones";
 import { DeliveryZonesTable } from "@/components/delivery/DeliveryZonesTable";
+import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: "Доставка и оплата — условия и способы | The Ame",
+  title: "Доставка и оплата — цветы с доставкой по Сочи | The Ame",
   description:
-    "Условия доставки цветов по Сочи, стоимость доставки по районам и способы оплаты. Круглосуточная доставка от 60 до 120 минут.",
-  keywords: [
-    "доставка цветов Сочи",
-    "доставка букетов",
-    "способы оплаты",
-    "стоимость доставки",
-    "круглосуточная доставка",
-  ],
+    "Условия доставки цветов по Сочи, способы оплаты и сроки выполнения заказов. Прозрачно, удобно и без сюрпризов — The Ame.",
   alternates: {
-    canonical: "https://theame.ru/delivery-and-payments",
+    canonical: canonicalUrl("/delivery-and-payments"),
   },
+  robots: ROBOTS_INDEX_FOLLOW,
 };
 
 export default async function DeliveryAndPaymentsPage() {
