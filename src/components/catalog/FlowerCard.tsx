@@ -144,9 +144,27 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
         </h3>
       </Link>
 
-      {/* Нижний блок: цена — главный якорь (text-lg), кнопки (min-h-[44px] на мобиле) */}
+      {/* Нижний блок: цена — главный якорь (text-lg), кнопки (min-h-[44px] на мобиле). На mobile при "от" — "от" отдельной строкой над ценой. */}
       <div className="mt-1.5 px-1 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
-        <span className="text-lg font-semibold text-color-text-main shrink-0 leading-none">{priceLabel}</span>
+        <div className="flex flex-col justify-center shrink-0 min-w-0">
+          {flower.priceFrom && (
+            <span className="text-[10px] font-normal text-color-text-secondary leading-tight md:sr-only">
+              от
+            </span>
+          )}
+          <span className="text-lg font-semibold text-color-text-main leading-none md:block">
+            {flower.priceFrom ? (
+              <>
+                <span className="hidden md:inline">{priceLabel}</span>
+                <span className="md:hidden">
+                  {flower.isPreorder ? "Предзаказ" : `${flower.price.toLocaleString("ru-RU")} ₽`}
+                </span>
+              </>
+            ) : (
+              priceLabel
+            )}
+          </span>
+        </div>
         <div className="flex items-center gap-1 shrink-0">
           {/* На мобильной: иконка избранного вместо скрытой кнопки «Купить в 1 клик» */}
           <button

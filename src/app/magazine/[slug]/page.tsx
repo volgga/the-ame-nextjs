@@ -93,7 +93,7 @@ export default async function MagazineCategoryPage({ params }: MagazineCategoryP
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-6 md:px-8 pt-2 pb-8 md:pt-4 md:pb-10">
+      <div className="container px-4 md:px-8 pt-2 pb-8 md:pt-4 md:pb-10">
         {/* A) Breadcrumb — на мобильной отступ A = заголовок↔описание */}
         <Breadcrumbs items={breadcrumbItems} className="mt-0 mb-2 md:mb-4" />
 

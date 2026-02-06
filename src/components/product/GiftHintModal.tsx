@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { Product } from "@/lib/products";
 
 type GiftHintModalProps = {
@@ -38,6 +39,18 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
       setSuccess(false);
       setError(null);
     }
+  }, [isOpen]);
+
+  // Блокировка скролла страницы при открытой модалке
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, [isOpen]);
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,13 +107,20 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+  const content = (
+    <>
+      {/* Overlay — выше хедера (z-40); фиксированный поверх страницы */}
+      <div
+        className="fixed inset-0 z-[60] bg-black/40"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+      {/* Modal — fixed, выше overlay; скролл при переполнении */}
+      <div
+        className="fixed left-1/2 top-1/2 z-[70] max-h-[90vh] w-[95vw] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto overflow-x-hidden rounded-2xl bg-white p-4 sm:p-6 shadow-xl box-border"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
           onClick={onClose}
@@ -138,10 +158,10 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
               Заполните форму, и ему придет сообщение с Вашим намеком :)
             </p>
 
-            {/* Форма */}
-            <div className="space-y-4">
+            {/* Форма: на mobile одна колонка, ровные отступы, без горизонтального скролла */}
+            <div className="space-y-4 min-w-0">
               {/* Ваше имя */}
-              <div>
+              <div className="min-w-0">
                 <label className="block text-sm font-medium text-color-text-main mb-1.5">
                   Ваше имя <span className="text-red-500">*</span>
                 </label>
@@ -150,13 +170,13 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
                   placeholder="Как к вам обращаться ?"
                   value={fromName}
                   onChange={(e) => setFromName(e.target.value)}
-                  className="w-full px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block"
+                  className="w-full min-w-0 px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block box-border"
                 />
               </div>
 
-              {/* Имя кому отправить и Телефон в одну строку */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              {/* Имя кому отправить и Телефон: на mobile одна колонка, на md — две */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 min-w-0">
+                <div className="min-w-0">
                   <label className="block text-sm font-medium text-color-text-main mb-1.5">
                     Имя кому отправить <span className="text-red-500">*</span>
                   </label>
@@ -165,10 +185,10 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
                     placeholder="Как к вам обращаться ?"
                     value={toName}
                     onChange={(e) => setToName(e.target.value)}
-                    className="w-full px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block"
+                    className="w-full min-w-0 px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block box-border"
                   />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <label className="block text-sm font-medium text-color-text-main mb-1.5">
                     Телефон <span className="text-red-500">*</span>
                   </label>
@@ -177,7 +197,7 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
                     placeholder="+7 (___) ___-__-__"
                     value={phone}
                     onChange={handlePhoneChange}
-                    className="w-full px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block"
+                    className="w-full min-w-0 px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block box-border"
                   />
                 </div>
               </div>
@@ -197,7 +217,7 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
                     href="/docs/oferta"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#ff6b35] hover:underline"
+                    className="text-[#1F3B2C] hover:text-[#1F3B2C] underline"
                   >
                     Пользовательского соглашения
                   </a>{" "}
@@ -206,7 +226,7 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
                     href="/docs/privacy"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#ff6b35] hover:underline"
+                    className="text-[#1F3B2C] hover:text-[#1F3B2C] underline"
                   >
                     Политики конфиденциальности
                   </a>
@@ -228,6 +248,8 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
           </>
         )}
       </div>
-    </div>
+    </>
   );
+
+  return createPortal(content, document.body);
 }

@@ -66,7 +66,7 @@ export async function AllFlowersPage({
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-6 md:px-8 pt-2 pb-8 md:pt-4 md:pb-10">
+      <div className="container px-4 md:px-8 pt-2 pb-8 md:pt-4 md:pb-10">
         {showBreadcrumbs && <Breadcrumbs items={breadcrumbItems} className="mt-0 mb-2 md:mb-4" />}
 
         <div className={`grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-3 md:gap-8 md:items-start ${SECTION_GAP}`}>

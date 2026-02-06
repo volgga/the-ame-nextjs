@@ -1,11 +1,19 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FlowerCard } from "./FlowerCard";
 import { Flower } from "@/types/flower";
 import type { Product } from "@/lib/products";
+
+/** Карточек в одном блоке «ПОКАЗАТЬ ЕЩЕ»: mobile 12 рядов × 2 колонки = 24, desktop 6 рядов × 4 колонки = 24 */
+const ROWS_MOBILE = 12;
+const ROWS_DESKTOP = 6;
+const COLS_MOBILE = 2;
+const COLS_DESKTOP = 4;
+const CARDS_PER_BLOCK_MOBILE = ROWS_MOBILE * COLS_MOBILE; // 24
+const CARDS_PER_BLOCK_DESKTOP = ROWS_DESKTOP * COLS_DESKTOP; // 24
 
 type SortValue = "default" | "price_asc" | "price_desc";
 
@@ -19,6 +27,8 @@ type FlowerCatalogProps = {
 };
 
 export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => {
+  /** Сколько блоков показываем: mobile — 12 рядов за блок, desktop — 6 рядов за блок; каждый клик добавляет один блок */
+  const [visibleBlocks, setVisibleBlocks] = useState(1);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const minPriceParam = searchParams.get("minPrice");
@@ -81,16 +91,49 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     return arr;
   }, [filteredFlowers, sortParam]);
 
+  // Карточек в одном блоке: mobile 12 рядов (24 карточки), desktop 6 рядов (24 карточки). Брейкпоинт md (768px).
+  const [cardsPerBlock, setCardsPerBlock] = useState(CARDS_PER_BLOCK_MOBILE);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setCardsPerBlock(mq.matches ? CARDS_PER_BLOCK_DESKTOP : CARDS_PER_BLOCK_MOBILE);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  // При смене фильтров/сортировки/поиска — сбрасываем к первому блоку (12 рядов на мобиле, 6 на desktop)
+  useEffect(() => {
+    setVisibleBlocks(1);
+  }, [minPrice, maxPrice, sortParam, qParam]);
+
+  // Показываем visibleBlocks блоков (mobile: 12 рядов за раз, desktop: 6 рядов за раз)
+  const visibleCount = visibleBlocks * cardsPerBlock;
+  const visibleFlowers = sortedFlowers.slice(0, visibleCount);
+  const hasMore = sortedFlowers.length > visibleCount;
+
   return (
     <div>
       {/* Каталог: 2 колонки mobile, 4 на desktop; меньший gap — карточки крупнее */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-        {sortedFlowers.map((flower) => {
+        {visibleFlowers.map((flower) => {
           // Находим соответствующий Product для передачи дополнительных данных
           const product = allProducts.find((p) => p.id === flower.id);
           return <FlowerCard key={flower.id} flower={flower} product={product} />;
         })}
       </div>
+
+      {/* Кнопка "ПОКАЗАТЬ ЕЩЕ": mobile — после 12 рядов, desktop — после 6 рядов; каждый клик добавляет следующий блок */}
+      {hasMore && (
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => setVisibleBlocks((b) => b + 1)}
+            className="rounded-[9999px] border border-[var(--color-text-main)] bg-transparent px-6 py-2.5 text-sm font-medium text-[var(--color-text-main)] transition-colors hover:bg-[rgba(31,42,31,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-text-main)] focus-visible:ring-offset-2"
+          >
+            ПОКАЗАТЬ ЕЩЕ
+          </button>
+        </div>
+      )}
 
       {/* Пустой результат */}
       {sortedFlowers.length === 0 && (

@@ -191,7 +191,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
           lineHeight: "normal",
         }}
       >
-        <div className="relative z-10 w-full flex items-center justify-between pl-3 pr-0.5 md:pl-0 md:pr-0 md:px-7 gap-4">
+        <div className="relative z-10 w-full flex items-center justify-between px-3 md:px-7 gap-4">
           <div className="relative z-10 flex items-center gap-1.5 md:gap-3 shrink-0 md:-ml-0.5">
             <button
               type="button"
@@ -216,7 +216,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
             </Link>
           </div>
 
-          <div className="relative z-10 flex items-center gap-0.5 md:gap-2 shrink-0 pr-3 md:pr-6" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
+          <div className="relative z-10 flex items-center gap-0.5 md:gap-2 shrink-0" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
             <SearchDropdown isHeaderBarVisible={mainBarVisible} />
             <Link
               id="header-favorites"
@@ -300,7 +300,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
               aria-hidden={!isSidebarOpen}
             />
             <div
-              className="fixed left-0 top-0 h-screen w-[75vw] sm:w-[55vw] md:w-[260px] lg:w-[280px] bg-header-bg text-header-foreground px-4 pb-4 pt-0 flex flex-col min-h-0 transition-transform will-change-transform shadow-xl"
+              className="fixed left-0 top-0 h-screen w-[68vw] max-w-[220px] sm:w-[68vw] sm:max-w-[220px] md:w-[260px] md:max-w-none lg:w-[280px] bg-header-bg text-header-foreground flex flex-col min-h-0 min-w-0 shrink-0 overflow-x-hidden transition-transform will-change-transform shadow-xl"
               style={{
                 zIndex: Z_MENU_SIDEBAR,
                 transform: isSidebarOpen ? "translateX(0)" : "translateX(-100%)",
@@ -315,13 +315,15 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
               aria-modal="true"
               aria-label="Меню навигации"
             >
+              {/* Внутренний контейнер: min-w-0 w-full — контент не раздувает drawer */}
+              <div className="min-w-0 w-full max-w-full flex-1 flex flex-col min-h-0 overflow-x-hidden px-4 pb-4 pt-0">
               {/* A) Top: лого (ссылка на главную) + ссылки */}
-              <div className="shrink-0 pt-6 pb-4" style={{ fontFamily: "Forum, serif" }}>
+              <div className="shrink-0 min-w-0 pt-6 pb-4" style={{ fontFamily: "Forum, serif" }}>
                 <Link href="/" onClick={() => setIsMenuOpen(false)} className="block text-4xl leading-none text-header-foreground">
                   The Áme
                 </Link>
               </div>
-              <nav className="shrink-0" aria-label="Навигация">
+              <nav className="shrink-0 min-w-0" aria-label="Навигация">
                 <ul className="space-y-2">
                   {/* Каталог — раскрывающийся список категорий (без навигации по клику на заголовок) */}
                   <li>
@@ -397,15 +399,24 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
                 </ul>
               </nav>
 
-              {/* B) Center: соц-блок (flex-1 spacers центрируют по вертикали) */}
-              <div className="flex-1 min-h-0" aria-hidden />
-              <div className="shrink-0 text-left my-auto">
-                <h3 className="text-base font-normal text-header-foreground mb-3 antialiased">Мы в социальных сетях</h3>
-                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+              {/* Соцсети + адрес: сразу под первой группой меню. Mobile: номер и кнопки по одной оси, по левому краю */}
+              <div className="shrink-0 min-w-0 pt-4 text-left">
+                <h3 className="text-base font-normal text-header-foreground mb-3 antialiased">Мы в соц. сетях</h3>
+                {/* Mobile: номер и кнопки в одной колонке, выравнивание по левому краю (как пункты меню), ширина по контенту */}
+                {/* Контейнер контактов (mobile): inline-flex, ширина по телефону; соцкнопки w-full = той же ширины, один столбец */}
+                <div className="inline-flex flex-col items-stretch w-fit min-w-0 md:contents">
                   <a
                     href="tel:+79939326095"
                     onClick={() => setIsMenuOpen(false)}
-                    className={`col-span-2 ${sidebarContactBtnClass}`}
+                    className="md:hidden block w-fit text-left py-2.5 text-header-foreground text-sm font-medium mb-2 hover:opacity-80 no-underline"
+                  >
+                    +7 993 932-60-95
+                  </a>
+                  <div className="grid w-full min-w-0 grid-cols-1 gap-2 place-items-stretch md:w-full md:grid-cols-2 md:gap-2 sm:gap-3 md:place-items-stretch">
+                  <a
+                    href="tel:+79939326095"
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`hidden md:flex col-span-2 ${sidebarContactBtnClass}`}
                   >
                     Позвонить нам
                   </a>
@@ -414,7 +425,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setIsMenuOpen(false)}
-                    className={sidebarContactBtnClass}
+                    className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
                   >
                     Telegram
                   </a>
@@ -423,7 +434,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setIsMenuOpen(false)}
-                    className={sidebarContactBtnClass}
+                    className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
                   >
                     Instagram
                   </a>
@@ -432,7 +443,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setIsMenuOpen(false)}
-                    className={sidebarContactBtnClass}
+                    className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
                   >
                     WhatsApp
                   </a>
@@ -441,26 +452,25 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setIsMenuOpen(false)}
-                    className={sidebarContactBtnClass}
+                    className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
                   >
                     Max
                   </a>
                 </div>
+                </div>
+                <footer className="pt-4 text-sm opacity-85 leading-relaxed min-w-0 max-w-full overflow-hidden w-full">
+                  <a
+                    href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:opacity-90 transition-opacity text-sm leading-snug break-words whitespace-normal max-w-full overflow-hidden w-full block min-w-0 text-left"
+                  >
+                    Пластунская 123А, корпус 2, этаж 2, офис 84
+                  </a>
+                  <div className="max-w-full whitespace-normal break-words min-w-0 w-full">Пн–Вс с 09:00 до 21:00</div>
+                </footer>
               </div>
-              <div className="flex-1 min-h-0" aria-hidden />
-
-              {/* C) Bottom: адрес */}
-              <footer className="shrink-0 pt-4 mt-auto text-sm opacity-85 leading-relaxed">
-                <a
-                  href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:opacity-90 transition-opacity"
-                >
-                  Пластунская 123А, корпус 2, этаж 2, офис 84
-                </a>
-                <div>Пн–Вс с 09:00 до 21:00</div>
-              </footer>
+              </div>
             </div>
           </>,
           document.body

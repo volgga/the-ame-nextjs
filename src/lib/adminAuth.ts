@@ -8,7 +8,6 @@ import { cookies } from "next/headers";
 const COOKIE_NAME = "admin_session";
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 дней
 
-/** Подписанный токен (простой base64 для минимальной реализации; в prod лучше JWT). */
 function createSessionToken(): string {
   const payload = { admin: true, exp: Date.now() + COOKIE_MAX_AGE * 1000 };
   return Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -47,7 +46,13 @@ export async function createAdminSession(): Promise<string> {
 
 export async function destroyAdminSession(): Promise<void> {
   const cookieStore = await cookies();
-  cookieStore.delete(COOKIE_NAME);
+  cookieStore.set(COOKIE_NAME, "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
 }
 
 export async function isAdminAuthenticated(): Promise<boolean> {

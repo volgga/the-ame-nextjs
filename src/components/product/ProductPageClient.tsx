@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ChevronDown, Heart, Bell, Minus, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Heart, Bell, Minus, Plus, ArrowLeftRight, ArrowUpDown } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import type { Product } from "@/lib/products";
@@ -373,14 +373,17 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.85fr] gap-6 lg:gap-10 items-start">
             {/* Левая колонка — миниатюры + большое фото */}
             <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 w-full">
-              {/* Миниатюры: вертикальная лента на desktop слева, горизонтальная на mobile сверху */}
+              {/* Миниатюры: на mobile под основным фото (order-2), на lg слева от фото (order-1) */}
               {imagesLen > 0 && (
-                <div className="flex flex-row lg:flex-col gap-2.5 order-1 lg:order-1 overflow-x-auto lg:overflow-x-visible overflow-y-auto lg:max-h-[min(620px,80vh)] shrink-0 p-1 scrollbar-hide">
+                <div className="flex flex-row lg:flex-col gap-2.5 order-2 lg:order-1 overflow-x-auto lg:overflow-x-visible overflow-y-auto lg:max-h-[min(620px,80vh)] shrink-0 p-1 scrollbar-hide">
                   {images.map((src, idx) => (
                     <button
                       key={src}
                       type="button"
-                      onClick={() => setSelectedImageIndex(idx)}
+                      onClick={() => {
+                        setSelectedImageIndex(idx);
+                        setFullscreenOpen(true);
+                      }}
                       className={`relative w-14 h-14 lg:w-16 lg:h-16 shrink-0 rounded-lg overflow-hidden transition-all duration-200 ${
                         idx === selectedImageIndex
                           ? "outline outline-2 outline-offset-2 outline-color-text-main"
@@ -399,7 +402,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                 </div>
               )}
 
-              {/* Большое фото со слайдером */}
+              {/* Большое фото со слайдером: на mobile первым (order-1), на lg справа от миниатюр (order-2) */}
               <div
                 className="relative flex-1 min-w-0 order-1 lg:order-2"
                 style={{
@@ -457,17 +460,13 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                     <div className="flex flex-col gap-0.5 text-xs font-medium leading-tight">
                       {displaySizeWidth != null && (
                         <span className="flex items-center gap-1 text-white">
-                          <span className="text-[10px] opacity-95" aria-hidden>
-                            ↔
-                          </span>
+                          <ArrowLeftRight className="w-3 h-3 opacity-95 shrink-0" aria-hidden />
                           <span>{displaySizeWidth} см</span>
                         </span>
                       )}
                       {displaySizeHeight != null && (
                         <span className="flex items-center gap-1 text-white">
-                          <span className="text-[10px] opacity-95" aria-hidden>
-                            ↕
-                          </span>
+                          <ArrowUpDown className="w-3 h-3 opacity-95 shrink-0" aria-hidden />
                           <span>{displaySizeHeight} см</span>
                         </span>
                       )}
@@ -538,38 +537,38 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
 
                 {/* Блок действий */}
                 <div>
-                {/* Первая строка: количество, CTA кнопки, избранное */}
-                <div className="flex flex-row items-center gap-2 mb-4 flex-wrap">
+                {/* Первая строка: количество, CTA кнопки, избранное. На mobile — компактно в одну строку. */}
+                <div className="flex flex-row items-center gap-1.5 md:gap-2 mb-4 flex-nowrap">
                   {/* Селектор количества */}
-                  <div className="flex items-center border border-border-block rounded-lg bg-white overflow-hidden flex-shrink-0 h-9">
+                  <div className="flex items-center border border-border-block rounded-lg bg-white overflow-hidden flex-shrink-0 h-8 md:h-9">
                     <button
                       type="button"
                       onClick={() => handleQuantityChange(-1)}
                       disabled={quantity <= 1}
-                      className="px-2 py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-r border-border-block"
+                      className="px-1.5 md:px-2 py-1 md:py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-r border-border-block"
                       aria-label="Уменьшить количество"
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <div className="px-2.5 py-1.5 text-sm font-medium text-color-text-main min-w-[2rem] text-center border-r border-border-block">
+                    <div className="px-2 md:px-2.5 py-1 md:py-1.5 text-xs md:text-sm font-medium text-color-text-main min-w-[1.75rem] md:min-w-[2rem] text-center border-r border-border-block">
                       {quantity}
                     </div>
                     <button
                       type="button"
                       onClick={() => handleQuantityChange(1)}
-                      className="px-2 py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors"
+                      className="px-1.5 md:px-2 py-1 md:py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors"
                       aria-label="Увеличить количество"
                     >
                       <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  {/* CTA кнопки вместе (на мобильных могут переноситься) */}
-                  <div className="flex flex-1 gap-2 min-w-0">
+                  {/* CTA кнопки: на mobile уменьшены (h-8, text-xs, px-2), в одну строку */}
+                  <div className="flex flex-1 gap-1.5 md:gap-2 min-w-0 min-h-0">
                     {/* Кнопка "В КОРЗИНУ" - зелёная залитая */}
                     <button
                       onClick={handleAddToCart}
-                      className="flex-1 min-h-[44px] h-9 md:h-9 px-3 rounded-lg text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0 touch-manipulation"
+                      className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0 touch-manipulation"
                     >
                       В КОРЗИНУ
                     </button>
@@ -577,17 +576,17 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                     {/* Кнопка "КУПИТЬ СЕЙЧАС" */}
                     <button
                       onClick={handleBuyNow}
-                      className="flex-1 min-h-[44px] h-9 md:h-9 px-3 rounded-lg text-sm font-medium uppercase transition-all btn-product-cta min-w-0 touch-manipulation"
+                      className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all btn-product-cta min-w-0 touch-manipulation"
                     >
                       КУПИТЬ СЕЙЧАС
                     </button>
                   </div>
 
-                  {/* Кнопка избранного - зелёный акцент */}
+                  {/* Кнопка избранного — в одну строку с CTA, на mobile компактнее */}
                   <button
                     type="button"
                     onClick={handleToggleFavorite}
-                    className={`btn-favorite group ${isInFavorites ? "selected" : ""}`}
+                    className={`btn-favorite group h-8 w-8 min-h-[36px] min-w-[36px] md:h-9 md:min-h-[44px] md:w-9 md:min-w-[44px] flex items-center justify-center flex-shrink-0 ${isInFavorites ? "selected" : ""}`}
                     aria-label={isInFavorites ? "Убрать из избранного" : "Добавить в избранное"}
                   >
                     <Heart

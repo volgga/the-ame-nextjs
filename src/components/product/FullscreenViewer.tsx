@@ -157,6 +157,11 @@ export function FullscreenViewer({
   }, [isOpen, onClose]);
 
   const handleOverlayClick = () => {
+    // На touch-устройствах (нет hover) закрытие по тапу по оверлею всегда разрешено
+    if (!hasHover) {
+      onClose();
+      return;
+    }
     if (canCloseByOverlay) onClose();
   };
 
