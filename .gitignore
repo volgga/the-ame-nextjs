@@ -25,6 +25,7 @@
 *.pem
 *.backup
 dump.backup
+products_data.sql
 
 # debug
 npm-debug.log*

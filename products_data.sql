@@ -1,8 +1,6 @@
 --
--- PostgreSQL database dump
+-- PostgreSQL database dump (data export; do not run blindly; see docs)
 --
-
-\restrict brIBA3qbArKeNt0V5JNhXUuPbU5rhp86AFkWu74uNqPJOpJghbIf5u3nGBeDY2U
 
 -- Dumped from database version 17.4
 -- Dumped by pg_dump version 17.7 (Homebrew)
