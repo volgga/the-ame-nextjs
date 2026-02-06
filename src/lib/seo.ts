@@ -63,6 +63,7 @@ export function trimDescription(text: string | null | undefined, maxLength = 160
  */
 const INDEXABLE_PARAMS = new Set([
   "sort",
+  "price",
   "minPrice",
   "maxPrice",
   "q",
