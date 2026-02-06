@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const BASE_URL = "https://theame.ru";
+import { CANONICAL_BASE } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -9,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/api/", "/_next/", "/admin/"],
     },
-    sitemap: `${BASE_URL}/sitemap.xml`,
+    sitemap: `${CANONICAL_BASE}/sitemap.xml`,
     host: "theame.ru",
   };
 }

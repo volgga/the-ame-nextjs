@@ -1,6 +1,11 @@
 /**
  * SEO constants and helpers — single source of truth for theame.ru
  * Used for metadata (title, description, canonical, robots) across all pages.
+ *
+ * Duplicate prevention:
+ * - Canonical URLs are always absolute, https, no trailing slash, no query params.
+ * - Middleware enforces www → non-www and http → https (see src/middleware.ts).
+ * - Pages with filter/sort/UTM params (category, magazin) set noindex,follow via hasIndexableQueryParams.
  */
 
 export const SITE_NAME = "The Ame";
