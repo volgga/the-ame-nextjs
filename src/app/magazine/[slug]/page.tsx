@@ -8,12 +8,24 @@ import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
 import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE, filterProductsByCategorySlug } from "@/lib/catalogCategories";
+import {
+  canonicalUrl,
+  trimDescription,
+  normalizeCategoryNameForTitle,
+  ROBOTS_INDEX_FOLLOW,
+  ROBOTS_NOINDEX_FOLLOW,
+  hasIndexableQueryParams,
+} from "@/lib/seo";
 
 type MagazineCategoryPageProps = {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 const VIRTUAL_CATEGORY_SLUGS = ["magazin", "posmotret-vse-tsvety"] as const;
+
+const CATEGORY_DESCRIPTION_FALLBACK =
+  " с доставкой по Сочи. Свежие цветы и удобный заказ — The Ame.";
 
 export async function generateStaticParams() {
   const categories = await getCategories();
@@ -22,19 +34,39 @@ export async function generateStaticParams() {
     .map((c) => ({ slug: c.slug }));
 }
 
-export async function generateMetadata({ params }: MagazineCategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: MagazineCategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
   const categories = await getCategories();
   const category = getCategoryBySlug(categories, slug);
   if (!category) {
     return { title: "Каталог | The Ame" };
   }
+
+  const normalizedName = normalizeCategoryNameForTitle(category.name);
+  const title =
+    normalizedName.toLowerCase().includes("сочи") || normalizedName.toLowerCase().includes("доставка")
+      ? `${normalizedName} | The Ame`
+      : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
+
+  const descRaw = category.description?.trim();
+  const description =
+    descRaw && descRaw.length > 0
+      ? trimDescription(descRaw, 160)
+      : `${normalizedName}${CATEGORY_DESCRIPTION_FALLBACK}`;
+
+  const hasParams = hasIndexableQueryParams(resolvedSearchParams);
+
   return {
-    title: `${category.name} | The Ame`,
-    description: `Каталог The Ame: ${category.name}. Доставка цветов по Сочи от 45 минут.`,
+    title,
+    description,
     alternates: {
-      canonical: `https://theame.ru/magazine/${slug}`,
+      canonical: canonicalUrl(`/magazine/${slug}`),
     },
+    robots: hasParams ? ROBOTS_NOINDEX_FOLLOW : ROBOTS_INDEX_FOLLOW,
   };
 }
 
