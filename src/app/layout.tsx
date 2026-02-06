@@ -13,8 +13,8 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   metadataBase: new URL(CANONICAL_BASE),
-  // Единый источник title: каждая страница задаёт полный title (включая "| The Ame").
-  // Строка (не template), чтобы дочерние страницы подменяли title целиком — без дубля "| The Ame | The Ame".
+  // Единый источник meta: только Metadata API (metadata/generateMetadata). Нет next/head — один <title>, одна description на маршрут.
+  // Title — строка (не template), чтобы дочерние страницы подменяли целиком, без дубля "| The Ame | The Ame".
   title: "The Ame — премиальные букеты в Сочи",
   description:
     "Премиальные букеты, свежие цветы и идеальный сервис. Закажите доставку по Сочи от 45 минут — создаём настроение в каждом букете.",
