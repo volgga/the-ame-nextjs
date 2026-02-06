@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Условия возврата | The Ame",
   description: "Условия возврата и обмена срезанных цветов и горшечных растений в интернет-магазине The Ame.",
-  alternates: {
-    canonical: "https://theame.ru/docs/return",
-  },
+  alternates: { canonical: canonicalUrl("/docs/return") },
+  robots: ROBOTS_INDEX_FOLLOW,
 };
 
 export default function ReturnPage() {

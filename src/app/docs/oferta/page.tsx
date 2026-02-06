@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Договор оферты | The Ame",
   description:
     "Публичная оферта на заключение договора розничной купли-продажи. Условия заказа и доставки цветов в интернет-магазине theame.ru.",
-  alternates: {
-    canonical: "https://theame.ru/docs/oferta",
-  },
+  alternates: { canonical: canonicalUrl("/docs/oferta") },
+  robots: ROBOTS_INDEX_FOLLOW,
 };
 
 export default function OfertaPage() {

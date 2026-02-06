@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Политика конфиденциальности | The Ame",
   description: "Политика в отношении обработки персональных данных интернет-магазина The Ame (theame.ru).",
-  alternates: {
-    canonical: "https://theame.ru/docs/privacy",
-  },
+  alternates: { canonical: canonicalUrl("/docs/privacy") },
+  robots: ROBOTS_INDEX_FOLLOW,
 };
 
 export default function PrivacyPage() {
