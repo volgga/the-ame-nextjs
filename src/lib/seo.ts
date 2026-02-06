@@ -19,8 +19,10 @@ export const ROBOTS_INDEX_FOLLOW = { index: true as const, follow: true as const
 /** Robots for placeholder/empty pages — noindex but allow following links */
 export const ROBOTS_NOINDEX_FOLLOW = { index: false as const, follow: true as const };
 
-/** Default title template: "{pageTitle} | The Ame" */
-export const TITLE_TEMPLATE = "%s | The Ame";
+/**
+ * Не используем глобальный title template в layout — каждая страница задаёт полный title
+ * (включая "| The Ame"), иначе получается дубль "... | The Ame | The Ame".
+ */
 
 /**
  * Build absolute canonical URL (no trailing slash, no query params).
