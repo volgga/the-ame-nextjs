@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AllFlowersPage } from "@/components/catalog/AllFlowersPage";
 import { getCategories, getCategoryBySlug } from "@/lib/categories";
 import { ALL_CATALOG } from "@/lib/catalogCategories";
+import { canonicalUrl } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const categories = await getCategories();
@@ -12,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${title} | The Ame`,
     description,
     alternates: {
-      canonical: "https://theame.ru/posmotret-vse-tsvety",
+      canonical: canonicalUrl("/posmotret-vse-tsvety"),
     },
   };
 }

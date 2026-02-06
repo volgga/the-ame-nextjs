@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/app/AppShell";
-import { CANONICAL_BASE, SITE_NAME, LOCALE, TITLE_TEMPLATE, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
+import { CANONICAL_BASE, SITE_NAME, LOCALE, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 
 // Подключаем шрифт Montserrat (как в старом проекте)
 const montserrat = Montserrat({
@@ -13,10 +13,9 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   metadataBase: new URL(CANONICAL_BASE),
-  title: {
-    template: TITLE_TEMPLATE,
-    default: "The Ame — премиальные букеты в Сочи",
-  },
+  // Единый источник title: каждая страница задаёт полный title (включая "| The Ame").
+  // Строка (не template), чтобы дочерние страницы подменяли title целиком — без дубля "| The Ame | The Ame".
+  title: "The Ame — премиальные букеты в Сочи",
   description:
     "Премиальные букеты, свежие цветы и идеальный сервис. Закажите доставку по Сочи от 45 минут — создаём настроение в каждом букете.",
   keywords: [
