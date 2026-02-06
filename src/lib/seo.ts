@@ -12,9 +12,11 @@ export const SITE_NAME = "The Ame";
 export const CANONICAL_BASE = "https://theame.ru";
 export const LOCALE = "ru_RU";
 export const CITY_KEYWORD = "Сочи";
+export const CITY = "Сочи"; // Для использования в метатегах
 
 /** Default robots for indexable pages */
 export const ROBOTS_INDEX_FOLLOW = { index: true as const, follow: true as const };
+export const DEFAULT_ROBOTS = ROBOTS_INDEX_FOLLOW; // Алиас для спекы
 
 /** Robots for placeholder/empty pages — noindex but allow following links */
 export const ROBOTS_NOINDEX_FOLLOW = { index: false as const, follow: true as const };
@@ -46,15 +48,56 @@ export function normalizeCategoryNameForTitle(name: string): string {
 }
 
 /**
+ * Нормализация текста для meta description:
+ * - Удаляет HTML-теги
+ * - Убирает лишние пробелы, переносы строк, табы
+ * - Нормализует кавычки
+ * - Удаляет двойные пробелы
+ */
+export function normalizeText(text: string | null | undefined): string {
+  if (!text || typeof text !== "string") return "";
+  
+  // Удаляем HTML-теги и заменяем на пробелы
+  let normalized = text.replace(/<[^>]+>/g, " ");
+  
+  // Заменяем различные типы пробелов и переносов на обычный пробел
+  normalized = normalized.replace(/[\r\n\t\u00A0\u2000-\u200B\u2028\u2029]+/g, " ");
+  
+  // Нормализуем кавычки (разные типы кавычек → обычные)
+  normalized = normalized.replace(/["""'']/g, '"');
+  
+  // Удаляем множественные пробелы
+  normalized = normalized.replace(/\s+/g, " ");
+  
+  // Убираем пробелы в начале и конце
+  return normalized.trim();
+}
+
+/**
+ * Обрезает текст до указанной длины по словам (для meta description, max ~160 символов).
+ * Использует normalizeText для предварительной очистки.
+ */
+export function truncateDescription(text: string | null | undefined, maxLength = 160): string {
+  const normalized = normalizeText(text);
+  if (!normalized) return "";
+  
+  if (normalized.length <= maxLength) return normalized;
+  
+  // Обрезаем до maxLength - 3 (для "..."), затем ищем последний пробел
+  const cut = normalized.slice(0, maxLength - 3);
+  const lastSpace = cut.lastIndexOf(" ");
+  
+  // Если пробел найден и не в самом начале — обрезаем по пробелу
+  // Иначе обрезаем жестко (для очень длинных слов)
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + "...";
+}
+
+/**
  * Trim and strip HTML from text for meta description (max length ~160).
+ * @deprecated Используйте truncateDescription для лучшей нормализации текста.
  */
 export function trimDescription(text: string | null | undefined, maxLength = 160): string {
-  if (!text || typeof text !== "string") return "";
-  const stripped = text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  if (stripped.length <= maxLength) return stripped;
-  const cut = stripped.slice(0, maxLength - 3);
-  const lastSpace = cut.lastIndexOf(" ");
-  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + "...";
+  return truncateDescription(text, maxLength);
 }
 
 /**
@@ -67,6 +110,7 @@ const INDEXABLE_PARAMS = new Set([
   "minPrice",
   "maxPrice",
   "q",
+  "page", // Пагинация
   "utm_source",
   "utm_medium",
   "utm_campaign",

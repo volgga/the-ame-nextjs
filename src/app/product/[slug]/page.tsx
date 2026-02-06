@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { ProductPageClient } from "@/components/product/ProductPageClient";
 import {
   canonicalUrl,
-  trimDescription,
+  truncateDescription,
   ROBOTS_INDEX_FOLLOW,
   CANONICAL_BASE,
   SITE_NAME,
@@ -38,10 +38,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = `Купить ${product.title} в Сочи с доставкой — цветы и подарки | The Ame`;
-  const descRaw = product.shortDescription?.trim();
+  // Если есть описание товара → использовать его (нормализованное и обрезанное до ≤160 символов)
+  // Иначе fallback: "{НазваниеТовара} — свежие цветы с доставкой по Сочи. Удобный заказ и быстрая доставка — The Ame."
   const description =
-    descRaw && descRaw.length > 0
-      ? trimDescription(descRaw, 160)
+    product.shortDescription && product.shortDescription.trim().length > 0
+      ? truncateDescription(product.shortDescription, 160)
       : `${product.title}${PRODUCT_DESCRIPTION_FALLBACK}`;
 
   const url = canonicalUrl(`/product/${slug}`);
