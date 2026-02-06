@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
         source: "/icons/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
+      {
+        source: "/sitemap.xml",
+        headers: [{ key: "Cache-Control", value: "public, max-age=3600, s-maxage=3600" }],
+      },
+      {
+        source: "/robots.txt",
+        headers: [{ key: "Cache-Control", value: "public, max-age=3600, s-maxage=3600" }],
+      },
     ];
   },
   images: {
