@@ -9,35 +9,73 @@ import { useHeaderScrollDirection } from "@/hooks/useHeaderScrollDirection";
 const MARQUEE_H = 32;
 const MAIN_H = 44;
 const TOP_BAR_H_DEFAULT = 44;
-const HEADER_TRANSITION_MS = 250;
+const TOPBAR_TRANSITION_MS = 360;
+const TOPBAR_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 /**
- * Двухрядный хедер (top bar + main bar):
- * - expanded: обе строки видны (телефон/соцсети + лого/иконки).
- * - compact: только top bar скрыт (height:0), main bar всегда видим и остаётся под marquee.
- * Spacer постоянной высоты — контент не прыгает.
+ * Двухрядный хедер (top bar + main bar).
+ * При скрытии: topbar-mask схлопывается по высоте до 0 (фон и контент исчезают),
+ * inner topbar дополнительно уезжает translateY(-100%). Main header поднимается на место topbar.
+ * Spacer анимирует высоту, чтобы не было рывка контента.
  */
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const headerMode = useHeaderScrollDirection();
-  const isExpanded = headerMode === "expanded";
+  const animationLockRef = useRef(false);
+  const headerMode = useHeaderScrollDirection(animationLockRef);
+  const isTopbarShown = headerMode === "expanded";
 
-  const [topBarHeight, setTopBarHeight] = useState(TOP_BAR_H_DEFAULT);
+  const [topbarHeightPx, setTopbarHeightPx] = useState(TOP_BAR_H_DEFAULT);
+  const [isMdOrLarger, setIsMdOrLarger] = useState(true); // до гидратации — как на сервере
+  const [mounted, setMounted] = useState(false);
   const topBarMeasureRef = useRef<HTMLDivElement>(null);
+  const topbarMaskRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const m = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsMdOrLarger(m.matches);
+    update();
+    m.addEventListener("change", update);
+    return () => m.removeEventListener("change", update);
+  }, [mounted]);
+
+  const handleTopbarMaskTransitionEnd = (e: React.TransitionEvent) => {
+    if (e.target !== topbarMaskRef.current || e.propertyName !== "height") return;
+    animationLockRef.current = false;
+  };
+
+  const mainBarWrapperRef = useRef<HTMLDivElement>(null);
+  const handleMainBarTransitionEnd = (e: React.TransitionEvent) => {
+    if (e.target !== mainBarWrapperRef.current) return;
+    if (e.propertyName !== "height" && e.propertyName !== "transform") return;
+    animationLockRef.current = false;
+  };
 
   useEffect(() => {
     const el = topBarMeasureRef.current;
     if (!el) return;
     const ro = new ResizeObserver(() => {
-      const h = el.offsetHeight;
-      if (h > 0) setTopBarHeight(h);
+      const h = el.scrollHeight;
+      if (h > 0) setTopbarHeightPx(h);
     });
     ro.observe(el);
-    if (el.offsetHeight > 0) setTopBarHeight(el.offsetHeight);
+    if (el.scrollHeight > 0) setTopbarHeightPx(el.scrollHeight);
     return () => ro.disconnect();
   }, []);
 
-  const spacerHeight = MARQUEE_H + topBarHeight + MAIN_H;
+  // До mounted используем те же значения, что и на сервере, чтобы не ломать гидратацию
+  const effectiveMdOrLarger = mounted ? isMdOrLarger : true;
+  const topbarVisible = effectiveMdOrLarger && isTopbarShown;
+  const topbarMaskHeight = topbarVisible ? `${topbarHeightPx}px` : "0px";
+  // На мобиле при скролле вниз скрываем основную строку; до mounted не скрываем (гидратация)
+  const mainBarVisible =
+    !mounted || effectiveMdOrLarger || headerMode === "expanded";
+  const spacerHeight =
+    MARQUEE_H + (topbarVisible ? topbarHeightPx : 0) + (mainBarVisible ? MAIN_H : 0);
 
   return (
     <>
@@ -66,44 +104,75 @@ export function Header() {
           />
         </div>
 
-        <div
-          className="w-full bg-header-bg relative z-50"
-          style={{
-            height: isExpanded ? topBarHeight : 0,
-            margin: 0,
-            padding: 0,
-            overflow: "visible",
-            opacity: isExpanded ? 1 : 0,
-            transition: `height ${HEADER_TRANSITION_MS}ms ease, opacity ${HEADER_TRANSITION_MS}ms ease`,
-            boxSizing: "border-box",
-            pointerEvents: isExpanded ? "auto" : "none",
-            willChange: "transform",
-          }}
-        >
-          <div ref={topBarMeasureRef} style={{ height: "auto" }}>
-            <TopBar />
+        {/* topbar-mask: скрыт на мобильных (sm), на md+ — фон topbar, анимируемая высота H <-> 0. */}
+        <div className="hidden md:block">
+          <div
+            ref={topbarMaskRef}
+            className="w-full bg-header-bg relative z-50"
+            style={{
+              height: topbarMaskHeight,
+              margin: 0,
+              padding: 0,
+              overflow: "hidden",
+              boxSizing: "border-box",
+              transition: `height ${TOPBAR_TRANSITION_MS}ms ${TOPBAR_EASING}`,
+            }}
+            onTransitionEnd={handleTopbarMaskTransitionEnd}
+          >
+            <div
+              ref={topBarMeasureRef}
+              className="w-full bg-header-bg"
+              style={{
+                transform: isTopbarShown ? "translateY(0)" : "translateY(-100%)",
+                transition: `transform ${TOPBAR_TRANSITION_MS}ms ${TOPBAR_EASING}`,
+                willChange: "transform",
+                pointerEvents: isTopbarShown ? "auto" : "none",
+              }}
+            >
+              <TopBar />
+            </div>
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: "1px",
+                background: "var(--header-foreground)",
+                flexShrink: 0,
+              }}
+            />
           </div>
         </div>
 
-        {/* Разделитель между верхней и нижней зелёной полосой: отдельный div, цвет как у вертикальных разделителей в TopBar */}
-        {isExpanded && (
-          <div
-            className="h-px w-full shrink-0 bg-header-foreground"
-            aria-hidden
-          />
-        )}
-
-        {/* Main bar: всегда видим, не двигаем — при compact topBar уже height:0, main bar остаётся под marquee */}
+        {/* Основная строка (логотип, иконки): на мобиле hide-on-scroll, обёртка сжимается по высоте */}
         <div
-          className="w-full bg-header-bg flex items-center"
+          ref={mainBarWrapperRef}
+          className="w-full bg-header-bg overflow-hidden md:overflow-visible"
           style={{
-            height: MAIN_H,
+            height: mainBarVisible || effectiveMdOrLarger ? MAIN_H : 0,
             margin: 0,
             padding: 0,
-            overflow: "visible",
+            boxSizing: "border-box",
+            transition: "height 280ms cubic-bezier(0.4, 0, 0.2, 1)",
           }}
+          onTransitionEnd={handleMainBarTransitionEnd}
         >
-          <HeaderMain isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+          <div
+            className="w-full h-full flex items-center"
+            style={{
+              margin: 0,
+              padding: 0,
+              minHeight: MAIN_H,
+              transform: mainBarVisible ? "translateY(0)" : "translateY(-100%)",
+              transition: "transform 280ms cubic-bezier(0.4, 0, 0.2, 1)",
+              willChange: "transform",
+              pointerEvents: mainBarVisible ? "auto" : "none",
+            }}
+          >
+            <HeaderMain isMenuOpen={isMenuOpen} setIsMenuOpen={setIsMenuOpen} />
+          </div>
         </div>
       </header>
 
@@ -113,6 +182,7 @@ export function Header() {
           height: spacerHeight,
           margin: 0,
           padding: 0,
+          transition: `height ${TOPBAR_TRANSITION_MS}ms ${TOPBAR_EASING}`,
         }}
       />
     </>

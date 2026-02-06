@@ -14,6 +14,8 @@
     "check": "npm run typecheck && npm run lint",
     "check-db": "tsx scripts/check-db.ts",
     "seed-categories": "tsx scripts/seed-categories.ts",
+    "fix-category-slugs": "tsx scripts/fix-category-slugs.ts",
+    "audit-categories": "tsx scripts/audit-categories.ts",
     "fix-visibility": "echo 'Выполните scripts/fix_visibility.sql в Supabase SQL Editor'",
     "diagnose": "echo 'Выполните scripts/diagnose.sql в Supabase SQL Editor'"
   },

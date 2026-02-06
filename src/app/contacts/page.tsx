@@ -109,7 +109,14 @@ export default function ContactsPage() {
                 <h2 className={`mb-2 ${SECTION_TITLE_CLASS}`}>Адрес</h2>
                 <div className={`${ROW_CLASS} text-neutral-600`}>
                   <MapPin className={ICON_CLASS} />
-                  <span>г. Сочи, ул. Пластунская 123А к2, 2 этаж, 84 офис</span>
+                  <a
+                    href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={LINK_CLASS}
+                  >
+                    г. Сочи, ул. Пластунская 123А к2, 2 этаж, 84 офис
+                  </a>
                 </div>
               </section>
 

@@ -7,6 +7,7 @@ import { Header } from "@/components/header/Header";
 import { Footer } from "@/components/Footer";
 import { FloatingSocialButton } from "@/components/FloatingSocialButton";
 import { CookieConsent } from "@/components/common/CookieConsent";
+import { ScrollToTop } from "@/components/common/ScrollToTop";
 
 /**
  * Оболочка приложения с провайдерами и основной разметкой.
@@ -42,10 +43,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <CartProvider>
       <FavoritesProvider>
+        <ScrollToTop />
         <div className="min-h-screen flex flex-col bg-page-bg overflow-x-hidden">
           <Header />
           <main
-            className={`flex-1 bg-page-bg px-6 md:px-8 page-enter ${isPageEnterActive ? "page-enter--active" : ""}`}
+            className={`flex-1 bg-page-bg px-3 md:px-8 page-enter ${isPageEnterActive ? "page-enter--active" : ""}`}
           >
             {children}
           </main>

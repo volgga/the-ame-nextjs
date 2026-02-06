@@ -7,7 +7,6 @@ type OrderBlockData = {
   title: string;
   subtitle1: string;
   text: string;
-  subtitle2: string;
   imageUrl: string | null;
 };
 
@@ -15,7 +14,6 @@ const DEFAULT_DATA: OrderBlockData = {
   title: "Заказать букет вашей мечты",
   subtitle1: "",
   text: "Соберём букет вашей мечты и доставим по Сочи уже сегодня. Оставьте заявку на сайте или позвоните нам — мы подберём идеальное сочетание цветов под ваш повод и бюджет.",
-  subtitle2: "или оставьте заявку",
   imageUrl: null,
 };
 
@@ -27,7 +25,6 @@ function snapshot(data: OrderBlockData): string {
     title: data.title,
     subtitle1: data.subtitle1,
     text: data.text,
-    subtitle2: data.subtitle2,
     imageUrl: data.imageUrl,
   });
 }
@@ -73,7 +70,6 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
       title: (data.title || "").trim(),
       subtitle1: (data.subtitle1 || "").trim(),
       text: (data.text || "").trim(),
-      subtitle2: (data.subtitle2 || "").trim(),
       imageUrl: data.imageUrl || null,
     };
     if (!payload.title || !payload.text) return;
@@ -88,7 +84,6 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
       title: responseData.title ?? data.title,
       subtitle1: responseData.subtitle1 ?? data.subtitle1,
       text: responseData.text ?? data.text,
-      subtitle2: responseData.subtitle2 ?? data.subtitle2,
       imageUrl: responseData.imageUrl ?? data.imageUrl,
     };
     setData(updated);
@@ -134,7 +129,6 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
         title: resData.title ?? DEFAULT_DATA.title,
         subtitle1: resData.subtitle1 ?? DEFAULT_DATA.subtitle1,
         text: resData.text ?? DEFAULT_DATA.text,
-        subtitle2: resData.subtitle2 ?? DEFAULT_DATA.subtitle2,
         imageUrl: resData.imageUrl ?? null,
       };
       setData(next);
@@ -260,18 +254,6 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
             }
             rows={10}
             className="w-full rounded border border-gray-300 px-3 py-2 text-[#111] text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-[#111] mb-1">Подзаголовок №2</label>
-          <input
-            type="text"
-            value={formData.subtitle2}
-            onChange={(e) =>
-              setData((d) => (d ? { ...d, subtitle2: e.target.value } : { ...DEFAULT_DATA, subtitle2: e.target.value }))
-            }
-            className="w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
-            placeholder="или оставьте заявку"
           />
         </div>
         <div>

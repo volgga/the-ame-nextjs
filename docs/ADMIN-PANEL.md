@@ -66,6 +66,7 @@ scripts/admin-tables-migration.sql
 | products | Простые товары (одна цена) |
 | variant_products | Товары с вариантами |
 | product_variants | Варианты (size, price, composition и т.д.) |
+| product_details | Глобальный текст «Подарок при заказе» для всех карточек (одна строка, Товары → Детали) |
 
 ## API эндпоинты (внутренние)
 
@@ -81,6 +82,7 @@ scripts/admin-tables-migration.sql
 - `GET/PATCH/DELETE /api/admin/products/[id]`
 - `POST /api/admin/products/[id]/variants`
 - `PATCH/DELETE /api/admin/products/[id]/variants/[variantId]`
+- `GET/PATCH /api/admin/product-details` — глобальный текст «Подарок при заказе» (модалка «Детали» на странице Товары)
 
 Все операции используют Service Role key на сервере.
 

@@ -12,7 +12,6 @@ const DEFAULT_ORDER_BLOCK = {
   title: "Заказать букет вашей мечты",
   subtitle1: "",
   text: "Соберём букет вашей мечты и доставим по Сочи уже сегодня. Оставьте заявку на сайте или позвоните нам — мы подберём идеальное сочетание цветов под ваш повод и бюджет.",
-  subtitle2: "или оставьте заявку",
   imageUrl: null as string | null,
 };
 
@@ -23,7 +22,7 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("home_reviews")
-      .select("order_block_title, order_block_subtitle1, order_block_text, order_block_subtitle2, order_block_image_url")
+      .select("order_block_title, order_block_subtitle1, order_block_text, order_block_image_url")
       .limit(1)
       .maybeSingle();
 
@@ -47,7 +46,6 @@ export async function GET() {
       title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
       subtitle1: data.order_block_subtitle1 ?? DEFAULT_ORDER_BLOCK.subtitle1,
       text: data.order_block_text ?? DEFAULT_ORDER_BLOCK.text,
-      subtitle2: data.order_block_subtitle2 ?? DEFAULT_ORDER_BLOCK.subtitle2,
       imageUrl: data.order_block_image_url ?? null,
     });
   } catch (e) {
@@ -63,7 +61,6 @@ const updateSchema = z.object({
   title: z.string().min(1).optional(),
   subtitle1: z.string().optional(),
   text: z.string().min(1).optional(),
-  subtitle2: z.string().optional(),
   imageUrl: z.string().nullable().optional(),
 });
 
@@ -103,7 +100,6 @@ export async function PATCH(request: NextRequest) {
     if (parsed.data.title !== undefined) updateData.order_block_title = parsed.data.title;
     if (parsed.data.subtitle1 !== undefined) updateData.order_block_subtitle1 = parsed.data.subtitle1;
     if (parsed.data.text !== undefined) updateData.order_block_text = parsed.data.text;
-    if (parsed.data.subtitle2 !== undefined) updateData.order_block_subtitle2 = parsed.data.subtitle2;
     if (parsed.data.imageUrl !== undefined) updateData.order_block_image_url = parsed.data.imageUrl;
 
     if (existing?.id) {
@@ -112,7 +108,7 @@ export async function PATCH(request: NextRequest) {
         .from("home_reviews")
         .update(updateData)
         .eq("id", existing.id)
-        .select("order_block_title, order_block_subtitle1, order_block_text, order_block_subtitle2, order_block_image_url")
+        .select("order_block_title, order_block_subtitle1, order_block_text, order_block_image_url")
         .single();
       if (error) {
         console.error("[admin/home-order-block PATCH] Ошибка обновления:", error);
@@ -122,7 +118,6 @@ export async function PATCH(request: NextRequest) {
         title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
         subtitle1: data.order_block_subtitle1 ?? DEFAULT_ORDER_BLOCK.subtitle1,
         text: data.order_block_text ?? DEFAULT_ORDER_BLOCK.text,
-        subtitle2: data.order_block_subtitle2 ?? DEFAULT_ORDER_BLOCK.subtitle2,
         imageUrl: data.order_block_image_url ?? null,
       });
     } else {
@@ -136,11 +131,10 @@ export async function PATCH(request: NextRequest) {
           order_block_title: parsed.data.title ?? DEFAULT_ORDER_BLOCK.title,
           order_block_subtitle1: parsed.data.subtitle1 ?? DEFAULT_ORDER_BLOCK.subtitle1,
           order_block_text: parsed.data.text ?? DEFAULT_ORDER_BLOCK.text,
-          order_block_subtitle2: parsed.data.subtitle2 ?? DEFAULT_ORDER_BLOCK.subtitle2,
           order_block_image_url: parsed.data.imageUrl ?? null,
           updated_at: new Date().toISOString(),
         })
-        .select("order_block_title, order_block_subtitle1, order_block_text, order_block_subtitle2, order_block_image_url")
+        .select("order_block_title, order_block_subtitle1, order_block_text, order_block_image_url")
         .single();
       if (error) {
         console.error("[admin/home-order-block PATCH] Ошибка создания:", error);
@@ -150,7 +144,6 @@ export async function PATCH(request: NextRequest) {
         title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
         subtitle1: data.order_block_subtitle1 ?? DEFAULT_ORDER_BLOCK.subtitle1,
         text: data.order_block_text ?? DEFAULT_ORDER_BLOCK.text,
-        subtitle2: data.order_block_subtitle2 ?? DEFAULT_ORDER_BLOCK.subtitle2,
         imageUrl: data.order_block_image_url ?? null,
       });
     }

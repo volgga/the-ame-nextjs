@@ -52,7 +52,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -131,7 +131,7 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -189,7 +189,7 @@ export async function getVariantProductWithVariantsBySlug(
     const { data: vp, error: vpErr } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")

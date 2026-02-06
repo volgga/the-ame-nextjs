@@ -10,9 +10,9 @@ export const metadata: Metadata = {
 
 export default function ReturnPage() {
   return (
-    <div className="min-h-screen bg-page-bg">
-      <article className="container mx-auto px-5 md:px-6 py-8 md:py-12 pb-16 md:pb-20 max-w-full">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#000] mb-8 md:mb-10">
+    <div className="bg-page-bg">
+      <article className="container mx-auto px-5 md:px-6 pt-10 md:pt-12 pb-8 md:pb-10 max-w-full">
+        <h1 className="text-2xl md:text-3xl font-bold text-[#000] mb-5 md:mb-6">
           Возврат и обмен срезанных цветов и горшечных растений
         </h1>
 
@@ -37,10 +37,16 @@ export default function ReturnPage() {
             совершена операция, после электронной оплаты оформить возврат наличными нельзя. Сроки зачисления могут
             варьировать от 3 до 40 рабочих дней, в зависимости от Банка.
           </p>
-          <p className="mt-6">
-            Если вам привезли некачественные цветы (например курьер переморозил их при транспортировке) вам следует
-            обратиться в этот же день в нашу компанию. Обращаем ваше внимание, что претензии относительно качества
-            цветов рассматриваются при наличии фотографии букета в течение дня, в который был доставлен букет.
+
+          <h2 className="text-xl md:text-2xl font-bold text-[#000] uppercase mb-4 mt-8 md:mt-10">
+            THE ÁME ВСЕГДА НА СТОРОНЕ КЛИЕНТА
+          </h2>
+          <p>
+            Если вам привезли цветы ненадлежащего качества (например, букет мог пострадать при перевозке), пожалуйста,
+            напишите или позвоните нам в день доставки — мы обязательно поможем разобраться.
+          </p>
+          <p>
+            Чтобы мы могли быстро решить вопрос, прикрепите фотографию букета в течение того же дня.
           </p>
         </div>
       </article>

@@ -42,16 +42,16 @@ export function CartItemsList() {
               <button
                 type="button"
                 onClick={() => updateItemQuantity(item.id, item.cartQuantity - 1)}
-                className="w-7 h-7 rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center transition-colors"
+                className="w-9 h-9 min-w-[44px] min-h-[44px] rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center transition-colors touch-manipulation"
                 aria-label="Уменьшить количество"
               >
                 <Minus className="w-4 h-4" />
               </button>
-              <span className="w-6 text-center text-sm font-medium">{item.cartQuantity}</span>
+              <span className="w-6 text-center text-sm font-medium min-w-[24px]">{item.cartQuantity}</span>
               <button
                 type="button"
                 onClick={() => updateItemQuantity(item.id, item.cartQuantity + 1)}
-                className="w-7 h-7 rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center transition-colors"
+                className="w-9 h-9 min-w-[44px] min-h-[44px] rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center transition-colors touch-manipulation"
                 aria-label="Увеличить количество"
               >
                 <Plus className="w-4 h-4" />
@@ -65,10 +65,10 @@ export function CartItemsList() {
             <button
               type="button"
               onClick={() => removeFromCart(item.id)}
-              className="w-6 h-6 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors"
+              className="w-10 h-10 min-w-[44px] min-h-[44px] rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors touch-manipulation"
               aria-label="Удалить товар"
             >
-              <X className="w-4 h-4 text-gray-600" />
+              <X className="w-5 h-5 text-gray-600" />
             </button>
           </div>
         </div>

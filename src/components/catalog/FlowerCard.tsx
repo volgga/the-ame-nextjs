@@ -144,21 +144,21 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
         </h3>
       </Link>
 
-      {/* Нижний блок: цена — главный якорь (text-lg), кнопки одного размера (h-8) */}
-      <div className="mt-1.5 px-1 flex items-center justify-between gap-3">
+      {/* Нижний блок: цена — главный якорь (text-lg), кнопки (min-h-[44px] на мобиле) */}
+      <div className="mt-1.5 px-1 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
         <span className="text-lg font-semibold text-color-text-main shrink-0 leading-none">{priceLabel}</span>
         <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={openQuickBuyModal}
-            className="product-cta h-8 rounded-full pl-3 pr-2.5 text-sm font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+            className="product-cta h-8 min-h-[44px] rounded-full pl-3 pr-2.5 text-sm font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
           >
             Купить в 1 клик
           </button>
           <button
             type="button"
             onClick={handleCartClick}
-            className="product-cta h-8 w-8 flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+            className="product-cta h-8 w-8 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
             title={flower.inStock ? "В корзину" : "Предзаказ"}
             aria-label={flower.inStock ? "В корзину" : "Предзаказ"}
           >

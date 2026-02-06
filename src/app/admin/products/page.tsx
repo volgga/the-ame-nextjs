@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { createPortal } from "react-dom";
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { slugify } from "@/utils/slugify";
+import { Modal } from "@/components/ui/modal";
 
 const ProductsList = dynamic(
   () => import("@/components/admin/products/ProductsList").then((m) => ({ default: m.ProductsList })),
@@ -106,6 +108,13 @@ function AdminProductsPageContent() {
 
   const [togglingProductId, setTogglingProductId] = useState<string | null>(null);
   const [deleteConfirmProductId, setDeleteConfirmProductId] = useState<string | null>(null);
+
+  // Глобальные детали товаров (Подарок при заказе)
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsKit, setDetailsKit] = useState("");
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsSaving, setDetailsSaving] = useState(false);
+  const [detailsError, setDetailsError] = useState("");
 
   const isEditMode = editProductId != null;
 
@@ -546,11 +555,46 @@ function AdminProductsPageContent() {
 
   useEffect(() => {
     if (!createModalOpen) return;
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = prevOverflow;
     };
   }, [createModalOpen]);
+
+  useEffect(() => {
+    if (!detailsModalOpen) return;
+    setDetailsError("");
+    setDetailsLoading(true);
+    fetch("/api/admin/product-details")
+      .then((res) => res.json())
+      .then((data: { kit?: string }) => {
+        setDetailsKit(data.kit ?? "");
+      })
+      .catch(() => setDetailsError("Ошибка загрузки"))
+      .finally(() => setDetailsLoading(false));
+  }, [detailsModalOpen]);
+
+  async function handleDetailsSave() {
+    setDetailsError("");
+    setDetailsSaving(true);
+    try {
+      const res = await fetch("/api/admin/product-details", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kit: detailsKit }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Ошибка сохранения");
+      }
+      setDetailsModalOpen(false);
+    } catch (e) {
+      setDetailsError(String((e as Error).message));
+    } finally {
+      setDetailsSaving(false);
+    }
+  }
 
   async function handleEditSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -990,7 +1034,16 @@ function AdminProductsPageContent() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h2 className="text-xl font-semibold text-color-text-main">Товары</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-color-text-main">Товары</h2>
+          <button
+            type="button"
+            onClick={() => setDetailsModalOpen(true)}
+            className="rounded border border-border-block bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)]"
+          >
+            Детали
+          </button>
+        </div>
         <div className="flex gap-2">
           <input
             type="search"
@@ -1066,16 +1119,29 @@ function AdminProductsPageContent() {
         )}
       </div>
 
-      {createModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={closeCreateModal} aria-hidden />
+      {createModalOpen &&
+        createPortal(
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-product-title"
-            className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl hover:border-border-block-hover"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[100] flex items-start justify-center p-4 overflow-hidden"
+            style={{ pointerEvents: "auto" }}
           >
+            <div
+              className="absolute inset-0 z-0 bg-black/40 cursor-default"
+              onClick={(e) => {
+                e.stopPropagation();
+                closeCreateModal();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              aria-hidden
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="create-product-title"
+              className="relative z-10 w-full max-w-2xl max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl hover:border-border-block-hover mt-0"
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -1087,7 +1153,7 @@ function AdminProductsPageContent() {
               }}
               className="flex flex-col min-h-0"
             >
-              <div className="relative flex items-center justify-center px-6 py-3 border-b border-border-block">
+              <div className="relative flex shrink-0 items-center justify-center px-6 py-3 border-b border-border-block">
                 <h3 id="create-product-title" className="font-medium text-color-text-main">
                   {isEditMode ? "Редактировать товар" : "Новый товар"}
                 </h3>
@@ -1152,7 +1218,6 @@ function AdminProductsPageContent() {
                     onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
                     className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                     required
-                    autoFocus
                   />
                   {fieldErrors.name && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.name}</p>}
                 </div>
@@ -1762,7 +1827,7 @@ function AdminProductsPageContent() {
                   </>
                 )}
               </div>
-              <div className="flex flex-wrap gap-2 px-6 py-3 border-t border-border-block">
+              <div className="flex shrink-0 flex-wrap gap-2 px-6 py-3 border-t border-border-block">
                 <button
                   type="submit"
                   disabled={createLoading || productImagesUploading || editLoading || deleteLoading}
@@ -1798,8 +1863,40 @@ function AdminProductsPageContent() {
               </div>
             </form>
           </div>
+        </div>,
+          document.body
+        )}
+
+      <Modal
+        isOpen={detailsModalOpen}
+        onClose={() => setDetailsModalOpen(false)}
+        title="Детали товаров"
+      >
+        <div className="space-y-4">
+          {detailsLoading && <p className="text-sm text-color-text-secondary">Загрузка…</p>}
+          {detailsError && <p className="text-sm text-red-600" role="alert">{detailsError}</p>}
+          <div>
+            <label className="block text-sm font-medium text-color-text-main mb-1">Подарок при заказе</label>
+            <textarea
+              value={detailsKit}
+              onChange={(e) => setDetailsKit(e.target.value)}
+              rows={3}
+              className="w-full rounded border border-border-block bg-white px-3 py-2 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+              placeholder="Например: фирменная коробка, открытка, ваза"
+            />
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleDetailsSave}
+              disabled={detailsLoading || detailsSaving}
+              className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {detailsSaving ? "Сохранение…" : "Сохранить"}
+            </button>
+          </div>
         </div>
-      )}
+      </Modal>
 
       {/* Мини-модалка подтверждения удаления (как в Категориях) */}
       {deleteConfirmProductId && (

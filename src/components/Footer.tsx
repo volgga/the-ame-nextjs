@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { CLIENT_LINKS } from "@/lib/navLinks";
 
 const FOOTER_LINK = "block text-[#7e7e7e] hover:text-black transition-colors py-0.5";
 
@@ -10,7 +11,7 @@ const FOOTER_LINK = "block text-[#7e7e7e] hover:text-black transition-colors py-
 export function Footer() {
   return (
     <footer className="bg-page-bg border-t mt-auto">
-      <div className="w-full px-6 md:px-8 py-8 md:py-10">
+      <div className="w-full px-3 md:px-8 py-8 md:py-10">
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* 1. Лого: логотип + подпись + копирайт + бейдж Яндекса (ниже копирайта) */}
@@ -58,15 +59,11 @@ export function Footer() {
           <div className="min-w-0">
             <h3 className="text-base font-semibold text-black mb-4">Клиентам</h3>
             <nav className="space-y-2">
-              <Link href="/delivery-and-payments" className={FOOTER_LINK}>
-                Доставка и оплата
-              </Link>
-              <Link href="/docs/return" className={FOOTER_LINK}>
-                Условия возврата
-              </Link>
-              <Link href="/docs/care" className={FOOTER_LINK}>
-                Инструкция по уходу
-              </Link>
+              {CLIENT_LINKS.map(({ href, label }) => (
+                <Link key={href} href={href} className={FOOTER_LINK}>
+                  {label}
+                </Link>
+              ))}
             </nav>
           </div>
 
@@ -76,7 +73,14 @@ export function Footer() {
             <div className="space-y-3 text-[#7e7e7e] text-sm leading-relaxed">
               <div className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-black mt-0.5 shrink-0" />
-                <span>Пластунская 123А, корпус 2, этаж 2, офис 84</span>
+                <a
+                  href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#7e7e7e] hover:text-black transition-colors"
+                >
+                  Пластунская 123А, корпус 2, этаж 2, офис 84
+                </a>
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-black shrink-0" />

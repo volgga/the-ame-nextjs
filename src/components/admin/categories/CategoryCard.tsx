@@ -107,9 +107,14 @@ export function CategoryCard({
         </button>
       </div>
 
-      {/* Content: name + status */}
+      {/* Content: name, slug, status */}
       <div className="flex flex-1 flex-col justify-center pt-6">
         <p className="font-medium text-[#111] text-lg leading-tight">{category.name}</p>
+        {category.slug ? (
+          <p className="mt-0.5 text-xs font-mono text-gray-500" title="Slug">
+            {category.slug}
+          </p>
+        ) : null}
         <p className={`mt-1 text-sm ${category.is_active ? "text-color-text-main" : "text-gray-400"}`}>
           {category.is_active ? "Активна" : "Неактивна"}
         </p>

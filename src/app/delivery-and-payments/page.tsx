@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Clock,
   Package,
@@ -16,6 +15,8 @@ import {
   Video,
   GiftIcon,
 } from "lucide-react";
+import { getDeliveryZones } from "@/lib/deliveryZones";
+import { DeliveryZonesTable } from "@/components/delivery/DeliveryZonesTable";
 
 export const metadata: Metadata = {
   title: "Доставка и оплата — условия и способы | The Ame",
@@ -33,18 +34,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default function DeliveryAndPaymentsPage() {
-  const deliveries = [
-    { area: "Центр Сочи", freeFrom: 4000, price: 300 },
-    { area: "Дагомыс, Мацеста", freeFrom: 5000, price: 500 },
-    { area: "Хоста", freeFrom: 7000, price: 700 },
-    { area: "Адлер", freeFrom: 9000, price: 900 },
-    { area: "Сириус, Лоо", freeFrom: 12000, price: 1200 },
-    { area: "п. Красная поляна", freeFrom: 18000, price: 1800 },
-    { area: "п. Эсто-Садок", freeFrom: 20000, price: 2000 },
-    { area: "п. Роза-Хутор", freeFrom: 22000, price: 2200 },
-    { area: "На высоту 960м (Роза-Хутор/Горки город)", freeFrom: 24000, price: 2400 },
-  ];
+export default async function DeliveryAndPaymentsPage() {
+  const zones = await getDeliveryZones();
 
   const paymentMethods = [
     {
@@ -70,16 +61,16 @@ export default function DeliveryAndPaymentsPage() {
       {/* Hero */}
       <section className="py-6 md:py-8">
         <div className="container mx-auto px-5 md:px-6 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 md:mb-3 text-[#000] uppercase tracking-tight">
+          <h1 className="text-3xl md:text-4xl font-bold mb-1.5 md:mb-2 text-[#000] uppercase tracking-tight">
             Доставка и оплата
           </h1>
         </div>
       </section>
 
-      <div className="container mx-auto px-5 md:px-6 pb-16 md:pb-20">
+      <div className="container mx-auto px-5 md:px-6 pb-6 md:pb-8">
         {/* Блок 1: Условия доставки */}
         <section className="mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-[#000] uppercase tracking-tight text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2 md:mb-3 text-[#000] uppercase tracking-tight text-center">
             Условия доставки
           </h2>
 
@@ -132,7 +123,7 @@ export default function DeliveryAndPaymentsPage() {
 
         {/* Блок 2: Что прилагается к заказу */}
         <section className="mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-[#000] uppercase tracking-tight text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2 md:mb-3 text-[#000] uppercase tracking-tight text-center">
             Что прилагается к заказу
           </h2>
 
@@ -165,7 +156,7 @@ export default function DeliveryAndPaymentsPage() {
                 </div>
                 <div className="flex-1 text-left">
                   <p className="text-base md:text-lg text-[#000] leading-relaxed">
-                    Карточку для ваших слов и пожеланий (по согласованию)
+                    Открытку для ваших слов и пожеланий (по согласованию)
                   </p>
                 </div>
               </div>
@@ -185,7 +176,7 @@ export default function DeliveryAndPaymentsPage() {
 
         {/* Блок 3: Опции перед отправкой */}
         <section className="mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-[#000] uppercase tracking-tight text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2 md:mb-3 text-[#000] uppercase tracking-tight text-center">
             Опции перед отправкой
           </h2>
 
@@ -227,43 +218,18 @@ export default function DeliveryAndPaymentsPage() {
 
         {/* Блок 4: Стоимость доставки по районам Сочи */}
         <section className="mb-12 md:mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-[#000] uppercase tracking-tight text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2 md:mb-3 text-[#000] uppercase tracking-tight text-center">
             Стоимость доставки по районам Сочи
           </h2>
 
           <div className="max-w-4xl mx-auto">
-            <Card className="border-0 shadow-sm bg-white">
-              <CardContent className="p-6 md:p-8">
-                <div className="divide-y divide-[#eaeaea]">
-                  {deliveries.map((d, i) => (
-                    <div key={i} className="py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                      <div className="text-base md:text-lg text-[#000] font-medium">{d.area}</div>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm md:text-base">
-                        <div className="text-[#7e7e7e]">
-                          до {d.freeFrom.toLocaleString("ru-RU")} ₽ —{" "}
-                          <span className="text-[#000] font-medium">{d.price} ₽</span>
-                        </div>
-                        <div className="text-[#7e7e7e] sm:ml-4">
-                          от {d.freeFrom.toLocaleString("ru-RU")} ₽ —{" "}
-                          <span className="text-[#000] font-medium">Бесплатно</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <p className="mt-6 text-sm md:text-base text-[#7e7e7e] text-left">
-                  Доставка работает круглосуточно. Стоимость доставки с 22:00 до 09:00 осуществляется по двойному
-                  тарифу.
-                </p>
-              </CardContent>
-            </Card>
+            <DeliveryZonesTable zones={zones} />
           </div>
         </section>
 
         {/* Блок 5: Способы оплаты */}
         <section>
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 md:mb-8 text-[#000] uppercase tracking-tight text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-2 md:mb-3 text-[#000] uppercase tracking-tight text-center">
             Способы оплаты
           </h2>
 

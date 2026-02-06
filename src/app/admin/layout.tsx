@@ -23,6 +23,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/home", label: "Главная страница" },
     { href: "/admin/products", label: "Товары" },
     { href: "/admin/categories", label: "Категории" },
+    { href: "/admin/add-on-products", label: "Доп товары" },
+    { href: "/admin/delivery-zones", label: "Условия доставки" },
   ];
 
   return (

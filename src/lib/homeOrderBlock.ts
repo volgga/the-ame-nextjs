@@ -8,7 +8,6 @@ export type HomeOrderBlock = {
   title: string;
   subtitle1: string;
   text: string;
-  subtitle2: string;
   imageUrl: string | null;
 };
 
@@ -16,7 +15,6 @@ const DEFAULT_ORDER_BLOCK: HomeOrderBlock = {
   title: "Заказать букет вашей мечты",
   subtitle1: "",
   text: "Соберём букет вашей мечты и доставим по Сочи уже сегодня. Оставьте заявку на сайте или позвоните нам — мы подберём идеальное сочетание цветов под ваш повод и бюджет.",
-  subtitle2: "или оставьте заявку",
   imageUrl: null,
 };
 
@@ -28,7 +26,7 @@ export async function getHomeOrderBlock(): Promise<HomeOrderBlock> {
   try {
     const { data, error } = await supabase
       .from("home_reviews")
-      .select("order_block_title, order_block_subtitle1, order_block_text, order_block_subtitle2, order_block_image_url")
+      .select("order_block_title, order_block_subtitle1, order_block_text, order_block_image_url")
       .limit(1)
       .single();
 
@@ -44,7 +42,6 @@ export async function getHomeOrderBlock(): Promise<HomeOrderBlock> {
       title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
       subtitle1: data.order_block_subtitle1 ?? DEFAULT_ORDER_BLOCK.subtitle1,
       text: data.order_block_text ?? DEFAULT_ORDER_BLOCK.text,
-      subtitle2: data.order_block_subtitle2 ?? DEFAULT_ORDER_BLOCK.subtitle2,
       imageUrl: data.order_block_image_url ?? null,
     };
   } catch {

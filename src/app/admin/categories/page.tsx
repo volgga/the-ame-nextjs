@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useState } from "react";
 import type { Category } from "@/components/admin/categories/CategoryCard";
+import { slugify } from "@/utils/slugify";
 
 const CategoriesGrid = dynamic(
   () => import("@/components/admin/categories/CategoriesGrid").then((m) => ({ default: m.CategoriesGrid })),
@@ -30,7 +31,8 @@ export default function AdminCategoriesPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [editing, setEditing] = useState<Category | null>(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ name: "", is_active: true, description: "" });
+  const [form, setForm] = useState({ name: "", slug: "", is_active: true, description: "" });
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
@@ -58,7 +60,8 @@ export default function AdminCategoriesPage() {
   function closeModal() {
     setCreating(false);
     setEditing(null);
-    setForm({ name: "", is_active: true, description: "" });
+    setForm({ name: "", slug: "", is_active: true, description: "" });
+    setIsSlugManuallyEdited(false);
   }
 
   useEffect(() => {
@@ -91,6 +94,16 @@ export default function AdminCategoriesPage() {
   async function handleSaveForm(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    const nameTrimmed = form.name.trim();
+    const slugTrimmed = form.slug.trim();
+    if (!nameTrimmed) {
+      setError("Название категории обязательно.");
+      return;
+    }
+    if (!slugTrimmed) {
+      setError("Slug обязателен. Заполните slug или измените название.");
+      return;
+    }
     try {
       if (creating) {
         const res = await fetch("/api/admin/categories", {
@@ -98,6 +111,7 @@ export default function AdminCategoriesPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: form.name.trim(),
+            slug: slugTrimmed,
             is_active: form.is_active,
             description: form.description.trim() || null,
           }),
@@ -108,13 +122,15 @@ export default function AdminCategoriesPage() {
         setCategoriesFromServer((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
         setCategoriesDraft((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
         setCreating(false);
-        setForm({ name: "", is_active: true, description: "" });
+        setForm({ name: "", slug: "", is_active: true, description: "" });
+        setIsSlugManuallyEdited(false);
       } else if (editing) {
         const res = await fetch(`/api/admin/categories/${editing.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: form.name.trim(),
+            slug: slugTrimmed,
             is_active: form.is_active,
             description: form.description.trim() || null,
           }),
@@ -124,13 +140,15 @@ export default function AdminCategoriesPage() {
         const updated = {
           ...editing,
           name: data.name,
+          slug: data.slug ?? editing.slug,
           is_active: data.is_active,
           description: data.description ?? null,
         };
         setCategoriesFromServer((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setCategoriesDraft((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setEditing(null);
-        setForm({ name: "", is_active: true, description: "" });
+        setForm({ name: "", slug: "", is_active: true, description: "" });
+        setIsSlugManuallyEdited(false);
       }
     } catch (e) {
       setError(String(e));
@@ -242,7 +260,8 @@ export default function AdminCategoriesPage() {
           onClick={() => {
             setCreating(true);
             setEditing(null);
-            setForm({ name: "", is_active: true, description: "" });
+            setForm({ name: "", slug: "", is_active: true, description: "" });
+            setIsSlugManuallyEdited(false);
           }}
           className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
         >
@@ -267,12 +286,34 @@ export default function AdminCategoriesPage() {
                     <input
                       type="text"
                       value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                      onChange={(e) => {
+                        const name = e.target.value;
+                        setForm((f) => ({
+                          ...f,
+                          name,
+                          ...(isSlugManuallyEdited ? {} : { slug: slugify(name) }),
+                        }));
+                      }}
                       className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
                       required
                       autoFocus
                     />
-                    <p className="mt-1 text-xs text-gray-500">Slug формируется автоматически и не показывается.</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">Slug</label>
+                    <input
+                      type="text"
+                      value={form.slug}
+                      onChange={(e) => {
+                        setForm((f) => ({ ...f, slug: e.target.value }));
+                        setIsSlugManuallyEdited(true);
+                      }}
+                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111] font-mono text-sm"
+                      placeholder="vazy"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Автоматически из названия. Если измените вручную — дальнейшее изменение названия не перезапишет slug.
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-[#111]">Текст</label>
@@ -320,7 +361,8 @@ export default function AdminCategoriesPage() {
                     onClick={() => {
                       setDeleteConfirmId(editing.id);
                       setEditing(null);
-                      setForm({ name: "", is_active: true, description: "" });
+                      setForm({ name: "", slug: "", is_active: true, description: "" });
+                      setIsSlugManuallyEdited(false);
                     }}
                     className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
@@ -340,7 +382,13 @@ export default function AdminCategoriesPage() {
           onEdit={(cat) => {
             setEditing(cat);
             setCreating(false);
-            setForm({ name: cat.name, is_active: cat.is_active, description: cat.description ?? "" });
+            setForm({
+              name: cat.name,
+              slug: cat.slug ?? slugify(cat.name),
+              is_active: cat.is_active,
+              description: cat.description ?? "",
+            });
+            setIsSlugManuallyEdited(false);
           }}
           onToggleActive={handleToggleActive}
           onDeleteClick={(cat) => setDeleteConfirmId(cat.id)}

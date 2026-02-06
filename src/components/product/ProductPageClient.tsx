@@ -2,18 +2,24 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight, ChevronDown, Heart, Bell, Minus, Plus } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import type { Product } from "@/lib/products";
+import type { ProductDetails } from "@/lib/productDetails";
 import { Flower } from "@/types/flower";
 import { Breadcrumbs, BREADCRUMB_SPACING } from "@/components/ui/breadcrumbs";
 import { FullscreenViewer } from "./FullscreenViewer";
 import { GiftHintModal } from "./GiftHintModal";
+import { ContactMessengersRow } from "./ContactMessengersRow";
+import { AddToOrderSection } from "./AddToOrderSection";
 import { runFlyToHeader } from "@/utils/flyToHeader";
 
 type ProductPageClientProps = {
   product: Product;
+  productDetails: ProductDetails;
+  addToOrderProducts: Product[];
 };
 
 /** Аккордеон-секция (single-open: при открытии нового — предыдущий закрывается) */
@@ -202,7 +208,7 @@ function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClos
   );
 }
 
-export function ProductPageClient({ product }: ProductPageClientProps) {
+export function ProductPageClient({ product, productDetails, addToOrderProducts }: ProductPageClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quickOrderOpen, setQuickOrderOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
@@ -369,7 +375,7 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
             <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 w-full">
               {/* Миниатюры: вертикальная лента на desktop слева, горизонтальная на mobile сверху */}
               {imagesLen > 0 && (
-                <div className="flex flex-row lg:flex-col gap-2.5 order-1 lg:order-1 overflow-x-auto lg:overflow-x-visible overflow-y-auto lg:max-h-[min(620px,80vh)] shrink-0 p-1">
+                <div className="flex flex-row lg:flex-col gap-2.5 order-1 lg:order-1 overflow-x-auto lg:overflow-x-visible overflow-y-auto lg:max-h-[min(620px,80vh)] shrink-0 p-1 scrollbar-hide">
                   {images.map((src, idx) => (
                     <button
                       key={src}
@@ -563,7 +569,7 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                     {/* Кнопка "В КОРЗИНУ" - зелёная залитая */}
                     <button
                       onClick={handleAddToCart}
-                      className="flex-1 h-9 px-3 rounded-lg text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0"
+                      className="flex-1 min-h-[44px] h-9 md:h-9 px-3 rounded-lg text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0 touch-manipulation"
                     >
                       В КОРЗИНУ
                     </button>
@@ -571,7 +577,7 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                     {/* Кнопка "КУПИТЬ СЕЙЧАС" */}
                     <button
                       onClick={handleBuyNow}
-                      className="flex-1 h-9 px-3 rounded-lg text-sm font-medium uppercase transition-all btn-product-cta min-w-0"
+                      className="flex-1 min-h-[44px] h-9 md:h-9 px-3 rounded-lg text-sm font-medium uppercase transition-all btn-product-cta min-w-0 touch-manipulation"
                     >
                       КУПИТЬ СЕЙЧАС
                     </button>
@@ -606,6 +612,9 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                       НАМЕКНУТЬ О ПОДАРКЕ
                     </span>
                   </button>
+
+                  {/* Строка контактов: СВЯЗАТЬСЯ С НАМИ + WhatsApp / Telegram / МАХ */}
+                  <ContactMessengersRow />
                 </div>
               </div>
 
@@ -651,7 +660,6 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                     onToggle={() => handleAccordionToggle("Размер")}
                   >
                     <p>
-                      Размер:{" "}
                       {[
                         displaySizeHeight != null && displaySizeHeight > 0 ? `высота ${displaySizeHeight} см` : null,
                         displaySizeWidth != null && displaySizeWidth > 0 ? `ширина ${displaySizeWidth} см` : null,
@@ -672,16 +680,14 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                 ) : null}
 
                 <AccordionItem
-                  id="Комплект"
-                  title="Комплект"
-                  isOpen={openedAccordion === "Комплект"}
-                  onToggle={() => handleAccordionToggle("Комплект")}
+                  id="Подарок при заказе"
+                  title="Подарок при заказе"
+                  isOpen={openedAccordion === "Подарок при заказе"}
+                  onToggle={() => handleAccordionToggle("Подарок при заказе")}
                 >
-                  <ul className="space-y-1">
-                    <li>• Букет в авторской упаковке</li>
-                    <li>• Подкормка для цветов</li>
-                    <li>• Открытка (по запросу)</li>
-                  </ul>
+                  <p className="whitespace-pre-line">
+                    {productDetails.kit.trim() || "—"}
+                  </p>
                 </AccordionItem>
 
                 <AccordionItem
@@ -690,23 +696,47 @@ export function ProductPageClient({ product }: ProductPageClientProps) {
                   isOpen={openedAccordion === "Доставка и оплата"}
                   onToggle={() => handleAccordionToggle("Доставка и оплата")}
                 >
-                  <div className="space-y-2">
-                    <p>
-                      <strong>Доставка по Сочи:</strong> от 300 ₽, бесплатно от 4 000 ₽.
-                    </p>
-                    <p>
-                      <strong>Время:</strong> 10:00–22:00. Ночная — по договорённости.
-                    </p>
-                    <p>
-                      <strong>Оплата:</strong> онлайн или курьеру.
-                    </p>
-                  </div>
+                  <p>
+                    Доставка цветов по Сочи доступна в любое время суток.
+                    Вы можете оформить заказ заранее или в день получения,
+                    указав удобный интервал доставки.
+                    Среднее время ожидания — от 60 минут.
+                    Подробные условия и стоимость доставки
+                    смотрите на странице{" "}
+                    <Link
+                      href="/delivery-and-payments"
+                      className="text-color-text-main underline hover:no-underline"
+                    >
+                      «Доставка и оплата»
+                    </Link>
+                    .
+                  </p>
+                </AccordionItem>
+
+                <AccordionItem
+                  id="Инструкция по уходу"
+                  title="Инструкция по уходу"
+                  isOpen={openedAccordion === "Инструкция по уходу"}
+                  onToggle={() => handleAccordionToggle("Инструкция по уходу")}
+                >
+                  <p>
+                    Подробные шаги по уходу за цветами мы собрали на отдельной странице —{" "}
+                    <Link
+                      href="/docs/care"
+                      className="text-color-text-main underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[var(--color-text-main)] rounded-sm"
+                    >
+                      «Инструкцию по уходу»
+                    </Link>
+                    .
+                  </p>
                 </AccordionItem>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      <AddToOrderSection products={addToOrderProducts} />
 
       {/* Модалка быстрого заказа */}
       <QuickOrderModal isOpen={quickOrderOpen} onClose={() => setQuickOrderOpen(false)} product={product} />

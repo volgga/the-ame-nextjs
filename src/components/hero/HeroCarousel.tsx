@@ -41,7 +41,7 @@ type HeroCarouselProps = {
  * next/image обеспечивает оптимизацию (webp/avif, sizes) для быстрой загрузки.
  *
  * Высота хиро — уменьшённая, лёгкая, премиальная (быстрее к контенту):
- * - mobile  (≤767px):  360px min 320px
+ * - mobile  (≤767px):  510px, object-position 50% 38% для лучшего кропа
  * - tablet  (768–1199): 420px
  * - laptop  (1200–1439): 500px
  * - desktop (≥1440px):  560px, max 680px
@@ -150,8 +150,8 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
     "absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] text-white transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
 
   return (
-    <section className="relative hero-full-width bg-[#fff8ea] overflow-hidden pb-4 md:pb-6 -mx-6 md:-mx-8">
-      <div className="relative w-full h-[360px] min-h-[320px] min-[768px]:h-[420px] min-[1200px]:h-[500px] min-[1440px]:h-[560px] min-[1440px]:max-h-[680px]">
+    <section className="relative hero-full-width bg-[#fff8ea] overflow-hidden pb-4 md:pb-6 -mx-3 md:-mx-8">
+      <div className="relative w-full h-[510px] min-[768px]:h-[420px] min-[1200px]:h-[500px] min-[1440px]:h-[560px] min-[1440px]:max-h-[680px]">
         <div className={`absolute inset-0 overflow-hidden bg-[#ece9e2] hero-reveal ${isRevealActive ? "hero-reveal--active" : ""}`}>
           <div
             className="flex h-full transition-transform ease-in-out"
@@ -171,7 +171,7 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                   src={slide.imageUrl}
                   alt="Слайд"
                   fill
-                  className="object-cover select-none pointer-events-none"
+                  className="object-cover object-[50%_38%] md:object-center select-none pointer-events-none"
                   loading={i === realIndexOffset ? "eager" : "lazy"}
                   sizes="(max-width: 640px) 1080px, (max-width: 1024px) 1600px, 1920px"
                   quality={90}

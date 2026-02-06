@@ -32,17 +32,7 @@ function categoryHref(slug: string): string {
   return `/magazine/${slug}`;
 }
 
-/** Список для выпадающего меню: первым "Все цветы", далее категории без magazin и без дубликата posmotret-vse-tsvety. */
-function buildMenuItems(categories: { name: string; slug: string }[]): MenuItem[] {
-  const withoutMagazin = categories.filter((c) => c.slug !== "magazin" && c.slug !== "posmotret-vse-tsvety");
-  const list =
-    withoutMagazin.length > 0
-      ? [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...withoutMagazin.map((c) => ({ label: c.name, href: categoryHref(c.slug) }))]
-      : [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` }))];
-  return list.length > MAX_ITEMS ? list.slice(0, MAX_ITEMS) : list;
-}
-
-/** Раскладка строго по 4 колонкам: col0 = [0..3], col1 = [4..7], col2 = [8..11], col3 = [12..15]. */
+/** Раскладка по 4 колонкам: col0=[0..3], col1=[4..7], col2=[8..11], col3=[12..15]. */
 function splitIntoFourColumns<T>(items: T[]): T[][] {
   const columns: T[][] = [];
   for (let c = 0; c < COLUMNS_COUNT; c++) {
@@ -52,7 +42,24 @@ function splitIntoFourColumns<T>(items: T[]): T[][] {
   return columns;
 }
 
-const COLUMN_MIN_WIDTH = 160;
+/** Список для выпадающего меню: первым "Все цветы", далее категории. Исключаем magazin, posmotret-vse-tsvety, "Каталог" и дубли "Все цветы". */
+function buildMenuItems(categories: { name: string; slug: string }[]): MenuItem[] {
+  const withoutMagazin = categories.filter(
+    (c) =>
+      c.slug !== "magazin" &&
+      c.slug !== "posmotret-vse-tsvety" &&
+      c.name !== "Каталог" &&
+      c.name !== "Все цветы"
+  );
+  const list =
+    withoutMagazin.length > 0
+      ? [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...withoutMagazin.map((c) => ({ label: c.name, href: categoryHref(c.slug) }))]
+      : [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` }))];
+  return list.length > MAX_ITEMS ? list.slice(0, MAX_ITEMS) : list;
+}
+
+const COLUMN_MIN_WIDTH = 180;
+const ROW_GAP = 12;
 const COLUMN_GAP = 36;
 
 type CatalogDropdownProps = {
@@ -174,7 +181,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
             className="overflow-hidden bg-white transition-all duration-200 ease-out border border-[#1F2A1F]"
             style={{
               padding: "22px 26px",
-              width: "fit-content",
+              width: "max-content",
               maxWidth: "min(980px, calc(100vw - 24px))",
               borderRadius: "22px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
@@ -188,16 +195,13 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
                 <div
                   key={colIdx}
                   className="flex shrink-0 flex-col"
-                  style={{
-                    gap: "12px",
-                    minWidth: COLUMN_MIN_WIDTH,
-                  }}
+                  style={{ gap: ROW_GAP, minWidth: COLUMN_MIN_WIDTH }}
                 >
                   {col.map((item, itemIdx) => {
                     const isFirst = colIdx === 0 && itemIdx === 0;
                     return (
                       <Link
-                        key={`col-${colIdx}-item-${itemIdx}-${item.href}`}
+                        key={item.href}
                         href={item.href}
                         role="menuitem"
                         className={

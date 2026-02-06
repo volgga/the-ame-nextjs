@@ -1,6 +1,7 @@
 /**
- * Скрипт проверки подключения к Supabase и наличия данных в таблицах с товарами.
+ * Скрипт проверки подключения к Supabase и сверки таблиц с кодом приложения.
  * Запуск: npm run check-db (из корня nextjs-project)
+ * Требует .env.local с NEXT_PUBLIC_SUPABASE_URL и NEXT_PUBLIC_SUPABASE_ANON_KEY.
  */
 import { config } from "dotenv";
 import { resolve } from "path";
@@ -12,11 +13,15 @@ if (loaded.error && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
   console.warn("Файл .env.local не найден или не прочитан:", envPath);
 }
 
-const TABLES = [
-  "products",
-  "product_variants",
-  "variant_products",
-  "orders",
+/** Таблицы, используемые в приложении (сверка с БД) */
+const CORE_TABLES = ["products", "product_variants", "variant_products", "orders", "product_details"] as const;
+const HOME_TABLES = ["home_reviews", "hero_slides", "home_collections"] as const;
+const REF_TABLES = [
+  "categories",
+  "add_on_products_categories",
+  "delivery_zones",
+  "gift_hints",
+  "one_click_orders",
 ] as const;
 
 async function main() {
@@ -31,31 +36,35 @@ async function main() {
   const supabase = createClient(url, key);
   console.log("🔗 Подключение к Supabase:", url);
 
-  for (const table of TABLES) {
-    try {
-      const { count, error } = await supabase
-        .from(table)
-        .select("*", { count: "exact", head: true });
+  function checkTable(table: string): Promise<{ ok: boolean; count: number | null; error?: string }> {
+    return supabase
+      .from(table)
+      .select("*", { count: "exact", head: true })
+      .then(({ count, error }) => {
+        if (error) return { ok: false, count: null, error: `${error.message} (${error.code})` };
+        return { ok: true, count: count ?? 0 };
+      })
+      .catch((e) => ({ ok: false, count: null, error: e instanceof Error ? e.message : String(e) }));
+  }
 
-      if (error) {
-        console.log(`  ${table}: ⚠️ ${error.message} (код: ${error.code})`);
-        if (error.code === "42P01") {
-          console.log(`    → Таблица или view не найдена.`);
-        }
-        if (error.code === "42501") {
-          console.log(`    → Нет прав доступа (RLS или роль).`);
-        }
-        continue;
-      }
+  const groups: { title: string; tables: readonly string[] }[] = [
+    { title: "Ядро (товары, заказы, детали)", tables: CORE_TABLES },
+    { title: "Главная страница", tables: HOME_TABLES },
+    { title: "Справочники и прочее", tables: REF_TABLES },
+  ];
 
-      const n = count ?? 0;
-      if (n === 0) {
-        console.log(`  ${table}: 0 строк (таблица пуста)`);
+  for (const { title, tables } of groups) {
+    console.log("\n--- " + title + " ---");
+    for (const table of tables) {
+      const result = await checkTable(table);
+      if (result.ok) {
+        const n = result.count!;
+        console.log(`  ${table}: ${n} строк${n === 0 ? " (пусто)" : ""}`);
       } else {
-        console.log(`  ${table}: ${n} строк`);
+        console.log(`  ${table}: ⚠️ ${result.error}`);
+        if (result.error?.includes("42P01")) console.log("    → Таблица не найдена. Проверьте миграции.");
+        if (result.error?.includes("42501")) console.log("    → Нет прав (RLS/роль).");
       }
-    } catch (e) {
-      console.log(`  ${table}: ❌ ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 

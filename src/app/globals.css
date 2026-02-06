@@ -391,9 +391,9 @@ All colors MUST be HSL.
     display: none;
   }
 
-  /* Компенсация padding для full-width элементов (Hero) */
+  /* Компенсация padding для full-width элементов (Hero): mobile 12px, md+ 32px */
   .hero-full-width {
-    width: calc(100% + 3rem);
+    width: calc(100% + 1.5rem);
   }
   @media (min-width: 768px) {
     .hero-full-width {

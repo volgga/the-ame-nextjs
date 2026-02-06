@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { getCatalogProductBySlug, getAllCatalogProducts } from "@/lib/products";
+import { getProductDetails } from "@/lib/productDetails";
+import { getAddOnCategoriesOrder, buildAddToOrderProducts } from "@/lib/addOnProducts";
 import { notFound } from "next/navigation";
 import { ProductPageClient } from "@/components/product/ProductPageClient";
 
@@ -35,11 +37,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  const product = await getCatalogProductBySlug(slug);
+  const [product, productDetails, addOnCategoryOrder, allCatalogProducts] = await Promise.all([
+    getCatalogProductBySlug(slug),
+    getProductDetails(),
+    getAddOnCategoriesOrder(),
+    getAllCatalogProducts(),
+  ]);
 
   if (!product) {
     notFound();
   }
 
-  return <ProductPageClient product={product} />;
+  const addToOrderProducts = buildAddToOrderProducts(
+    allCatalogProducts,
+    addOnCategoryOrder,
+    product.id
+  );
+
+  return (
+    <ProductPageClient
+      product={product}
+      productDetails={productDetails}
+      addToOrderProducts={addToOrderProducts}
+    />
+  );
 }

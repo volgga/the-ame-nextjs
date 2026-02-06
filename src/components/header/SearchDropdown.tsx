@@ -76,7 +76,7 @@ function searchProducts(products: SearchProductItem[], query: string): SearchPro
 }
 
 const HEADER_ICON_CLASS =
-  "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
+  "relative inline-flex items-center justify-center w-9 h-9 min-w-[44px] min-h-[44px] md:w-10 md:h-10 md:min-w-0 md:min-h-0 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
 
 type SearchDropdownProps = {
   onClose?: () => void;
@@ -168,7 +168,7 @@ export function SearchDropdown({ onClose }: SearchDropdownProps) {
         className={HEADER_ICON_CLASS}
       >
         <svg
-          className="w-[18px] h-[18px] md:w-5 md:h-5 shrink-0"
+          className="w-4 h-4 md:w-5 md:h-5 shrink-0"
           fill="none"
           stroke="currentColor"
           strokeWidth={1.6}

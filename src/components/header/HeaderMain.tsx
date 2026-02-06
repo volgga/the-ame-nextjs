@@ -6,7 +6,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CartIcon } from "./CartIcon";
 import { CatalogDropdown } from "./CatalogDropdown";
+import { ClientsDropdown } from "./ClientsDropdown";
 import { SearchDropdown } from "./SearchDropdown";
+import { CLIENT_LINKS } from "@/lib/navLinks";
 import { useFavorites } from "@/context/FavoritesContext";
 
 const SIDEBAR_OPEN_MS = 420;
@@ -20,9 +22,10 @@ const Z_MENU_SIDEBAR = 85;
 const CATALOG_HREF = "/posmotret-vse-tsvety";
 
 const NAV_LINKS = [
-  { href: CATALOG_HREF, label: "Каталог", isCatalog: true },
-  { href: "/about", label: "О нас", isCatalog: false },
-  { href: "/contacts", label: "Контакты", isCatalog: false },
+  { href: CATALOG_HREF, label: "Каталог", isCatalog: true, isClients: false },
+  { href: "/about", label: "О нас", isCatalog: false, isClients: false },
+  { href: "/contacts", label: "Контакты", isCatalog: false, isClients: false },
+  { href: "/delivery-and-payments", label: "Клиентам", isCatalog: false, isClients: true },
 ] as const;
 
 /** Ссылки сайдбара: Top-зона (лого + этот список) + Center (соц-блок) + Bottom (адрес). */
@@ -35,6 +38,7 @@ const SIDEBAR_LINKS: { href: string; label: string }[] = [
   { href: "/delivery-and-payments", label: "Доставка и оплата" },
   { href: "/docs/return", label: "Условия возврата" },
   { href: "/docs/care", label: "Инструкция по уходу" },
+  { href: "/docs/corporate", label: "Корпоративные заказы" },
 ];
 
 export type HeaderMainProps = {
@@ -124,7 +128,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
   }, [isMenuOpen]);
 
   const iconLinkClass =
-    "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
+    "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
 
   const sidebarLinkClass = "block";
   const sidebarContactBtnClass =
@@ -146,16 +150,16 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
           lineHeight: "normal",
         }}
       >
-        <div className="w-full flex items-center justify-between px-5 md:px-7 gap-4">
-          <div className="relative z-10 flex items-center gap-2 md:gap-3 shrink-0 -ml-1 md:-ml-0.5">
+        <div className="w-full flex items-center justify-between px-3 md:px-7 gap-4">
+          <div className="relative z-10 flex items-center gap-2 md:gap-3 shrink-0 -ml-0.5 md:-ml-0.5">
             <button
               type="button"
               onClick={() => setIsMenuOpen(true)}
-              className="inline-flex items-center justify-center shrink-0 w-9 h-9 md:w-10 md:h-10 rounded text-header-foreground hover:opacity-80 active:opacity-60"
+              className="inline-flex items-center justify-center shrink-0 w-9 h-9 min-w-[44px] min-h-[44px] md:w-10 md:h-10 md:min-w-0 md:min-h-0 rounded text-header-foreground hover:opacity-80 active:opacity-60"
               aria-label="Открыть меню"
             >
               <svg
-                className="w-5 h-5 md:w-6 md:h-6"
+                className="w-4 h-4 md:w-6 md:h-6"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={2}
@@ -171,7 +175,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
             </Link>
           </div>
 
-          <div className="relative z-10 flex items-center gap-1.5 md:gap-2 shrink-0" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
+          <div className="relative z-10 flex items-center gap-1 md:gap-2 shrink-0" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
             <SearchDropdown />
             <Link
               id="header-favorites"
@@ -180,7 +184,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
               className={`${iconLinkClass} relative`}
             >
               <svg
-                className="w-[18px] h-[18px] md:w-5 md:h-5 shrink-0"
+                className="w-4 h-4 md:w-5 md:h-5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.6}
@@ -211,16 +215,22 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
           aria-label="Основное меню"
         >
           <div className="pointer-events-auto flex items-center gap-5 lg:gap-8">
-            {NAV_LINKS.map(({ href, label, isCatalog }) => {
+            {NAV_LINKS.map(({ href, label, isCatalog, isClients }) => {
+              const isClientActive = CLIENT_LINKS.some((l) => pathname === l.href);
               const isActive =
-                href === CATALOG_HREF
-                  ? pathname === CATALOG_HREF ||
-                    pathname.startsWith(CATALOG_HREF + "/") ||
-                    pathname.startsWith("/magazine/")
-                  : pathname === href;
+                isClients
+                  ? isClientActive
+                  : href === CATALOG_HREF
+                    ? pathname === CATALOG_HREF ||
+                      pathname.startsWith(CATALOG_HREF + "/") ||
+                      pathname.startsWith("/magazine/")
+                    : pathname === href;
               const linkClass = `${navLinkBase} text-header-foreground ${navLinkUnderline} ${isActive ? "after:scale-x-100" : "after:scale-x-0 hover:after:scale-x-100"}`;
               if (isCatalog) {
                 return <CatalogDropdown key="catalog" triggerClassName={linkClass} isActive={isActive} />;
+              }
+              if (isClients) {
+                return <ClientsDropdown key="clients" triggerClassName={linkClass} isActive={isActive} />;
               }
               return (
                 <Link key={href + label} href={href} className={linkClass}>
@@ -334,7 +344,14 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen }: HeaderMainProps) {
 
               {/* C) Bottom: адрес */}
               <footer className="shrink-0 pt-4 mt-auto text-sm opacity-85 leading-relaxed">
-                <div>Пластунская 123А, корпус 2, этаж 2, офис 84</div>
+                <a
+                  href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:opacity-90 transition-opacity"
+                >
+                  Пластунская 123А, корпус 2, этаж 2, офис 84
+                </a>
                 <div>Пн–Вс с 09:00 до 21:00</div>
               </footer>
             </div>

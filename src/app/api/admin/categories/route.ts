@@ -9,16 +9,32 @@ async function requireAdmin() {
   if (!ok) throw new Error("unauthorized");
 }
 
+/**
+ * GET: список категорий ТОЛЬКО из таблицы `categories`.
+ * Единственный допустимый источник для раздела «Доп товары» и др.
+ * Возвращаются только строки с непустым slug из БД (без генерации, без fallback).
+ */
 export async function GET() {
   try {
     const supabase = getSupabaseAdmin();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("categories")
-      .select("*")
+      .select("id, name, slug, sort_order, is_active, description")
       .order("sort_order", { ascending: true });
     if (error) throw error;
-    return NextResponse.json(data ?? []);
+    const rows = (data ?? []) as { id: string; name: string | null; slug: string | null; sort_order: number; is_active: boolean; description: string | null }[];
+    const list = rows
+      .filter((r) => typeof r.slug === "string" && r.slug.trim() !== "")
+      .map((r) => ({
+        id: String(r.id),
+        name: r.name ?? "",
+        slug: String(r.slug).trim(),
+        sort_order: r.sort_order ?? 0,
+        is_active: r.is_active ?? true,
+        description: r.description ?? null,
+      }));
+    return NextResponse.json(list);
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
@@ -28,8 +44,12 @@ export async function GET() {
   }
 }
 
+/** Допустимый формат slug: только латиница, цифры, дефис */
+const SLUG_REGEX = /^[a-z0-9-]+$/;
+
 const createSchema = z.object({
   name: z.string().min(1),
+  slug: z.string().min(1).optional(),
   is_active: z.boolean().default(true),
   description: z.string().max(5000).optional().nullable(),
 });
@@ -60,7 +80,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
     const supabase = getSupabaseAdmin();
-    const baseSlug = slugify(parsed.data.name) || "category";
+    const rawSlug =
+      (parsed.data.slug && parsed.data.slug.trim()) || slugify(parsed.data.name) || "category";
+    const baseSlug = rawSlug.trim();
+    if (!SLUG_REGEX.test(baseSlug)) {
+      return NextResponse.json(
+        { error: "Slug может содержать только латинские буквы, цифры и дефис (a-z, 0-9, -)." },
+        { status: 400 }
+      );
+    }
     const slug = await ensureUniqueSlug(supabase, baseSlug);
 
     // sort_order: ставим в конец (по текущему max + 1 или 0)

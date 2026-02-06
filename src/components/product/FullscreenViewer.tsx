@@ -31,11 +31,14 @@ export function FullscreenViewer({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [canCloseByOverlay, setCanCloseByOverlay] = useState(false);
+  const [hasHover, setHasHover] = useState(false);
   const dragStartRef = useRef<{ clientX: number; clientY: number; offsetX: number; offsetY: number } | null>(null);
   const didDragRef = useRef(false);
   const viewportRef = useRef<HTMLDivElement>(null);
 
-  const hasHover = typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches;
+  useEffect(() => {
+    setHasHover(window.matchMedia("(hover: hover)").matches);
+  }, []);
   const imagesLen = images.length;
   const hasMultipleImages = imagesLen > 1;
   const scale = isZoomed ? ZOOM_SCALE : 1;

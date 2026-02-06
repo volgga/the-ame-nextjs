@@ -53,6 +53,11 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Корзина — только модалка в шапке; отдельной страницы нет
+  if (pathname === "/cart" || pathname === "/korzina") {
+    return NextResponse.redirect(new URL("/", request.url), 308);
+  }
+
   // ============================================================
   // Страницы админки
   // ============================================================
@@ -93,6 +98,8 @@ export const config = {
     "/admin",
     "/admin/:path*",
     "/api/admin/:path*",
+    "/cart",
+    "/korzina",
     "/catalog",
     "/catalog/:path*",
     "/magazin",

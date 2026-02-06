@@ -233,14 +233,21 @@ export function CheckoutFormModal() {
     { id: "height_960", name: "На высоту 960м (Роза-Хутор/Горки город)", feeUnder: 2400, freeFrom: 24000 },
   ];
 
-  // Единый расчёт стоимости доставки: базовая цена по району + удвоение при «Доставка ночью»
+  // Стандартная цена по зоне (без ночного тарифа): бесплатно при достижении порога, иначе feeUnder.
+  const getStandardZonePrice = (zone: { freeFrom: number; feeUnder: number }) =>
+    state.total >= zone.freeFrom ? 0 : zone.feeUnder;
+
+  // Единый расчёт стоимости доставки: по району, порог бесплатной доставки, ночной тариф ×2 только при сумме ниже порога.
   const getDeliveryPrice = () => {
     if (isPickup || !deliveryType) return 0;
     const zone = deliveryZones.find((z) => z.id === deliveryType);
     if (!zone) return 0;
-    const basePrice = state.total >= zone.freeFrom ? 0 : zone.feeUnder;
     const isNightDelivery = deliveryTime === "Доставка ночью";
-    return isNightDelivery ? basePrice * 2 : basePrice;
+    const standardPrice = getStandardZonePrice(zone);
+    if (isNightDelivery) {
+      return state.total >= zone.freeFrom ? zone.feeUnder : zone.feeUnder * 2;
+    }
+    return standardPrice;
   };
 
   const deliveryPrice = getDeliveryPrice();
@@ -355,7 +362,7 @@ export function CheckoutFormModal() {
               placeholder="Имя и фамилия"
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
@@ -369,7 +376,7 @@ export function CheckoutFormModal() {
                 placeholder="+7 (000) 000-00-00"
                 value={customerPhone}
                 onChange={(e) => handlePhoneChange(e, setCustomerPhone)}
-                className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full pl-12 pr-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -380,7 +387,7 @@ export function CheckoutFormModal() {
               placeholder="@username"
               value={customerTelegram}
               onChange={handleTelegramChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
           <div>
@@ -390,7 +397,7 @@ export function CheckoutFormModal() {
               placeholder="example@mail.ru"
               value={customerEmail}
               onChange={(e) => setCustomerEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         </div>
@@ -437,7 +444,7 @@ export function CheckoutFormModal() {
                 placeholder="Имя получателя"
                 value={recipientName}
                 onChange={(e) => setRecipientName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             <div>
@@ -451,7 +458,7 @@ export function CheckoutFormModal() {
                   placeholder="+7 (000) 000-00-00"
                   value={recipientPhone}
                   onChange={(e) => handlePhoneChange(e, setRecipientPhone)}
-                  className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full pl-12 pr-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </div>
@@ -470,7 +477,7 @@ export function CheckoutFormModal() {
             <button
               type="button"
               onClick={() => setIsDeliveryDropdownOpen(!isDeliveryDropdownOpen)}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-left flex items-center justify-between bg-white ${isDeliveryDropdownOpen ? "border-border-block" : "border-gray-300"}`}
+              className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-left flex items-center justify-between bg-white ${isDeliveryDropdownOpen ? "border-border-block" : "border-gray-300"}`}
             >
               <span className={selectedZone ? "text-gray-900" : "text-gray-500"}>
                 {selectedZone
@@ -497,7 +504,7 @@ export function CheckoutFormModal() {
                 <div className="fixed inset-0 z-10" onClick={() => setIsDeliveryDropdownOpen(false)} />
                 <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-border-block rounded-lg shadow-lg z-20 max-h-60 overflow-y-auto">
                   {deliveryZones.map((zone) => {
-                    const zonePrice = state.total >= zone.freeFrom ? 0 : zone.feeUnder;
+                    const zonePrice = getStandardZonePrice(zone);
                     return (
                       <button
                         key={zone.id}
@@ -574,11 +581,11 @@ export function CheckoutFormModal() {
           <div className="mb-3">
             <input
               type="text"
-              placeholder="Улица, номер дома, подъезд, квартира, этаж"
-              value={deliveryAddress}
-              onChange={(e) => setDeliveryAddress(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
+          placeholder="Улица, номер дома, подъезд, квартира, этаж"
+          value={deliveryAddress}
+          onChange={(e) => setDeliveryAddress(e.target.value)}
+          className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+        />
           </div>
         )}
 
@@ -593,7 +600,7 @@ export function CheckoutFormModal() {
                 onChange={(e) => setDeliveryDate(e.target.value)}
                 min={getMinDate()}
                 lang="ru"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             {/* Время доставки: скрыто при "Уточнить время и адрес у получателя"; при самовывозе — показываем */}
@@ -603,7 +610,7 @@ export function CheckoutFormModal() {
                 <select
                   value={deliveryTime}
                   onChange={(e) => setDeliveryTime(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
                   <option value="">Выберите время</option>
                   {getTimeIntervals().map((interval) => (
@@ -632,7 +639,7 @@ export function CheckoutFormModal() {
           value={cardText}
           onChange={(e) => setCardText(e.target.value)}
           rows={3}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+          className="w-full px-4 py-3 min-h-[88px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
         />
       </div>
 
@@ -645,7 +652,7 @@ export function CheckoutFormModal() {
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+          className="w-full px-4 py-3 min-h-[88px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
         />
       </div>
 
@@ -656,7 +663,7 @@ export function CheckoutFormModal() {
           placeholder="Промокод"
           value={promoCode}
           onChange={(e) => setPromoCode(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="w-full px-4 py-3 min-h-[44px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
       </div>
       <p className="text-sm text-muted-foreground mb-6">

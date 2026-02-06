@@ -91,7 +91,7 @@ export function TopBar() {
           overflow: "visible",
         }}
       >
-        <div className="w-full flex items-center justify-between px-4 md:px-6">
+        <div className="w-full flex items-center justify-between gap-1 sm:gap-2 md:gap-4 px-4 md:px-6 min-w-0">
           {/* Слева: 2 строки текста */}
           <div className="min-w-0 -ml-1 md:-ml-0.5 leading-tight">
             <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide">
@@ -103,7 +103,7 @@ export function TopBar() {
           </div>
 
           {/* Справа: [адрес |] телефон | иконки */}
-          <div ref={containerRef} className="flex items-center gap-0 shrink-0">
+          <div ref={containerRef} className="flex items-center gap-0.5 sm:gap-1 shrink-0">
             {/* Адрес — отдельная ссылка на Яндекс.Карты, без popover, скрыт на узких экранах */}
             <a
               href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
@@ -195,7 +195,7 @@ export function TopBar() {
               rel="noopener noreferrer"
               aria-label="Max"
               title="Max"
-              className={`${iconLinkClass} ${ICON_BOX}`}
+              className={`${iconLinkClass} ${ICON_BOX} max-[380px]:hidden`}
             >
               <span
                 className={`${ICON_SIZE} block shrink-0 bg-header-foreground`}

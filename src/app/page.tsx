@@ -41,7 +41,6 @@ export default async function HomePage() {
         title={homeOrderBlock?.title}
         subtitle1={homeOrderBlock?.subtitle1}
         text={homeOrderBlock?.text}
-        subtitle2={homeOrderBlock?.subtitle2}
         imageUrl={homeOrderBlock?.imageUrl}
       />
       <FaqSection faqItems={homeFaq} />

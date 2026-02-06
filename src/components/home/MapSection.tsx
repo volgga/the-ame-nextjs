@@ -11,7 +11,7 @@ const YANDEX_MAP_SRC = "https://yandex.ru/map-widget/v1/?z=16&ol=biz&oid=7726999
 export function MapSection() {
   return (
     <section
-      className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP}`}
+      className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP} mb-8`}
       aria-label="Карта расположения"
     >
       <div className="container mx-auto px-4 md:px-6">

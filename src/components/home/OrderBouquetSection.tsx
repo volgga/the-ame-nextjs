@@ -12,7 +12,6 @@ const DEFAULT_TITLE = "Заказать букет вашей мечты";
 const DEFAULT_SUBTITLE1 = "";
 const DEFAULT_TEXT =
   "Соберём букет вашей мечты и доставим по Сочи уже сегодня. Оставьте заявку на сайте или позвоните нам — мы подберём идеальное сочетание цветов под ваш повод и бюджет.";
-const DEFAULT_SUBTITLE2 = "или оставьте заявку";
 const DEFAULT_IMAGE = "/IMG_1543.PNG";
 
 export type OrderBouquetSectionProps = {
@@ -22,15 +21,13 @@ export type OrderBouquetSectionProps = {
   subtitle1?: string | null;
   /** Основной текст (из админки) */
   text?: string | null;
-  /** Подзаголовок №2 — между кнопкой и формой (из админки) */
-  subtitle2?: string | null;
   /** URL изображения (из админки). Если нет — используется дефолтное фото */
   imageUrl?: string | null;
 };
 
 /**
  * Секция "Заказать букет вашей мечты".
- * Порядок: 1) Заголовок (справа), 2) Подзаголовок №1, 3) Основной текст, 4) Кнопка «→ НАПИСАТЬ НАМ», 5) Подзаголовок №2, 6) Форма заказа.
+ * Порядок: 1) Заголовок (справа), 2) Подзаголовок №1, 3) Основной текст, 4) Кнопка «→ НАПИСАТЬ НАМ», 5) Форма заказа.
  * Изображение справа — такой же размер и пропорции (1:1), как в блоке «О нас».
  * Форма заказа не изменяется.
  */
@@ -38,13 +35,11 @@ export function OrderBouquetSection({
   title,
   subtitle1,
   text,
-  subtitle2,
   imageUrl,
 }: OrderBouquetSectionProps = {}) {
   const blockTitle = title?.trim() || DEFAULT_TITLE;
   const blockSubtitle1 = subtitle1?.trim() ?? DEFAULT_SUBTITLE1;
   const blockText = text?.trim() || DEFAULT_TEXT;
-  const blockSubtitle2 = subtitle2?.trim() || DEFAULT_SUBTITLE2;
   const blockImageUrl = imageUrl?.trim() || DEFAULT_IMAGE;
 
   const [socialModalOpen, setSocialModalOpen] = useState(false);
@@ -135,10 +130,11 @@ export function OrderBouquetSection({
             </div>
           </div>
 
-          {/* Сетка: колонка фото шире (увеличено), фото строго 1:1 */}
-          <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1.8fr)] gap-3 md:gap-5 items-start">
-            <div className="order-2 md:order-1 w-full max-w-full">
-              <div className="relative aspect-square w-full max-w-md md:max-w-none overflow-hidden rounded-2xl border border-border-block bg-white">
+          {/* Flex: изображение слева, зазор, текст и форма правее середины */}
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-16">
+              <div className="order-2 md:order-1 w-full md:flex-[0_0_50%]">
+                <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border-block bg-white">
                 <Image
                   src={blockImageUrl}
                   alt="Букет вашей мечты"
@@ -151,11 +147,11 @@ export function OrderBouquetSection({
               </div>
             </div>
 
-            {/* Правая колонка: подзаголовок №1, основной текст, кнопка, подзаголовок №2, форма */}
-            <div className="flex flex-col order-1 md:order-2">
+              {/* Правая колонка: подзаголовок №1, основной текст, форма */}
+              <div className="flex flex-col order-1 md:order-2 md:flex-1 md:min-w-0 md:pl-8">
               <div className="flex-1 space-y-4 pl-0 pr-0">
                 {blockSubtitle1 ? (
-                  <div className="space-y-3 text-sm md:text-base text-[var(--color-text-secondary)] leading-normal">
+                  <div className="space-y-3 text-lg md:text-xl text-[var(--color-text-secondary)] leading-normal font-medium">
                     {blockSubtitle1
                       .split("\n")
                       .filter((line) => line.length > 0)
@@ -170,18 +166,7 @@ export function OrderBouquetSection({
                   )}
                 </p>
 
-                {blockSubtitle2 ? (
-                  <div className="space-y-3 text-sm md:text-base text-[var(--color-text-secondary)] leading-normal text-center">
-                    {blockSubtitle2
-                      .split("\n\n")
-                      .filter((p) => p.trim().length > 0)
-                      .map((paragraph, index) => (
-                        <p key={paragraph.trim().slice(0, 20) || `sub2-${index}`}>{paragraph.trim()}</p>
-                      ))}
-                  </div>
-                ) : null}
-
-                <form onSubmit={handleSubmit} className="space-y-3 max-w-md">
+                <form onSubmit={handleSubmit} className="space-y-3 w-full">
                   <div>
                     <input
                       type="text"
@@ -240,7 +225,7 @@ export function OrderBouquetSection({
                     </label>
                     {consentError && <p className="mt-1 text-sm text-red-600">{consentError}</p>}
                   </div>
-                  <div className="flex justify-center md:justify-start">
+                  <div className="flex justify-center">
                     <button
                       type="submit"
                       disabled={
@@ -259,6 +244,7 @@ export function OrderBouquetSection({
                 </form>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </section>

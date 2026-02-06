@@ -144,6 +144,7 @@ export default function AdminHomeCollectionsPage() {
       initialFormSnapshotRef.current = formSnapshot(form, !!form.file);
     }
     modalWasOpenRef.current = !!open;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot only when modal opens; full `form` would retrigger on every keystroke
   }, [creating, editing, form.name, form.category_slug, form.is_active, form.sort_order, form.file]);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 # Схема Supabase (public) — ядро магазина
 
-После чистки в `public` остаются **4 таблицы**: `products`, `variant_products`, `product_variants`, `orders`. Других таблиц/вью в коде и скриптах нет.
+После чистки в `public` используются **5 таблиц**: `products`, `variant_products`, `product_variants`, `orders`, `product_details`. Других таблиц/вью в коде и скриптах нет.
 
 ---
 
@@ -12,6 +12,7 @@
 | **variant_products** | Товары с вариантами (размер/тип): заголовок, slug, min_price_cache |
 | **product_variants** | Конкретные варианты (размер/название, цена) — принадлежат variant_products |
 | **orders** | Заказы из корзины, сумма в копейках, статус оплаты, платеж Tinkoff |
+| **product_details** | Глобальный текст «Подарок при заказе» для всех карточек товаров (singleton, одна строка) |
 
 Связь: **product_variants.product_id → variant_products.id** (один вариант принадлежит одному «вариантному» товару).  
 **products** и **variant_products** — два независимых каталога; в приложении они объединяются в один список (каталог).
@@ -97,6 +98,16 @@
 
 В коде используются: `id`, `items`, `amount`, `currency`, `customer`, `status`, `tinkoff_payment_id`, `created_at`, `updated_at`. Поле **amount** — единственное для суммы (в копейках); если в БД было **total_amount**, его нужно привести к **amount** (см. `scripts/db-fix.sql`).
 
+### product_details
+
+| Колонка | Тип | PK | Nullable | Описание |
+|---------|-----|----|----------|----------|
+| id | INT | ✓ | NOT NULL | Всегда 1 (singleton), CHECK (id = 1) |
+| kit | TEXT | | NULL | Текст «Подарок при заказе» для всех карточек товаров |
+| updated_at | TIMESTAMPTZ | | NULL | Дата обновления |
+
+Создание: `scripts/migrations/product-details.sql`. Для существующих БД с колонкой `component_replacement` — `scripts/migrations/product-details-drop-component-replacement.sql`. RLS: anon — SELECT; service_role — полный доступ (админка).
+
 ---
 
 ## 3. Связи (FK)
@@ -128,6 +139,7 @@
 | products | ✓ (каталог) | — | — |
 | variant_products | ✓ (каталог) | — | — |
 | product_variants | ✓ (если нужен выбор варианта) | — | — |
+| product_details | ✓ (карточки товаров) | — | — |
 | orders | ✓ по id (страница успеха, письмо) | ✓ (оформление заказа) | ✓ по id (колбэк Tinkoff по id) |
 
 - **products / variant_products / product_variants**: только чтение для всех — каталог и карточки публичные.
@@ -146,6 +158,7 @@
 - **variant_products** — «шапка» товара с вариантами (id = int, в корзине как `vp-{id}`); отображается в каталоге с ценой от `min_price_cache`.
 - **product_variants** — строки вариантов (размер/тип, цена) для каждого variant_product; обновление `min_price_cache` у variant_products обычно по триггеру или при сохранении вариантов.
 - **orders** — заказ из корзины: позиции в `items`, сумма в `amount` (копейки), контакт и доставка в `customer`, статус оплаты в `status`; Tinkoff пишет ID платежа в `tinkoff_payment_id` / `payment_id`.
+- **product_details** — одна строка (id = 1): текст «Подарок при заказе», редактируется в админке (Товары → Детали), отображается на всех карточках товаров.
 
 **hero_slides** — используется для слайдов на главной (см. docs/SLIDES-SYSTEM.md).  
 **admin_users, new_clients, discount_rules** — в коде не используются; удалять по желанию.

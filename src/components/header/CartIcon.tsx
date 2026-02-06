@@ -4,25 +4,25 @@ import { useCart } from "@/context/CartContext";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { formatPrice } from "@/utils/formatPrice";
 
-/** Единый стиль иконок в шапке (поиск, избранное, корзина): размер, цвет, hover. */
+/** Единый стиль иконок в шапке (поиск, избранное, корзина): на мобиле компактнее, tap area 44px. */
 const HEADER_ICON_CLASS =
-  "relative inline-flex items-center justify-center w-9 h-9 md:w-10 md:h-10 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
+  "relative inline-flex items-center justify-center w-9 h-9 min-w-[44px] min-h-[44px] md:w-10 md:h-10 md:min-w-0 md:min-h-0 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg";
 
 export function CartIcon() {
   const { state, isCartDrawerOpen, openCartDrawer, closeCartDrawer } = useCart();
 
   return (
     <>
-      <div className="flex items-center gap-1.5 shrink-0">
-        <button
-          id="header-cart"
-          type="button"
-          onClick={openCartDrawer}
-          aria-label="Корзина"
-          className={HEADER_ICON_CLASS}
-        >
+      <button
+        id="header-cart"
+        type="button"
+        onClick={openCartDrawer}
+        aria-label="Корзина"
+        className="flex items-center gap-1.5 shrink-0 rounded text-header-foreground hover:opacity-80 active:opacity-60 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-header-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-header-bg"
+      >
+        <span className={`${HEADER_ICON_CLASS} pointer-events-none`}>
           <svg
-            className="w-[18px] h-[18px] md:w-5 md:h-5 shrink-0"
+            className="w-4 h-4 md:w-5 md:h-5 shrink-0"
             fill="none"
             stroke="currentColor"
             strokeWidth={1.6}
@@ -44,11 +44,11 @@ export function CartIcon() {
               {state.itemCount > 99 ? "99+" : state.itemCount}
             </span>
           )}
-        </button>
-        <span className="text-sm font-medium text-header-foreground tabular-nums">
+        </span>
+        <span className="hidden md:inline text-sm font-medium text-header-foreground tabular-nums">
           {formatPrice(state.total)}
         </span>
-      </div>
+      </button>
       <CartDrawer isOpen={isCartDrawerOpen} onClose={closeCartDrawer} />
     </>
   );
