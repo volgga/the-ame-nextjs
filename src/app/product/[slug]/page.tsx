@@ -4,10 +4,14 @@ import { getProductDetails } from "@/lib/productDetails";
 import { getAddOnCategoriesOrder, buildAddToOrderProducts } from "@/lib/addOnProducts";
 import { notFound } from "next/navigation";
 import { ProductPageClient } from "@/components/product/ProductPageClient";
+import { canonicalUrl, trimDescription, ROBOTS_INDEX_FOLLOW, CANONICAL_BASE } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
+
+const PRODUCT_DESCRIPTION_FALLBACK =
+  " — свежие цветы с доставкой по Сочи. Удобный заказ и быстрая доставка — The Ame.";
 
 export async function generateStaticParams() {
   const products = await getAllCatalogProducts();
@@ -26,11 +30,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const title = `Купить ${product.title} в Сочи с доставкой — цветы и подарки | The Ame`;
+  const descRaw = product.shortDescription?.trim();
+  const description =
+    descRaw && descRaw.length > 0
+      ? trimDescription(descRaw, 160)
+      : `${product.title}${PRODUCT_DESCRIPTION_FALLBACK}`;
+
   return {
-    title: `${product.title} — купить с доставкой за 45 минут по Сочи | The Ame`,
-    description: `Свежий букет ${product.title} с бесплатной доставкой по Сочи за 45 минут. ${product.shortDescription}`,
+    title,
+    description,
     alternates: {
-      canonical: `https://theame.ru/product/${slug}`,
+      canonical: canonicalUrl(`/product/${slug}`),
+    },
+    robots: ROBOTS_INDEX_FOLLOW,
+  };
+}
+
+function buildProductJsonLd(slug: string, product: { title: string; image: string; price: number }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    image: product.image ? (product.image.startsWith("http") ? product.image : `${CANONICAL_BASE}${product.image.startsWith("/") ? "" : "/"}${product.image}`) : undefined,
+    offers: {
+      "@type": "Offer",
+      price: product.price,
+      priceCurrency: "RUB",
+      availability: "https://schema.org/InStock",
+      url: canonicalUrl(`/product/${slug}`),
     },
   };
 }
@@ -54,11 +82,19 @@ export default async function ProductPage({ params }: Props) {
     product.id
   );
 
+  const jsonLd = buildProductJsonLd(slug, product);
+
   return (
-    <ProductPageClient
-      product={product}
-      productDetails={productDetails}
-      addToOrderProducts={addToOrderProducts}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductPageClient
+        product={product}
+        productDetails={productDetails}
+        addToOrderProducts={addToOrderProducts}
+      />
+    </>
   );
 }
