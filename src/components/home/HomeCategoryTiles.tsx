@@ -191,7 +191,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
               !col.categorySlug || col.categorySlug === "magazin"
                 ? "/magazin"
                 : `/magazine/${col.categorySlug}`;
-            const imageSrc = col.imageUrl || "https://theame.ru/placeholder.svg";
+            const imageSrc = col.imageUrl?.trim() && (col.imageUrl.startsWith("http") || col.imageUrl.startsWith("/")) ? col.imageUrl : "/placeholder.svg";
             const cardKey = col.id;
             const rowInfo = cardRowMap.get(cardKey);
             const isRowVisible = rowInfo ? visibleRows.has(rowInfo.rowIndex) : false;

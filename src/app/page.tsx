@@ -23,7 +23,7 @@ import {
   canonicalUrl,
 } from "@/lib/seo";
 
-const HOME_TITLE = "Доставка цветов Сочи — купить цветы с доставкой | The Ame";
+const HOME_TITLE = "Доставка цветов в Сочи — купить цветы с доставкой | The Ame";
 const HOME_DESCRIPTION =
   "Купить цветы с доставкой в Сочи — розы, монобукеты и авторские букеты. Быстрая доставка, свежие цветы и удобный заказ в The Ame.";
 const HOME_KEYWORDS =

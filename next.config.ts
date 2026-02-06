@@ -28,15 +28,12 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "theame.ru",
-        pathname: "/**",
-      },
+      { protocol: "https", hostname: "theame.ru", pathname: "/**" },
+      { protocol: "http", hostname: "theame.ru", pathname: "/**" },
       ...supabaseHosts.map((host) => ({
         protocol: "https" as const,
         hostname: host,
-        pathname: "/storage/v1/object/public/**" as const,
+        pathname: "/**" as const,
       })),
     ],
   },

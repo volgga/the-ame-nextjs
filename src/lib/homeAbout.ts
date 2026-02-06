@@ -3,6 +3,7 @@
  * Использует anon-клиент. RLS разрешает SELECT для всех.
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 
 export type HomeAbout = {
@@ -25,7 +26,7 @@ const DEFAULT_ABOUT: HomeAbout = {
   imageUrl: null,
 };
 
-export async function getHomeAbout(): Promise<HomeAbout> {
+async function getHomeAboutUncached(): Promise<HomeAbout> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return DEFAULT_ABOUT;
@@ -37,13 +38,7 @@ export async function getHomeAbout(): Promise<HomeAbout> {
       .limit(1)
       .single();
 
-    if (error) {
-      if (error.code === "42P01" || error.code === "PGRST116") return DEFAULT_ABOUT;
-      console.warn("[homeAbout] Ошибка загрузки:", error.message);
-      return DEFAULT_ABOUT;
-    }
-
-    if (!data) return DEFAULT_ABOUT;
+    if (error || !data) return DEFAULT_ABOUT;
 
     return {
       title: data.about_title ?? DEFAULT_ABOUT.title,
@@ -53,4 +48,8 @@ export async function getHomeAbout(): Promise<HomeAbout> {
   } catch {
     return DEFAULT_ABOUT;
   }
+}
+
+export async function getHomeAbout(): Promise<HomeAbout> {
+  return unstable_cache(getHomeAboutUncached, ["home-about"], { revalidate: 300 })();
 }

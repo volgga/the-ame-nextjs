@@ -3,6 +3,7 @@
  * Использует anon-клиент. RLS разрешает SELECT только для is_active=true.
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 
 export type HomeCollection = {
@@ -13,7 +14,7 @@ export type HomeCollection = {
   sort_order: number;
 };
 
-export async function getActiveHomeCollections(): Promise<HomeCollection[]> {
+async function getActiveHomeCollectionsUncached(): Promise<HomeCollection[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return [];
@@ -25,11 +26,7 @@ export async function getActiveHomeCollections(): Promise<HomeCollection[]> {
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
 
-    if (error) {
-      if (error.code === "42P01") return []; // таблица не существует
-      console.warn("[homeCollections] Ошибка загрузки:", error.message);
-      return [];
-    }
+    if (error) return [];
 
     return (data ?? []).map((r) => ({
       id: String(r.id),
@@ -41,4 +38,9 @@ export async function getActiveHomeCollections(): Promise<HomeCollection[]> {
   } catch {
     return [];
   }
+}
+
+/** Кэш 5 мин */
+export async function getActiveHomeCollections(): Promise<HomeCollection[]> {
+  return unstable_cache(getActiveHomeCollectionsUncached, ["home-collections"], { revalidate: 300 })();
 }

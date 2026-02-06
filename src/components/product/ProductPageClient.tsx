@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, ChevronDown, Heart, Bell, Minus, Plus, ArrowLeftRight, ArrowUpDown } from "lucide-react";
 import { useCart } from "@/context/CartContext";
@@ -155,8 +156,14 @@ function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClos
 
             {/* Товар */}
             <div className="flex items-center gap-3 p-3 bg-[rgba(31,42,31,0.06)] rounded-lg mb-6">
-              <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                <Image src={product.image} alt={product.title} fill className="object-cover" />
+              <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 bg-[#ece9e2]">
+                <Image
+                  src={isValidImageUrl(product.image) ? product.image! : PLACEHOLDER_IMAGE}
+                  alt={product.title}
+                  fill
+                  sizes="64px"
+                  className="object-cover"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-color-text-main truncate">{product.title}</p>
@@ -263,18 +270,17 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     isPreorder: product.isPreorder ?? false,
   };
 
-  // Массив изображений: всегда начинается с product.image, затем product.images (без дублей)
-  const base = product.image?.trim() || null;
+  // Массив изображений: product.image + product.images; невалидные заменяем placeholder
+  const base = product.image?.trim();
   const extra = product.images ?? [];
   const seen = new Set<string>();
   const images: string[] = [];
-  if (base) {
-    images.push(base);
-    seen.add(base);
-  }
+  const first = isValidImageUrl(base) ? base! : PLACEHOLDER_IMAGE;
+  images.push(first);
+  seen.add(first);
   for (const url of extra) {
     const u = typeof url === "string" ? url.trim() : "";
-    if (u && !seen.has(u)) {
+    if (u && isValidImageUrl(u) && !seen.has(u)) {
       images.push(u);
       seen.add(u);
     }

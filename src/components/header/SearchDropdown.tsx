@@ -251,17 +251,13 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                             className="flex gap-3 p-3 hover:bg-gray-50 transition-colors"
                           >
                             <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#ece9e2] shrink-0">
-                              {product.image ? (
-                                <Image
-                                  src={product.image}
-                                  alt=""
-                                  fill
-                                  className="object-cover"
-                                  sizes="48px"
-                                />
-                              ) : (
-                                <div className="w-full h-full bg-gray-200" />
-                              )}
+                              <Image
+                                src={product.image?.trim() && (product.image.startsWith("http") || product.image.startsWith("/")) ? product.image : "/placeholder.svg"}
+                                alt=""
+                                fill
+                                sizes="48px"
+                                className="object-cover"
+                              />
                             </div>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium text-color-text-main line-clamp-2">
@@ -324,17 +320,13 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                           className="flex gap-3 p-3 hover:bg-gray-50 transition-colors"
                         >
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#ece9e2] shrink-0">
-                            {product.image ? (
-                              <Image
-                                src={product.image}
-                                alt=""
-                                fill
-                                className="object-cover"
-                                sizes="48px"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gray-200" />
-                            )}
+                            <Image
+                              src={product.image?.trim() && (product.image.startsWith("http") || product.image.startsWith("/")) ? product.image : "/placeholder.svg"}
+                              alt=""
+                              fill
+                              sizes="48px"
+                              className="object-cover"
+                            />
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium text-color-text-main line-clamp-2">

@@ -2,6 +2,7 @@
  * Публичная загрузка контента блока «Форма с заказом» на главной (заголовок, текст, изображение).
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 
 export type HomeOrderBlock = {
@@ -18,7 +19,7 @@ const DEFAULT_ORDER_BLOCK: HomeOrderBlock = {
   imageUrl: null,
 };
 
-export async function getHomeOrderBlock(): Promise<HomeOrderBlock> {
+async function getHomeOrderBlockUncached(): Promise<HomeOrderBlock> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return DEFAULT_ORDER_BLOCK;
@@ -30,13 +31,7 @@ export async function getHomeOrderBlock(): Promise<HomeOrderBlock> {
       .limit(1)
       .single();
 
-    if (error) {
-      if (error.code === "42P01" || error.code === "PGRST116") return DEFAULT_ORDER_BLOCK;
-      console.warn("[homeOrderBlock] Ошибка загрузки:", error.message);
-      return DEFAULT_ORDER_BLOCK;
-    }
-
-    if (!data) return DEFAULT_ORDER_BLOCK;
+    if (error || !data) return DEFAULT_ORDER_BLOCK;
 
     return {
       title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
@@ -47,4 +42,8 @@ export async function getHomeOrderBlock(): Promise<HomeOrderBlock> {
   } catch {
     return DEFAULT_ORDER_BLOCK;
   }
+}
+
+export async function getHomeOrderBlock(): Promise<HomeOrderBlock> {
+  return unstable_cache(getHomeOrderBlockUncached, ["home-order-block"], { revalidate: 300 })();
 }
