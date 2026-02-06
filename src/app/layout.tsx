@@ -10,7 +10,10 @@ const montserrat = Montserrat({
   display: "swap",
 });
 
+const SITE_URL = "https://theame.ru";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   // Шаблон для title (будет использоваться на всех страницах)
   title: {
     template: "%s | The Ame",
@@ -71,9 +74,9 @@ export const metadata: Metadata = {
   // Другие метаданные
   manifest: "/site.webmanifest",
   // themeColor в Next 16 нужно указывать через export const viewport (см. ниже)
-  // Canonical URL (будет переопределяться на каждой странице)
+  // Canonical URL главной (остальные страницы задают свой в metadata)
   alternates: {
-    canonical: "https://theame.ru/",
+    canonical: "/",
   },
   // Robots (для поисковых систем)
   robots: {

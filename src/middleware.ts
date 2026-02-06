@@ -13,8 +13,26 @@ const ALL_FLOWERS = "/posmotret-vse-tsvety";
 /** Маршрут категории */
 const MAGAZINE_PREFIX = "/magazine";
 
+const CANONICAL_HOST = "theame.ru";
+
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, hostname, protocol } = request.nextUrl;
+
+  // ============================================================
+  // Canonical host: www → non-www, http → https (301)
+  // Только для продакшн-домена, локальную разработку не трогаем.
+  // ============================================================
+  if (hostname === "www." + CANONICAL_HOST) {
+    const url = new URL(request.url);
+    url.hostname = CANONICAL_HOST;
+    url.protocol = "https:";
+    return NextResponse.redirect(url, 301);
+  }
+  if (hostname === CANONICAL_HOST && protocol === "http:") {
+    const url = new URL(request.url);
+    url.protocol = "https:";
+    return NextResponse.redirect(url, 301);
+  }
 
   // ============================================================
   // Редиректы на новый формат /magazine/<slug> и главную каталога /magazin
@@ -93,17 +111,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/admin",
-    "/admin/:path*",
-    "/api/admin/:path*",
-    "/cart",
-    "/korzina",
-    "/catalog",
-    "/catalog/:path*",
-    "/magazin",
-    "/magazin/:path*",
-    "/posmotret-vse-tsvety",
-    "/posmotret-vse-tsvety/:path*",
-  ],
+  // Запускаем для всех путей (canonical редиректы + роутинг ниже). Исключаем статику.
+  matcher: ["/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:ico|png|jpg|jpeg|gif|webp|svg)$).*)"],
 };

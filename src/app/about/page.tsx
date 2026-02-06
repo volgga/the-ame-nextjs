@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: "О нас",
   description:
     "The Áme — цветочный магазин в Сочи. Классические сочетания, понятные формы, аккуратные букеты для важных моментов.",
+  alternates: { canonical: "https://theame.ru/about" },
 };
 
 export default function AboutPage() {
