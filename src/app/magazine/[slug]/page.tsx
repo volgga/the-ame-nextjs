@@ -15,6 +15,9 @@ import {
   ROBOTS_INDEX_FOLLOW,
   ROBOTS_NOINDEX_FOLLOW,
   hasIndexableQueryParams,
+  SITE_NAME,
+  LOCALE,
+  CANONICAL_BASE,
 } from "@/lib/seo";
 
 type MagazineCategoryPageProps = {
@@ -60,13 +63,21 @@ export async function generateMetadata({
 
   const hasParams = hasIndexableQueryParams(resolvedSearchParams);
 
+  const url = canonicalUrl(`/magazine/${slug}`);
   return {
     title,
     description,
-    alternates: {
-      canonical: canonicalUrl(`/magazine/${slug}`),
-    },
+    alternates: { canonical: url },
     robots: hasParams ? ROBOTS_NOINDEX_FOLLOW : ROBOTS_INDEX_FOLLOW,
+    openGraph: {
+      type: "website",
+      locale: LOCALE,
+      url,
+      siteName: SITE_NAME,
+      title,
+      description,
+      images: [{ url: `${CANONICAL_BASE}/IMG_1543.PNG`, width: 900, height: 1200, alt: title }],
+    },
   };
 }
 

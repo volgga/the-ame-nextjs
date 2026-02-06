@@ -1,15 +1,26 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
+import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo";
 
 const PROSE_CLASS = "space-y-5 text-[18px] leading-relaxed text-neutral-700";
 
+const TITLE = "О нас — доставка цветов в Сочи | The Ame";
+const DESCRIPTION =
+  "The Ame — сервис доставки цветов в Сочи. Свежие букеты, внимание к деталям и забота о каждом заказе.";
+
 export const metadata: Metadata = {
-  title: "О нас — доставка цветов в Сочи | The Ame",
-  description:
-    "The Ame — сервис доставки цветов в Сочи. Свежие букеты, внимание к деталям и забота о каждом заказе.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: { canonical: canonicalUrl("/about") },
   robots: ROBOTS_INDEX_FOLLOW,
+  openGraph: {
+    type: "website",
+    locale: LOCALE,
+    url: canonicalUrl("/about"),
+    siteName: SITE_NAME,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default function AboutPage() {

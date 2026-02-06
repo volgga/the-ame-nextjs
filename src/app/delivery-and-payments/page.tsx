@@ -17,16 +17,25 @@ import {
 } from "lucide-react";
 import { getDeliveryZones } from "@/lib/deliveryZones";
 import { DeliveryZonesTable } from "@/components/delivery/DeliveryZonesTable";
-import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
+import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo";
+
+const TITLE = "Доставка и оплата — цветы с доставкой по Сочи | The Ame";
+const DESCRIPTION =
+  "Условия доставки цветов по Сочи, способы оплаты и сроки выполнения заказов. Прозрачно, удобно и без сюрпризов — The Ame.";
 
 export const metadata: Metadata = {
-  title: "Доставка и оплата — цветы с доставкой по Сочи | The Ame",
-  description:
-    "Условия доставки цветов по Сочи, способы оплаты и сроки выполнения заказов. Прозрачно, удобно и без сюрпризов — The Ame.",
-  alternates: {
-    canonical: canonicalUrl("/delivery-and-payments"),
-  },
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: canonicalUrl("/delivery-and-payments") },
   robots: ROBOTS_INDEX_FOLLOW,
+  openGraph: {
+    type: "website",
+    locale: LOCALE,
+    url: canonicalUrl("/delivery-and-payments"),
+    siteName: SITE_NAME,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default async function DeliveryAndPaymentsPage() {

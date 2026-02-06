@@ -1,16 +1,25 @@
 import type { Metadata } from "next";
 import { Clock, MapPin, Phone, MessageCircle, Send, Sparkles, Mail, Instagram } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
+import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo";
+
+const TITLE = "Контакты — доставка цветов в Сочи | The Ame";
+const DESCRIPTION =
+  "Контакты и способы связи с The Ame. Заказ цветов с доставкой по Сочи, адрес, телефон и соцсети.";
 
 export const metadata: Metadata = {
-  title: "Контакты — доставка цветов в Сочи | The Ame",
-  description:
-    "Контакты и способы связи с The Ame. Заказ цветов с доставкой по Сочи, адрес, телефон и соцсети.",
-  alternates: {
-    canonical: canonicalUrl("/contacts"),
-  },
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: canonicalUrl("/contacts") },
   robots: ROBOTS_INDEX_FOLLOW,
+  openGraph: {
+    type: "website",
+    locale: LOCALE,
+    url: canonicalUrl("/contacts"),
+    siteName: SITE_NAME,
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 const YANDEX_MAP_SRC = "https://yandex.ru/map-widget/v1/?z=16&ol=biz&oid=77269998905";
