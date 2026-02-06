@@ -10,7 +10,7 @@ import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/l
 import { ALL_CATALOG, CATALOG_PAGE, filterProductsByCategorySlug } from "@/lib/catalogCategories";
 import {
   canonicalUrl,
-  trimDescription,
+  truncateDescription,
   normalizeCategoryNameForTitle,
   ROBOTS_INDEX_FOLLOW,
   ROBOTS_NOINDEX_FOLLOW,
@@ -27,8 +27,6 @@ type MagazineCategoryPageProps = {
 
 const VIRTUAL_CATEGORY_SLUGS = ["magazin", "posmotret-vse-tsvety"] as const;
 
-const CATEGORY_DESCRIPTION_FALLBACK =
-  " с доставкой по Сочи. Свежие цветы и удобный заказ — The Ame.";
 
 export async function generateStaticParams() {
   const categories = await getCategories();
@@ -50,16 +48,21 @@ export async function generateMetadata({
   }
 
   const normalizedName = normalizeCategoryNameForTitle(category.name);
-  const title =
-    normalizedName.toLowerCase().includes("сочи") || normalizedName.toLowerCase().includes("доставка")
-      ? `${normalizedName} | The Ame`
-      : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
+  // Формула по спеке: "Купить {НазваниеКатегории} в Сочи с доставкой | The Ame"
+  // Если в названии уже есть "Сочи" или "доставка" — не дублировать
+  const lowerName = normalizedName.toLowerCase();
+  const hasSochi = lowerName.includes("сочи");
+  const hasDelivery = lowerName.includes("доставка");
+  const title = hasSochi || hasDelivery
+    ? `${normalizedName} | The Ame`
+    : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
 
-  const descRaw = category.description?.trim();
+  // Если есть описание категории → использовать его (нормализованное и обрезанное до ≤160 символов)
+  // Иначе fallback: "{НазваниеКатегории} с доставкой по Сочи. Свежие цветы и удобный заказ — The Ame."
   const description =
-    descRaw && descRaw.length > 0
-      ? trimDescription(descRaw, 160)
-      : `${normalizedName}${CATEGORY_DESCRIPTION_FALLBACK}`;
+    category.description && category.description.trim().length > 0
+      ? truncateDescription(category.description, 160)
+      : `${normalizedName} с доставкой по Сочи. Свежие цветы и удобный заказ — The Ame.`;
 
   const hasParams = hasIndexableQueryParams(resolvedSearchParams);
 

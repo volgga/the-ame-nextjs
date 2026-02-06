@@ -4,7 +4,7 @@ import { getCategories, getCategoryBySlug } from "@/lib/categories";
 import { ALL_CATALOG } from "@/lib/catalogCategories";
 import {
   canonicalUrl,
-  trimDescription,
+  truncateDescription,
   normalizeCategoryNameForTitle,
   ROBOTS_INDEX_FOLLOW,
   ROBOTS_NOINDEX_FOLLOW,
@@ -29,12 +29,19 @@ export async function generateMetadata({
   const cat = getCategoryBySlug(categories, "posmotret-vse-tsvety");
   const name = cat?.name ?? ALL_CATALOG.title;
   const normalizedName = normalizeCategoryNameForTitle(name);
-  const title =
-    normalizedName.toLowerCase().includes("сочи") || normalizedName.toLowerCase().includes("доставка")
-      ? `${normalizedName} | The Ame`
-      : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
-  const descRaw = cat?.description?.trim() ?? ALL_CATALOG.description;
-  const description = trimDescription(descRaw, 160) || FALLBACK_DESCRIPTION;
+  // Формула по спеке: "Купить {НазваниеКатегории} в Сочи с доставкой | The Ame"
+  const lowerName = normalizedName.toLowerCase();
+  const hasSochi = lowerName.includes("сочи");
+  const hasDelivery = lowerName.includes("доставка");
+  const title = hasSochi || hasDelivery
+    ? `${normalizedName} | The Ame`
+    : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
+  // Если есть описание категории → использовать его (нормализованное и обрезанное до ≤160 символов)
+  // Иначе fallback
+  const description =
+    cat?.description && cat.description.trim().length > 0
+      ? truncateDescription(cat.description, 160)
+      : FALLBACK_DESCRIPTION;
   const hasParams = hasIndexableQueryParams(resolvedSearchParams);
 
   const url = canonicalUrl("/posmotret-vse-tsvety");

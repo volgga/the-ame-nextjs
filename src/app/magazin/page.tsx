@@ -3,7 +3,7 @@ import { AllFlowersPage } from "@/components/catalog/AllFlowersPage";
 import { getCategories, getCategoryBySlug } from "@/lib/categories";
 import {
   canonicalUrl,
-  trimDescription,
+  truncateDescription,
   normalizeCategoryNameForTitle,
   ROBOTS_INDEX_FOLLOW,
   ROBOTS_NOINDEX_FOLLOW,
@@ -27,12 +27,19 @@ export async function generateMetadata({ searchParams }: MagazinPageProps): Prom
   const cat = getCategoryBySlug(categories, "magazin");
   const name = cat?.name ?? FALLBACK_TITLE;
   const normalizedName = normalizeCategoryNameForTitle(name);
-  const title =
-    normalizedName.toLowerCase().includes("сочи") || normalizedName.toLowerCase().includes("доставка")
-      ? `${normalizedName} | The Ame`
-      : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
-  const descRaw = cat?.description?.trim() ?? FALLBACK_DESCRIPTION;
-  const description = trimDescription(descRaw, 160) || FALLBACK_DESCRIPTION;
+  // Формула по спеке: "Купить {НазваниеКатегории} в Сочи с доставкой | The Ame"
+  const lowerName = normalizedName.toLowerCase();
+  const hasSochi = lowerName.includes("сочи");
+  const hasDelivery = lowerName.includes("доставка");
+  const title = hasSochi || hasDelivery
+    ? `${normalizedName} | The Ame`
+    : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
+  // Если есть описание категории → использовать его (нормализованное и обрезанное до ≤160 символов)
+  // Иначе fallback
+  const description =
+    cat?.description && cat.description.trim().length > 0
+      ? truncateDescription(cat.description, 160)
+      : FALLBACK_DESCRIPTION;
   const hasParams = hasIndexableQueryParams(resolvedSearchParams);
 
   const url = canonicalUrl("/magazin");
