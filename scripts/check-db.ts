@@ -36,15 +36,16 @@ async function main() {
   const supabase = createClient(url, key);
   console.log("🔗 Подключение к Supabase:", url);
 
-  function checkTable(table: string): Promise<{ ok: boolean; count: number | null; error?: string }> {
-    return supabase
-      .from(table)
-      .select("*", { count: "exact", head: true })
-      .then(({ count, error }) => {
-        if (error) return { ok: false, count: null, error: `${error.message} (${error.code})` };
-        return { ok: true, count: count ?? 0 };
-      })
-      .catch((e) => ({ ok: false, count: null, error: e instanceof Error ? e.message : String(e) }));
+  async function checkTable(table: string): Promise<{ ok: boolean; count: number | null; error?: string }> {
+    try {
+      const { count, error } = await supabase
+        .from(table)
+        .select("*", { count: "exact", head: true });
+      if (error) return { ok: false, count: null, error: `${error.message} (${error.code})` };
+      return { ok: true, count: count ?? 0 };
+    } catch (e) {
+      return { ok: false, count: null, error: e instanceof Error ? e.message : String(e) };
+    }
   }
 
   const groups: { title: string; tables: readonly string[] }[] = [
