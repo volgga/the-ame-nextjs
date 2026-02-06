@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/app/AppShell";
-import { CANONICAL_BASE, SITE_NAME, LOCALE, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
+import { CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
 
 // Подключаем шрифт Montserrat (как в старом проекте)
 const montserrat = Montserrat({
@@ -11,52 +11,21 @@ const montserrat = Montserrat({
   display: "swap",
 });
 
+/**
+ * Root layout — только глобальные настройки (metadataBase, icons, manifest).
+ * Title, description, openGraph, canonical — каждая страница задаёт СВОИ в metadata/generateMetadata.
+ * Это предотвращает дублирование "| The Ame | The Ame" и гарантирует один title/description на страницу.
+ */
 export const metadata: Metadata = {
   metadataBase: new URL(CANONICAL_BASE),
-  // Единый источник meta: только Metadata API (metadata/generateMetadata). Нет next/head — один <title>, одна description на маршрут.
-  // Title — строка (не template), чтобы дочерние страницы подменяли целиком, без дубля "| The Ame | The Ame".
-  title: "The Ame — премиальные букеты в Сочи",
-  description:
-    "Премиальные букеты, свежие цветы и идеальный сервис. Закажите доставку по Сочи от 45 минут — создаём настроение в каждом букете.",
-  keywords: [
-    "купить цветы Сочи",
-    "доставка цветов Сочи",
-    "свежие букеты",
-    "премиум букеты",
-    "авторские композиции",
-    "розы с доставкой",
-    "пионовидные розы",
-    "сезонные цветы",
-    "цветы онлайн",
-    "цветы в подарок",
-  ],
+  title: {
+    default: SITE_NAME,
+    template: `%s`, // Без template-суффикса — страницы задают полный title включая "| The Ame"
+  },
   authors: [{ name: SITE_NAME }],
   creator: SITE_NAME,
   publisher: SITE_NAME,
   applicationName: SITE_NAME,
-  openGraph: {
-    type: "website",
-    locale: LOCALE,
-    url: `${CANONICAL_BASE}/`,
-    siteName: SITE_NAME,
-    title: "The Ame — премиальные букеты в Сочи",
-    description:
-      "Премиальные букеты, свежие цветы и идеальный сервис. Закажите доставку по Сочи от 45 минут — создаём настроение в каждом букете.",
-    images: [
-      {
-        url: `${CANONICAL_BASE}/og-image.jpg`,
-        width: 1200,
-        height: 630,
-        alt: "The Ame — премиальные букеты в Сочи",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "The Ame — премиальные букеты в Сочи",
-    description: "Премиальные букеты, свежие цветы и идеальный сервис. Закажите доставку по Сочи от 45 минут.",
-    images: [`${CANONICAL_BASE}/og-image.jpg`],
-  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -66,18 +35,10 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   manifest: "/site.webmanifest",
-  alternates: {
-    canonical: "/",
-  },
-  robots: {
-    ...ROBOTS_INDEX_FOLLOW,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
+  openGraph: {
+    type: "website",
+    locale: LOCALE,
+    siteName: SITE_NAME,
   },
 };
 

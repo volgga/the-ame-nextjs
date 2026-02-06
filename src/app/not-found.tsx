@@ -1,4 +1,10 @@
 import Link from "next/link";
+import { ROBOTS_NOINDEX_FOLLOW } from "@/lib/seo";
+
+export const metadata = {
+  title: "Страница не найдена | The Ame",
+  robots: ROBOTS_NOINDEX_FOLLOW,
+};
 
 /**
  * Страница 404. Next.js App Router автоматически отдаёт HTTP 404 при рендере этого компонента.

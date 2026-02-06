@@ -4,7 +4,14 @@ import { getProductDetails } from "@/lib/productDetails";
 import { getAddOnCategoriesOrder, buildAddToOrderProducts } from "@/lib/addOnProducts";
 import { notFound } from "next/navigation";
 import { ProductPageClient } from "@/components/product/ProductPageClient";
-import { canonicalUrl, trimDescription, ROBOTS_INDEX_FOLLOW, CANONICAL_BASE } from "@/lib/seo";
+import {
+  canonicalUrl,
+  trimDescription,
+  ROBOTS_INDEX_FOLLOW,
+  CANONICAL_BASE,
+  SITE_NAME,
+  LOCALE,
+} from "@/lib/seo";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -37,13 +44,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? trimDescription(descRaw, 160)
       : `${product.title}${PRODUCT_DESCRIPTION_FALLBACK}`;
 
+  const url = canonicalUrl(`/product/${slug}`);
+  const imageUrl = product.image
+    ? product.image.startsWith("http")
+      ? product.image
+      : `${CANONICAL_BASE}${product.image.startsWith("/") ? "" : "/"}${product.image}`
+    : `${CANONICAL_BASE}/IMG_1543.PNG`;
+
   return {
     title,
     description,
-    alternates: {
-      canonical: canonicalUrl(`/product/${slug}`),
-    },
+    alternates: { canonical: url },
     robots: ROBOTS_INDEX_FOLLOW,
+    openGraph: {
+      type: "website",
+      locale: LOCALE,
+      url,
+      siteName: SITE_NAME,
+      title,
+      description,
+      images: [{ url: imageUrl, width: 900, height: 900, alt: product.title }],
+    },
   };
 }
 
