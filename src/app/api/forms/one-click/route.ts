@@ -60,6 +60,12 @@ function validateAndParse(body: unknown): OneClickFormData | { error: string } {
   }
   result.pageUrl = pageUrlValidation.normalized;
 
+  const productIdValidation = validateStringField(data.productId, "productId", 100, false);
+  if (!productIdValidation.valid) {
+    return { error: productIdValidation.error! };
+  }
+  result.productId = productIdValidation.normalized;
+
   return result;
 }
 

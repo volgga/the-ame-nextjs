@@ -72,6 +72,18 @@ function validateAndParse(body: unknown): GiftHintFormData | { error: string } {
   }
   result.pageUrl = pageUrlValidation.normalized;
 
+  const productTitleValidation = validateStringField(data.productTitle, "productTitle", 200, false);
+  if (!productTitleValidation.valid) {
+    return { error: productTitleValidation.error! };
+  }
+  result.productTitle = productTitleValidation.normalized;
+
+  const productIdValidation = validateStringField(data.productId, "productId", 100, false);
+  if (!productIdValidation.valid) {
+    return { error: productIdValidation.error! };
+  }
+  result.productId = productIdValidation.normalized;
+
   return result;
 }
 

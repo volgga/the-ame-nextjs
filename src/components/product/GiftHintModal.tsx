@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Product } from "@/lib/products";
+import { submitGiftHint } from "@/lib/formsClient";
 
 type GiftHintModalProps = {
   isOpen: boolean;
@@ -79,25 +80,31 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
     setError(null);
 
     try {
-      const res = await fetch("/api/gift-hints", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id.toString(),
-          productTitle: product.title,
-          fromName: fromName.trim(),
-          toName: toName.trim(),
-          phone: phone.trim(),
-        }),
-      });
+      const pageUrl =
+        typeof window !== "undefined"
+          ? window.location.pathname + window.location.search
+          : "";
+      const payload = {
+        phone: phone.trim(),
+        name: fromName.trim() || undefined,
+        recipientName: toName.trim() || undefined,
+        productTitle: product.title,
+        pageUrl,
+        productId: product.id?.toString?.() ?? undefined,
+      };
+      if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
+        console.log("[GiftHint] payload", payload);
+      }
 
-      if (!res.ok) {
-        const data = await res.json();
+      const data = await submitGiftHint(payload);
+
+      if (!data.ok) {
         setError(data.error ?? "Ошибка при отправке");
         setLoading(false);
         return;
       }
 
+      setLoading(false);
       setSuccess(true);
     } catch {
       setError("Ошибка сети");
@@ -139,7 +146,7 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-color-text-main mb-2">Намёк отправлен!</h3>
+            <h3 className="text-xl font-semibold text-color-text-main mb-2">Отправили намёк</h3>
             <p className="text-color-text-secondary text-sm mb-6">
               Сообщение будет отправлено получателю в ближайшее время.
             </p>

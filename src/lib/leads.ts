@@ -41,6 +41,7 @@ export function createOneClickPayload(data: OneClickFormData): OneClickPayload {
     name: data.name ?? null,
     productTitle: data.productTitle ?? null,
     pageUrl: data.pageUrl ?? null,
+    productId: data.productId ?? null,
   };
 }
 
@@ -68,5 +69,7 @@ export function createGiftHintPayload(data: GiftHintFormData): GiftHintPayload {
     preferredDate: data.preferredDate ?? null,
     comment: data.comment ?? null,
     pageUrl: data.pageUrl ?? null,
+    productTitle: data.productTitle ?? null,
+    productId: data.productId ?? null,
   };
 }
