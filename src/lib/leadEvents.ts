@@ -46,12 +46,8 @@ export async function logLeadEvent(
       meta,
     });
   } catch (error) {
-    // Best effort: логируем ошибку, но не фейлим основной запрос
-    console.error(`[leadEvents] Не удалось записать событие ${type}:`, {
-      type,
-      leadId: leadId || "не указан",
-      error: error instanceof Error ? error.message : String(error),
-    });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`[leadEvents] event=${type} not written: ${msg}`);
   }
 }
 

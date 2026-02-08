@@ -42,6 +42,8 @@ export function createOneClickPayload(data: OneClickFormData): OneClickPayload {
     productTitle: data.productTitle ?? null,
     pageUrl: data.pageUrl ?? null,
     productId: data.productId ?? null,
+    productUrl: data.productUrl ?? null,
+    productPath: data.productPath ?? null,
   };
 }
 
@@ -71,5 +73,7 @@ export function createGiftHintPayload(data: GiftHintFormData): GiftHintPayload {
     pageUrl: data.pageUrl ?? null,
     productTitle: data.productTitle ?? null,
     productId: data.productId ?? null,
+    productUrl: data.productUrl ?? null,
+    productPath: data.productPath ?? null,
   };
 }

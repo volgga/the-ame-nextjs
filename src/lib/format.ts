@@ -4,6 +4,20 @@
  */
 
 /**
+ * Собирает полный URL из базового адреса сайта и относительного пути.
+ * Использует NEXT_PUBLIC_SITE_URL. Не допускает двойных слешей.
+ */
+export function buildAbsoluteUrl(pathOrEmpty: string | null | undefined): string | null {
+  const base = typeof process !== "undefined" ? process.env.NEXT_PUBLIC_SITE_URL : undefined;
+  if (!base || !pathOrEmpty) return null;
+  const baseClean = base.replace(/\/+$/, "");
+  const path = pathOrEmpty.trim();
+  if (!path) return baseClean;
+  const pathNorm = path.startsWith("/") ? path : `/${path}`;
+  return `${baseClean}${pathNorm}`;
+}
+
+/**
  * Данные формы "Купить в 1 клик"
  */
 export interface OneClickFormData {
@@ -12,6 +26,10 @@ export interface OneClickFormData {
   productTitle?: string | null;
   pageUrl?: string | null;
   productId?: string | null;
+  /** Полный URL страницы товара (если передан — используется как ссылка) */
+  productUrl?: string | null;
+  /** Путь вида /product/slug (fallback для сборки ссылки) */
+  productPath?: string | null;
 }
 
 /**
@@ -37,6 +55,8 @@ export interface GiftHintFormData {
   pageUrl?: string | null;
   productTitle?: string | null;
   productId?: string | null;
+  productUrl?: string | null;
+  productPath?: string | null;
 }
 
 /**
@@ -53,101 +73,93 @@ function escapeHtml(text: string): string {
 
 /**
  * Форматирует сообщение для формы "Купить в 1 клик".
+ * Не выводит Страница, ID товара, Lead ID. Товар — полная кликабельная ссылка.
  */
-export function formatOneClickMessage(data: OneClickFormData, leadId?: string): string {
-  const name = data.name?.trim() || "Не указано";
-  const productTitle = data.productTitle?.trim() || "Не указано";
-  const pageUrl = data.pageUrl?.trim();
+export function formatOneClickMessage(data: OneClickFormData, _leadId?: string): string {
+  const name = data.name?.trim();
+  const productTitle = data.productTitle?.trim();
+  const productLink =
+    data.productUrl?.trim() ||
+    buildAbsoluteUrl(data.productPath?.trim() || data.pageUrl?.trim() || null);
 
-  let message = `🛒 <b>Купить в 1 клик</b>
+  let message = `🛒 <b>Купить в 1 клик (горячий лид)</b>
 
-<b>Имя:</b> ${escapeHtml(name)}
-<b>Телефон:</b> <code>${escapeHtml(data.phone)}</code>
-<b>Товар:</b> <code>${escapeHtml(productTitle)}</code>`;
+`;
+  if (name) {
+    message += `<b>Имя:</b> ${escapeHtml(name)}\n`;
+  }
+  message += `<b>Телефон:</b> <code>${escapeHtml(data.phone)}</code>\n`;
 
-  if (pageUrl) {
-    message += `\n<b>Страница:</b> <code>${escapeHtml(pageUrl)}</code>`;
+  if (productTitle) {
+    message += `<b>Товар:</b> ${escapeHtml(productTitle)}\n`;
+  }
+  if (productLink) {
+    message += `<b>Товар:</b> <a href="${escapeHtml(productLink)}">${escapeHtml(productLink)}</a>`;
+  } else if (!productTitle) {
+    message += `<b>Товар:</b> —`;
   }
 
-  const productId = data.productId?.trim();
-  if (productId) {
-    message += `\n<b>ID товара:</b> <code>${escapeHtml(productId)}</code>`;
-  }
-
-  if (leadId) {
-    message += `\n<b>Lead ID:</b> <code>${escapeHtml(leadId)}</code>`;
-  }
-
-  return message;
+  return message.trim();
 }
 
 /**
  * Форматирует сообщение для формы "Заказать букет" (главная страница).
+ * Не выводит Страница, Lead ID.
  */
-export function formatBouquetMessage(data: BouquetFormData, leadId?: string): string {
-  const name = data.name?.trim() || "Не указано";
-  const message = data.message?.trim() || data.comment?.trim();
-  const pageUrl = data.pageUrl?.trim();
+export function formatBouquetMessage(data: BouquetFormData, _leadId?: string): string {
+  const name = data.name?.trim();
+  const wishes = data.message?.trim() || data.comment?.trim();
 
-  let text = `💐 <b>Заказать букет</b>
+  let text = `💐 <b>Заказать букет (помочь подобрать)</b>
 
-<b>Имя:</b> ${escapeHtml(name)}
-<b>Телефон:</b> <code>${escapeHtml(data.phone)}</code>`;
+`;
+  if (name) {
+    text += `<b>Имя:</b> ${escapeHtml(name)}\n`;
+  }
+  text += `<b>Телефон:</b> <code>${escapeHtml(data.phone)}</code>`;
 
-  if (message) {
-    text += `\n<b>Сообщение:</b> ${escapeHtml(message)}`;
+  if (wishes) {
+    text += `\n<b>Пожелания:</b> ${escapeHtml(wishes)}`;
   }
 
-  if (pageUrl) {
-    text += `\n<b>Страница:</b> <code>${escapeHtml(pageUrl)}</code>`;
-  }
-
-  if (leadId) {
-    text += `\n<b>Lead ID:</b> <code>${escapeHtml(leadId)}</code>`;
-  }
-
-  return text;
+  return text.trim();
 }
 
 /**
  * Форматирует сообщение для формы "Намекнуть о подарке".
+ * Не выводит Страница, Lead ID. Товар: название (если есть) и отдельной строкой кликабельная ссылка.
  */
-export function formatGiftHintMessage(data: GiftHintFormData, leadId?: string): string {
-  const name = data.name?.trim() || "Не указано";
+export function formatGiftHintMessage(data: GiftHintFormData, _leadId?: string): string {
+  const name = data.name?.trim();
   const recipientName = data.recipientName?.trim();
+  const productTitle = data.productTitle?.trim();
+  const productLink =
+    data.productUrl?.trim() ||
+    buildAbsoluteUrl(data.productPath?.trim() || data.pageUrl?.trim() || null);
   const preferredDate = data.preferredDate?.trim();
   const comment = data.comment?.trim();
-  const pageUrl = data.pageUrl?.trim();
 
   let text = `🎁 <b>Намекнуть о подарке</b>
 
-<b>Имя:</b> ${escapeHtml(name)}
-<b>Телефон:</b> <code>${escapeHtml(data.phone)}</code>`;
-
-  const productTitle = data.productTitle?.trim();
-  if (productTitle) {
-    text += `\n<b>Товар:</b> <code>${escapeHtml(productTitle)}</code>`;
+`;
+  if (name) {
+    text += `<b>Имя:</b> ${escapeHtml(name)}\n`;
   }
+  text += `<b>Телефон:</b> <code>${escapeHtml(data.phone)}</code>`;
 
   if (recipientName) {
     text += `\n<b>Получатель:</b> ${escapeHtml(recipientName)}`;
   }
-
+  if (productTitle) {
+    text += `\n<b>Товар:</b> ${escapeHtml(productTitle)}`;
+  }
+  if (productLink) {
+    text += `\n<b>Товар:</b> <a href="${escapeHtml(productLink)}">${escapeHtml(productLink)}</a>`;
+  }
   if (preferredDate) {
     text += `\n<b>Предпочтительная дата:</b> <code>${escapeHtml(preferredDate)}</code>`;
   }
+  text += `\n<b>Комментарий:</b> ${comment ? escapeHtml(comment) : "-"}`;
 
-  if (comment) {
-    text += `\n<b>Комментарий:</b> ${escapeHtml(comment)}`;
-  }
-
-  if (pageUrl) {
-    text += `\n<b>Страница:</b> <code>${escapeHtml(pageUrl)}</code>`;
-  }
-
-  if (leadId) {
-    text += `\n<b>Lead ID:</b> <code>${escapeHtml(leadId)}</code>`;
-  }
-
-  return text;
+  return text.trim();
 }

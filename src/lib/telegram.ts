@@ -1,6 +1,13 @@
 /**
  * Отправка сообщений в Telegram через Bot API.
+ * Единая функция sendTelegramMessage, таймаут, 1 retry на 5xx/сеть, лимит длины.
  */
+
+export interface SendTelegramOptions {
+  chatId: string;
+  threadId?: number;
+  text: string;
+}
 
 interface TelegramResponse {
   ok: boolean;
@@ -9,11 +16,20 @@ interface TelegramResponse {
   result?: unknown;
 }
 
-const FETCH_TIMEOUT_MS = 7000; // 7 секунд
-const MAX_RETRIES = 1; // 1 retry
+const FETCH_TIMEOUT_MS = 10_000; // 10 секунд
+const MAX_RETRIES = 1;
+const MAX_MESSAGE_LENGTH = 4096; // лимит Telegram API
 
 /**
- * Выполняет fetch с таймаутом.
+ * Урезает текст до лимита и добавляет "…" при обрезке.
+ */
+function truncateForTelegram(text: string): string {
+  if (text.length <= MAX_MESSAGE_LENGTH) return text;
+  return text.slice(0, MAX_MESSAGE_LENGTH - 1).trimEnd() + "…";
+}
+
+/**
+ * Fetch с таймаутом (AbortController).
  */
 async function fetchWithTimeout(
   url: string,
@@ -40,24 +56,17 @@ async function fetchWithTimeout(
 }
 
 /**
- * Проверяет, нужно ли делать retry для ошибки.
+ * Retry только на сетевые ошибки и 5xx. Не ретраить 4xx.
  */
-function shouldRetry(status: number | null, _error: unknown): boolean {
-  // Не retry на 4xx ошибки (клиентские ошибки)
-  if (status !== null && status >= 400 && status < 500) {
-    return false;
-  }
-  // Retry на 5xx ошибки и сетевые ошибки
+function shouldRetry(status: number | null): boolean {
+  if (status !== null && status >= 400 && status < 500) return false;
   return true;
 }
 
-/**
- * Выполняет запрос к Telegram API с retry.
- */
 async function sendTelegramRequest(
   url: string,
   body: Record<string, unknown>,
-  retryCount: number = 0
+  retryCount = 0
 ): Promise<void> {
   let lastError: Error | null = null;
   let lastStatus: number | null = null;
@@ -68,9 +77,7 @@ async function sendTelegramRequest(
       url,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       },
       FETCH_TIMEOUT_MS
@@ -83,86 +90,79 @@ async function sendTelegramRequest(
     try {
       data = JSON.parse(lastResponseText || "{}") as TelegramResponse;
     } catch {
-      // Если не удалось распарсить JSON, создаем объект с ошибкой
       data = {
         ok: false,
-        description: `Неверный формат ответа от Telegram API (статус: ${response.status})`,
+        description: `Неверный формат ответа (статус: ${response.status})`,
       };
     }
 
     if (!data.ok) {
-      const errorMessage =
-        data.description ||
-        `Telegram API вернул ошибку (код: ${data.error_code || "unknown"}, статус HTTP: ${response.status})`;
-      const error = new Error(errorMessage);
-      (error as Error & { status?: number; responseText?: string }).status = response.status;
-      (error as Error & { status?: number; responseText?: string }).responseText = lastResponseText ?? undefined;
-      throw error;
+      const desc = data.description ?? `код ${data.error_code ?? "unknown"}, HTTP ${response.status}`;
+      const err = new Error(desc) as Error & { status?: number; responseText?: string };
+      err.status = response.status;
+      err.responseText = lastResponseText ?? undefined;
+      throw err;
     }
-
-    // Успешный ответ
     return;
   } catch (error) {
     lastError = error instanceof Error ? error : new Error(String(error));
-
-    // Если это сетевой таймаут или другая сетевая ошибка, считаем статус как null
     if (lastError.message.includes("Таймаут") || lastError.message.includes("fetch")) {
       lastStatus = null;
     }
 
-    // Проверяем, нужно ли делать retry
-    if (retryCount < MAX_RETRIES && shouldRetry(lastStatus, error)) {
-      // Делаем retry
+    if (retryCount < MAX_RETRIES && shouldRetry(lastStatus)) {
       return sendTelegramRequest(url, body, retryCount + 1);
     }
 
-    // Не делаем retry или превышен лимит retry
-    const errorMessage = lastError.message;
-    const statusInfo = lastStatus !== null ? ` (HTTP статус: ${lastStatus})` : "";
-    const responseInfo = lastResponseText ? ` Ответ: ${lastResponseText.substring(0, 200)}` : "";
-
-    throw new Error(`Ошибка при отправке сообщения в Telegram: ${errorMessage}${statusInfo}${responseInfo}`);
+    const statusInfo = lastStatus != null ? ` (HTTP ${lastStatus})` : "";
+    const responseInfo = lastResponseText ? ` Ответ: ${lastResponseText.slice(0, 200)}` : "";
+    throw new Error(
+      `Telegram: ${lastError.message}${statusInfo}${responseInfo}`
+    );
   }
 }
 
 /**
- * Отправляет сообщение в Telegram чат.
- *
- * @param text - Текст сообщения (HTML формат)
- * @param threadId - Опциональный ID топика (для форумов)
- * @throws {Error} Если Telegram API вернул ошибку
+ * Единая функция отправки в Telegram.
+ * parse_mode=HTML. Текст обрезается до 4096 символов при необходимости.
+ * Токен не логируется.
  */
-export async function sendToTelegram(text: string, threadId?: number): Promise<void> {
+export async function sendTelegramMessage(options: SendTelegramOptions): Promise<void> {
+  const { chatId, threadId, text } = options;
   const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (!token) {
-    throw new Error("TELEGRAM_BOT_TOKEN не задан в переменных окружения");
+    throw new Error("TELEGRAM_BOT_TOKEN не задан");
   }
 
-  if (!chatId) {
-    throw new Error("TELEGRAM_CHAT_ID не задан в переменных окружения");
-  }
-
-  // Создаем URL без логирования токена
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
-
   const body: Record<string, unknown> = {
     chat_id: chatId,
-    text,
+    text: truncateForTelegram(text),
     parse_mode: "HTML",
   };
-
-  // Добавляем message_thread_id только если он задан в env или передан явно
-  const envThreadId = process.env.TELEGRAM_THREAD_ID;
-  if (threadId !== undefined) {
+  if (threadId != null) {
     body.message_thread_id = threadId;
-  } else if (envThreadId) {
-    const parsedThreadId = Number.parseInt(envThreadId, 10);
-    if (!Number.isNaN(parsedThreadId)) {
-      body.message_thread_id = parsedThreadId;
-    }
   }
 
   await sendTelegramRequest(url, body);
+}
+
+/**
+ * Отправляет сообщение в чат из env (TELEGRAM_CHAT_ID, опционально TELEGRAM_THREAD_ID).
+ * Удобная обёртка для форм.
+ */
+export async function sendToTelegram(text: string, threadId?: number): Promise<void> {
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!chatId) {
+    throw new Error("TELEGRAM_CHAT_ID не задан");
+  }
+  const envTid = process.env.TELEGRAM_THREAD_ID;
+  const parsedTid = envTid ? Number.parseInt(envTid, 10) : undefined;
+  const resolvedThreadId = threadId ?? (parsedTid !== undefined && !Number.isNaN(parsedTid) ? parsedTid : undefined);
+  await sendTelegramMessage({
+    chatId,
+    threadId: resolvedThreadId,
+    text,
+  });
 }

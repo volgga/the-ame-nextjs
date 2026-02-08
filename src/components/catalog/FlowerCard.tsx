@@ -213,6 +213,7 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
           name: flower.name,
           image: flower.image,
           price: flower.price,
+          productPath: productUrl,
         }}
       />
       <QuickViewModal
