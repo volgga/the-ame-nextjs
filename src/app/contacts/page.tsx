@@ -3,7 +3,7 @@ import { Clock, MapPin, Phone, MessageCircle, Send, Sparkles, Mail, Instagram } 
 import type { LucideIcon } from "lucide-react";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo";
 
-const TITLE = "Контакты — доставка цветов в Сочи | The Ame";
+const TITLE = "Контакты цветочного бутика The Ame в Сочи";
 const DESCRIPTION =
   "Контакты и способы связи с The Ame. Заказ цветов с доставкой по Сочи, адрес, телефон и соцсети.";
 

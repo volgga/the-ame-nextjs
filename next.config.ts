@@ -8,7 +8,19 @@ const supabaseHosts = [...new Set([supabaseHost, "eweaqbtqzzoxpwfmjinp.supabase.
 
 const nextConfig: NextConfig = {
   async redirects() {
-    return [{ source: "/privacy", destination: "/docs/privacy", permanent: true }];
+    return [
+      { source: "/privacy", destination: "/docs/privacy", permanent: true },
+      {
+        source: "/docs/care",
+        destination: "/instrukciya-po-uhodu-za-tsvetami",
+        permanent: true,
+      },
+      {
+        source: "/instrukciya-po-uhodu",
+        destination: "/instrukciya-po-uhodu-za-tsvetami",
+        permanent: true,
+      },
+    ];
   },
   async headers() {
     return [

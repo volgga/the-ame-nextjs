@@ -5,12 +5,15 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { submitOneClick } from "@/lib/formsClient";
+import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
 
 export type QuickBuyProduct = {
   id: string;
   name: string;
   image: string;
   price: number;
+  /** Путь к странице товара, например /product/slug (для полной ссылки в Telegram) */
+  productPath?: string;
 };
 
 type QuickBuyModalProps = {
@@ -21,16 +24,6 @@ type QuickBuyModalProps = {
 
 const Z_OVERLAY = 200;
 const Z_PANEL = 201;
-
-/** Проверка телефона: минимум 7–10 цифр */
-function normalizePhone(value: string): string {
-  return value.replace(/\D/g, "");
-}
-
-function isValidPhone(value: string): boolean {
-  const digits = normalizePhone(value);
-  return digits.length >= 7 && digits.length <= 15;
-}
 
 /**
  * QuickBuyModal — модалка «Купить в 1 клик».
@@ -68,13 +61,13 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
     setPhoneError(null);
     setSubmitError(null);
 
-    const trimmedPhone = phone.trim();
-    if (!trimmedPhone) {
+    const phoneE164 = toE164(phone);
+    if (!phoneE164) {
       setPhoneError("Укажите номер телефона");
       return;
     }
-    if (!isValidPhone(trimmedPhone)) {
-      setPhoneError("Введите корректный номер (7–15 цифр)");
+    if (!isValidPhone(phoneE164)) {
+      setPhoneError("Введите корректный номер телефона");
       return;
     }
 
@@ -85,16 +78,13 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
           ? window.location.pathname + window.location.search
           : "";
       const payload = {
-        phone: trimmedPhone,
+        phone: phoneE164,
         name: name.trim() || undefined,
         productTitle: product.name,
         pageUrl,
         productId: product.id || undefined,
+        productPath: product.productPath || undefined,
       };
-      if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
-        console.log("[QuickBuy] payload", payload);
-      }
-
       const data = await submitOneClick(payload);
 
       if (!data.ok) {
@@ -159,24 +149,17 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="quick-buy-phone" className="block text-sm font-medium text-color-text-main mb-1">
-                Ваш телефон <span className="text-red-500">*</span>
-              </label>
-              <input
+              <PhoneInput
                 id="quick-buy-phone"
-                type="tel"
-                placeholder="+7 (999) 123-45-67"
                 value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
+                onChange={(v) => {
+                  setPhone(v);
                   if (phoneError) setPhoneError(null);
                 }}
-                className={`w-full px-4 py-3 border rounded-lg bg-white text-color-text-main placeholder:text-color-text-secondary/60 focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block ${
-                  phoneError ? "border-red-500" : "border-border-block"
-                }`}
-                autoComplete="tel"
+                label="Ваш телефон"
+                required
+                error={phoneError ?? undefined}
               />
-              {phoneError && <p className="mt-1 text-sm text-red-600">{phoneError}</p>}
             </div>
 
             <div>

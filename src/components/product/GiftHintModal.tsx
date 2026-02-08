@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import type { Product } from "@/lib/products";
 import { submitGiftHint } from "@/lib/formsClient";
+import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
 
 type GiftHintModalProps = {
   isOpen: boolean;
@@ -14,7 +15,8 @@ type GiftHintModalProps = {
 export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) {
   const [fromName, setFromName] = useState("");
   const [toName, setToName] = useState("");
-  const [phone, setPhone] = useState("+7 (");
+  const [phone, setPhone] = useState("");
+  const [comment, setComment] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -35,7 +37,8 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
     if (!isOpen) {
       setFromName("");
       setToName("");
-      setPhone("+7 (");
+      setPhone("");
+      setComment("");
       setAgreed(false);
       setSuccess(false);
       setError(null);
@@ -54,21 +57,8 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
     };
   }, [isOpen]);
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "");
-    if (value.startsWith("7")) value = value.slice(1);
-    if (value.length > 10) value = value.slice(0, 10);
-
-    let formatted = "+7 (";
-    if (value.length > 0) formatted += value.slice(0, 3);
-    if (value.length > 3) formatted += ") " + value.slice(3, 6);
-    if (value.length > 6) formatted += "-" + value.slice(6, 8);
-    if (value.length > 8) formatted += "-" + value.slice(8, 10);
-
-    setPhone(formatted);
-  };
-
-  const isValid = fromName.trim() && toName.trim() && phone.length >= 18 && agreed;
+  const phoneE164 = toE164(phone);
+  const isValid = fromName.trim() && toName.trim() && phoneE164 !== "" && isValidPhone(phoneE164) && agreed;
 
   const handleSubmit = async () => {
     if (!isValid) {
@@ -85,17 +75,15 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
           ? window.location.pathname + window.location.search
           : "";
       const payload = {
-        phone: phone.trim(),
+        phone: phoneE164,
         name: fromName.trim() || undefined,
         recipientName: toName.trim() || undefined,
+        comment: comment.trim() || undefined,
         productTitle: product.title,
         pageUrl,
         productId: product.id?.toString?.() ?? undefined,
+        productPath: pageUrl || undefined,
       };
-      if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
-        console.log("[GiftHint] payload", payload);
-      }
-
       const data = await submitGiftHint(payload);
 
       if (!data.ok) {
@@ -161,12 +149,11 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
           <>
             <h2 className="text-xl font-semibold text-color-text-main mb-3">Намекнуть ?</h2>
             <p className="text-sm text-color-text-secondary mb-6 leading-relaxed">
-              Вам понравилась наша композиция и Вы хотели бы получить ее в качестве подарка от близкого человека?
-              Заполните форму, и ему придет сообщение с Вашим намеком :)
+              Если эта композиция вам по душе и вы мечтаете получить её в подарок — заполните форму. Близкому человеку придёт сообщение с вашим лёгким намёком.
             </p>
 
             {/* Форма: на mobile одна колонка, ровные отступы, без горизонтального скролла */}
-            <div className="space-y-4 min-w-0">
+            <div className="space-y-4 min-w-0 gift-hint-form">
               {/* Ваше имя */}
               <div className="min-w-0">
                 <label className="block text-sm font-medium text-color-text-main mb-1.5">
@@ -189,24 +176,34 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
                   </label>
                   <input
                     type="text"
-                    placeholder="Как к вам обращаться ?"
+                    placeholder="Имя"
                     value={toName}
                     onChange={(e) => setToName(e.target.value)}
                     className="w-full min-w-0 px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block box-border"
                   />
                 </div>
-                <div className="min-w-0">
-                  <label className="block text-sm font-medium text-color-text-main mb-1.5">
-                    Телефон <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="+7 (___) ___-__-__"
+                <div className="min-w-0 flex flex-col">
+                  <PhoneInput
                     value={phone}
-                    onChange={handlePhoneChange}
-                    className="w-full min-w-0 px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block box-border"
+                    onChange={setPhone}
+                    label="Телефон"
+                    required
                   />
                 </div>
+              </div>
+
+              {/* Комментарий — во всю ширину, необязательно */}
+              <div className="min-w-0">
+                <label className="block text-sm font-medium text-color-text-main mb-1.5">
+                  Комментарий
+                </label>
+                <textarea
+                  placeholder="Комментарий к подарку"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows={3}
+                  className="w-full min-w-0 px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block box-border resize-y"
+                />
               </div>
 
               {/* Чекбокс */}

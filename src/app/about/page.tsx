@@ -4,7 +4,7 @@ import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo"
 
 const PROSE_CLASS = "space-y-5 text-[18px] leading-relaxed text-neutral-700";
 
-const TITLE = "О нас — доставка цветов в Сочи | The Ame";
+const TITLE = "О студии цветов The Ame в Сочи";
 const DESCRIPTION =
   "The Ame — сервис доставки цветов в Сочи. Свежие букеты, внимание к деталям и забота о каждом заказе.";
 

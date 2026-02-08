@@ -1,8 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import { MapPin } from "lucide-react";
-import { SendMessageModal } from "@/components/SendMessageModal";
 
 const iconLinkClass = "relative inline-flex items-center justify-center text-header-foreground";
 
@@ -10,8 +8,6 @@ const iconLinkClass = "relative inline-flex items-center justify-center text-hea
 const ICON_BOX = "w-8 h-8 flex items-center justify-center shrink-0";
 /** Размер самой иконки (svg/img) */
 const ICON_SIZE = "w-5 h-5";
-
-const POPOVER_CLOSE_DELAY_MS = 150;
 
 /** Вертикальная полоска между адресом | телефоном | соцсети. Единая высота и выравнивание (self-center в flex). */
 function DividerVertical() {
@@ -25,142 +21,69 @@ function DividerVertical() {
 }
 
 /**
- * TopBar — инфо-полоса: текст слева, адрес | телефон (с hover-поповером) | иконки справа.
+ * TopBar — инфо-полоса: текст слева, адрес | телефон | иконки справа.
  */
 export function TopBar() {
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [isContactsModalOpen, setIsContactsModalOpen] = useState(false);
-  const [isTouch, setIsTouch] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
-  }, []);
-
-  const handlePopoverOpen = () => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-    setIsPopoverOpen(true);
-  };
-
-  const handlePopoverClose = () => {
-    closeTimeoutRef.current = setTimeout(() => setIsPopoverOpen(false), POPOVER_CLOSE_DELAY_MS);
-  };
-
-  const handleOpenContactsModal = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsPopoverOpen(false);
-    setIsContactsModalOpen(true);
-  };
-
-  useEffect(() => {
-    if (!isPopoverOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsPopoverOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [isPopoverOpen]);
-
-  useEffect(() => {
-    return () => {
-      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-    };
-  }, []);
-
   return (
-    <>
-      <div
-        className="w-full flex items-center justify-between bg-header-bg"
-        style={{
-          margin: 0,
-          padding: 0,
-          paddingTop: "6px",
-          paddingBottom: "6px",
-          boxSizing: "border-box",
-          lineHeight: "normal",
-          height: "100%",
-          minHeight: "44px",
-          display: "flex",
-          overflow: "visible",
-        }}
-      >
-        <div className="w-full flex items-center justify-between gap-1 sm:gap-2 md:gap-4 px-4 md:px-6 min-w-0">
-          {/* Слева: 2 строки текста */}
-          <div className="min-w-0 -ml-1 md:-ml-0.5 leading-tight">
-            <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide">
-              Приём заказов с 09.00 до 21.00
-            </div>
-            <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide">
-              Доставка 24/7 по Сочи и районам
-            </div>
+    <div
+      className="w-full flex items-center justify-between bg-header-bg"
+      style={{
+        margin: 0,
+        padding: 0,
+        paddingTop: "6px",
+        paddingBottom: "6px",
+        boxSizing: "border-box",
+        lineHeight: "normal",
+        height: "100%",
+        minHeight: "44px",
+        display: "flex",
+        overflow: "visible",
+      }}
+    >
+      <div className="w-full flex items-center justify-between gap-1 sm:gap-2 md:gap-4 px-4 md:px-6 min-w-0">
+        {/* Слева: 2 строки текста */}
+        <div className="min-w-0 -ml-1 md:-ml-0.5 leading-tight">
+          <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide">
+            Приём заказов с 09.00 до 21.00
+          </div>
+          <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide">
+            Доставка 24/7 по Сочи и районам
+          </div>
+        </div>
+
+        {/* Справа: [адрес |] телефон | иконки */}
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+          {/* Адрес — ссылка на Яндекс.Карты, скрыт на узких экранах */}
+          <a
+            href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden md:inline-flex items-center gap-1.5 shrink-0 text-sm font-normal text-header-foreground hover:opacity-80 transition-opacity"
+            aria-label="Адрес на карте"
+          >
+            <MapPin
+              className="w-4 h-4 shrink-0"
+              strokeWidth={2}
+              stroke="currentColor"
+              fill="none"
+              aria-hidden
+            />
+            <span className="whitespace-nowrap">Пластунская 123А, к2</span>
+          </a>
+
+          <div className="hidden md:flex md:items-center">
+            <DividerVertical />
           </div>
 
-          {/* Справа: [адрес |] телефон | иконки */}
-          <div ref={containerRef} className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-            {/* Адрес — отдельная ссылка на Яндекс.Карты, без popover, скрыт на узких экранах */}
-            <a
-              href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden md:inline-flex items-center gap-1.5 shrink-0 text-sm font-normal text-header-foreground hover:opacity-80 transition-opacity"
-              aria-label="Адрес на карте"
-            >
-              <MapPin
-                className="w-4 h-4 shrink-0"
-                strokeWidth={2}
-                stroke="currentColor"
-                fill="none"
-                aria-hidden
-              />
-              <span className="whitespace-nowrap">Пластунская 123А, к2</span>
-            </a>
+          {/* Телефон — статичная ссылка tel: */}
+          <a
+            href="tel:+79939326095"
+            className="text-sm md:text-base font-normal text-header-foreground whitespace-nowrap py-1 hover:opacity-80 transition-opacity"
+          >
+            +7 993 932-60-95
+          </a>
 
-            {/* Разделитель между адресом и телефоном — тот же DividerVertical, flex+items-center как у родителя */}
-            <div className="hidden md:flex md:items-center">
-              <DividerVertical />
-            </div>
-
-            {/* Телефон — hover-область только для popover (не включает адрес) */}
-            <div
-              className="relative flex items-center"
-              onMouseEnter={!isTouch ? handlePopoverOpen : undefined}
-              onMouseLeave={!isTouch ? handlePopoverClose : undefined}
-            >
-              <a
-                href="tel:+79939326095"
-                className="text-sm md:text-base font-normal text-header-foreground whitespace-nowrap py-1"
-              >
-                +7 993 932-60-95
-              </a>
-
-              {/* Поповер с кнопкой "ЗАКАЗАТЬ ЗВОНОК" — внутри PhoneWrapper, чтобы не исчезал при переходе на popover */}
-              {isPopoverOpen && !isTouch && (
-                <div
-                  className="absolute right-0 top-full z-[75] mt-1.5 min-w-[180px] rounded-xl shadow-lg border border-border-block overflow-hidden bg-page-bg"
-                  role="menu"
-                  aria-label="Заказать звонок"
-                >
-                  <div className="p-2">
-                    <button
-                      type="button"
-                      onClick={handleOpenContactsModal}
-                      className="w-full py-2.5 px-4 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 bg-header-bg text-header-foreground hover:opacity-90 active:opacity-95"
-                    >
-                      Заказать звонок
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <DividerVertical />
+          <DividerVertical />
 
             <a
               href="https://wa.me/message/XQDDWGSEL35LP1"
@@ -214,11 +137,5 @@ export function TopBar() {
           </div>
         </div>
       </div>
-
-      <SendMessageModal
-        isOpen={isContactsModalOpen}
-        onClose={() => setIsContactsModalOpen(false)}
-      />
-    </>
   );
 }

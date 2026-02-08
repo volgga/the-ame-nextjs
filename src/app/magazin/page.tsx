@@ -4,7 +4,6 @@ import { getCategories, getCategoryBySlug } from "@/lib/categories";
 import {
   canonicalUrl,
   truncateDescription,
-  normalizeCategoryNameForTitle,
   ROBOTS_INDEX_FOLLOW,
   ROBOTS_NOINDEX_FOLLOW,
   hasIndexableQueryParams,
@@ -25,15 +24,8 @@ export async function generateMetadata({ searchParams }: MagazinPageProps): Prom
   const resolvedSearchParams = await searchParams;
   const categories = await getCategories();
   const cat = getCategoryBySlug(categories, "magazin");
-  const name = cat?.name ?? FALLBACK_TITLE;
-  const normalizedName = normalizeCategoryNameForTitle(name);
-  // Формула по спеке: "Купить {НазваниеКатегории} в Сочи с доставкой | The Ame"
-  const lowerName = normalizedName.toLowerCase();
-  const hasSochi = lowerName.includes("сочи");
-  const hasDelivery = lowerName.includes("доставка");
-  const title = hasSochi || hasDelivery
-    ? `${normalizedName} | The Ame`
-    : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
+  // Каталог (magazin): фиксированный title по ТЗ
+  const title = "Купить цветы в Сочи — букеты с доставкой | The Ame";
   // Если есть описание категории → использовать его (нормализованное и обрезанное до ≤160 символов)
   // Иначе fallback
   const description =

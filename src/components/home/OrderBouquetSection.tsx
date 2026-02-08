@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
 import { MAIN_PAGE_BLOCK_GAP, MAIN_PAGE_BLOCK_GAP_MARGIN } from "@/components/ui/breadcrumbs";
 import { ContactsModal } from "@/components/ContactsModal";
 import { contactProviders } from "@/lib/contactProviders";
@@ -54,12 +55,8 @@ export function OrderBouquetSection({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const cleaned = value.replace(/[^\d+\s()\-]/g, "");
-    setPhone(cleaned);
-    if (phoneError) setPhoneError("");
-  };
+  const phoneE164 = toE164(phone);
+  const isPhoneValid = phoneE164 !== "" && isValidPhone(phoneE164);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,15 +69,12 @@ export function OrderBouquetSection({
       setNameError("Укажите ваше имя");
       isValid = false;
     }
-    if (!phone.trim()) {
+    if (!phoneE164) {
       setPhoneError("Укажите номер телефона");
       isValid = false;
-    } else {
-      const digits = phone.replace(/\D/g, "");
-      if (digits.length < 7) {
-        setPhoneError("Введите корректный номер телефона");
-        isValid = false;
-      }
+    } else if (!isValidPhone(phoneE164)) {
+      setPhoneError("Введите корректный номер телефона");
+      isValid = false;
     }
     if (!consent) {
       setConsentError("Необходимо согласие на обработку персональных данных");
@@ -94,13 +88,10 @@ export function OrderBouquetSection({
       const pageUrl =
         typeof window !== "undefined" ? window.location.pathname + window.location.search : undefined;
       const payload = {
-        phone: phone.trim(),
+        phone: phoneE164,
         name: name.trim() || undefined,
         pageUrl: pageUrl || undefined,
       };
-      if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
-        console.log("[Bouquet] payload", payload);
-      }
       const result = await submitBouquet(payload);
       if (result.ok) {
         setSubmitted(true);
@@ -149,10 +140,9 @@ export function OrderBouquetSection({
             </div>
           </div>
 
-          {/* Flex: изображение слева, зазор, текст и форма правее середины */}
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-16">
-              <div className="order-2 md:order-1 w-full md:flex-[0_0_50%]">
+          {/* Flex: изображение слева по сетке контейнера, текст и форма справа */}
+          <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-16">
+            <div className="order-2 md:order-1 w-full md:flex-[0_0_50%]">
                 <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border-block bg-white">
                 <Image
                   src={blockImageUrl}
@@ -166,8 +156,8 @@ export function OrderBouquetSection({
               </div>
             </div>
 
-              {/* Правая колонка: подзаголовок №1, основной текст, форма */}
-              <div className="flex flex-col order-1 md:order-2 md:flex-1 md:min-w-0 md:pl-8">
+            {/* Правая колонка: подзаголовок №1, основной текст, форма */}
+            <div className="flex flex-col order-1 md:order-2 md:flex-1 md:min-w-0 md:pl-8">
               <div className="flex-1 space-y-4 pl-0 pr-0">
                 {blockSubtitle1 ? (
                   <div className="space-y-3 text-lg md:text-xl text-[var(--color-text-secondary)] leading-normal font-medium">
@@ -202,22 +192,14 @@ export function OrderBouquetSection({
                     />
                     {nameError && <p className="mt-1 text-sm text-red-600">{nameError}</p>}
                   </div>
-                  <div>
-                    <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none">🇷🇺</span>
-                      <input
-                        type="tel"
-                        placeholder="+7 (000) 000-00-00"
-                        value={phone}
-                        onChange={handlePhoneChange}
-                        className={`w-full pl-12 pr-4 py-2.5 border rounded-lg bg-white text-[var(--color-text-main)] placeholder:text-[var(--color-text-secondary)]/60 focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block ${
-                          phoneError ? "border-red-500" : "border-gray-300"
-                        }`}
-                        autoComplete="tel"
-                      />
-                    </div>
-                    {phoneError && <p className="mt-1 text-sm text-red-600">{phoneError}</p>}
-                  </div>
+                  <PhoneInput
+                    value={phone}
+                    onChange={(v) => {
+                      setPhone(v);
+                      if (phoneError) setPhoneError("");
+                    }}
+                    error={phoneError}
+                  />
                   <div>
                     <label className="flex items-start gap-2 cursor-pointer">
                       <input
@@ -252,8 +234,8 @@ export function OrderBouquetSection({
                       type="submit"
                       disabled={
                         !name.trim() ||
-                        !phone.trim() ||
-                        phone.replace(/\D/g, "").length < 7 ||
+                        !phoneE164 ||
+                        !isPhoneValid ||
                         !consent ||
                         submitting ||
                         submitted
@@ -266,7 +248,6 @@ export function OrderBouquetSection({
                 </form>
               </div>
             </div>
-          </div>
           </div>
         </div>
       </section>

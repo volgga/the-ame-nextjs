@@ -11,6 +11,7 @@ import type { Product } from "@/lib/products";
 import type { ProductDetails } from "@/lib/productDetails";
 import { Flower } from "@/types/flower";
 import { Breadcrumbs, BREADCRUMB_SPACING } from "@/components/ui/breadcrumbs";
+import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
 import { FullscreenViewer } from "./FullscreenViewer";
 import { GiftHintModal } from "./GiftHintModal";
 import { ContactMessengersRow } from "./ContactMessengersRow";
@@ -57,26 +58,13 @@ function AccordionItem({
 /** Модалка "Купить в один клик" */
 function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClose: () => void; product: Product }) {
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("+7 (");
+  const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "");
-    if (value.startsWith("7")) value = value.slice(1);
-    if (value.length > 10) value = value.slice(0, 10);
-
-    let formatted = "+7 (";
-    if (value.length > 0) formatted += value.slice(0, 3);
-    if (value.length > 3) formatted += ") " + value.slice(3, 6);
-    if (value.length > 6) formatted += "-" + value.slice(6, 8);
-    if (value.length > 8) formatted += "-" + value.slice(8, 10);
-
-    setPhone(formatted);
-  };
-
-  const isValid = name.trim() && phone.length >= 18;
+  const phoneE164 = toE164(phone);
+  const isValid = name.trim() && phoneE164 !== "" && isValidPhone(phoneE164);
 
   const handleSubmit = async () => {
     if (!isValid) return;
@@ -92,7 +80,7 @@ function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClos
           productTitle: product.title,
           productPrice: product.price,
           customerName: name,
-          customerPhone: phone,
+          customerPhone: phoneE164,
         }),
       });
 
@@ -182,14 +170,12 @@ function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClos
                   className="w-full px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block"
                 />
               </div>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg">🇷🇺</span>
-                <input
-                  type="tel"
-                  placeholder="+7 (000) 000-00-00"
+              <div>
+                <PhoneInput
                   value={phone}
-                  onChange={handlePhoneChange}
-                  className="w-full pl-12 pr-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block"
+                  onChange={setPhone}
+                  label="Телефон"
+                  required
                 />
               </div>
 
@@ -727,7 +713,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                   <p>
                     Подробные шаги по уходу за цветами мы собрали на отдельной странице —{" "}
                     <Link
-                      href="/docs/care"
+                      href="/instrukciya-po-uhodu-za-tsvetami"
                       className="text-color-text-main underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[var(--color-text-main)] rounded-sm"
                     >
                       «Инструкцию по уходу»

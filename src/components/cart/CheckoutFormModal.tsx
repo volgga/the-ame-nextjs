@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useCart } from "@/context/CartContext";
 import type { OrderCustomerPayload } from "@/types/order";
+import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
 
 const STORAGE_KEY = "theame.checkout.form";
 
@@ -121,12 +122,12 @@ function PayButton({
 export function CheckoutFormModal() {
   const { state } = useCart();
   const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("+7 (");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [customerTelegram, setCustomerTelegram] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [isRecipientSelf, setIsRecipientSelf] = useState(true);
   const [recipientName, setRecipientName] = useState("");
-  const [recipientPhone, setRecipientPhone] = useState("+7 (");
+  const [recipientPhone, setRecipientPhone] = useState("");
   const [deliveryType, setDeliveryType] = useState<string | null>(null);
   const [isPickup, setIsPickup] = useState(false);
   const [isDeliveryDropdownOpen, setIsDeliveryDropdownOpen] = useState(false);
@@ -166,11 +167,11 @@ export function CheckoutFormModal() {
       try {
         const data: SavedFormData = {
           customerName: customerName || undefined,
-          customerPhone: customerPhone !== "+7 (" ? customerPhone : undefined,
+          customerPhone: customerPhone ? toE164(customerPhone) : undefined,
           customerEmail: customerEmail.trim() || undefined,
           customerTelegram: customerTelegram || undefined,
           recipientName: recipientName || undefined,
-          recipientPhone: recipientPhone !== "+7 (" ? recipientPhone : undefined,
+          recipientPhone: recipientPhone ? toE164(recipientPhone) : undefined,
           isRecipientSelf,
           deliveryType,
           isPickup,
@@ -280,21 +281,6 @@ export function CheckoutFormModal() {
   // Итоговая сумма (товары + доставка, без дублирования логики)
   const finalTotal = state.total + deliveryPrice;
 
-  // Форматирование телефона
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (value: string) => void) => {
-    let value = e.target.value.replace(/\D/g, "");
-    if (value.startsWith("7")) value = value.slice(1);
-    if (value.length > 10) value = value.slice(0, 10);
-
-    let formatted = "+7 (";
-    if (value.length > 0) formatted += value.slice(0, 3);
-    if (value.length > 3) formatted += ") " + value.slice(3, 6);
-    if (value.length > 6) formatted += "-" + value.slice(6, 8);
-    if (value.length > 8) formatted += "-" + value.slice(8, 10);
-
-    setter(formatted);
-  };
-
   // Авто-подстановка @ для Telegram
   const handleTelegramChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
@@ -321,11 +307,14 @@ export function CheckoutFormModal() {
     return intervals;
   };
 
+  const customerPhoneE164 = toE164(customerPhone);
+  const recipientPhoneE164 = toE164(recipientPhone);
+
   // Валидация: контакты, получатель, согласие + обязательные данные доставки
   const isFormValid = () => {
-    if (!customerName.trim() || !customerPhone || customerPhone.length < 18) return false;
+    if (!customerName.trim() || !customerPhoneE164 || !isValidPhone(customerPhoneE164)) return false;
     if (!isRecipientSelf) {
-      if (!recipientName.trim() || !recipientPhone || recipientPhone.length < 18) return false;
+      if (!recipientName.trim() || !recipientPhoneE164 || !isValidPhone(recipientPhoneE164)) return false;
     }
     if (!agreePrivacy) return false;
 
@@ -349,10 +338,10 @@ export function CheckoutFormModal() {
   // Первое незаполненное поле (порядок как в isFormValid) для scroll+focus+highlight
   const getFirstInvalidFieldId = (): string | null => {
     if (!customerName.trim()) return FIELD_IDS.customerName;
-    if (!customerPhone || customerPhone.length < 18) return FIELD_IDS.customerPhone;
+    if (!customerPhoneE164 || !isValidPhone(customerPhoneE164)) return FIELD_IDS.customerPhone;
     if (!isRecipientSelf) {
       if (!recipientName.trim()) return FIELD_IDS.recipientName;
-      if (!recipientPhone || recipientPhone.length < 18) return FIELD_IDS.recipientPhone;
+      if (!recipientPhoneE164 || !isValidPhone(recipientPhoneE164)) return FIELD_IDS.recipientPhone;
     }
     if (!agreePrivacy) return FIELD_IDS.agreePrivacy;
     const hasDeliveryChoice = deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails);
@@ -428,24 +417,17 @@ export function CheckoutFormModal() {
             {firstInvalidField === FIELD_IDS.customerName && <p className="text-sm text-red-600 mt-1">Заполните имя и фамилию</p>}
           </div>
           <div>
-            <label className="block text-sm mb-1">
-              Телефон <span className="text-red-500">*</span>
-            </label>
-            <div className="relative w-full">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none">🇷🇺</span>
-              <input
-                id={FIELD_IDS.customerPhone}
-                type="tel"
-                placeholder="+7 (000) 000-00-00"
-                value={customerPhone}
-                onChange={(e) => { handlePhoneChange(e, setCustomerPhone); clearFieldError(FIELD_IDS.customerPhone); }}
-                className={`w-full pl-12 pr-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.customerPhone ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
-              />
-              {firstInvalidField === FIELD_IDS.customerPhone && <p className="text-sm text-red-600 mt-1">Введите корректный номер телефона</p>}
-            </div>
+            <PhoneInput
+              id={FIELD_IDS.customerPhone}
+              value={customerPhone}
+              onChange={(v) => { setCustomerPhone(v); clearFieldError(FIELD_IDS.customerPhone); }}
+              label="Телефон"
+              required
+              error={firstInvalidField === FIELD_IDS.customerPhone ? "Введите корректный номер телефона" : undefined}
+            />
           </div>
           <div>
-            <label className="block text-sm mb-1">Ник в Telegram (необязательное)</label>
+            <label className="block text-sm mb-1">Ник в Telegram (необязательно)</label>
             <input
               type="text"
               placeholder="@username"
@@ -455,7 +437,7 @@ export function CheckoutFormModal() {
             />
           </div>
           <div>
-            <label className="block text-sm mb-1">Почта (необязательное)</label>
+            <label className="block text-sm mb-1">Почта (необязательно)</label>
             <input
               type="email"
               placeholder="example@mail.ru"
@@ -514,21 +496,14 @@ export function CheckoutFormModal() {
               {firstInvalidField === FIELD_IDS.recipientName && <p className="text-sm text-red-600 mt-1">Заполните имя получателя</p>}
             </div>
             <div>
-              <label className="block text-sm mb-1">
-                Телефон получателя <span className="text-red-500">*</span>
-              </label>
-              <div className="relative w-full">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg pointer-events-none">🇷🇺</span>
-                <input
-                  id={FIELD_IDS.recipientPhone}
-                  type="tel"
-                  placeholder="+7 (000) 000-00-00"
-                  value={recipientPhone}
-                  onChange={(e) => { handlePhoneChange(e, setRecipientPhone); clearFieldError(FIELD_IDS.recipientPhone); }}
-                  className={`w-full pl-12 pr-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.recipientPhone ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
-                />
-                {firstInvalidField === FIELD_IDS.recipientPhone && <p className="text-sm text-red-600 mt-1">Введите корректный номер телефона получателя</p>}
-              </div>
+              <PhoneInput
+                id={FIELD_IDS.recipientPhone}
+                value={recipientPhone}
+                onChange={(v) => { setRecipientPhone(v); clearFieldError(FIELD_IDS.recipientPhone); }}
+                label="Телефон получателя"
+                required
+                error={firstInvalidField === FIELD_IDS.recipientPhone ? "Введите корректный номер телефона получателя" : undefined}
+              />
             </div>
           </div>
         )}
@@ -806,11 +781,11 @@ export function CheckoutFormModal() {
         items={state.items.map((item) => ({ id: item.id, quantity: item.cartQuantity }))}
         customer={{
           name: customerName,
-          phone: customerPhone,
+          phone: customerPhoneE164 || undefined,
           email: customerEmail.trim() || undefined,
           telegram: customerTelegram || undefined,
           recipientName: isRecipientSelf ? customerName : recipientName,
-          recipientPhone: isRecipientSelf ? customerPhone : recipientPhone,
+          recipientPhone: isRecipientSelf ? customerPhoneE164 : recipientPhoneE164,
           deliveryType: isPickup ? "pickup" : (deliveryType ?? undefined),
           isPickup,
           deliveryAddress: deliveryAddress || undefined,

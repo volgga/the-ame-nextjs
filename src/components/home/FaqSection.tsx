@@ -134,7 +134,7 @@ export function FaqSection({ faqItems }: FaqSectionProps) {
                 <button
                   type="button"
                   onClick={() => toggleItem(item.id)}
-                  className="w-full flex items-center justify-between gap-4 p-4 md:p-5 text-left hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2"
+                  className="w-full flex items-center justify-between gap-4 pl-0 pr-4 md:pr-5 py-4 md:py-5 text-left hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2"
                   aria-expanded={isOpen}
                   aria-controls={`faq-answer-${item.id}`}
                 >
@@ -171,7 +171,7 @@ export function FaqSection({ faqItems }: FaqSectionProps) {
                 >
                   <div
                     ref={showContent ? contentRef : undefined}
-                    className="px-4 md:px-5 pb-4 md:pb-5 text-sm md:text-base text-[var(--color-text-main)] leading-relaxed"
+                    className="pl-0 pr-4 md:pr-5 pb-4 md:pb-5 text-sm md:text-base text-[var(--color-text-main)] leading-relaxed"
                   >
                     {item.answer}
                   </div>

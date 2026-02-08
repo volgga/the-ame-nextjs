@@ -98,3 +98,12 @@ curl -X POST http://localhost:3000/api/forms/gift-hint \
 ```json
 {"ok": false, "error": "Описание ошибки"}
 ```
+
+### Если приходит 500 internal_error
+
+1. **Таблицы в Supabase** — выполните миграции в SQL Editor:
+   - `scripts/migrations/create-leads-table.sql`
+   - `scripts/migrations/create-lead-events-table.sql`
+2. **Переменные** — в `.env.local` должны быть заданы: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+3. **Токен бота** — скопируйте его из @BotFather без лишних символов (часто опечатка в конце: `9ZBYs` vs `9ZBs`).
+4. **Логи** — в терминале, где запущен `npm run dev`, смотрите сообщения вида `[forms/one-click] Ошибка Telegram:` — там будет причина.

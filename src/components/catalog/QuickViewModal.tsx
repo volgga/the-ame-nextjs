@@ -318,6 +318,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
           name: product.name,
           image: product.image,
           price: product.price,
+          productPath: buildProductUrl({ name: product.name, productSlug: product.slug ?? null }),
         }}
       />
     </div>

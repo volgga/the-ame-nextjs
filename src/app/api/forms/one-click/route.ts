@@ -66,6 +66,18 @@ function validateAndParse(body: unknown): OneClickFormData | { error: string } {
   }
   result.productId = productIdValidation.normalized;
 
+  const productUrlValidation = validateStringField(data.productUrl, "productUrl", 500, false);
+  if (!productUrlValidation.valid) {
+    return { error: productUrlValidation.error! };
+  }
+  result.productUrl = productUrlValidation.normalized;
+
+  const productPathValidation = validateStringField(data.productPath, "productPath", 300, false);
+  if (!productPathValidation.valid) {
+    return { error: productPathValidation.error! };
+  }
+  result.productPath = productPathValidation.normalized;
+
   return result;
 }
 
@@ -140,17 +152,8 @@ export async function POST(request: Request) {
         .single();
 
       if (supabaseError) {
-        console.error(`[forms/${FORM_TYPE}] Ошибка Supabase при сохранении:`, {
-          formType: FORM_TYPE,
-          phone: parsed.phone.substring(0, 5) + "***",
-          name: parsed.name?.substring(0, 3) + "***" || "не указано",
-          error: supabaseError.message,
-        });
-        await logLeadEvent("saved_failed", {
-          formType: FORM_TYPE,
-          error: supabaseError.message,
-        });
-        // Продолжаем выполнение - попробуем отправить в TG
+        console.error(`[forms/${FORM_TYPE}] saved_failed error=${supabaseError.message}`);
+        await logLeadEvent("saved_failed", { formType: FORM_TYPE, error: supabaseError.message });
       } else if (leadData?.id) {
         leadId = leadData.id;
         await logLeadEvent("saved", {
@@ -159,48 +162,26 @@ export async function POST(request: Request) {
       }
     } catch (supabaseErr) {
       const errorMessage = supabaseErr instanceof Error ? supabaseErr.message : String(supabaseErr);
-      console.error(`[forms/${FORM_TYPE}] Неожиданная ошибка Supabase:`, {
-        formType: FORM_TYPE,
-        phone: parsed.phone.substring(0, 5) + "***",
-        name: parsed.name?.substring(0, 3) + "***" || "не указано",
-        error: errorMessage,
-      });
-      await logLeadEvent("saved_failed", {
-        formType: FORM_TYPE,
-        error: errorMessage,
-      });
-      // Продолжаем выполнение - попробуем отправить в TG
+      console.error(`[forms/${FORM_TYPE}] saved_failed error=${errorMessage}`);
+      await logLeadEvent("saved_failed", { formType: FORM_TYPE, error: errorMessage });
     }
 
-    // Отправка в Telegram
+    // Отправка в Telegram (best effort: лид уже в БД, TG вторично)
     try {
       const message = formatOneClickMessage(parsed, leadId);
       await sendToTelegram(message);
-      await logLeadEvent("tg_sent", {
-        formType: FORM_TYPE,
-      }, leadId);
+      await logLeadEvent("tg_sent", { formType: FORM_TYPE }, leadId);
     } catch (tgError) {
       const errorMessage = tgError instanceof Error ? tgError.message : String(tgError);
-      console.error(`[forms/${FORM_TYPE}] Ошибка Telegram:`, {
-        formType: FORM_TYPE,
-        phone: parsed.phone.substring(0, 5) + "***",
-        name: parsed.name?.substring(0, 3) + "***" || "не указано",
-        leadId: leadId || "не сохранен",
-        error: errorMessage,
-      });
-      await logLeadEvent("tg_failed", {
-        formType: FORM_TYPE,
-        error: errorMessage,
-      }, leadId);
-      return NextResponse.json({ ok: false, error: "internal_error" }, { status: 500 });
+      console.error(`[forms/${FORM_TYPE}] tg_failed leadId=${leadId ?? "—"} error=${errorMessage}`);
+      await logLeadEvent("tg_failed", { formType: FORM_TYPE, error: errorMessage }, leadId);
+      // Не возвращаем 500: лид сохранён, пользователю ok
     }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error(`[forms/${FORM_TYPE}] Неожиданная ошибка:`, {
-      formType: FORM_TYPE,
-      error: error instanceof Error ? error.message : String(error),
-    });
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error(`[forms/${FORM_TYPE}] unexpected error=${msg}`);
     return NextResponse.json({ ok: false, error: "internal_error" }, { status: 500 });
   }
 }
