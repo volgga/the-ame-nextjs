@@ -7,6 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { MAIN_PAGE_BLOCK_GAP, MAIN_PAGE_BLOCK_GAP_MARGIN } from "@/components/ui/breadcrumbs";
 import { ContactsModal } from "@/components/ContactsModal";
 import { contactProviders } from "@/lib/contactProviders";
+import { submitBouquet } from "@/lib/formsClient";
 
 const DEFAULT_TITLE = "Заказать букет вашей мечты";
 const DEFAULT_SUBTITLE1 = "";
@@ -51,6 +52,7 @@ export function OrderBouquetSection({
   const [consentError, setConsentError] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -87,16 +89,33 @@ export function OrderBouquetSection({
     if (!isValid) return;
 
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-      setTimeout(() => {
+    setSubmitError("");
+    try {
+      const pageUrl =
+        typeof window !== "undefined" ? window.location.pathname + window.location.search : undefined;
+      const payload = {
+        phone: phone.trim(),
+        name: name.trim() || undefined,
+        pageUrl: pageUrl || undefined,
+      };
+      if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
+        console.log("[Bouquet] payload", payload);
+      }
+      const result = await submitBouquet(payload);
+      if (result.ok) {
+        setSubmitted(true);
         setName("");
         setPhone("");
         setConsent(false);
-        setSubmitted(false);
-      }, 3000);
-    }, 500);
+        setTimeout(() => setSubmitted(false), 3000);
+      } else {
+        setSubmitError(result.error || "Не удалось отправить заявку. Попробуйте позже.");
+      }
+    } catch {
+      setSubmitError("Ошибка отправки. Проверьте интернет и попробуйте снова.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -225,6 +244,9 @@ export function OrderBouquetSection({
                     </label>
                     {consentError && <p className="mt-1 text-sm text-red-600">{consentError}</p>}
                   </div>
+                  {submitError && (
+                    <p className="text-sm text-red-600 text-center">{submitError}</p>
+                  )}
                   <div className="flex justify-center">
                     <button
                       type="submit"

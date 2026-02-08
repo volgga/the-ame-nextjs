@@ -11,6 +11,7 @@ export interface OneClickFormData {
   name?: string | null;
   productTitle?: string | null;
   pageUrl?: string | null;
+  productId?: string | null;
 }
 
 /**
@@ -34,6 +35,8 @@ export interface GiftHintFormData {
   preferredDate?: string | null;
   comment?: string | null;
   pageUrl?: string | null;
+  productTitle?: string | null;
+  productId?: string | null;
 }
 
 /**
@@ -64,6 +67,11 @@ export function formatOneClickMessage(data: OneClickFormData, leadId?: string): 
 
   if (pageUrl) {
     message += `\n<b>Страница:</b> <code>${escapeHtml(pageUrl)}</code>`;
+  }
+
+  const productId = data.productId?.trim();
+  if (productId) {
+    message += `\n<b>ID товара:</b> <code>${escapeHtml(productId)}</code>`;
   }
 
   if (leadId) {
@@ -115,6 +123,11 @@ export function formatGiftHintMessage(data: GiftHintFormData, leadId?: string): 
 
 <b>Имя:</b> ${escapeHtml(name)}
 <b>Телефон:</b> <code>${escapeHtml(data.phone)}</code>`;
+
+  const productTitle = data.productTitle?.trim();
+  if (productTitle) {
+    text += `\n<b>Товар:</b> <code>${escapeHtml(productTitle)}</code>`;
+  }
 
   if (recipientName) {
     text += `\n<b>Получатель:</b> ${escapeHtml(recipientName)}`;

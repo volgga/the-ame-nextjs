@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { X } from "lucide-react";
+import { submitOneClick } from "@/lib/formsClient";
 
 export type QuickBuyProduct = {
   id: string;
@@ -79,27 +80,24 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
 
     setLoading(true);
     try {
-      const res = await fetch("/api/one-click-order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          productId: product.id,
-          productTitle: product.name,
-          price: product.price,
-          phone: trimmedPhone,
-          name: name.trim() || null,
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setSubmitError(data.error ?? "Ошибка при отправке. Попробуйте ещё раз.");
-        setLoading(false);
-        return;
+      const pageUrl =
+        typeof window !== "undefined"
+          ? window.location.pathname + window.location.search
+          : "";
+      const payload = {
+        phone: trimmedPhone,
+        name: name.trim() || undefined,
+        productTitle: product.name,
+        pageUrl,
+        productId: product.id || undefined,
+      };
+      if (typeof process !== "undefined" && process.env.NODE_ENV !== "production") {
+        console.log("[QuickBuy] payload", payload);
       }
 
-      if (data.ok !== true) {
+      const data = await submitOneClick(payload);
+
+      if (!data.ok) {
         setSubmitError(data.error ?? "Ошибка при отправке. Попробуйте ещё раз.");
         setLoading(false);
         return;
