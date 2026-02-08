@@ -22,6 +22,9 @@ const variantSchema = z.object({
   sort_order: z.number().int().default(0),
   image_url: optionalImageUrl,
   description: z.string().optional().nullable(),
+  seo_title: z.string().max(300).optional().nullable(),
+  seo_description: z.string().max(500).optional().nullable(),
+  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -61,6 +64,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         sort_order: parsed.data.sort_order,
         image_url: parsed.data.image_url ?? null,
         description: parsed.data.description ?? null,
+        seo_title: parsed.data.seo_title?.trim() || null,
+        seo_description: parsed.data.seo_description?.trim() || null,
+        og_image: parsed.data.og_image?.trim() || null,
       })
       .select()
       .single();

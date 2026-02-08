@@ -166,3 +166,22 @@ export async function sendToTelegram(text: string, threadId?: number): Promise<v
     text,
   });
 }
+
+/**
+ * Отправляет сообщение в чат заказов (TELEGRAM_ORDERS_CHAT_ID, TELEGRAM_ORDERS_THREAD_ID).
+ * Best-effort: если переменные не заданы — ничего не отправляет, не бросает.
+ */
+export async function sendOrderTelegramMessage(text: string): Promise<void> {
+  const chatId = process.env.TELEGRAM_ORDERS_CHAT_ID;
+  if (!chatId?.trim()) return;
+
+  const envTid = process.env.TELEGRAM_ORDERS_THREAD_ID;
+  const threadId =
+    envTid != null ? (Number.parseInt(String(envTid).trim(), 10) || undefined) : undefined;
+
+  await sendTelegramMessage({
+    chatId: chatId.trim(),
+    threadId,
+    text,
+  });
+}

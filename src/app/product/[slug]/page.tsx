@@ -37,16 +37,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  const title = `Купить ${product.title} в Сочи с доставкой — цветы и подарки | The Ame`;
-  // Если есть описание товара → использовать его (нормализованное и обрезанное до ≤160 символов)
-  // Иначе fallback: "{НазваниеТовара} — свежие цветы с доставкой по Сочи. Удобный заказ и быстрая доставка — The Ame."
+  // Ручной SEO title или автогенерация
+  const title = product.seoTitle?.trim()
+    ? `${product.seoTitle.trim()} | The Ame`
+    : `Купить ${product.title} в Сочи с доставкой — цветы и подарки | The Ame`;
+  // Ручной SEO description или описание товара или fallback
   const description =
-    product.shortDescription && product.shortDescription.trim().length > 0
-      ? truncateDescription(product.shortDescription, 160)
-      : `${product.title}${PRODUCT_DESCRIPTION_FALLBACK}`;
+    product.seoDescription?.trim()
+      ? truncateDescription(product.seoDescription, 160)
+      : product.shortDescription && product.shortDescription.trim().length > 0
+        ? truncateDescription(product.shortDescription, 160)
+        : `${product.title}${PRODUCT_DESCRIPTION_FALLBACK}`;
 
   const url = canonicalUrl(`/product/${slug}`);
-  const imageUrl = product.image
+  const ogTitle = product.ogTitle?.trim() || title;
+  const ogDesc = product.ogDescription?.trim() || description;
+  const imageUrl = product.ogImage?.trim()
+    ? (product.ogImage.startsWith("http") ? product.ogImage : `${CANONICAL_BASE}${product.ogImage.startsWith("/") ? "" : "/"}${product.ogImage}`)
+    : product.image
     ? product.image.startsWith("http")
       ? product.image
       : `${CANONICAL_BASE}${product.image.startsWith("/") ? "" : "/"}${product.image}`
@@ -55,6 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    ...(product.seoKeywords?.trim() && { keywords: product.seoKeywords.trim() }),
     alternates: { canonical: url },
     robots: ROBOTS_INDEX_FOLLOW,
     openGraph: {
@@ -62,8 +71,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locale: LOCALE,
       url,
       siteName: SITE_NAME,
-      title,
-      description,
+      title: ogTitle,
+      description: ogDesc,
       images: [{ url: imageUrl, width: 900, height: 900, alt: product.title }],
     },
   };

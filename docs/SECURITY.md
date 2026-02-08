@@ -2,7 +2,7 @@
 
 ## Секреты и переменные окружения
 
-- **Не коммитить**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD`, ключи Tinkoff и любые секреты.
+- **Не коммитить**: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_PASSWORD_HASH`, `ADMIN_SESSION_SECRET`, ключи Tinkoff и любые секреты. Пароль админки в открытом виде хранить нельзя — только bcrypt-хеш в `ADMIN_PASSWORD_HASH`.
 - **`.env.local`** должен быть в `.gitignore` (в проекте используется правило `.env*` с исключением `!.env.example`).
 - **`.env.example`** — шаблон без значений секретов; коммитить можно.
 

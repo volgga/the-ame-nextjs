@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { CartItemsList } from "./CartItemsList";
 import { CheckoutFormModal } from "./CheckoutFormModal";
+import type { PromoTotals } from "./PromoCodeBlock";
 import { UpsellSection } from "./UpsellSection";
 import { useCart } from "@/context/CartContext";
+import { formatPrice } from "@/utils/formatPrice";
 
 const Z_CART_OVERLAY = 200;
 const Z_CART_PANEL = 201;
@@ -19,8 +21,46 @@ type CartDrawerProps = {
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { state } = useCart();
   const [mounted, setMounted] = useState(false);
+  const [totals, setTotals] = useState<PromoTotals | null>(null);
+
+  const subtotal = state.total; // сумма по позициям
+
+  const fetchTotals = useCallback(async () => {
+    if (subtotal <= 0) {
+      setTotals({ subtotal: 0, discount: 0, total: 0, promo: null });
+      return;
+    }
+    try {
+      const res = await fetch("/api/cart/totals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subtotal }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setTotals({
+          subtotal: data.subtotal ?? subtotal,
+          discount: data.discount ?? 0,
+          total: data.total ?? subtotal,
+          promo: data.promo ?? null,
+        });
+      } else {
+        setTotals({ subtotal, discount: 0, total: subtotal, promo: null });
+      }
+    } catch {
+      setTotals({ subtotal, discount: 0, total: subtotal, promo: null });
+    }
+  }, [subtotal]);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (isOpen && state.items.length > 0) {
+      fetchTotals();
+    } else if (state.items.length === 0) {
+      setTotals(null);
+    }
+  }, [isOpen, state.items.length, state.total, fetchTotals]);
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
@@ -38,6 +78,18 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
+
+  const displayTotals: PromoTotals = totals ?? { subtotal, discount: 0, total: subtotal, promo: null };
+
+  const handlePromoApplySuccess = useCallback((newTotals: PromoTotals) => {
+    setTotals(newTotals);
+  }, []);
+
+  const handlePromoRemoveSuccess = useCallback(() => {
+    setTotals((t) =>
+      t ? { ...t, discount: 0, total: t.subtotal, promo: null } : { subtotal, discount: 0, total: subtotal, promo: null }
+    );
+  }, [subtotal]);
 
   if (!mounted) return null;
 
@@ -78,14 +130,31 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               ) : (
                 <>
                   <CartItemsList />
-                  <div className="mt-4 text-right">
-                    <div className="font-bold text-lg">Сумма: {state.total.toLocaleString("ru-RU")} р.</div>
+                  {/* Итоги */}
+                  <div className="mt-4 text-right space-y-1">
+                    <div className="text-[#111]">
+                      Подытог: {formatPrice(displayTotals.subtotal)}
+                    </div>
+                    {displayTotals.discount > 0 && (
+                      <div className="text-green-600">
+                        Скидка: -{formatPrice(displayTotals.discount)}
+                      </div>
+                    )}
+                    <div className="font-bold text-lg">
+                      Итого: {formatPrice(displayTotals.total)}
+                    </div>
                   </div>
                   <UpsellSection />
                 </>
               )}
             </div>
-            {state.items.length > 0 && <CheckoutFormModal />}
+            {state.items.length > 0 && (
+              <CheckoutFormModal
+                totals={displayTotals}
+                onTotalsUpdate={handlePromoApplySuccess}
+                onTotalsReset={handlePromoRemoveSuccess}
+              />
+            )}
           </div>
         </div>
       </div>

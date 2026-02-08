@@ -20,10 +20,10 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("categories")
-      .select("id, name, slug, sort_order, is_active, description")
+      .select("id, name, slug, sort_order, is_active, description, seo_title")
       .order("sort_order", { ascending: true });
     if (error) throw error;
-    const rows = (data ?? []) as { id: string; name: string | null; slug: string | null; sort_order: number; is_active: boolean; description: string | null }[];
+    const rows = (data ?? []) as { id: string; name: string | null; slug: string | null; sort_order: number; is_active: boolean; description: string | null; seo_title: string | null }[];
     const list = rows
       .filter((r) => typeof r.slug === "string" && r.slug.trim() !== "")
       .map((r) => ({
@@ -33,6 +33,7 @@ export async function GET() {
         sort_order: r.sort_order ?? 0,
         is_active: r.is_active ?? true,
         description: r.description ?? null,
+        seo_title: r.seo_title ?? null,
       }));
     return NextResponse.json(list);
   } catch (e) {
@@ -52,6 +53,7 @@ const createSchema = z.object({
   slug: z.string().min(1).optional(),
   is_active: z.boolean().default(true),
   description: z.string().max(5000).optional().nullable(),
+  seo_title: z.string().max(200).optional().nullable(),
 });
 
 /** Находит уникальный slug: base, base-2, base-3, ... */
@@ -110,6 +112,7 @@ export async function POST(request: NextRequest) {
         sort_order,
         is_active: parsed.data.is_active,
         description: parsed.data.description?.trim() || null,
+        seo_title: parsed.data.seo_title?.trim() || null,
       })
       .select()
       .single();

@@ -9,7 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import type { Product } from "@/lib/products";
 import type { ProductDetails } from "@/lib/productDetails";
-import { Flower } from "@/types/flower";
+import { Flower, getCartLineId } from "@/types/flower";
 import { Breadcrumbs, BREADCRUMB_SPACING } from "@/components/ui/breadcrumbs";
 import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
 import { FullscreenViewer } from "./FullscreenViewer";
@@ -228,6 +228,21 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     }
   }, [product.variants, hasVariants, selectedVariantId]);
 
+  // Client-side update metadata when variant changes (variant has its own SEO fields)
+  useEffect(() => {
+    if (!hasVariants || !selectedVariant) return;
+    const v = selectedVariant as { seo_title?: string | null; seo_description?: string | null; og_image?: string | null };
+    const title = v.seo_title?.trim();
+    const desc = v.seo_description?.trim();
+    if (title) {
+      document.title = `${title} | The Ame`;
+    }
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc && desc) {
+      metaDesc.setAttribute("content", desc);
+    }
+  }, [hasVariants, selectedVariant]);
+
   // Храним предыдущий product.id чтобы сбросить индекс только при смене товара
   const prevProductId = useRef(product.id);
 
@@ -239,7 +254,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     }
   }, [product.id, hasVariants, product.variants]);
 
-  const flower: Flower = {
+  const flower: Flower & { variantId?: number | null; variantTitle?: string | null } = {
     id: product.id,
     name: product.title,
     price: displayPrice,
@@ -254,6 +269,10 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     slug: product.slug,
     categorySlug: product.categorySlug ?? null,
     isPreorder: product.isPreorder ?? false,
+    ...(selectedVariant && {
+      variantId: selectedVariant.id,
+      variantTitle: selectedVariant.name ?? undefined,
+    }),
   };
 
   // Массив изображений: product.image + product.images; невалидные заменяем placeholder
@@ -285,14 +304,14 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     setSelectedImageIndex((i) => (i === imagesLen - 1 ? 0 : i + 1));
   };
 
+  const lineId = getCartLineId(flower);
+
   const handleAddToCart = (e?: React.MouseEvent<HTMLButtonElement>) => {
-    // Проверяем, есть ли товар уже в корзине
-    const existingItem = cartState.items.find((item) => item.id === flower.id);
+    // Проверяем, есть ли эта позиция (товар + вариант) уже в корзине
+    const existingItem = cartState.items.find((item) => item.id === lineId);
     if (existingItem) {
-      // Если есть, увеличиваем количество
-      updateQuantity(flower.id, existingItem.cartQuantity + quantity);
+      updateQuantity(lineId, existingItem.cartQuantity + quantity);
     } else {
-      // Если нет, добавляем с нужным количеством
       for (let i = 0; i < quantity; i++) {
         addToCart(flower);
       }
@@ -305,10 +324,9 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
   };
 
   const handleBuyNow = (e?: React.MouseEvent<HTMLButtonElement>) => {
-    // Добавляем в корзину (та же логика, что и в handleAddToCart)
-    const existingItem = cartState.items.find((item) => item.id === flower.id);
+    const existingItem = cartState.items.find((item) => item.id === lineId);
     if (existingItem) {
-      updateQuantity(flower.id, existingItem.cartQuantity + quantity);
+      updateQuantity(lineId, existingItem.cartQuantity + quantity);
     } else {
       for (let i = 0; i < quantity; i++) {
         addToCart(flower);

@@ -3,56 +3,67 @@
 import Link from "next/link";
 
 type TopMarqueeProps = {
-  phrases?: string[];
-  href?: string;
-  speed?: number; // секунды на один полный цикл
+  /** Текст бегущей строки (одна фраза, повторяется для анимации) */
+  text: string;
+  /** Ссылка при клике; пусто/не задано — не кликабельно */
+  href?: string | null;
+  /** Секунды на один полный цикл анимации */
+  speed?: number;
+  /** Сколько раз повторить фразу в ряду для бесшовности */
   duplicates?: number;
 };
 
 /**
  * TopMarquee — бегущая строка вверху шапки.
- * CSS animation без библиотек.
+ * CSS animation без библиотек. Если href задан — клик ведёт на ссылку (та же вкладка).
+ * Вызывать только при enabled && text.trim() (при пустом тексте возвращает null).
  */
-/** Ссылка категории «14 февраля» (тот же формат, что в каталоге) */
-const MARQUEE_HREF = "/magazine/14-fevralya";
-
 export function TopMarquee({
-  phrases = ["Один клик и ты герой 14 февраля"],
-  href = MARQUEE_HREF,
+  text,
+  href,
   speed = 50,
   duplicates = 6,
 }: TopMarqueeProps) {
-  // Формируем дорожку: повторяем массив фраз нужное количество раз
+  if (!text?.trim()) return null;
+  const phrases = [text.trim()];
   const row: string[] = [];
   for (let i = 0; i < duplicates; i++) {
     row.push(...phrases);
   }
-
-  // Дублируем для бесшовности
   const content = [...row, ...row];
 
-  return (
-    <Link
-      href={href}
-      className="block w-full overflow-hidden bg-ticker-bg text-ticker-foreground h-8 flex items-center cursor-pointer hover:opacity-[0.85] transition-opacity"
-      style={{ borderBottom: "0.5px solid rgba(31, 42, 31, 0.65)" }}
-      aria-label="Перейти в категорию 14 февраля"
+  const inner = (
+    <div
+      className="flex items-center whitespace-nowrap"
+      style={{ animation: `marquee ${speed}s linear infinite` }}
     >
-      <div
-        className="flex items-center whitespace-nowrap"
-        style={{
-          animation: `marquee ${speed}s linear infinite`,
-        }}
-      >
-        {content.map((text, i) => (
-          <div key={i} className="flex items-center">
-            <span className="py-1.5 px-8 text-xs uppercase tracking-wide">{text}</span>
-            <span className="mx-6 inline-flex items-center justify-center" aria-hidden>
-              <span className="block w-2 h-2 rounded-full bg-current" />
-            </span>
-          </div>
-        ))}
-      </div>
-    </Link>
+      {content.map((t, i) => (
+        <div key={i} className="flex items-center">
+          <span className="py-1.5 px-8 text-xs uppercase tracking-wide">{t}</span>
+          <span className="mx-6 inline-flex items-center justify-center" aria-hidden>
+            <span className="block w-2 h-2 rounded-full bg-current" />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  const wrapperClass =
+    "block w-full overflow-hidden bg-ticker-bg text-ticker-foreground h-8 flex items-center " +
+    (href ? "cursor-pointer hover:opacity-[0.85] transition-opacity" : "");
+  const style = { borderBottom: "0.5px solid rgba(31, 42, 31, 0.65)" };
+
+  if (href && href.trim() !== "") {
+    return (
+      <Link href={href} className={wrapperClass} style={style} aria-label={text}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={wrapperClass} style={style} aria-hidden>
+      {inner}
+    </div>
   );
 }

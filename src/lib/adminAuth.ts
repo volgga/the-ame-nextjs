@@ -1,47 +1,45 @@
 /**
- * Админ-авторизация: проверка пароля, установка/чтение cookie сессии.
- * Пароль берётся из ADMIN_PASSWORD (env). Cookie: httpOnly, secure в prod.
+ * Админ-авторизация: проверка логина/пароля (bcrypt), установка/чтение session cookie.
+ * Пароль только через bcrypt.compare с hash из env. Cookie: httpOnly, sameSite=lax,
+ * secure в prod, без maxAge/expires — session cookie (исчезает при закрытии браузера).
  */
 
+import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import { createSessionToken, verifySessionToken } from "@/lib/adminSession";
 
 const COOKIE_NAME = "admin_session";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 дней
 
-function createSessionToken(): string {
-  const payload = { admin: true, exp: Date.now() + COOKIE_MAX_AGE * 1000 };
-  return Buffer.from(JSON.stringify(payload)).toString("base64url");
-}
-
-/** Проверка токена (для middleware — без cookies()). */
-export function validateSessionToken(token: string | undefined): boolean {
+/** Проверка токена по подписи (для использования вне cookies, например в middleware). */
+export async function validateSessionToken(token: string | undefined): Promise<boolean> {
   if (!token) return false;
-  try {
-    const json = Buffer.from(token, "base64url").toString("utf8");
-    const data = JSON.parse(json);
-    return Boolean(data?.admin && data?.exp && data.exp > Date.now());
-  } catch {
-    return false;
-  }
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) return false;
+  const payload = await verifySessionToken(token, secret);
+  return payload !== null;
 }
 
-export async function verifyAdminPassword(password: string): Promise<boolean> {
-  const expected = process.env.ADMIN_PASSWORD;
-  if (!expected) return false;
-  return password === expected;
+/** Проверка логина и пароля: только bcrypt.compare, пароль не хранится в коде. */
+export async function verifyAdminCredentials(login: string, password: string): Promise<boolean> {
+  const username = process.env.ADMIN_USERNAME;
+  const hash = process.env.ADMIN_PASSWORD_HASH;
+  if (!username || !hash || typeof login !== "string" || typeof password !== "string") return false;
+  if (login !== username) return false;
+  return bcrypt.compare(password, hash);
 }
 
-export async function createAdminSession(): Promise<string> {
-  const token = createSessionToken();
+export async function createAdminSession(): Promise<void> {
+  const secret = process.env.ADMIN_SESSION_SECRET;
+  if (!secret) throw new Error("ADMIN_SESSION_SECRET is not set");
+  const token = await createSessionToken(secret);
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: COOKIE_MAX_AGE,
     path: "/",
+    // Без maxAge/expires — session cookie, удаляется при закрытии браузера
   });
-  return token;
 }
 
 export async function destroyAdminSession(): Promise<void> {

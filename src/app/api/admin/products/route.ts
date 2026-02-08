@@ -114,6 +114,12 @@ const createSimpleSchema = z.object({
   is_preorder: z.boolean().default(false),
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
+  seo_title: z.string().max(300).optional().nullable(),
+  seo_description: z.string().max(500).optional().nullable(),
+  seo_keywords: z.string().max(500).optional().nullable(),
+  og_title: z.string().max(300).optional().nullable(),
+  og_description: z.string().max(500).optional().nullable(),
+  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
 });
 
 const createVariantSchema = z.object({
@@ -126,6 +132,12 @@ const createVariantSchema = z.object({
   is_hidden: z.boolean().default(false),
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
+  seo_title: z.string().max(300).optional().nullable(),
+  seo_description: z.string().max(500).optional().nullable(),
+  seo_keywords: z.string().max(500).optional().nullable(),
+  og_title: z.string().max(300).optional().nullable(),
+  og_description: z.string().max(500).optional().nullable(),
+  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
   variants: z
     .array(
       z.object({
@@ -138,6 +150,9 @@ const createVariantSchema = z.object({
         image_url: optionalImageUrl,
         sort_order: z.number().default(0),
         is_active: z.boolean().default(true),
+        seo_title: z.string().max(300).optional().nullable(),
+        seo_description: z.string().max(500).optional().nullable(),
+        og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
       })
     )
     .min(1),
@@ -186,6 +201,12 @@ export async function POST(request: NextRequest) {
           sort_order: 0,
           category_slug: mainCategorySlug,
           category_slugs: categorySlugs,
+          seo_title: parsed.data.seo_title?.trim() || null,
+          seo_description: parsed.data.seo_description?.trim() || null,
+          seo_keywords: parsed.data.seo_keywords?.trim() || null,
+          og_title: parsed.data.og_title?.trim() || null,
+          og_description: parsed.data.og_description?.trim() || null,
+          og_image: parsed.data.og_image?.trim() || null,
         })
         .select()
         .single();
@@ -228,6 +249,12 @@ export async function POST(request: NextRequest) {
           sort_order: 0,
           category_slug: mainCategorySlug,
           category_slugs: categorySlugs,
+          seo_title: parsed.data.seo_title?.trim() || null,
+          seo_description: parsed.data.seo_description?.trim() || null,
+          seo_keywords: parsed.data.seo_keywords?.trim() || null,
+          og_title: parsed.data.og_title?.trim() || null,
+          og_description: parsed.data.og_description?.trim() || null,
+          og_image: parsed.data.og_image?.trim() || null,
         })
         .select()
         .single();
@@ -247,6 +274,9 @@ export async function POST(request: NextRequest) {
         image_url: v.image_url ?? null,
         sort_order: v.sort_order,
         is_active: v.is_active,
+        seo_title: v.seo_title?.trim() || null,
+        seo_description: v.seo_description?.trim() || null,
+        og_image: v.og_image?.trim() || null,
       }));
 
       const { error: variantsError } = await sb.from("product_variants").insert(variantsToInsert);

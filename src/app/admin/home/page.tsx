@@ -8,7 +8,13 @@ import type { AboutFormRef } from "@/components/admin/home/AboutForm";
 import type { ReviewsFormRef } from "@/components/admin/home/ReviewsForm";
 import type { FaqFormRef } from "@/components/admin/home/FaqForm";
 import type { OrderBlockFormRef } from "@/components/admin/home/OrderBlockForm";
+import type { MarqueeFormRef } from "@/components/admin/home/MarqueeForm";
+import type { PromoFormRef } from "@/components/admin/home/PromoForm";
 
+const MarqueeForm = dynamic(
+  () => import("@/components/admin/home/MarqueeForm").then((m) => ({ default: m.MarqueeForm })),
+  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
+);
 const ReviewsForm = dynamic(
   () => import("@/components/admin/home/ReviewsForm").then((m) => ({ default: m.ReviewsForm })),
   { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
@@ -25,6 +31,10 @@ const OrderBlockForm = dynamic(
   () => import("@/components/admin/home/OrderBlockForm").then((m) => ({ default: m.OrderBlockForm })),
   { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
 );
+const PromoForm = dynamic(
+  () => import("@/components/admin/home/PromoForm").then((m) => ({ default: m.PromoForm })),
+  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
+);
 
 /**
  * Раздел «Главная страница» в админке.
@@ -39,10 +49,16 @@ export default function AdminHomePage() {
   const [reviewsDirty, setReviewsDirty] = useState(false);
   const [orderBlockDirty, setOrderBlockDirty] = useState(false);
   const [faqDirty, setFaqDirty] = useState(false);
+  const [marqueeModalOpen, setMarqueeModalOpen] = useState(false);
+  const [marqueeDirty, setMarqueeDirty] = useState(false);
+  const [promoModalOpen, setPromoModalOpen] = useState(false);
+  const [promoDirty, setPromoDirty] = useState(false);
   const aboutFormRef = useRef<AboutFormRef>(null);
   const reviewsFormRef = useRef<ReviewsFormRef>(null);
   const orderBlockFormRef = useRef<OrderBlockFormRef>(null);
   const faqFormRef = useRef<FaqFormRef>(null);
+  const marqueeFormRef = useRef<MarqueeFormRef>(null);
+  const promoFormRef = useRef<PromoFormRef>(null);
 
   return (
     <>
@@ -56,6 +72,20 @@ export default function AdminHomePage() {
             <h3 className="font-medium text-[#111]">Коллекции</h3>
             <p className="mt-1 text-sm text-gray-500">Карточки блока «КОЛЛЕКЦИИ THE ÁME» на главной</p>
           </Link>
+          <button
+            onClick={() => setMarqueeModalOpen(true)}
+            className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition text-left w-full cursor-pointer"
+          >
+            <h3 className="font-medium text-[#111]">Бегущая дорожка</h3>
+            <p className="mt-1 text-sm text-gray-500">Текст и ссылка бегущей строки над шапкой, вкл/выкл</p>
+          </button>
+          <button
+            onClick={() => setPromoModalOpen(true)}
+            className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition text-left w-full cursor-pointer"
+          >
+            <h3 className="font-medium text-[#111]">Промокод(ы)</h3>
+            <p className="mt-1 text-sm text-gray-500">Управление промокодами для скидок в корзине</p>
+          </button>
           <button
             onClick={() => setAboutModalOpen(true)}
             className="block rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-sm hover:shadow transition text-left w-full cursor-pointer"
@@ -134,6 +164,30 @@ export default function AdminHomePage() {
         }}
       >
         <FaqForm formRef={faqFormRef} onDirtyChange={setFaqDirty} />
+      </Modal>
+
+      <Modal
+        isOpen={marqueeModalOpen}
+        onClose={() => setMarqueeModalOpen(false)}
+        title="Бегущая дорожка"
+        unsavedChanges={marqueeDirty}
+        onSaveAndClose={async () => {
+          await marqueeFormRef.current?.save();
+        }}
+      >
+        <MarqueeForm formRef={marqueeFormRef} onDirtyChange={setMarqueeDirty} />
+      </Modal>
+
+      <Modal
+        isOpen={promoModalOpen}
+        onClose={() => setPromoModalOpen(false)}
+        title="Промокод(ы)"
+        unsavedChanges={promoDirty}
+        onSaveAndClose={async () => {
+          await promoFormRef.current?.save();
+        }}
+      >
+        <PromoForm formRef={promoFormRef} onDirtyChange={setPromoDirty} />
       </Modal>
     </>
   );

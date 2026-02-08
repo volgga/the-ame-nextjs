@@ -35,7 +35,7 @@ function CartItemRow({
   updateQuantity,
   removeFromCart,
 }: {
-  item: { id: string; name: string; image: string; price: number; cartQuantity: number };
+  item: { id: string; name: string; image: string; price: number; cartQuantity: number; variantTitle?: string | null };
   updateQuantity: (id: string, qty: number) => void;
   removeFromCart: (id: string) => void;
 }) {
@@ -50,6 +50,9 @@ function CartItemRow({
 
       <div className="flex-1 min-w-0">
         <h3 className="font-medium text-sm mb-1 line-clamp-2">{item.name}</h3>
+        {item.variantTitle && (
+          <p className="text-xs text-muted-foreground mb-1">Вариант: {item.variantTitle}</p>
+        )}
         {item.cartQuantity > 1 && <p className="text-xs text-muted-foreground mb-2">Количество: {item.cartQuantity}</p>}
         <div className="flex items-center gap-2">
           <button

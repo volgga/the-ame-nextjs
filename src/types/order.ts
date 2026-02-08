@@ -10,6 +10,10 @@ export interface OrderItemPayload {
   name: string;
   price: number; // в рублях (на сервере в заказ сохраняем в копейках в amount)
   quantity: number;
+  /** Путь карточки товара для ссылки в уведомлениях, например /product/slug */
+  productPath?: string;
+  /** Название варианта (для вариантных товаров); выводится в TG */
+  variantTitle?: string;
 }
 
 export interface OrderCustomerPayload {
@@ -20,6 +24,8 @@ export interface OrderCustomerPayload {
   recipientName?: string;
   recipientPhone?: string;
   deliveryType?: string;
+  /** Название района доставки (для отображения в уведомлениях) */
+  deliveryZoneTitle?: string;
   isPickup?: boolean;
   deliveryAddress?: string;
   deliveryDate?: string;
@@ -29,6 +35,12 @@ export interface OrderCustomerPayload {
   notes?: string;
   askRecipientForDetails?: boolean;
   deliverAnonymously?: boolean;
+  /** false = получатель другой человек, true = получатель сам клиент */
+  isRecipientSelf?: boolean;
+  /** Согласие на получение рассылки */
+  receiveMailings?: boolean;
+  /** Промокод (в уведомлении показывается всегда: значение или —) */
+  promocode?: string;
 }
 
 export interface OrderRecord {

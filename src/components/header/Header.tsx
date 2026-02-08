@@ -5,6 +5,7 @@ import { TopMarquee } from "./TopMarquee";
 import { TopBar } from "./TopBar";
 import { HeaderMain } from "./HeaderMain";
 import { useHeaderScrollDirection } from "@/hooks/useHeaderScrollDirection";
+import type { MarqueeSettings } from "@/lib/homeMarquee";
 
 const MARQUEE_H = 32;
 const MAIN_H = 44;
@@ -14,11 +15,12 @@ const TOPBAR_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 /**
  * Двухрядный хедер (top bar + main bar).
- * При скрытии: topbar-mask схлопывается по высоте до 0 (фон и контент исчезают),
- * inner topbar дополнительно уезжает translateY(-100%). Main header поднимается на место topbar.
- * Spacer анимирует высоту, чтобы не было рывка контента.
+ * marquee — настройки бегущей дорожки (SSR). Если выключена или нет текста — блок не рендерится, хедер без отступа.
  */
-export function Header() {
+export function Header({ marquee }: { marquee?: MarqueeSettings | null }) {
+  const hasText = Boolean(marquee?.text?.trim());
+  const marqueeVisible = Boolean(marquee?.enabled) && hasText;
+  const marqueeHeight = marqueeVisible ? MARQUEE_H : 0;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const animationLockRef = useRef(false);
   const headerMode = useHeaderScrollDirection(animationLockRef);
@@ -75,7 +77,7 @@ export function Header() {
   const mainBarVisible =
     !mounted || effectiveMdOrLarger || headerMode === "expanded";
   const spacerHeight =
-    MARQUEE_H + (topbarVisible ? topbarHeightPx : 0) + (mainBarVisible ? MAIN_H : 0);
+    marqueeHeight + (topbarVisible ? topbarHeightPx : 0) + (mainBarVisible ? MAIN_H : 0);
 
   return (
     <>
@@ -87,22 +89,24 @@ export function Header() {
           background: "transparent",
         }}
       >
-        <div
-          className="w-full relative z-10 bg-header-bg border-b border-header-foreground-secondary"
-          style={{
-            height: MARQUEE_H,
-            margin: 0,
-            padding: 0,
-            overflow: "hidden",
-          }}
-        >
-          <TopMarquee
-            phrases={["Один клик и ты герой 14 февраля"]}
-            href="/magazine/14-fevralya"
-            speed={50}
-            duplicates={6}
-          />
-        </div>
+        {marqueeVisible && marquee && (
+          <div
+            className="w-full relative z-10 bg-header-bg border-b border-header-foreground-secondary"
+            style={{
+              height: MARQUEE_H,
+              margin: 0,
+              padding: 0,
+              overflow: "hidden",
+            }}
+          >
+            <TopMarquee
+              text={marquee.text ?? ""}
+              href={marquee.link ?? undefined}
+              speed={50}
+              duplicates={6}
+            />
+          </div>
+        )}
 
         {/* topbar-mask: скрыт на мобильных (sm), на md+ — фон topbar, анимируемая высота H <-> 0. */}
         <div className="hidden md:block">

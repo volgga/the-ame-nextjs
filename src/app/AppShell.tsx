@@ -8,12 +8,20 @@ import { Footer } from "@/components/Footer";
 import { FloatingSocialButton } from "@/components/FloatingSocialButton";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
+import { AdminLogoutOnLeave } from "@/components/admin/AdminLogoutOnLeave";
+import type { MarqueeSettings } from "@/lib/homeMarquee";
 
 /**
  * Оболочка приложения с провайдерами и основной разметкой.
- * Гарантирует, что CartProvider и FavoritesProvider оборачивают весь контент.
+ * initialMarquee — настройки бегущей дорожки (с сервера), передаются в Header.
  */
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  initialMarquee,
+}: {
+  children: React.ReactNode;
+  initialMarquee?: MarqueeSettings | null;
+}) {
   const [isPageEnterActive, setIsPageEnterActive] = useState(false);
   const hasAnimatedRef = useRef(false);
 
@@ -43,9 +51,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <CartProvider>
       <FavoritesProvider>
+        <AdminLogoutOnLeave />
         <ScrollToTop />
         <div className="min-h-screen flex flex-col bg-page-bg overflow-x-hidden">
-          <Header />
+          <Header marquee={initialMarquee} />
           <main
             className={`flex-1 bg-page-bg px-0.5 md:px-8 page-enter ${isPageEnterActive ? "page-enter--active" : ""}`}
           >

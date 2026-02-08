@@ -6,16 +6,16 @@
 
 ## Переменные окружения
 
-Добавьте в `.env.local`:
+Добавьте в `.env.local` (см. пошаговую настройку в README):
 
 ```env
-# Обязательно для админки
 SUPABASE_SERVICE_ROLE_KEY=ваш_service_role_ключ
-ADMIN_PASSWORD=ваш_пароль_для_входа
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD_HASH=...   # bcrypt-хеш, не пароль в открытом виде
+ADMIN_SESSION_SECRET=...   # случайная строка 32+ символов
 ```
 
-- **SUPABASE_SERVICE_ROLE_KEY** — из Supabase Dashboard → Settings → API (Service role key). Никогда не передавать на клиент.
-- **ADMIN_PASSWORD** — пароль для входа в админку (хранится только в env, не в коде).
+- **Пароль в открытом виде хранить нельзя** — только `ADMIN_PASSWORD_HASH` (bcrypt). Хеш генерируется скриптом `scripts/hash-admin-password.mjs`.
 
 ## Миграция БД
 
@@ -36,8 +36,8 @@ scripts/admin-tables-migration.sql
 ## Запуск
 
 1. `npm run dev`
-2. Откройте `/admin`
-3. Введите пароль из `ADMIN_PASSWORD`
+2. Откройте `/admin` (редирект на `/admin/login`)
+3. Введите логин и пароль (логин из `ADMIN_USERNAME`; пароль — тот, от которого сгенерирован `ADMIN_PASSWORD_HASH`)
 
 ## Роуты админки
 
@@ -50,11 +50,12 @@ scripts/admin-tables-migration.sql
 | `/admin/products/new` | Создать товар |
 | `/admin/products/[id]` | Редактировать товар и варианты |
 | `/admin/categories` | Категории |
+| `/admin/home` | Главная страница: коллекции, бегущая дорожка, о нас, форма заказа, FAQ, отзывы |
 
 ## Авторизация
 
-- Cookie `admin_session` (httpOnly, 7 дней)
-- Middleware защищает `/admin/*` и `/api/admin/*` (кроме login)
+- Cookie `admin_session` (httpOnly, session cookie — без срока, сбрасывается при закрытии браузера/уходе с админки)
+- Middleware защищает `/admin/*` и `/api/admin/*` (кроме login, logout, me)
 - API endpoints проверяют сессию
 
 ## Таблицы Supabase
@@ -70,7 +71,7 @@ scripts/admin-tables-migration.sql
 
 ## API эндпоинты (внутренние)
 
-- `POST /api/admin/login` — вход (password)
+- `POST /api/admin/login` — вход (login + password)
 - `POST /api/admin/logout` — выход
 - `GET/POST /api/admin/slides` — слайды
 - `POST /api/admin/slides/upload` — загрузка изображения (multipart)
@@ -83,6 +84,7 @@ scripts/admin-tables-migration.sql
 - `POST /api/admin/products/[id]/variants`
 - `PATCH/DELETE /api/admin/products/[id]/variants/[variantId]`
 - `GET/PATCH /api/admin/product-details` — глобальный текст «Подарок при заказе» (модалка «Детали» на странице Товары)
+- `GET/PATCH /api/admin/home-marquee` — настройки бегущей дорожки над шапкой (enabled, text, link). Таблица `home_reviews`, миграция `scripts/migrations/home-marquee.sql`.
 
 Все операции используют Service Role key на сервере.
 

@@ -3,6 +3,7 @@ import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/app/AppShell";
 import { CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
+import { getHomeMarquee } from "@/lib/homeMarquee";
 
 // Подключаем шрифт Montserrat (как в старом проекте)
 const montserrat = Montserrat({
@@ -48,11 +49,12 @@ export const viewport = {
   themeColor: "#ffffff",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const marquee = await getHomeMarquee();
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className={`${montserrat.variable} antialiased`} suppressHydrationWarning>
@@ -92,7 +94,7 @@ export default function RootLayout({
         />
 
         {/* Основная структура: AppShell с провайдерами + контент */}
-        <AppShell>{children}</AppShell>
+        <AppShell initialMarquee={marquee}>{children}</AppShell>
       </body>
     </html>
   );

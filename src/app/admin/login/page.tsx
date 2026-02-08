@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,7 +18,7 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ login: login.trim(), password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -38,17 +39,32 @@ export default function AdminLoginPage() {
       <h2 className="text-xl font-semibold text-[#111]">Вход в админку</h2>
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <div>
+          <label htmlFor="login" className="block text-sm font-medium text-[#111]">
+            Логин
+          </label>
+          <input
+            id="login"
+            type="text"
+            autoComplete="username"
+            value={login}
+            onChange={(e) => setLogin(e.target.value)}
+            className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-color-text-main focus:outline-none focus:ring-1 focus:ring-color-text-main"
+            required
+            autoFocus
+          />
+        </div>
+        <div>
           <label htmlFor="password" className="block text-sm font-medium text-[#111]">
             Пароль
           </label>
           <input
             id="password"
             type="password"
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="mt-1 w-full rounded border border-gray-300 px-3 py-2 focus:border-color-text-main focus:outline-none focus:ring-1 focus:ring-color-text-main"
             required
-            autoFocus
           />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
