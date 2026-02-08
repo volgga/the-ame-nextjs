@@ -31,6 +31,9 @@ cat > /var/www/app/.env.local << 'ENVEOF'
 NEXT_PUBLIC_SUPABASE_URL=https://eweaqbtqzzoxpwfmjinp.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=G7DOVb26JLGYGmgOmmtzNA__QM03j3k
 SUPABASE_SERVICE_ROLE_KEY=RS2RS0FKuqBZBglHTv51_w_c8sqio58
+TELEGRAM_BOT_TOKEN=8210290619:AAEXbzbTbkcR5pH-gsondkTRa165ie9ZBYs
+TELEGRAM_CHAT_ID=-1002343550030
+TELEGRAM_THREAD_ID=624995887
 ENVEOF
 
 echo "📦 Шаг 4.5: Настройка swap для работы с ограниченной памятью..."

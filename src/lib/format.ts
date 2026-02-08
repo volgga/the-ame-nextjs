@@ -51,7 +51,7 @@ function escapeHtml(text: string): string {
 /**
  * Форматирует сообщение для формы "Купить в 1 клик".
  */
-export function formatOneClickMessage(data: OneClickFormData): string {
+export function formatOneClickMessage(data: OneClickFormData, leadId?: string): string {
   const name = data.name?.trim() || "Не указано";
   const productTitle = data.productTitle?.trim() || "Не указано";
   const pageUrl = data.pageUrl?.trim();
@@ -66,13 +66,17 @@ export function formatOneClickMessage(data: OneClickFormData): string {
     message += `\n<b>Страница:</b> <code>${escapeHtml(pageUrl)}</code>`;
   }
 
+  if (leadId) {
+    message += `\n<b>Lead ID:</b> <code>${escapeHtml(leadId)}</code>`;
+  }
+
   return message;
 }
 
 /**
  * Форматирует сообщение для формы "Заказать букет" (главная страница).
  */
-export function formatBouquetMessage(data: BouquetFormData): string {
+export function formatBouquetMessage(data: BouquetFormData, leadId?: string): string {
   const name = data.name?.trim() || "Не указано";
   const message = data.message?.trim() || data.comment?.trim();
   const pageUrl = data.pageUrl?.trim();
@@ -90,13 +94,17 @@ export function formatBouquetMessage(data: BouquetFormData): string {
     text += `\n<b>Страница:</b> <code>${escapeHtml(pageUrl)}</code>`;
   }
 
+  if (leadId) {
+    text += `\n<b>Lead ID:</b> <code>${escapeHtml(leadId)}</code>`;
+  }
+
   return text;
 }
 
 /**
  * Форматирует сообщение для формы "Намекнуть о подарке".
  */
-export function formatGiftHintMessage(data: GiftHintFormData): string {
+export function formatGiftHintMessage(data: GiftHintFormData, leadId?: string): string {
   const name = data.name?.trim() || "Не указано";
   const recipientName = data.recipientName?.trim();
   const preferredDate = data.preferredDate?.trim();
@@ -122,6 +130,10 @@ export function formatGiftHintMessage(data: GiftHintFormData): string {
 
   if (pageUrl) {
     text += `\n<b>Страница:</b> <code>${escapeHtml(pageUrl)}</code>`;
+  }
+
+  if (leadId) {
+    text += `\n<b>Lead ID:</b> <code>${escapeHtml(leadId)}</code>`;
   }
 
   return text;
