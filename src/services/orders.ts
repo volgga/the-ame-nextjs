@@ -9,6 +9,8 @@ import type { OrderCustomerPayload, OrderItemPayload, OrderRecord, OrderStatus }
 export interface CreateOrderInput {
   items: { id: string; quantity: number }[];
   customer: OrderCustomerPayload;
+  /** Опционально: скидка по промокоду в рублях (вычитается из суммы заказа). */
+  getPromoDiscountRubles?: (subtotalRubles: number) => Promise<number>;
 }
 
 /**
@@ -31,17 +33,28 @@ export async function createOrder(input: CreateOrderInput): Promise<{ order: Ord
       return { error: `Товар не найден: ${id}` };
     }
     const lineTotal = Math.round(product.price * quantity * 100); // рубли -> копейки
+    const productPath = product.slug ? `/product/${product.slug}` : undefined;
     orderItems.push({
       id: product.id,
       name: product.name,
       price: product.price,
       quantity,
+      ...(productPath && { productPath }),
+      ...(product.variantTitle && { variantTitle: product.variantTitle }),
     });
     amountKopeks += lineTotal;
   }
 
   if (orderItems.length === 0) {
     return { error: "Нет валидных позиций в заказе" };
+  }
+
+  let finalAmountKopeks = amountKopeks;
+  if (input.getPromoDiscountRubles) {
+    const subtotalRubles = amountKopeks / 100;
+    const discountRubles = await input.getPromoDiscountRubles(subtotalRubles);
+    const discountKopeks = Math.round(discountRubles * 100);
+    finalAmountKopeks = Math.max(0, amountKopeks - discountKopeks);
   }
 
   const supabase = getSupabaseServer();
@@ -51,7 +64,7 @@ export async function createOrder(input: CreateOrderInput): Promise<{ order: Ord
     .from("orders")
     .insert({
       items: orderItems,
-      amount: amountKopeks,
+      amount: finalAmountKopeks,
       currency: "RUB",
       customer: input.customer,
       status: "created",

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Clock, MapPin, Phone, MessageCircle, Send, Sparkles, Mail, Instagram } from "lucide-react";
+import Image from "next/image";
+import { Clock, MapPin, Phone, Mail, Instagram, Send } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo";
 
@@ -30,9 +31,12 @@ const SECTION_TITLE_CLASS = "text-sm font-medium uppercase tracking-wide text-ne
 
 const ROW_CLASS = "flex items-center gap-3";
 const ICON_CLASS = "h-5 w-5 shrink-0 text-neutral-500";
+/** Иконки из проекта (public/icons), серые в списке контактов */
+const ICON_IMG_CLASS = "h-5 w-5 shrink-0 object-contain grayscale opacity-70";
 
 const CONTACT_LINKS: {
-  Icon: LucideIcon;
+  Icon?: LucideIcon;
+  iconSrc?: string;
   label: string;
   href: string;
   text: string;
@@ -45,21 +49,21 @@ const CONTACT_LINKS: {
     text: "+7 993 932-60-95",
   },
   {
-    Icon: MessageCircle,
+    iconSrc: "/icons/whatsapp.svg",
     label: "What's App",
     href: "https://wa.me/message/XQDDWGSEL35LP1",
     text: "+7 993 932-60-95",
     external: true,
   },
   {
-    Icon: Send,
+    iconSrc: "/icons/telegram.svg",
     label: "Telegram",
     href: "https://t.me/the_ame_flowers",
     text: "@the_ame_flowers",
     external: true,
   },
   {
-    Icon: Sparkles,
+    iconSrc: "/icons/max4-messenger-color-icon.png",
     label: "МАХ",
     href: "https://max.ru/u/f9LHodD0cOJJBRShH_taOp567aS5B7oZt4PZHqOvsl782HDW1tNY1II4OTY",
     text: "+7 993 932-60-95",
@@ -134,9 +138,20 @@ export default function ContactsPage() {
               <section>
                 <h2 className={`mb-3 ${SECTION_TITLE_CLASS}`}>Свяжитесь с нами</h2>
                 <ul className="space-y-2.5 text-neutral-600">
-                  {CONTACT_LINKS.map(({ Icon, label, href, text, external }) => (
+                  {CONTACT_LINKS.map(({ Icon, iconSrc, label, href, text, external }) => (
                     <li key={label} className={ROW_CLASS}>
-                      <Icon className={ICON_CLASS} />
+                      {iconSrc ? (
+                        <Image
+                          src={iconSrc}
+                          alt=""
+                          width={20}
+                          height={20}
+                          className={ICON_IMG_CLASS}
+                          unoptimized={iconSrc.endsWith(".svg")}
+                        />
+                      ) : (
+                        Icon && <Icon className={ICON_CLASS} />
+                      )}
                       <span>
                         {label}:{" "}
                         <a

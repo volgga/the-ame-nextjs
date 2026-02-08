@@ -172,35 +172,35 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
             )}
           </span>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {/* На мобильной: иконка избранного вместо скрытой кнопки «Купить в 1 клик» */}
           <button
             type="button"
             onClick={handleToggleFavorite}
-            className={`product-cta h-11 w-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation md:hidden ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
+            className={`product-cta h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation md:hidden ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
             title={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
             aria-label={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
           >
             <Heart
-              className={`w-4 h-4 ${mounted && inFavorites ? "fill-[var(--color-accent-btn)] text-[var(--color-accent-btn)]" : ""}`}
+              className={`w-3.5 h-3.5 ${mounted && inFavorites ? "fill-[var(--color-accent-btn)] text-[var(--color-accent-btn)]" : ""}`}
               strokeWidth={1.5}
             />
           </button>
           <button
             type="button"
             onClick={openQuickBuyModal}
-            className="product-cta min-h-[44px] py-1 rounded-full pl-2.5 pr-2 text-sm font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation hidden md:inline-flex"
+            className="product-cta min-h-[36px] py-0.5 rounded-full pl-2 pr-1.5 text-xs font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation hidden md:inline-flex"
           >
             Купить в 1 клик
           </button>
           <button
             type="button"
             onClick={handleCartClick}
-            className="product-cta h-11 w-11 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
+            className="product-cta h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
             title={flower.inStock ? "В корзину" : "Предзаказ"}
             aria-label={flower.inStock ? "В корзину" : "Предзаказ"}
           >
-            <ShoppingCart className="w-4 h-4" strokeWidth={1.6} />
+            <ShoppingCart className="w-3.5 h-3.5" strokeWidth={1.6} />
           </button>
         </div>
       </div>

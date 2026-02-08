@@ -3,8 +3,6 @@ import type { NextRequest } from "next/server";
 import { validateSessionToken, getAdminCookieName } from "@/lib/adminAuthMiddleware";
 
 const LOGIN_PATH = "/admin/login";
-const API_LOGIN = "/api/admin/login";
-const API_LOGOUT = "/api/admin/logout";
 
 /** Главная страница каталога (все товары) */
 const CATALOG_HOME = "/magazin";
@@ -15,8 +13,13 @@ const MAGAZINE_PREFIX = "/magazine";
 
 const CANONICAL_HOST = "theame.ru";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, hostname, protocol } = request.nextUrl;
+
+  // /api/* и /_next/* не трогаем — запрос идёт сразу в route/статику
+  if (pathname.startsWith("/api") || pathname.startsWith("/_next")) {
+    return NextResponse.next();
+  }
 
   // ============================================================
   // Canonical host: www → non-www, http → https (301)
@@ -81,7 +84,7 @@ export function middleware(request: NextRequest) {
   if (pathname.startsWith("/admin")) {
     if (pathname === LOGIN_PATH) {
       const token = request.cookies.get(getAdminCookieName())?.value;
-      if (validateSessionToken(token)) {
+      if (await validateSessionToken(token)) {
         return NextResponse.redirect(new URL("/admin", request.url));
       }
       return NextResponse.next();
@@ -90,19 +93,8 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/admin/slides", request.url));
     }
     const token = request.cookies.get(getAdminCookieName())?.value;
-    if (!validateSessionToken(token)) {
+    if (!(await validateSessionToken(token))) {
       return NextResponse.redirect(new URL(LOGIN_PATH, request.url));
-    }
-    return NextResponse.next();
-  }
-
-  if (pathname.startsWith("/api/admin")) {
-    if (pathname === API_LOGIN || pathname === API_LOGOUT) {
-      return NextResponse.next();
-    }
-    const token = request.cookies.get(getAdminCookieName())?.value;
-    if (!validateSessionToken(token)) {
-      return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     }
     return NextResponse.next();
   }

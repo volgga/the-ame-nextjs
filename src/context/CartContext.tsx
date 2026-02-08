@@ -1,7 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
-import { Flower, CartItem } from "@/types/flower";
+import { Flower, CartItem, getCartLineId } from "@/types/flower";
+
+/** Позиция при добавлении в корзину: товар + опционально вариант */
+export type AddToCartPayload = Flower & { variantId?: number | null; variantTitle?: string | null };
 
 interface CartState {
   items: CartItem[];
@@ -11,7 +14,7 @@ interface CartState {
 
 interface CartContextType {
   state: CartState;
-  addToCart: (flower: Flower) => void;
+  addToCart: (flower: AddToCartPayload) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -25,7 +28,7 @@ interface CartContextType {
 }
 
 type CartAction =
-  | { type: "ADD_TO_CART"; payload: Flower }
+  | { type: "ADD_TO_CART"; payload: AddToCartPayload }
   | { type: "REMOVE_FROM_CART"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "CLEAR_CART" }
@@ -49,15 +52,16 @@ const CartContext = createContext<CartContextType>(NOOP_CART);
 const cartReducer = (state: CartState, action: CartAction): CartState => {
   switch (action.type) {
     case "ADD_TO_CART": {
-      const existingItem = state.items.find((item) => item.id === action.payload.id);
+      const lineId = getCartLineId(action.payload);
+      const existingItem = state.items.find((item) => item.id === lineId);
       let newItems: CartItem[];
 
       if (existingItem) {
         newItems = state.items.map((item) =>
-          item.id === action.payload.id ? { ...item, cartQuantity: item.cartQuantity + 1 } : item
+          item.id === lineId ? { ...item, cartQuantity: item.cartQuantity + 1 } : item
         );
       } else {
-        newItems = [...state.items, { ...action.payload, cartQuantity: 1 }];
+        newItems = [...state.items, { ...action.payload, id: lineId, cartQuantity: 1 }];
       }
 
       return calculateTotals(newItems);
@@ -120,7 +124,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem("cart", JSON.stringify(state.items));
   }, [state.items]);
 
-  const addToCart = (flower: Flower) => {
+  const addToCart = (flower: AddToCartPayload) => {
     dispatch({ type: "ADD_TO_CART", payload: flower });
   };
 

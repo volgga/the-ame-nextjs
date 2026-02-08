@@ -111,6 +111,7 @@ function PaymentSuccessContent() {
   useEffect(() => {
     if (!orderId) {
       setLoading(false);
+      setError("Не указан номер заказа. Вернитесь в корзину или на главную.");
       return;
     }
 
@@ -176,13 +177,21 @@ function PaymentSuccessContent() {
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
           <p className="text-color-text-secondary mb-4">{error}</p>
-          <button
-            type="button"
-            onClick={openCartDrawer}
-            className="inline-block px-6 py-3 rounded-full font-semibold text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
-          >
-            В корзину
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <Link
+              href="/"
+              className="inline-flex justify-center px-6 py-3 rounded-full font-semibold btn-outline"
+            >
+              На главную
+            </Link>
+            <button
+              type="button"
+              onClick={openCartDrawer}
+              className="inline-flex justify-center px-6 py-3 rounded-full font-semibold text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+            >
+              В корзину
+            </button>
+          </div>
         </div>
       </div>
     );

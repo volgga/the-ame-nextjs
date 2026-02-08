@@ -19,6 +19,10 @@ import { getDeliveryZones } from "@/lib/deliveryZones";
 import { DeliveryZonesTable } from "@/components/delivery/DeliveryZonesTable";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo";
 
+/** Всегда актуальные зоны из админки, без кэша. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const TITLE = "Доставка и оплата — цветы с доставкой по Сочи | The Ame";
 const DESCRIPTION =
   "Условия доставки цветов по Сочи, способы оплаты и сроки выполнения заказов. Прозрачно, удобно и без сюрпризов — The Ame.";

@@ -26,6 +26,13 @@ export type Product = {
   price: number;
   image: string;
   shortDescription: string;
+  /** SEO fields (если заполнены — используются в metadata) */
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoKeywords?: string | null;
+  ogTitle?: string | null;
+  ogDescription?: string | null;
+  ogImage?: string | null;
   /** Состав букета (ручной ввод). У вариантного товара — из выбранного варианта. */
   composition?: string | null;
   /** Высота букета, см */
@@ -65,7 +72,13 @@ type ProductsRow = {
   is_hidden?: boolean | null;
   is_preorder?: boolean | null;
   sort_order?: number | null;
-  created_at?: string | null; // опционально, если есть в БД
+  created_at?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_keywords?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image?: string | null;
 };
 
 /**
@@ -119,6 +132,12 @@ async function rowToProduct(row: ProductsRow, getCategoryNames?: (slugs: string[
     price: Number(row.price) ?? 0,
     image: row.image_url ?? "",
     shortDescription: row.description ?? "",
+    seoTitle: row.seo_title ?? null,
+    seoDescription: row.seo_description ?? null,
+    seoKeywords: row.seo_keywords ?? null,
+    ogTitle: row.og_title ?? null,
+    ogDescription: row.og_description ?? null,
+    ogImage: row.og_image ?? null,
     composition: row.composition_size?.trim() || null,
     sizeHeightCm: row.height_cm != null ? Number(row.height_cm) : null,
     sizeWidthCm: row.width_cm != null ? Number(row.width_cm) : null,
@@ -151,7 +170,7 @@ export async function getAllProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, sort_order, created_at"
+        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -217,7 +236,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     const base = supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder"
+        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null");

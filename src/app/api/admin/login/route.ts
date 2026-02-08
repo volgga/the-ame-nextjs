@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminPassword, createAdminSession } from "@/lib/adminAuth";
+import { verifyAdminCredentials, createAdminSession } from "@/lib/adminAuth";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    const login = typeof body.login === "string" ? body.login.trim() : "";
     const password = typeof body.password === "string" ? body.password : "";
-    if (!password) {
+    if (!login || !password) {
       return NextResponse.json({ error: "Неверный запрос" }, { status: 400 });
     }
-    const ok = await verifyAdminPassword(password);
+    const ok = await verifyAdminCredentials(login, password);
     if (!ok) {
-      return NextResponse.json({ error: "Неверный пароль" }, { status: 401 });
+      return NextResponse.json({ error: "Неверный логин или пароль" }, { status: 401 });
     }
     await createAdminSession();
     return NextResponse.json({ success: true });

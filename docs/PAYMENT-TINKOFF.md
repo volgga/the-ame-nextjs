@@ -52,6 +52,29 @@
 
 Для проверки вебхука локально: поднять туннель (ngrok), подставить `TINKOFF_NOTIFICATION_URL=https://xxx.ngrok.io/api/tinkoff-callback` в `.env.local`.
 
+## Telegram-уведомления об оплате
+
+Уведомления «✅ Оплата успешна» и «❌ Оплата не прошла» отправляются **только при вызове webhook** Tinkoff (`/api/tinkoff-callback` или `/api/payments/tinkoff/notification`). На localhost webhook обычно не вызывается (Tinkoff шлёт на URL из кабинета, например theame.ru).
+
+**Локальная проверка (dev-only):** при `NODE_ENV=development` доступны эндпоинты, которые вызывают те же функции отправки в Telegram:
+
+```bash
+# Подставьте реальный orderId (uuid заказа из Supabase или из ответа после «Оплатить»)
+ORDER_ID="ваш-uuid-заказа"
+
+# Эмуляция успешной оплаты → в Telegram придёт «✅ Оплата успешна»
+curl -X POST http://localhost:3000/api/dev/payment-success \
+  -H "Content-Type: application/json" \
+  -d "{\"orderId\": \"$ORDER_ID\"}"
+
+# Эмуляция неуспешной оплаты → в Telegram придёт «❌ Оплата не прошла»
+curl -X POST http://localhost:3000/api/dev/payment-failed \
+  -H "Content-Type: application/json" \
+  -d "{\"orderId\": \"$ORDER_ID\", \"reason\": \"REJECTED / тест\"}"
+```
+
+В логах сервера при вызове webhook или dev-эндпоинтов: `payment status:`, `sending payment success tg`, `sending payment failed tg`; при ошибке отправки — `payment tg failed`. Если `TELEGRAM_ORDERS_CHAT_ID` не задан — в логах будет `[telegram-orders] TELEGRAM_ORDERS_CHAT_ID не задан`.
+
 ## Чеклист «как проверить, что работает»
 
 - [ ] Корзина не пустая + форма валидна → кнопка «Оплатить» активна.

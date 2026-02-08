@@ -56,6 +56,9 @@ type Variant = {
   image: ImageItem | null;
   imageUrl?: string | null; // existing image URL (for edit)
   sort_order: number;
+  seo_title: string;
+  seo_description: string;
+  og_image: string;
 };
 
 const initialForm = {
@@ -65,6 +68,12 @@ const initialForm = {
   height_cm: null as number | null,
   width_cm: null as number | null,
   price: 0,
+  seo_title: "",
+  seo_description: "",
+  seo_keywords: "",
+  og_title: "",
+  og_description: "",
+  og_image: "",
 };
 
 function AdminProductsPageContent() {
@@ -252,6 +261,12 @@ function AdminProductsPageContent() {
           height_cm: isVariantProduct ? null : data.height_cm != null ? Number(data.height_cm) : null,
           width_cm: isVariantProduct ? null : data.width_cm != null ? Number(data.width_cm) : null,
           price: Number(data.price ?? data.min_price_cache ?? 0),
+          seo_title: data.seo_title ?? "",
+          seo_description: data.seo_description ?? "",
+          seo_keywords: data.seo_keywords ?? "",
+          og_title: data.og_title ?? "",
+          og_description: data.og_description ?? "",
+          og_image: data.og_image ?? "",
         });
         setCreateIsHidden(data.is_hidden ?? false);
         setCreateIsPreorder(data.is_preorder ?? false);
@@ -279,6 +294,9 @@ function AdminProductsPageContent() {
                 price?: number;
                 is_preorder?: boolean;
                 image_url?: string | null;
+                seo_title?: string | null;
+                seo_description?: string | null;
+                og_image?: string | null;
               },
               idx: number
             ) => ({
@@ -292,6 +310,9 @@ function AdminProductsPageContent() {
               image: null,
               imageUrl: v.image_url ?? null,
               sort_order: idx,
+              seo_title: v.seo_title ?? "",
+              seo_description: v.seo_description ?? "",
+              og_image: v.og_image ?? "",
             })
           );
           setVariants(vars);
@@ -474,6 +495,9 @@ function AdminProductsPageContent() {
       is_preorder: false,
       image: null,
       sort_order: variants.length,
+      seo_title: "",
+      seo_description: "",
+      og_image: "",
     };
     setVariants((prev) => [...prev, newVariant]);
     // Первый вариант развернут по умолчанию, остальные — свернуты
@@ -639,6 +663,12 @@ function AdminProductsPageContent() {
           is_preorder: createIsPreorder,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
+          seo_title: createForm.seo_title.trim() || null,
+          seo_description: createForm.seo_description.trim() || null,
+          seo_keywords: createForm.seo_keywords.trim() || null,
+          og_title: createForm.og_title.trim() || null,
+          og_description: createForm.og_description.trim() || null,
+          og_image: createForm.og_image.trim() || null,
         };
         const url = `/api/admin/products/${editProductId}`;
         const res = await fetch(url, {
@@ -679,6 +709,12 @@ function AdminProductsPageContent() {
           is_hidden: createIsHidden,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
+          seo_title: createForm.seo_title.trim() || null,
+          seo_description: createForm.seo_description.trim() || null,
+          seo_keywords: createForm.seo_keywords.trim() || null,
+          og_title: createForm.og_title.trim() || null,
+          og_description: createForm.og_description.trim() || null,
+          og_image: createForm.og_image.trim() || null,
         };
         const url = `/api/admin/products/${editProductId}`;
         const res = await fetch(url, {
@@ -731,6 +767,9 @@ function AdminProductsPageContent() {
                 is_preorder: v.is_preorder,
                 image_url: variantImageUrl,
                 sort_order: v.sort_order,
+                seo_title: v.seo_title?.trim() || null,
+                seo_description: v.seo_description?.trim() || null,
+                og_image: v.og_image?.trim() || null,
               }),
             });
             if (!vRes.ok) {
@@ -760,6 +799,9 @@ function AdminProductsPageContent() {
                 image_url: variantImageUrl,
                 sort_order: v.sort_order,
                 is_active: true,
+                seo_title: v.seo_title?.trim() || null,
+                seo_description: v.seo_description?.trim() || null,
+                og_image: v.og_image?.trim() || null,
               }),
             });
             if (!vRes.ok) {
@@ -850,6 +892,12 @@ function AdminProductsPageContent() {
           is_hidden: createIsHidden,
           is_preorder: createIsPreorder,
           category_slugs,
+          seo_title: createForm.seo_title.trim() || null,
+          seo_description: createForm.seo_description.trim() || null,
+          seo_keywords: createForm.seo_keywords.trim() || null,
+          og_title: createForm.og_title.trim() || null,
+          og_description: createForm.og_description.trim() || null,
+          og_image: createForm.og_image.trim() || null,
         };
 
         const res = await fetch("/api/admin/products", {
@@ -946,6 +994,12 @@ function AdminProductsPageContent() {
           is_active: true,
           is_hidden: createIsHidden,
           category_slugs,
+          seo_title: createForm.seo_title.trim() || null,
+          seo_description: createForm.seo_description.trim() || null,
+          seo_keywords: createForm.seo_keywords.trim() || null,
+          og_title: createForm.og_title.trim() || null,
+          og_description: createForm.og_description.trim() || null,
+          og_image: createForm.og_image.trim() || null,
           variants: variants.map((v, idx) => ({
             name: v.name.trim(),
             composition: v.composition.trim() || null,
@@ -956,6 +1010,9 @@ function AdminProductsPageContent() {
             image_url: variantImageUrls[idx],
             sort_order: v.sort_order,
             is_active: true,
+            seo_title: v.seo_title?.trim() || null,
+            seo_description: v.seo_description?.trim() || null,
+            og_image: v.og_image?.trim() || null,
           })),
         };
 
@@ -1467,6 +1524,70 @@ function AdminProductsPageContent() {
                       <p>«Скрыть с витрины» — товар не показывается на сайте, но остаётся в админке.</p>
                       <p>«Предзаказ» — товар виден на витрине, вместо цены отображается текст «Предзаказ».</p>
                     </div>
+                    <fieldset className="border border-border-block rounded-lg p-4 space-y-3">
+                      <legend className="text-sm font-medium text-color-text-main px-1">SEO</legend>
+                      <p className="text-xs text-color-text-secondary -mt-1">Если не заполнено — используется название товара / описание по умолчанию.</p>
+                      <div>
+                        <label className="block text-xs text-color-text-main mb-0.5">SEO заголовок (title)</label>
+                        <input
+                          type="text"
+                          value={createForm.seo_title}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_title: e.target.value }))}
+                          placeholder="Например: Букет роз с доставкой"
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-color-text-main mb-0.5">SEO описание (description)</label>
+                        <textarea
+                          value={createForm.seo_description}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_description: e.target.value }))}
+                          rows={2}
+                          placeholder="До 160 символов рекомендуется"
+                          maxLength={500}
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                        />
+                        <p className="text-xs text-color-text-secondary mt-0.5">{createForm.seo_description.length}/500</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-color-text-main mb-0.5">Ключевые слова (через запятую)</label>
+                        <input
+                          type="text"
+                          value={createForm.seo_keywords}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_keywords: e.target.value }))}
+                          placeholder="цветы, букет, розы"
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-color-text-main mb-0.5">OG title (опционально)</label>
+                        <input
+                          type="text"
+                          value={createForm.og_title}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, og_title: e.target.value }))}
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-color-text-main mb-0.5">OG description (опционально)</label>
+                        <input
+                          type="text"
+                          value={createForm.og_description}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, og_description: e.target.value }))}
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-color-text-main mb-0.5">OG image URL (опционально)</label>
+                        <input
+                          type="text"
+                          value={createForm.og_image}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, og_image: e.target.value }))}
+                          placeholder="https://..."
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                        />
+                      </div>
+                    </fieldset>
                   </>
                 )}
                 {createType === "variant" && (
@@ -1701,6 +1822,36 @@ function AdminProductsPageContent() {
                                         />
                                       )}
                                     </div>
+                                    <div className="border-t border-border-block pt-2 space-y-2">
+                                      <label className="block text-xs text-color-text-secondary font-medium">SEO варианта</label>
+                                      <div>
+                                        <input
+                                          type="text"
+                                          placeholder="SEO title"
+                                          value={variant.seo_title ?? ""}
+                                          onChange={(e) => updateVariant(variant.id, { seo_title: e.target.value })}
+                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm"
+                                        />
+                                      </div>
+                                      <div>
+                                        <textarea
+                                          placeholder="SEO description (до 160 символов)"
+                                          value={variant.seo_description ?? ""}
+                                          onChange={(e) => updateVariant(variant.id, { seo_description: e.target.value })}
+                                          rows={2}
+                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm"
+                                        />
+                                      </div>
+                                      <div>
+                                        <input
+                                          type="text"
+                                          placeholder="OG image URL"
+                                          value={variant.og_image ?? ""}
+                                          onChange={(e) => updateVariant(variant.id, { og_image: e.target.value })}
+                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm"
+                                        />
+                                      </div>
+                                    </div>
                                     {/* Кнопка удаления — только в развернутом состоянии */}
                                     <div className="pt-1 border-t border-border-block">
                                       <button
@@ -1766,6 +1917,42 @@ function AdminProductsPageContent() {
                         <p className="mt-0.5 text-xs text-red-600">{fieldErrors.variantMainImage}</p>
                       )}
                     </div>
+
+                    <fieldset className="border border-border-block rounded-lg p-4 space-y-3">
+                      <legend className="text-sm font-medium text-color-text-main px-1">SEO товара</legend>
+                      <p className="text-xs text-color-text-secondary -mt-1">Если не заполнено — используется название товара / описание по умолчанию.</p>
+                      <div>
+                        <label className="block text-xs text-color-text-main mb-0.5">SEO заголовок (title)</label>
+                        <input
+                          type="text"
+                          value={createForm.seo_title}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_title: e.target.value }))}
+                          placeholder="Например: Букет роз с доставкой"
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-color-text-main mb-0.5">SEO описание (description)</label>
+                        <textarea
+                          value={createForm.seo_description}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_description: e.target.value }))}
+                          rows={2}
+                          placeholder="До 160 символов рекомендуется"
+                          maxLength={500}
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-color-text-main mb-0.5">OG image URL (опционально)</label>
+                        <input
+                          type="text"
+                          value={createForm.og_image}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, og_image: e.target.value }))}
+                          placeholder="https://..."
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                        />
+                      </div>
+                    </fieldset>
 
                     {/* Категории */}
                     <div>

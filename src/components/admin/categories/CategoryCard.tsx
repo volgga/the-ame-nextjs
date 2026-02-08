@@ -11,6 +11,7 @@ export type Category = {
   sort_order: number;
   is_active: boolean;
   description?: string | null;
+  seo_title?: string | null;
 };
 
 const iconSize = 16;

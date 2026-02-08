@@ -31,7 +31,7 @@ export default function AdminCategoriesPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [editing, setEditing] = useState<Category | null>(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", is_active: true, description: "" });
+  const [form, setForm] = useState({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export default function AdminCategoriesPage() {
   function closeModal() {
     setCreating(false);
     setEditing(null);
-    setForm({ name: "", slug: "", is_active: true, description: "" });
+    setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
     setIsSlugManuallyEdited(false);
   }
 
@@ -114,6 +114,7 @@ export default function AdminCategoriesPage() {
             slug: slugTrimmed,
             is_active: form.is_active,
             description: form.description.trim() || null,
+            seo_title: form.seo_title.trim() || null,
           }),
         });
         const data = await res.json();
@@ -122,7 +123,7 @@ export default function AdminCategoriesPage() {
         setCategoriesFromServer((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
         setCategoriesDraft((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
         setCreating(false);
-        setForm({ name: "", slug: "", is_active: true, description: "" });
+        setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
         setIsSlugManuallyEdited(false);
       } else if (editing) {
         const res = await fetch(`/api/admin/categories/${editing.id}`, {
@@ -133,6 +134,7 @@ export default function AdminCategoriesPage() {
             slug: slugTrimmed,
             is_active: form.is_active,
             description: form.description.trim() || null,
+            seo_title: form.seo_title.trim() || null,
           }),
         });
         const data = await res.json();
@@ -143,11 +145,12 @@ export default function AdminCategoriesPage() {
           slug: data.slug ?? editing.slug,
           is_active: data.is_active,
           description: data.description ?? null,
+          seo_title: data.seo_title ?? null,
         };
         setCategoriesFromServer((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setCategoriesDraft((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setEditing(null);
-        setForm({ name: "", slug: "", is_active: true, description: "" });
+        setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
         setIsSlugManuallyEdited(false);
       }
     } catch (e) {
@@ -260,7 +263,7 @@ export default function AdminCategoriesPage() {
           onClick={() => {
             setCreating(true);
             setEditing(null);
-            setForm({ name: "", slug: "", is_active: true, description: "" });
+            setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
             setIsSlugManuallyEdited(false);
           }}
           className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
@@ -330,6 +333,19 @@ export default function AdminCategoriesPage() {
                     </p>
                   </div>
                   <div>
+                    <label className="block text-sm font-medium text-[#111]">SEO заголовок (title)</label>
+                    <input
+                      type="text"
+                      value={form.seo_title}
+                      onChange={(e) => setForm((f) => ({ ...f, seo_title: e.target.value }))}
+                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                      placeholder="Например: Купить букеты на День влюбленных"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Если заполнено — используется в &lt;title&gt; страницы категории вместо автогенерации.
+                    </p>
+                  </div>
+                  <div>
                     <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -361,7 +377,7 @@ export default function AdminCategoriesPage() {
                     onClick={() => {
                       setDeleteConfirmId(editing.id);
                       setEditing(null);
-                      setForm({ name: "", slug: "", is_active: true, description: "" });
+                      setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
                       setIsSlugManuallyEdited(false);
                     }}
                     className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
@@ -382,12 +398,13 @@ export default function AdminCategoriesPage() {
           onEdit={(cat) => {
             setEditing(cat);
             setCreating(false);
-            setForm({
-              name: cat.name,
-              slug: cat.slug ?? slugify(cat.name),
-              is_active: cat.is_active,
-              description: cat.description ?? "",
-            });
+setForm({
+            name: cat.name,
+            slug: cat.slug ?? slugify(cat.name),
+            is_active: cat.is_active,
+            description: cat.description ?? "",
+            seo_title: cat.seo_title ?? "",
+          });
             setIsSlugManuallyEdited(false);
           }}
           onToggleActive={handleToggleActive}

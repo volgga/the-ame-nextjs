@@ -59,6 +59,12 @@ const updateSimpleSchema = z.object({
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
   sort_order: z.number().int().min(0).optional(),
+  seo_title: z.string().max(300).optional().nullable(),
+  seo_description: z.string().max(500).optional().nullable(),
+  seo_keywords: z.string().max(500).optional().nullable(),
+  og_title: z.string().max(300).optional().nullable(),
+  og_description: z.string().max(500).optional().nullable(),
+  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
 });
 
 const updateVariantSchema = z.object({
@@ -74,6 +80,11 @@ const updateVariantSchema = z.object({
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
   sort_order: z.number().int().min(0).optional(),
+  seo_title: z.string().max(300).optional().nullable(),
+  seo_description: z.string().max(500).optional().nullable(),
+  og_title: z.string().max(300).optional().nullable(),
+  og_description: z.string().max(500).optional().nullable(),
+  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
 });
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

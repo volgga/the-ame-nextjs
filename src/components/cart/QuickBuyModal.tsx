@@ -172,7 +172,7 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
                 placeholder="Как к вам обращаться"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-color-text-secondary/60 focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block"
+                className="w-full px-4 py-3 min-h-[48px] border border-border-block rounded-lg bg-white text-color-text-main placeholder:text-color-text-secondary/60 focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block"
                 autoComplete="name"
               />
             </div>

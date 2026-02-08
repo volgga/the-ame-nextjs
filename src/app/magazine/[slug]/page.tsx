@@ -47,15 +47,16 @@ export async function generateMetadata({
     return { title: "Каталог | The Ame" };
   }
 
+  // Если заполнен ручной SEO title — используем его, иначе автогенерация
   const normalizedName = normalizeCategoryNameForTitle(category.name);
-  // Формула по спеке: "Купить {НазваниеКатегории} в Сочи с доставкой | The Ame"
-  // Если в названии уже есть "Сочи" или "доставка" — не дублировать
   const lowerName = normalizedName.toLowerCase();
   const hasSochi = lowerName.includes("сочи");
   const hasDelivery = lowerName.includes("доставка");
-  const title = hasSochi || hasDelivery
-    ? `${normalizedName} | The Ame`
-    : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
+  const title = category.seo_title?.trim()
+    ? `${category.seo_title.trim()} | The Ame`
+    : hasSochi || hasDelivery
+      ? `${normalizedName} | The Ame`
+      : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
 
   // Если есть описание категории → использовать его (нормализованное и обрезанное до ≤160 символов)
   // Иначе fallback: "{НазваниеКатегории} с доставкой по Сочи. Свежие цветы и удобный заказ — The Ame."

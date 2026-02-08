@@ -22,6 +22,9 @@ const updateSchema = z.object({
   sort_order: z.number().int().optional(),
   image_url: optionalImageUrl,
   description: z.string().optional().nullable(),
+  seo_title: z.string().max(300).optional().nullable(),
+  seo_description: z.string().max(500).optional().nullable(),
+  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; variantId: string }> }) {

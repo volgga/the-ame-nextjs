@@ -15,7 +15,7 @@ if (loaded.error && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
 
 /** Таблицы, используемые в приложении (сверка с БД) */
 const CORE_TABLES = ["products", "product_variants", "variant_products", "orders", "product_details"] as const;
-const HOME_TABLES = ["home_reviews", "hero_slides", "home_collections"] as const;
+const HOME_TABLES = ["home_reviews", "hero_slides", "home_collections", "promo_codes"] as const;
 const REF_TABLES = [
   "categories",
   "add_on_products_categories",

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import type { DeliveryZone } from "@/lib/deliveryZones";
+import type { DeliveryZone } from "@/types/delivery";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
 type DeliveryZonesTableProps = {
@@ -26,7 +26,7 @@ export function DeliveryZonesTable({ zones }: DeliveryZonesTableProps) {
       <CardContent className="p-6 md:p-8">
         <div className="divide-y divide-[#eaeaea]">
           {zones.map((z) => {
-            const hasSubareas = !!z.subareas_text?.trim();
+            const hasSubareas = !!z.conditions?.trim();
             const isExpanded = expandedIds.has(z.id);
 
             return (
@@ -50,7 +50,7 @@ export function DeliveryZonesTable({ zones }: DeliveryZonesTableProps) {
                     )}
                     <div className="min-w-0">
                       <div className="text-base md:text-lg text-[#000] font-medium">
-                        {z.zone_title}
+                        {z.title}
                       </div>
                       {hasSubareas && (
                         <div
@@ -61,7 +61,7 @@ export function DeliveryZonesTable({ zones }: DeliveryZonesTableProps) {
                           }}
                         >
                           <p className="pt-1.5 text-xs md:text-sm text-[#7e7e7e] leading-relaxed">
-                            {z.subareas_text}
+                            {z.conditions}
                           </p>
                         </div>
                       )}
@@ -69,13 +69,13 @@ export function DeliveryZonesTable({ zones }: DeliveryZonesTableProps) {
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm md:text-base md:shrink-0">
                     <div className="text-[#7e7e7e]">
-                      до {z.paid_up_to.toLocaleString("ru-RU")} ₽ —{" "}
+                      до {z.paidUpTo.toLocaleString("ru-RU")} ₽ —{" "}
                       <span className="text-[#000] font-medium">
-                        {z.delivery_price.toLocaleString("ru-RU")} ₽
+                        {z.price.toLocaleString("ru-RU")} ₽
                       </span>
                     </div>
                     <div className="text-[#7e7e7e] sm:ml-4">
-                      от {z.free_from.toLocaleString("ru-RU")} ₽ —{" "}
+                      от {z.freeFrom.toLocaleString("ru-RU")} ₽ —{" "}
                       <span className="text-[#000] font-medium">Бесплатно</span>
                     </div>
                   </div>

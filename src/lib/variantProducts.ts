@@ -27,7 +27,13 @@ type VariantProductsRow = {
   is_hidden: boolean | null;
   published_at: string | null;
   sort_order: number;
-  created_at?: string | null; // опционально, если есть в БД
+  created_at?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_keywords?: string | null;
+  og_title?: string | null;
+  og_description?: string | null;
+  og_image?: string | null;
 };
 
 export type ProductVariantPublic = {
@@ -38,6 +44,9 @@ export type ProductVariantPublic = {
   height_cm?: number | null;
   width_cm?: number | null;
   image_url?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  og_image?: string | null;
 };
 
 /**
@@ -52,7 +61,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -102,6 +111,12 @@ export async function getAllVariantProducts(): Promise<Product[]> {
           price: Number(row.min_price_cache) ?? 0,
           image: row.image_url ?? "",
           shortDescription: row.description ?? "",
+          seoTitle: row.seo_title ?? null,
+          seoDescription: row.seo_description ?? null,
+          seoKeywords: row.seo_keywords ?? null,
+          ogTitle: row.og_title ?? null,
+          ogDescription: row.og_description ?? null,
+          ogImage: row.og_image ?? null,
           composition: null,
           sizeHeightCm: null,
           sizeWidthCm: null,
@@ -131,7 +146,7 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -162,6 +177,12 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
       price: Number(row.min_price_cache) ?? 0,
       image: row.image_url ?? "",
       shortDescription: row.description ?? "",
+      seoTitle: row.seo_title ?? null,
+      seoDescription: row.seo_description ?? null,
+      seoKeywords: row.seo_keywords ?? null,
+      ogTitle: row.og_title ?? null,
+      ogDescription: row.og_description ?? null,
+      ogImage: row.og_image ?? null,
       composition: null,
       sizeHeightCm: null,
       sizeWidthCm: null,
@@ -189,7 +210,7 @@ export async function getVariantProductWithVariantsBySlug(
     const { data: vp, error: vpErr } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -220,6 +241,12 @@ export async function getVariantProductWithVariantsBySlug(
       price: Number(row.min_price_cache) ?? 0,
       image: row.image_url ?? "",
       shortDescription: row.description ?? "",
+      seoTitle: row.seo_title ?? null,
+      seoDescription: row.seo_description ?? null,
+      seoKeywords: row.seo_keywords ?? null,
+      ogTitle: row.og_title ?? null,
+      ogDescription: row.og_description ?? null,
+      ogImage: row.og_image ?? null,
       composition: null,
       sizeHeightCm: null,
       sizeWidthCm: null,
@@ -229,7 +256,7 @@ export async function getVariantProductWithVariantsBySlug(
 
     const { data: vars, error: vErr } = await supabase
       .from("product_variants")
-      .select("id, title, composition, height_cm, width_cm, price, image_url")
+      .select("id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image")
       .eq("product_id", (vp as { id: number }).id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
@@ -244,6 +271,9 @@ export async function getVariantProductWithVariantsBySlug(
         width_cm?: number | null;
         price?: number;
         image_url?: string | null;
+        seo_title?: string | null;
+        seo_description?: string | null;
+        og_image?: string | null;
       }) => ({
         id: v.id,
         name: v.title ?? "",
@@ -252,6 +282,9 @@ export async function getVariantProductWithVariantsBySlug(
         height_cm: v.height_cm != null ? Number(v.height_cm) : null,
         width_cm: v.width_cm != null ? Number(v.width_cm) : null,
         image_url: v.image_url ?? null,
+        seo_title: v.seo_title ?? null,
+        seo_description: v.seo_description ?? null,
+        og_image: v.og_image ?? null,
       })
     );
     return { ...product, variants };

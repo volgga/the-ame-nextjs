@@ -49,6 +49,8 @@ export function Modal({ isOpen, onClose, title, children, unsavedChanges = false
       await onSaveAndClose();
       setShowConfirm(false);
       onClose();
+    } catch {
+      setShowConfirm(false);
     } finally {
       setSaving(false);
     }

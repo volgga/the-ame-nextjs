@@ -14,6 +14,8 @@ export type Category = {
   is_active: boolean;
   /** SEO/описательный текст категории. Если нет — показывается DEFAULT_CATEGORY_SEO_TEXT. */
   description?: string | null;
+  /** Ручной SEO заголовок (title). Если заполнен — используется в <title> вместо автогенерации. */
+  seo_title?: string | null;
 };
 
 /** Дефолтный SEO-текст, если у категории нет своего seoText. */
@@ -35,7 +37,7 @@ async function getCategoriesUncached(): Promise<Category[]> {
   try {
     const { data, error } = await supabase
       .from("categories")
-      .select("id, name, slug, sort_order, is_active, description")
+      .select("id, name, slug, sort_order, is_active, description, seo_title")
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
 
@@ -48,6 +50,7 @@ async function getCategoriesUncached(): Promise<Category[]> {
       sort_order: r.sort_order ?? 0,
       is_active: r.is_active ?? true,
       description: r.description ?? null,
+      seo_title: r.seo_title ?? null,
     }));
   } catch {
     return FALLBACK_CATEGORIES;
