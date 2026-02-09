@@ -52,6 +52,10 @@ export type Product = {
   sortOrder?: number;
   /** Дата создания (для вторичной сортировки) */
   createdAt?: string;
+  /** Флаг "новый" товар (ручной флаг из админки) */
+  isNew?: boolean;
+  /** Дата окончания статуса "новый" (null если не установлен) */
+  newUntil?: string | null;
 };
 
 /** Сырая строка таблицы products в Supabase */
@@ -71,6 +75,8 @@ type ProductsRow = {
   is_active?: boolean | null;
   is_hidden?: boolean | null;
   is_preorder?: boolean | null;
+  is_new?: boolean | null;
+  new_until?: string | null;
   sort_order?: number | null;
   created_at?: string | null;
   seo_title?: string | null;
@@ -148,6 +154,8 @@ async function rowToProduct(row: ProductsRow, getCategoryNames?: (slugs: string[
     images,
     sortOrder: row.sort_order ?? 0,
     createdAt: row.created_at ?? undefined, // fallback для вторичной сортировки
+    isNew: row.is_new ?? false,
+    newUntil: row.new_until ?? null,
   };
 }
 
@@ -170,7 +178,7 @@ export async function getAllProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
+        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -236,7 +244,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     const base = supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
+        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null");

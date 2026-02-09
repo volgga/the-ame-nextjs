@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const [productsRes, variantProductsRes] = await Promise.all([
       sb
         .from("products")
-        .select("id, name, slug, price, image_url, is_active, is_hidden, is_preorder, sort_order")
+        .select("id, name, slug, price, image_url, is_active, is_hidden, is_preorder, is_new, new_until, sort_order")
         .order("sort_order", { ascending: true, nullsFirst: false }),
       sb
         .from("variant_products")
@@ -112,6 +112,8 @@ const createSimpleSchema = z.object({
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
   is_preorder: z.boolean().default(false),
+  is_new: z.boolean().default(false),
+  new_until: z.string().datetime().nullable().optional(),
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
   seo_title: z.string().max(300).optional().nullable(),
@@ -183,6 +185,19 @@ export async function POST(request: NextRequest) {
       const slug = parsed.data.slug?.trim() || slugify(parsed.data.name) || crypto.randomUUID();
       const categorySlugs = parsed.data.category_slugs?.filter(Boolean) ?? null;
       const mainCategorySlug = categorySlugs?.[0] ?? parsed.data.category_slug ?? null;
+      
+      // Логика для is_new и new_until:
+      // Если is_new = true и new_until не задан -> установить now() + 30 days
+      // Если is_new = false -> new_until = null
+      let newUntil: string | null = parsed.data.new_until ?? null;
+      if (parsed.data.is_new && !newUntil) {
+        const now = new Date();
+        now.setDate(now.getDate() + 30);
+        newUntil = now.toISOString();
+      } else if (!parsed.data.is_new) {
+        newUntil = null;
+      }
+      
       const { data, error } = await sb
         .from("products")
         .insert({
@@ -198,6 +213,8 @@ export async function POST(request: NextRequest) {
           is_active: parsed.data.is_active,
           is_hidden: parsed.data.is_hidden,
           is_preorder: parsed.data.is_preorder,
+          is_new: parsed.data.is_new,
+          new_until: newUntil,
           sort_order: 0,
           category_slug: mainCategorySlug,
           category_slugs: categorySlugs,

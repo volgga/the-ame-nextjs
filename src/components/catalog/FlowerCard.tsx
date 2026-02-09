@@ -17,9 +17,10 @@ import type { Product } from "@/lib/products";
 interface FlowerCardProps {
   flower: Flower;
   product?: Product; // Опциональный Product для передачи дополнительных данных (images, composition)
+  showNewBadge?: boolean; // Показывать ли бейдж "новый" (по умолчанию true)
 }
 
-export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
+export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardProps) => {
   const { addToCart } = useCart();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
   const [quickBuyOpen, setQuickBuyOpen] = useState(false);
@@ -84,6 +85,14 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
       ? `от ${flower.price.toLocaleString("ru-RU")} ₽`
       : `${flower.price.toLocaleString("ru-RU")} ₽`;
 
+  // Проверка эффективного статуса "новый": is_new = true AND new_until > now()
+  // Бейдж показывается только если showNewBadge = true (по умолчанию true)
+  const isNewEffective =
+    showNewBadge &&
+    product?.isNew === true &&
+    product?.newUntil != null &&
+    new Date(product.newUntil) > new Date();
+
   const handleCartClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -101,6 +110,12 @@ export const FlowerCard = ({ flower, product }: FlowerCardProps) => {
       <Link href={productUrl} aria-label={flower.name} className="block flex-1">
         {/* 📸 Фото + hover-иконки (лупа, сердечко) — group на контейнере фото */}
         <div className="group relative overflow-hidden rounded-2xl aspect-square bg-[#ece9e2]">
+          {/* Бейдж "новый" — левый верхний угол */}
+          {isNewEffective && (
+            <div className="absolute top-3 left-3 z-10 px-2 py-1 rounded bg-[var(--btn-chip-active-bg)] text-[var(--color-text-main)] text-[11px] font-normal leading-none">
+              новый
+            </div>
+          )}
           <Image
             src={imageSrc}
             alt={flower.name}

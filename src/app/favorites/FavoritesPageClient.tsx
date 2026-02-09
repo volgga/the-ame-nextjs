@@ -87,7 +87,7 @@ export function FavoritesPageClient({ products }: FavoritesPageClientProps) {
             {favoriteFlowers.map((flower) => {
               // Находим соответствующий Product для передачи дополнительных данных
               const product = products.find((p) => p.id === flower.id);
-              return <FlowerCard key={flower.id} flower={flower} product={product} />;
+              return <FlowerCard key={flower.id} flower={flower} product={product} showNewBadge={false} />;
             })}
           </div>
         ) : (

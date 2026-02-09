@@ -56,6 +56,8 @@ const updateSimpleSchema = z.object({
   is_active: z.boolean().optional(),
   is_hidden: z.boolean().optional(),
   is_preorder: z.boolean().optional(),
+  is_new: z.boolean().optional(),
+  new_until: z.string().datetime().nullable().optional(),
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
   sort_order: z.number().int().min(0).optional(),
@@ -173,6 +175,24 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (result.data.name && !result.data.slug) {
         updates.slug = slugify(result.data.name);
       }
+      
+      // Логика для is_new и new_until:
+      // Если is_new = true и new_until не задан -> установить now() + 30 days
+      // Если is_new = false -> new_until = null
+      if (result.data.is_new !== undefined) {
+        if (result.data.is_new) {
+          if (!result.data.new_until) {
+            const now = new Date();
+            now.setDate(now.getDate() + 30);
+            updates.new_until = now.toISOString();
+          } else {
+            updates.new_until = result.data.new_until;
+          }
+        } else {
+          updates.new_until = null;
+        }
+      }
+      
       const categorySlugs = result.data.category_slugs?.filter(Boolean) ?? null;
       if (categorySlugs !== null) {
         updates.category_slugs = categorySlugs;
