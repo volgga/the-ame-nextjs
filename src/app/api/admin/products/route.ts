@@ -131,6 +131,7 @@ const createSimpleSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v === "" ? null : v)),
+  bouquet_colors: z.array(z.string()).optional().nullable(),
 });
 
 const createVariantSchema = z.object({
@@ -155,6 +156,7 @@ const createVariantSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v === "" ? null : v)),
+  bouquet_colors: z.array(z.string()).optional().nullable(),
   variants: z
     .array(
       z.object({
@@ -176,6 +178,7 @@ const createVariantSchema = z.object({
           .optional()
           .nullable()
           .transform((v) => (v === "" ? null : v)), // Обратная совместимость - игнорируется на клиенте
+        bouquet_colors: z.array(z.string()).optional().nullable(),
       })
     )
     .min(1),
@@ -249,6 +252,10 @@ export async function POST(request: NextRequest) {
           og_title: parsed.data.og_title?.trim() || null,
           og_description: parsed.data.og_description?.trim() || null,
           og_image: parsed.data.og_image?.trim() || null,
+          bouquet_colors:
+            parsed.data.bouquet_colors && parsed.data.bouquet_colors.length > 0
+              ? parsed.data.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
+              : null,
         })
         .select()
         .single();
@@ -301,6 +308,10 @@ export async function POST(request: NextRequest) {
           og_title: parsed.data.og_title?.trim() || null,
           og_description: parsed.data.og_description?.trim() || null,
           og_image: parsed.data.og_image?.trim() || null,
+          bouquet_colors:
+            parsed.data.bouquet_colors && parsed.data.bouquet_colors.length > 0
+              ? parsed.data.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
+              : null,
         })
         .select()
         .single();
@@ -324,6 +335,10 @@ export async function POST(request: NextRequest) {
         seo_title: v.seo_title?.trim() || null, // Обратная совместимость
         seo_description: v.seo_description?.trim() || null, // Обратная совместимость
         og_image: v.og_image?.trim() || null, // Обратная совместимость
+        bouquet_colors:
+          v.bouquet_colors && v.bouquet_colors.length > 0
+            ? v.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
+            : null,
       }));
 
       const { error: variantsError } = await sb.from("product_variants").insert(variantsToInsert);

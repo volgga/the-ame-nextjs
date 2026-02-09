@@ -99,33 +99,33 @@ export default async function MagazineCategoryPage({ params, searchParams }: Mag
   const isOccasionsCategory = slug === OCCASIONS_CATEGORY_SLUG;
   const isFlowersInCompositionCategory = slug === FLOWERS_IN_COMPOSITION_CATEGORY_SLUG;
 
-  // Редиректы со старых query-URL на новые slug-URL
+  // Редиректы со старых query-URL на новые slug-URL (?occasion=id или ?occasion=slug)
   if (isOccasionsCategory && occasionParam && typeof occasionParam === "string") {
     const occasionsSubcategories = await getOccasionsSubcategories();
-    const occasion = occasionsSubcategories.find((sub) => sub.id === occasionParam && sub.slug);
+    const occasion =
+      occasionsSubcategories.find((sub) => sub.id === occasionParam && sub.slug) ??
+      occasionsSubcategories.find((sub) => sub.slug === occasionParam);
     if (occasion?.slug) {
       permanentRedirect(`/magazine/${OCCASIONS_CATEGORY_SLUG}/${occasion.slug}`);
     }
   }
 
   if (isFlowersInCompositionCategory && flowerParam && typeof flowerParam === "string") {
-    const { getFlowersInCompositionSubcategories } = await import("@/lib/subcategories");
-    const flowersSubcategories = await getFlowersInCompositionSubcategories();
+    const { getFlowersInCompositionList } = await import("@/lib/getAllFlowers");
+    const flowersList = await getFlowersInCompositionList();
     const normalized = normalizeFlowerKey(flowerParam);
-    const flower = flowersSubcategories.find(
-      (sub) => normalizeFlowerKey(sub.name) === normalized && sub.slug && sub.is_active
-    );
+    const flower = flowersList.find((f) => normalizeFlowerKey(f.name) === normalized);
     if (flower?.slug) {
       permanentRedirect(`/magazine/${FLOWERS_IN_COMPOSITION_CATEGORY_SLUG}/${flower.slug}`);
     }
   }
 
-  const [categories, allProducts, occasionsSubcategories, flowersSubcategories] = await Promise.all([
+  const [categories, allProducts, occasionsSubcategories, flowersList] = await Promise.all([
     getCategories(),
     getAllCatalogProducts(),
     isOccasionsCategory ? getOccasionsSubcategories() : Promise.resolve([]),
     isFlowersInCompositionCategory
-      ? (await import("@/lib/subcategories")).getFlowersInCompositionSubcategories()
+      ? (await import("@/lib/getAllFlowers")).getFlowersInCompositionList()
       : Promise.resolve([]),
   ]);
 
@@ -215,10 +215,10 @@ export default async function MagazineCategoryPage({ params, searchParams }: Mag
           <CategoryChips categories={chips} currentSlug={slug} />
         </div>
 
-        {/* D.5) Flower filter buttons (только для категории "Цветы в составе") */}
-        {isFlowersInCompositionCategory && flowersSubcategories.length > 0 && (
+        {/* D.5) Flower filter buttons (только для категории "Цветы в составе") — список из товаров */}
+        {isFlowersInCompositionCategory && flowersList.length > 0 && (
           <div className={SECTION_GAP}>
-            <FlowerFilterButtons flowers={flowersSubcategories} />
+            <FlowerFilterButtons flowers={flowersList} />
           </div>
         )}
 

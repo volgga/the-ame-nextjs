@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import { OCCASIONS_CATEGORY_SLUG, FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "./constants";
+import { OCCASIONS_CATEGORY_SLUG } from "./constants";
+import { slugify } from "@/utils/slugify";
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
@@ -47,7 +48,20 @@ export async function getOccasionsSubcategories(): Promise<Subcategory[]> {
       return [];
     }
 
-    return (subcategories || []) as Subcategory[];
+    const list = (subcategories || []) as Subcategory[];
+    // Fallback slug из name для подкатегорий без slug (миграция могла не заполнять slug)
+    const withSlug = list.map((sub) => ({
+      ...sub,
+      slug: (sub.slug && String(sub.slug).trim()) || slugify(sub.name) || null,
+    }));
+    // Порядок: sort_order, затем по названию
+    withSlug.sort((a, b) => {
+      const oa = a.sort_order ?? 999;
+      const ob = b.sort_order ?? 999;
+      if (oa !== ob) return oa - ob;
+      return (a.name || "").localeCompare(b.name || "");
+    });
+    return withSlug;
   } catch (e) {
     console.error("[getOccasionsSubcategories] Exception:", e);
     return [];
@@ -75,44 +89,6 @@ export async function getProductIdsBySubcategoryIds(subcategoryIds: string[]): P
   } catch (e) {
     console.error("[getProductIdsBySubcategoryIds] Exception:", e);
     return new Set();
-  }
-}
-
-/**
- * Получить все подкатегории категории "Цветы в составе" (цветы)
- */
-export async function getFlowersInCompositionSubcategories(): Promise<Subcategory[]> {
-  try {
-    // Сначала находим категорию "Цветы в составе"
-    const { data: categories, error: catError } = await supabase
-      .from("categories")
-      .select("id")
-      .eq("slug", FLOWERS_IN_COMPOSITION_CATEGORY_SLUG)
-      .eq("is_active", true)
-      .maybeSingle();
-
-    if (catError || !categories) {
-      console.error("[getFlowersInCompositionSubcategories] Category not found:", catError);
-      return [];
-    }
-
-    // Загружаем подкатегории этой категории
-    const { data: subcategories, error: subError } = await supabase
-      .from("subcategories")
-      .select("id, category_id, name, slug, title, description, seo_title, seo_description, sort_order, is_active")
-      .eq("category_id", categories.id)
-      .eq("is_active", true)
-      .order("sort_order", { ascending: true, nullsFirst: false });
-
-    if (subError) {
-      console.error("[getFlowersInCompositionSubcategories] Error loading subcategories:", subError);
-      return [];
-    }
-
-    return (subcategories || []) as Subcategory[];
-  } catch (e) {
-    console.error("[getFlowersInCompositionSubcategories] Exception:", e);
-    return [];
   }
 }
 

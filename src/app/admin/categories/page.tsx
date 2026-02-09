@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Category } from "@/components/admin/categories/CategoryCard";
 import type { Subcategory } from "@/types/admin";
 import { slugify } from "@/utils/slugify";
+import { FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
 
 const CategoriesGrid = dynamic(
   () => import("@/components/admin/categories/CategoriesGrid").then((m) => ({ default: m.CategoriesGrid })),
@@ -50,6 +51,32 @@ export default function AdminCategoriesPage() {
     seo_description: "",
   });
   const [deleteSubcategoryConfirmId, setDeleteSubcategoryConfirmId] = useState<string | null>(null);
+  // Справочник "Цветы в составе" (таблица flowers) — только при редактировании категории "Цветы в составе"
+  type FlowerItem = {
+    id: string;
+    slug: string;
+    name: string;
+    title?: string | null;
+    description?: string | null;
+    seo_title?: string | null;
+    seo_description?: string | null;
+    is_active: boolean;
+    sort_order: number;
+  };
+  const [flowersList, setFlowersList] = useState<FlowerItem[]>([]);
+  const [flowersLoading, setFlowersLoading] = useState(false);
+  const [flowersSyncLoading, setFlowersSyncLoading] = useState(false);
+  const [editingFlower, setEditingFlower] = useState<FlowerItem | null>(null);
+  const [flowerForm, setFlowerForm] = useState({
+    name: "",
+    title: "",
+    description: "",
+    seo_title: "",
+    seo_description: "",
+    is_active: true,
+  });
+  const [deleteFlowerConfirmId, setDeleteFlowerConfirmId] = useState<string | null>(null);
+  const [deleteFlowerHardConfirmId, setDeleteFlowerHardConfirmId] = useState<string | null>(null);
 
   const isDirty = !areOrdersEqual(categoriesFromServer, categoriesDraft);
 
@@ -84,15 +111,18 @@ export default function AdminCategoriesPage() {
     setEditing(null);
     setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
     setIsSlugManuallyEdited(false);
-    // Очищаем состояние подкатегорий
     setSubcategories([]);
     setEditingSubcategory(null);
     setCreatingSubcategory(false);
     setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
     setDeleteSubcategoryConfirmId(null);
+    setFlowersList([]);
+    setEditingFlower(null);
+    setFlowerForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", is_active: true });
+    setDeleteFlowerConfirmId(null);
+    setDeleteFlowerHardConfirmId(null);
   }
 
-  // Загрузка подкатегорий при открытии модалки редактирования
   const loadSubcategories = useCallback(async (categoryId: string) => {
     setSubcategoriesLoading(true);
     try {
@@ -107,13 +137,35 @@ export default function AdminCategoriesPage() {
     }
   }, []);
 
+  const loadFlowers = useCallback(async () => {
+    setFlowersLoading(true);
+    try {
+      const res = await fetch("/api/admin/flowers");
+      if (!res.ok) throw new Error("Ошибка загрузки цветов");
+      const data = await res.json();
+      setFlowersList(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error("[admin/categories] Error loading flowers:", e);
+    } finally {
+      setFlowersLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (editing?.id) {
+    if (editing?.id && editing?.slug !== FLOWERS_IN_COMPOSITION_CATEGORY_SLUG) {
       loadSubcategories(editing.id);
     } else {
       setSubcategories([]);
     }
-  }, [editing?.id, loadSubcategories]);
+  }, [editing?.id, editing?.slug, loadSubcategories]);
+
+  useEffect(() => {
+    if (editing?.slug === FLOWERS_IN_COMPOSITION_CATEGORY_SLUG) {
+      loadFlowers();
+    } else {
+      setFlowersList([]);
+    }
+  }, [editing?.slug, loadFlowers]);
 
   useEffect(() => {
     if (!creating && !editing) return;
@@ -154,6 +206,36 @@ export default function AdminCategoriesPage() {
     window.addEventListener("keydown", onEsc);
     return () => window.removeEventListener("keydown", onEsc);
   }, [deleteSubcategoryConfirmId]);
+
+  useEffect(() => {
+    if (!editingFlower) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setEditingFlower(null);
+        setFlowerForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", is_active: true });
+      }
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [editingFlower]);
+
+  useEffect(() => {
+    if (!deleteFlowerConfirmId) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDeleteFlowerConfirmId(null);
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [deleteFlowerConfirmId]);
+
+  useEffect(() => {
+    if (!deleteFlowerHardConfirmId) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDeleteFlowerHardConfirmId(null);
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [deleteFlowerHardConfirmId]);
 
   useEffect(() => {
     if (!isDirty) return;
@@ -360,11 +442,9 @@ export default function AdminCategoriesPage() {
       newSubcategories[index],
     ];
 
-    // Обновляем sort_order
     const updated = newSubcategories.map((s, i) => ({ ...s, sort_order: i }));
     setSubcategories(updated);
 
-    // Сохраняем порядок на сервере
     Promise.all(
       updated.map((s, i) =>
         fetch(`/api/admin/subcategories/${s.id}`, {
@@ -376,6 +456,95 @@ export default function AdminCategoriesPage() {
     ).catch((e) => {
       console.error("[admin/categories] Error reordering subcategories:", e);
       setError("Ошибка сохранения порядка подкатегорий");
+    });
+  }
+
+  async function handleSyncFlowers() {
+    setFlowersSyncLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/admin/flowers/sync", { method: "POST" });
+      if (!res.ok) throw new Error("Ошибка синхронизации");
+      await loadFlowers();
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setFlowersSyncLoading(false);
+    }
+  }
+
+  async function handleSaveFlower(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingFlower) return;
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/flowers/${editingFlower.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: flowerForm.name.trim() || undefined,
+          title: flowerForm.title.trim() || null,
+          description: flowerForm.description.trim() || null,
+          seo_title: flowerForm.seo_title.trim() || null,
+          seo_description: flowerForm.seo_description.trim() || null,
+          is_active: flowerForm.is_active,
+        }),
+      });
+      if (!res.ok) throw new Error("Ошибка сохранения");
+      const data = await res.json();
+      setFlowersList((prev) => prev.map((f) => (f.id === data.id ? data : f)));
+      setEditingFlower(null);
+      setFlowerForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", is_active: true });
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
+  async function handleDeactivateFlower(id: string) {
+    setDeleteFlowerConfirmId(null);
+    try {
+      const res = await fetch(`/api/admin/flowers/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_active: false }),
+      });
+      if (!res.ok) throw new Error("Ошибка");
+      await loadFlowers();
+      setEditingFlower(null);
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
+  async function handleDeleteFlowerHard(id: string) {
+    setDeleteFlowerHardConfirmId(null);
+    try {
+      const res = await fetch(`/api/admin/flowers/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Ошибка удаления");
+      await loadFlowers();
+      setEditingFlower(null);
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
+  function handleMoveFlower(id: string, direction: "up" | "down") {
+    const index = flowersList.findIndex((f) => f.id === id);
+    if (index === -1) return;
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === flowersList.length - 1) return;
+    const newList = [...flowersList];
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    [newList[index], newList[newIndex]] = [newList[newIndex], newList[index]];
+    const orderedIds = newList.map((f) => f.id);
+    setFlowersList(newList.map((f, i) => ({ ...f, sort_order: i })));
+    fetch("/api/admin/flowers/reorder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ordered_ids: orderedIds }),
+    }).catch((e) => {
+      console.error("[admin/categories] Error reordering flowers:", e);
+      loadFlowers();
     });
   }
 
@@ -528,8 +697,106 @@ export default function AdminCategoriesPage() {
                       <span className="text-sm text-[#111]">Активна</span>
                     </label>
                   </div>
-                  {/* Блок управления подкатегориями (только при редактировании) */}
-                  {editing && (
+                  {/* Блок "Цветы в составе" (справочник flowers) — только для категории "Цветы в составе" */}
+                  {editing?.slug === FLOWERS_IN_COMPOSITION_CATEGORY_SLUG && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-[#111]">Цветы в составе (из товаров)</h4>
+                        <button
+                          type="button"
+                          onClick={handleSyncFlowers}
+                          disabled={flowersSyncLoading}
+                          className="text-xs text-blue-600 hover:text-blue-800 underline disabled:opacity-50"
+                        >
+                          {flowersSyncLoading ? "Синхронизация…" : "Синхронизировать из товаров"}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-2">
+                        Список можно обновить из товаров. Редактируйте название, SEO и порядок для каждого цветка.
+                      </p>
+                      {flowersLoading ? (
+                        <p className="text-xs text-gray-500">Загрузка…</p>
+                      ) : flowersList.length === 0 ? (
+                        <p className="text-xs text-gray-500">Нет цветов. Нажмите «Синхронизировать из товаров».</p>
+                      ) : (
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {flowersList.map((flower, idx) => (
+                            <div
+                              key={flower.id}
+                              className={`flex items-center justify-between p-2 border rounded text-sm ${flower.is_active ? "border-gray-200" : "border-gray-100 bg-gray-50"}`}
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <div className="flex flex-col gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveFlower(flower.id, "up")}
+                                    disabled={idx === 0}
+                                    className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Вверх"
+                                  >
+                                    ↑
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveFlower(flower.id, "down")}
+                                    disabled={idx === flowersList.length - 1}
+                                    className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Вниз"
+                                  >
+                                    ↓
+                                  </button>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`font-medium truncate ${flower.is_active ? "text-[#111]" : "text-gray-500"}`}>{flower.name}</p>
+                                  {flower.seo_title && (
+                                    <p className="text-xs text-gray-500 truncate">{flower.seo_title}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 ml-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingFlower(flower);
+                                    setFlowerForm({
+                                      name: flower.name,
+                                      title: flower.title || "",
+                                      description: flower.description || "",
+                                      seo_title: flower.seo_title || "",
+                                      seo_description: flower.seo_description || "",
+                                      is_active: flower.is_active,
+                                    });
+                                  }}
+                                  className="text-xs text-blue-600 hover:text-blue-800"
+                                >
+                                  Редактировать
+                                </button>
+                                {flower.is_active && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteFlowerConfirmId(flower.id)}
+                                    className="text-xs text-red-600 hover:text-red-800"
+                                  >
+                                    Отключить
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteFlowerHardConfirmId(flower.id)}
+                                  className="text-xs text-red-700 hover:text-red-900 font-medium"
+                                  title="Удалить из справочника навсегда"
+                                >
+                                  Удалить
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {/* Блок подкатегорий (только для категорий кроме "Цветы в составе", например "По поводу") */}
+                  {editing && editing.slug !== FLOWERS_IN_COMPOSITION_CATEGORY_SLUG && (
                     <div className="pt-4 border-t border-gray-200">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-sm font-medium text-[#111]">Подкатегории</h4>
@@ -793,6 +1060,174 @@ export default function AdminCategoriesPage() {
                 className="rounded px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
               >
                 Да
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка редактирования цветка (справочник "Цветы в составе") */}
+      {editingFlower && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => {
+              setEditingFlower(null);
+              setFlowerForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", is_active: true });
+            }}
+            aria-hidden
+          />
+          <div
+            className="relative w-full max-w-[600px] max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <form onSubmit={handleSaveFlower} className="flex flex-col min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto p-6">
+                <h3 className="mb-4 font-medium text-[#111]">Редактирование цветка</h3>
+                {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">Название *</label>
+                    <input
+                      type="text"
+                      value={flowerForm.name}
+                      onChange={(e) => setFlowerForm((f) => ({ ...f, name: e.target.value }))}
+                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">Заголовок</label>
+                    <input
+                      type="text"
+                      value={flowerForm.title}
+                      onChange={(e) => setFlowerForm((f) => ({ ...f, title: e.target.value }))}
+                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                      placeholder="Опционально"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">Описание</label>
+                    <textarea
+                      value={flowerForm.description}
+                      onChange={(e) => setFlowerForm((f) => ({ ...f, description: e.target.value }))}
+                      rows={4}
+                      className="mt-2 w-full resize-y rounded border border-gray-300 px-3 py-2 text-[#111] text-sm"
+                      placeholder="Опционально"
+                      maxLength={5000}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">SEO заголовок</label>
+                    <input
+                      type="text"
+                      value={flowerForm.seo_title}
+                      onChange={(e) => setFlowerForm((f) => ({ ...f, seo_title: e.target.value }))}
+                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                      placeholder="SEO title"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">SEO описание</label>
+                    <textarea
+                      value={flowerForm.seo_description}
+                      onChange={(e) => setFlowerForm((f) => ({ ...f, seo_description: e.target.value }))}
+                      rows={2}
+                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111] text-sm"
+                      placeholder="SEO description"
+                      maxLength={500}
+                    />
+                  </div>
+                  <div>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={flowerForm.is_active}
+                        onChange={(e) => setFlowerForm((f) => ({ ...f, is_active: e.target.checked }))}
+                      />
+                      <span className="text-sm text-[#111]">Активен</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 p-6 pt-4 border-t border-gray-100">
+                <button
+                  type="submit"
+                  className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+                >
+                  Сохранить
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingFlower(null);
+                    setFlowerForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", is_active: true });
+                  }}
+                  className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
+                >
+                  Отмена
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Подтверждение отключения цветка */}
+      {deleteFlowerConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteFlowerConfirmId(null)} aria-hidden />
+          <div
+            className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-4 text-[#111]">Отключить цветок? Он не будет отображаться в фильтрах и на витрине.</p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteFlowerConfirmId(null)}
+                className="rounded bg-gray-100 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-200"
+              >
+                Нет
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeactivateFlower(deleteFlowerConfirmId)}
+                className="rounded px-3 py-1.5 text-sm text-red-600 hover:bg-red-50"
+              >
+                Отключить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Подтверждение удаления цветка из справочника */}
+      {deleteFlowerHardConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteFlowerHardConfirmId(null)} aria-hidden />
+          <div
+            className="relative w-full max-w-[340px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-4 text-[#111]">
+              Удалить цветок из справочника навсегда? Связи с товарами также будут удалены. Восстановить нельзя.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteFlowerHardConfirmId(null)}
+                className="rounded bg-gray-100 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-200"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteFlowerHard(deleteFlowerHardConfirmId)}
+                className="rounded px-3 py-1.5 text-sm text-white bg-red-600 hover:bg-red-700"
+              >
+                Удалить
               </button>
             </div>
           </div>

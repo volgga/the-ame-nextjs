@@ -110,6 +110,7 @@ const INDEXABLE_PARAMS = new Set([
   "minPrice",
   "maxPrice",
   "q",
+  "colors",
   "page", // Пагинация
   "utm_source",
   "utm_medium",

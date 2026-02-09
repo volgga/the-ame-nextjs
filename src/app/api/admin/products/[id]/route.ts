@@ -76,6 +76,7 @@ const updateSimpleSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v === "" ? null : v)),
+  bouquet_colors: z.array(z.string()).optional().nullable(),
 });
 
 const updateVariantSchema = z.object({
@@ -102,6 +103,7 @@ const updateVariantSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v === "" ? null : v)),
+  bouquet_colors: z.array(z.string()).optional().nullable(),
 });
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -223,6 +225,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             ? result.data.composition_flowers
             : null;
       }
+      if (result.data.bouquet_colors !== undefined) {
+        updates.bouquet_colors =
+          Array.isArray(result.data.bouquet_colors) && result.data.bouquet_colors.length > 0
+            ? result.data.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
+            : null;
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
@@ -257,6 +265,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       updates.composition_flowers =
         Array.isArray(result.data.composition_flowers) && result.data.composition_flowers.length > 0
           ? result.data.composition_flowers
+          : null;
+    }
+    if (result.data.bouquet_colors !== undefined) {
+      updates.bouquet_colors =
+        Array.isArray(result.data.bouquet_colors) && result.data.bouquet_colors.length > 0
+          ? result.data.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
           : null;
     }
 

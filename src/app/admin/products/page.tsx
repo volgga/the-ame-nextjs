@@ -9,6 +9,8 @@ import { Modal } from "@/components/ui/modal";
 import { parseCompositionFlowers } from "@/lib/parseCompositionFlowers";
 import { OCCASIONS_CATEGORY_SLUG } from "@/lib/constants";
 import { useAutoSyncCompositionFlowers } from "@/hooks/useAutoSyncCompositionFlowers";
+import { BOUQUET_COLORS, filterValidBouquetColorKeys } from "@/shared/catalog/bouquetColors";
+import { BouquetColorSwatch } from "@/components/catalog/BouquetColorSwatch";
 
 const ProductsList = dynamic(
   () => import("@/components/admin/products/ProductsList").then((m) => ({ default: m.ProductsList })),
@@ -58,6 +60,7 @@ type Variant = {
   is_preorder: boolean;
   is_new: boolean;
   sort_order: number;
+  bouquetColors?: string[];
 };
 
 const initialForm = {
@@ -93,6 +96,7 @@ function AdminProductsPageContent() {
     { id: string; name: string; category_id: string }[]
   >([]);
   const [selectedOccasionSubcategoryIds, setSelectedOccasionSubcategoryIds] = useState<string[]>([]);
+  const [selectedBouquetColorKeys, setSelectedBouquetColorKeys] = useState<string[]>([]);
   const [loadingOccasions, setLoadingOccasions] = useState(false);
   const [errorOccasions, setErrorOccasions] = useState("");
   const [createIsHidden, setCreateIsHidden] = useState(false);
@@ -164,11 +168,11 @@ function AdminProductsPageContent() {
       )
       .catch(() => setCategories([]));
 
-    // Загружаем список доступных цветов и подкатегорий
+    // Загружаем список цветов из справочника flowers (Flower[]), для чекбоксов используем имена
     Promise.all([
       fetch("/api/admin/flowers")
         .then((res) => (res.ok ? res.json() : []))
-        .then((data: string[]) => setAvailableFlowers(data))
+        .then((data: { name: string }[]) => setAvailableFlowers(Array.isArray(data) ? data.map((f) => f.name) : []))
         .catch(() => setAvailableFlowers([])),
       // Загружаем категорию "По поводу" и её подкатегории
       (async () => {
@@ -306,6 +310,9 @@ function AdminProductsPageContent() {
         setSelectedCategorySlugs(
           Array.isArray(data.category_slugs) ? data.category_slugs : data.category_slug ? [data.category_slug] : []
         );
+        setSelectedBouquetColorKeys(
+          Array.isArray(data.bouquet_colors) ? filterValidBouquetColorKeys(data.bouquet_colors) : []
+        );
         // Загружаем выбранные цветы (если есть)
         setSelectedFlowers(
           Array.isArray(data.composition_flowers) && data.composition_flowers.length > 0
@@ -382,6 +389,7 @@ function AdminProductsPageContent() {
                 price?: number;
                 is_preorder?: boolean;
                 is_new?: boolean;
+                bouquet_colors?: string[] | null;
               },
               idx: number
             ) => ({
@@ -394,6 +402,7 @@ function AdminProductsPageContent() {
               is_preorder: v.is_preorder ?? false,
               is_new: v.is_new ?? false,
               sort_order: idx,
+              bouquetColors: Array.isArray(v.bouquet_colors) ? filterValidBouquetColorKeys(v.bouquet_colors) : [],
             })
           );
           setVariants(vars);
@@ -449,6 +458,7 @@ function AdminProductsPageContent() {
     setSelectedCategorySlugs([]);
     setSelectedFlowers([]);
     setSelectedOccasionSubcategoryIds([]);
+    setSelectedBouquetColorKeys([]);
     setCreateIsHidden(false);
     setCreateIsPreorder(false);
     setCreateIsNew(false);
@@ -600,6 +610,7 @@ function AdminProductsPageContent() {
       is_preorder: false,
       is_new: false,
       sort_order: variants.length,
+      bouquetColors: [],
     };
     setVariants((prev) => [...prev, newVariant]);
     // Первый вариант развернут по умолчанию, остальные — свернуты
@@ -743,6 +754,7 @@ function AdminProductsPageContent() {
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           composition_flowers: selectedFlowers.length > 0 ? selectedFlowers : null,
+          bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
         };
         const url = `/api/admin/products/${editProductId}`;
         const res = await fetch(url, {
@@ -763,7 +775,6 @@ function AdminProductsPageContent() {
         }
         // Сохраняем привязки к подкатегориям "По поводу"
         const productId = editProductId || data.id;
-        // Для вариантных товаров используем формат "vp-{id}" (но здесь createType всегда "simple" при редактировании)
         const productIdForSubcategories = String(productId);
         const saveRes = await fetch(`/api/admin/products/${productIdForSubcategories}/subcategories`, {
           method: "PUT",
@@ -775,6 +786,33 @@ function AdminProductsPageContent() {
         if (!saveRes.ok) {
           const errorData = await saveRes.json().catch(() => ({}));
           console.error("[admin/products] Error saving subcategories:", errorData);
+        }
+        // Справочник "Цветы в составе": ensure по именам, затем сохраняем привязки product_flowers
+        if (selectedFlowers.length > 0) {
+          try {
+            const ensureRes = await fetch("/api/admin/flowers/ensure", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ names: selectedFlowers }),
+            });
+            const flowers = ensureRes.ok ? await ensureRes.json() : [];
+            const flowerIds = Array.isArray(flowers) ? flowers.map((f: { id: string }) => f.id) : [];
+            if (flowerIds.length > 0) {
+              await fetch(`/api/admin/products/${productIdForSubcategories}/flowers`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ flower_ids: flowerIds }),
+              });
+            }
+          } catch (e) {
+            console.error("[admin/products] Error saving flowers:", e);
+          }
+        } else {
+          await fetch(`/api/admin/products/${productIdForSubcategories}/flowers`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ flower_ids: [] }),
+          }).catch(() => {});
         }
         closeCreateModal();
         load();
@@ -806,6 +844,7 @@ function AdminProductsPageContent() {
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           composition_flowers: selectedFlowers.length > 0 ? selectedFlowers : null,
+          bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
         };
         const url = `/api/admin/products/${editProductId}`;
         const res = await fetch(url, {
@@ -849,6 +888,7 @@ function AdminProductsPageContent() {
                 is_preorder: v.is_preorder,
                 is_new: v.is_new,
                 sort_order: v.sort_order,
+                bouquet_colors: (v.bouquetColors && v.bouquetColors.length > 0) ? v.bouquetColors : null,
               }),
             });
             if (!vRes.ok) {
@@ -869,6 +909,7 @@ function AdminProductsPageContent() {
                 is_new: v.is_new,
                 sort_order: v.sort_order,
                 is_active: true,
+                bouquet_colors: (v.bouquetColors && v.bouquetColors.length > 0) ? v.bouquetColors : null,
               }),
             });
             if (!vRes.ok) {
@@ -876,6 +917,44 @@ function AdminProductsPageContent() {
               throw new Error(vData?.error ?? "Ошибка добавления варианта");
             }
           }
+        }
+        const productIdForVariant = String(editProductId);
+        const subcatRes = await fetch(`/api/admin/products/${productIdForVariant}/subcategories`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subcategory_ids: selectedOccasionSubcategoryIds.length > 0 ? selectedOccasionSubcategoryIds : null,
+          }),
+        });
+        if (!subcatRes.ok) {
+          const err = await subcatRes.json().catch(() => ({}));
+          console.error("[admin/products] Error saving subcategories (variant):", err);
+        }
+        if (selectedFlowers.length > 0) {
+          try {
+            const ensureRes = await fetch("/api/admin/flowers/ensure", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ names: selectedFlowers }),
+            });
+            const flowers = ensureRes.ok ? await ensureRes.json() : [];
+            const flowerIds = Array.isArray(flowers) ? flowers.map((f: { id: string }) => f.id) : [];
+            if (flowerIds.length > 0) {
+              await fetch(`/api/admin/products/${productIdForVariant}/flowers`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ flower_ids: flowerIds }),
+              });
+            }
+          } catch (err) {
+            console.error("[admin/products] Error saving flowers (variant):", err);
+          }
+        } else {
+          await fetch(`/api/admin/products/${productIdForVariant}/flowers`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ flower_ids: [] }),
+          }).catch(() => {});
         }
         closeCreateModal();
         load();
@@ -961,6 +1040,8 @@ function AdminProductsPageContent() {
           is_preorder: createIsPreorder,
           is_new: createIsNew,
           category_slugs,
+          composition_flowers,
+          bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
         };
 
         const res = await fetch("/api/admin/products", {
@@ -1051,6 +1132,7 @@ function AdminProductsPageContent() {
           is_hidden: createIsHidden,
           category_slugs,
           composition_flowers,
+          bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
           variants: variants.map((v) => ({
             name: v.name.trim(),
             composition: v.composition.trim() || null,
@@ -1061,6 +1143,7 @@ function AdminProductsPageContent() {
             is_new: v.is_new,
             sort_order: v.sort_order,
             is_active: true,
+            bouquet_colors: (v.bouquetColors && v.bouquetColors.length > 0) ? v.bouquetColors : null,
           })),
         };
 
@@ -1095,10 +1178,11 @@ function AdminProductsPageContent() {
           setCreateLoading(false);
           return;
         }
-        // Сохраняем привязки к подкатегориям "По поводу" для созданного товара
+        // Сохраняем привязки к подкатегориям "По поводу" и к справочнику цветов для созданного товара
         const createdProductId = data?.id;
         if (createdProductId) {
-          const saveRes = await fetch(`/api/admin/products/${createdProductId}/subcategories`, {
+          const pid = String(createdProductId);
+          const saveRes = await fetch(`/api/admin/products/${pid}/subcategories`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1109,9 +1193,28 @@ function AdminProductsPageContent() {
             const errorData = await saveRes.json().catch(() => ({}));
             console.error("[admin/products] Error saving subcategories:", errorData);
           }
+          if (selectedFlowers.length > 0) {
+            try {
+              const ensureRes = await fetch("/api/admin/flowers/ensure", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ names: selectedFlowers }),
+              });
+              const flowers = ensureRes.ok ? await ensureRes.json() : [];
+              const flowerIds = Array.isArray(flowers) ? flowers.map((f: { id: string }) => f.id) : [];
+              if (flowerIds.length > 0) {
+                await fetch(`/api/admin/products/${pid}/flowers`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ flower_ids: flowerIds }),
+                });
+              }
+            } catch (err) {
+              console.error("[admin/products] Error saving flowers (create):", err);
+            }
+          }
         }
       } else if (createType === "variant") {
-        // Сохраняем привязки к подкатегориям "По поводу" для созданного вариантного товара
         const variantData = data as { id?: number };
         const createdVariantProductId = variantData.id ? `vp-${variantData.id}` : null;
         if (createdVariantProductId) {
@@ -1125,6 +1228,26 @@ function AdminProductsPageContent() {
           if (!saveRes.ok) {
             const errorData = await saveRes.json().catch(() => ({}));
             console.error("[admin/products] Error saving subcategories:", errorData);
+          }
+          if (selectedFlowers.length > 0) {
+            try {
+              const ensureRes = await fetch("/api/admin/flowers/ensure", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ names: selectedFlowers }),
+              });
+              const flowers = ensureRes.ok ? await ensureRes.json() : [];
+              const flowerIds = Array.isArray(flowers) ? flowers.map((f: { id: string }) => f.id) : [];
+              if (flowerIds.length > 0) {
+                await fetch(`/api/admin/products/${createdVariantProductId}/flowers`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ flower_ids: flowerIds }),
+                });
+              }
+            } catch (err) {
+              console.error("[admin/products] Error saving flowers (create variant):", err);
+            }
           }
         }
       }
@@ -1632,6 +1755,50 @@ function AdminProductsPageContent() {
                           </div>
                         )}
                       </div>
+                      {/* Цвет букета (товар) */}
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Цвет букета</label>
+                        <p className="text-xs text-color-text-secondary mb-2">
+                          Отметьте цвета для фильтрации в каталоге.
+                        </p>
+                        <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
+                          {[0, 1].map((col) => {
+                            const mid = Math.ceil(BOUQUET_COLORS.length / 2);
+                            const list = col === 0 ? BOUQUET_COLORS.slice(0, mid) : BOUQUET_COLORS.slice(mid);
+                            return (
+                              <ul key={col} className="divide-y divide-border-block">
+                                {list.map((item) => (
+                                  <li
+                                    key={item.key}
+                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                  >
+                                    <BouquetColorSwatch item={item} />
+                                    <input
+                                      type="checkbox"
+                                      id={`bouquet-color-${item.key}`}
+                                      checked={selectedBouquetColorKeys.includes(item.key)}
+                                      onChange={() => {
+                                        setSelectedBouquetColorKeys((prev) =>
+                                          prev.includes(item.key)
+                                            ? prev.filter((k) => k !== item.key)
+                                            : [...prev, item.key]
+                                        );
+                                      }}
+                                      className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                    />
+                                    <label
+                                      htmlFor={`bouquet-color-${item.key}`}
+                                      className="text-sm text-color-text-main cursor-pointer flex-1"
+                                    >
+                                      {item.label}
+                                    </label>
+                                  </li>
+                                ))}
+                              </ul>
+                            );
+                          })}
+                        </div>
+                      </div>
                       <div>
                         <label className="block text-sm font-medium text-color-text-main mb-1">Размер</label>
                         <div className="flex gap-3 items-center">
@@ -1980,6 +2147,32 @@ function AdminProductsPageContent() {
                                           </label>
                                         </div>
                                       </div>
+                                      {/* Цвет букета (вариант) */}
+                                      <div className="mt-2">
+                                        <label className="block text-xs text-color-text-main mb-1">Цвет букета</label>
+                                        <div className="flex flex-wrap gap-x-3 gap-y-1">
+                                          {BOUQUET_COLORS.map((item) => (
+                                            <label
+                                              key={item.key}
+                                              className="flex items-center gap-1.5 cursor-pointer"
+                                            >
+                                              <BouquetColorSwatch item={item} className="!w-4 !h-4" />
+                                              <input
+                                                type="checkbox"
+                                                checked={(variant.bouquetColors ?? []).includes(item.key)}
+                                                onChange={(e) => {
+                                                  const next = e.target.checked
+                                                    ? [...(variant.bouquetColors ?? []), item.key]
+                                                    : (variant.bouquetColors ?? []).filter((k) => k !== item.key);
+                                                  updateVariant(variant.id, { bouquetColors: next });
+                                                }}
+                                                className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                              />
+                                              <span className="text-xs text-color-text-main">{item.label}</span>
+                                            </label>
+                                          ))}
+                                        </div>
+                                      </div>
                                       {/* Кнопка удаления — только в развернутом состоянии */}
                                       <div className="pt-1 border-t border-border-block">
                                         <button
@@ -2140,6 +2333,50 @@ function AdminProductsPageContent() {
                             })}
                           </div>
                         )}
+                      </div>
+                      {/* Цвет букета (товар с вариантами) */}
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Цвет букета</label>
+                        <p className="text-xs text-color-text-secondary mb-2">
+                          Отметьте цвета для фильтрации в каталоге.
+                        </p>
+                        <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
+                          {[0, 1].map((col) => {
+                            const mid = Math.ceil(BOUQUET_COLORS.length / 2);
+                            const list = col === 0 ? BOUQUET_COLORS.slice(0, mid) : BOUQUET_COLORS.slice(mid);
+                            return (
+                              <ul key={col} className="divide-y divide-border-block">
+                                {list.map((item) => (
+                                  <li
+                                    key={item.key}
+                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                  >
+                                    <BouquetColorSwatch item={item} />
+                                    <input
+                                      type="checkbox"
+                                      id={`variant-bouquet-color-${item.key}`}
+                                      checked={selectedBouquetColorKeys.includes(item.key)}
+                                      onChange={() => {
+                                        setSelectedBouquetColorKeys((prev) =>
+                                          prev.includes(item.key)
+                                            ? prev.filter((k) => k !== item.key)
+                                            : [...prev, item.key]
+                                        );
+                                      }}
+                                      className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                    />
+                                    <label
+                                      htmlFor={`variant-bouquet-color-${item.key}`}
+                                      className="text-sm text-color-text-main cursor-pointer flex-1"
+                                    >
+                                      {item.label}
+                                    </label>
+                                  </li>
+                                ))}
+                              </ul>
+                            );
+                          })}
+                        </div>
                       </div>
 
                       {/* Изображения товара */}
