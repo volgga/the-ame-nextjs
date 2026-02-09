@@ -110,10 +110,10 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
       <Link href={productUrl} aria-label={flower.name} className="block flex-1">
         {/* 📸 Фото + hover-иконки (лупа, сердечко) — group на контейнере фото */}
         <div className="group relative overflow-hidden rounded-2xl aspect-square bg-[#ece9e2]">
-          {/* Бейдж "новый" — левый верхний угол */}
+          {/* Бейдж "НОВЫЙ" — левый верхний угол */}
           {isNewEffective && (
-            <div className="absolute top-3 left-3 z-10 px-3.5 py-2 rounded-lg border border-[var(--color-outline-border)] bg-[var(--page-bg)] text-[var(--color-text-main)] text-xs font-normal leading-none">
-              новый
+            <div className="absolute top-0 left-0 z-10 px-4 py-2.5 rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-xs font-medium leading-none">
+              НОВЫЙ
             </div>
           )}
           <Image
