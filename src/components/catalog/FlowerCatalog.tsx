@@ -38,6 +38,10 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   const maxPriceParam = searchParams.get("maxPrice");
   const sortParam = (searchParams.get("sort") as SortValue) ?? "default";
   const qParam = (searchParams.get("q") ?? "").trim().toLowerCase();
+  const colorsParam = searchParams.get("colors") ?? "";
+  const selectedColorKeys = colorsParam
+    ? colorsParam.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
 
   const minPrice = minPriceParam ? Number(minPriceParam) : 0;
   const maxPrice = maxPriceParam ? Number(maxPriceParam) : Infinity;
@@ -71,15 +75,21 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     [allProducts]
   );
 
-  // Фильтрация по цене и поиску
+  // Фильтрация по цене, поиску и цвету букета
   const filteredFlowers = useMemo(() => {
     return flowers.filter((flower) => {
       const price = flower.price ?? 0;
       if (!(price >= minPrice && price <= maxPrice)) return false;
       if (qParam && !(flower.name ?? "").toLowerCase().includes(qParam)) return false;
+      if (selectedColorKeys.length > 0) {
+        const product = allProducts.find((p) => p.id === flower.id);
+        const productColors = product?.bouquetColors ?? [];
+        const hasMatch = productColors.some((k) => selectedColorKeys.includes(k));
+        if (!hasMatch) return false;
+      }
       return true;
     });
-  }, [flowers, minPrice, maxPrice, qParam]);
+  }, [flowers, allProducts, minPrice, maxPrice, qParam, selectedColorKeys]);
 
   // Сортировка (не мутируем исходный массив)
   const sortedFlowers = useMemo(() => {
@@ -107,7 +117,7 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   // При смене фильтров/сортировки/поиска — сбрасываем к первому блоку (12 рядов на мобиле, 6 на desktop)
   useEffect(() => {
     setVisibleBlocks(1);
-  }, [minPrice, maxPrice, sortParam, qParam]);
+  }, [minPrice, maxPrice, sortParam, qParam, selectedColorKeys]);
 
   // Показываем visibleBlocks блоков (mobile: 12 рядов за раз, desktop: 6 рядов за раз)
   const visibleCount = visibleBlocks * cardsPerBlock;

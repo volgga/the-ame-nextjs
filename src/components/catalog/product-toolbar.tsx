@@ -3,6 +3,8 @@
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Search, ChevronDown } from "lucide-react";
+import { BOUQUET_COLORS, filterValidBouquetColorKeys } from "@/shared/catalog/bouquetColors";
+import { BouquetColorSwatch } from "@/components/catalog/BouquetColorSwatch";
 
 export type SortValue = "default" | "price_asc" | "price_desc";
 
@@ -14,10 +16,10 @@ const SORT_OPTIONS: { value: SortValue; label: string }[] = [
 
 function buildQueryString(
   params: URLSearchParams,
-  updates: { minPrice?: string; maxPrice?: string; sort?: string; q?: string }
+  updates: { minPrice?: string; maxPrice?: string; sort?: string; q?: string; colors?: string }
 ) {
   const next = new URLSearchParams(params);
-  const keys = ["minPrice", "maxPrice", "sort", "q"] as const;
+  const keys = ["minPrice", "maxPrice", "sort", "q", "colors"] as const;
   keys.forEach((k) => {
     const v = updates[k];
     if (v === undefined) return;
@@ -58,9 +60,15 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
   const maxPriceParam = searchParams.get("maxPrice");
   const sort = (searchParams.get("sort") as SortValue) ?? "default";
   const qParam = searchParams.get("q") ?? "";
+  const colorsParam = searchParams.get("colors") ?? "";
+  const selectedColorKeys = colorsParam
+    ? filterValidBouquetColorKeys(colorsParam.split(",").map((s) => s.trim()).filter(Boolean))
+    : [];
 
   const [searchInput, setSearchInput] = useState(qParam);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [colorPopoverOpen, setColorPopoverOpen] = useState(false);
+  const colorPopoverRef = useRef<HTMLDivElement>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [localMin, setLocalMin] = useState(minPriceParam ? Number(minPriceParam) : priceMin);
   const [localMax, setLocalMax] = useState(maxPriceParam ? Number(maxPriceParam) : priceMax);
@@ -78,7 +86,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
   }, [popoverOpen, minPriceParam, maxPriceParam, priceMin, priceMax]);
 
   const applyUrl = useCallback(
-    (updates: { minPrice?: string; maxPrice?: string; sort?: string; q?: string }) => {
+    (updates: { minPrice?: string; maxPrice?: string; sort?: string; q?: string; colors?: string }) => {
       startTransition(() => {
         const qs = buildQueryString(searchParams, updates);
         router.push(`${pathname}${qs}`, { scroll: false });
@@ -129,8 +137,16 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
     setSearchInput("");
     setLocalMin(priceMin);
     setLocalMax(priceMax);
-    applyUrl({ minPrice: "", maxPrice: "", sort: "", q: "" });
+    applyUrl({ minPrice: "", maxPrice: "", sort: "", q: "", colors: "" });
     setPopoverOpen(false);
+    setColorPopoverOpen(false);
+  };
+
+  const handleColorToggle = (key: string) => {
+    const next = selectedColorKeys.includes(key)
+      ? selectedColorKeys.filter((k) => k !== key)
+      : [...selectedColorKeys, key];
+    applyUrl({ colors: next.length > 0 ? next.join(",") : "" });
   };
 
   // Popover: закрытие по клику вне и Esc
@@ -152,11 +168,30 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
     };
   }, [popoverOpen]);
 
+  useEffect(() => {
+    if (!colorPopoverOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (colorPopoverRef.current && !colorPopoverRef.current.contains(e.target as Node)) {
+        setColorPopoverOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setColorPopoverOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [colorPopoverOpen]);
+
   const hasFilters =
     (minPriceParam && Number(minPriceParam) !== priceMin) ||
     (maxPriceParam && Number(maxPriceParam) !== priceMax) ||
     (sort && sort !== "default") ||
-    qParam;
+    qParam ||
+    selectedColorKeys.length > 0;
 
   const priceLabel =
     localMin === priceMin && localMax === priceMax ? "Цена" : `${formatPrice(localMin)} – ${formatPrice(localMax)}`;
@@ -296,6 +331,52 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
                   Применить
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Цвет букета (dropdown) */}
+        <div className="relative" ref={colorPopoverRef}>
+          <button
+            type="button"
+            onClick={() => setColorPopoverOpen((o) => !o)}
+            className={`${controlH} w-full md:w-auto inline-flex items-center justify-between md:justify-start gap-2 rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
+            aria-expanded={colorPopoverOpen}
+            aria-haspopup="true"
+            aria-label="Фильтр по цвету букета"
+          >
+            <span>
+              {selectedColorKeys.length === 0
+                ? "Цвет букета"
+                : selectedColorKeys.length === 1
+                  ? BOUQUET_COLORS.find((c) => c.key === selectedColorKeys[0])?.label ?? "Цвет букета"
+                  : `Цвет (${selectedColorKeys.length})`}
+            </span>
+            <ChevronDown
+              className={`h-4 w-4 shrink-0 text-color-text-secondary transition-transform ${colorPopoverOpen ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {colorPopoverOpen && (
+            <div
+              className="absolute left-0 top-full z-50 mt-2 w-[min(100vw-2rem,320px)] rounded-lg border border-border-block bg-white p-2 shadow-elegant max-h-[70vh] overflow-y-auto"
+              role="dialog"
+              aria-label="Выбор цвета букета"
+            >
+              {BOUQUET_COLORS.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => handleColorToggle(item.key)}
+                  className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-[rgba(31,42,31,0.06)] text-left min-h-[40px]"
+                >
+                  <BouquetColorSwatch item={item} />
+                  <span className="text-sm text-color-text-main flex-1">{item.label}</span>
+                  {selectedColorKeys.includes(item.key) && (
+                    <span className="text-accent-btn text-sm" aria-hidden>✓</span>
+                  )}
+                </button>
+              ))}
             </div>
           )}
         </div>

@@ -34,6 +34,7 @@ const variantSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v === "" ? null : v)), // Обратная совместимость - игнорируется на клиенте
+  bouquet_colors: z.array(z.string()).optional().nullable(),
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -77,6 +78,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         seo_title: parsed.data.seo_title?.trim() || null, // Обратная совместимость
         seo_description: parsed.data.seo_description?.trim() || null, // Обратная совместимость
         og_image: parsed.data.og_image?.trim() || null, // Обратная совместимость
+        bouquet_colors:
+          parsed.data.bouquet_colors && parsed.data.bouquet_colors.length > 0
+            ? parsed.data.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
+            : null,
       })
       .select()
       .single();

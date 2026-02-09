@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { Subcategory } from "@/lib/subcategories";
 import { OCCASIONS_CATEGORY_SLUG } from "@/lib/constants";
 
@@ -9,103 +10,55 @@ interface OccasionFilterButtonsProps {
 }
 
 /**
- * Компонент квадратных кнопок-фильтров поводов.
+ * Кнопки-фильтры поводов в стиле круглых чипов категорий (CategoryChips).
  * Показывается под списком категорий в категории "По поводу".
- * Стили: квадратные кнопки, светлый фон, тонкая рамка; активная — чёрная с белым текстом.
- * Визуально идентичен FlowerFilterButtons.
- * Использует slug в URL вместо query-параметров.
+ * Кнопки "Все поводы" нет: сброс фильтра — через клик по категории "По поводу" вверху.
+ * Стили 1:1 с CategoryChips: rounded-full, border, bg-btn-chip-active / bg-white hover.
  */
 export function OccasionFilterButtons({ occasions }: OccasionFilterButtonsProps) {
-  const router = useRouter();
   const pathname = usePathname();
 
   if (occasions.length === 0) {
     return null;
   }
 
-  // Определяем активный повод по slug в URL
+  // Активный повод по slug в URL; на /magazine/po-povodu без сегмента — ни один не активен
   const activeSlug = pathname.includes(`/${OCCASIONS_CATEGORY_SLUG}/`)
     ? pathname.split(`/${OCCASIONS_CATEGORY_SLUG}/`)[1]?.split("/")[0] || null
     : null;
 
-  const handleOccasionClick = (occasionSlug: string | null) => {
-    if (!occasionSlug) {
-      // Переход на базовую страницу без фильтра
-      router.push(`/magazine/${OCCASIONS_CATEGORY_SLUG}`, { scroll: false });
-      return;
-    }
-
-    // Если кликнули по активной кнопке — снимаем фильтр
-    if (activeSlug === occasionSlug) {
-      router.push(`/magazine/${OCCASIONS_CATEGORY_SLUG}`, { scroll: false });
-    } else {
-      // Иначе переходим на SEO-страницу повода
-      router.push(`/magazine/${OCCASIONS_CATEGORY_SLUG}/${occasionSlug}`, { scroll: false });
-    }
-  };
-
   return (
-    <div className="w-full">
-      <div className="flex flex-wrap gap-2">
-        {/* Кнопка "Все поводы" */}
-        <button
-          type="button"
-          onClick={() => handleOccasionClick(null)}
-          className={`
-            inline-flex items-center justify-center
-            h-8 md:h-9
-            px-3 md:px-4
-            text-sm font-medium
-            transition-colors duration-200
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
-            focus-visible:ring-[var(--color-bg-main)]
-            rounded
-            ${
-              !activeSlug
-                ? "bg-black text-white border border-black"
-                : "bg-white text-color-text-main border border-[var(--color-outline-border)] hover:bg-[rgba(31,42,31,0.06)]"
-            }
-          `}
-          aria-current={!activeSlug ? "page" : undefined}
-          aria-label="Все поводы"
-        >
-          Все поводы
-        </button>
+    <div
+      className="w-full max-w-5xl mx-auto flex flex-wrap justify-center gap-2.5"
+      role="group"
+      aria-label="Поводы"
+    >
+      {occasions
+        .filter((occasion) => occasion.slug && occasion.is_active !== false)
+        .map((occasion) => {
+          const slug = occasion.slug!;
+          const isActive = activeSlug === slug;
+          // Активный повод: ссылка ведёт на базовую страницу (снять фильтр); иначе — на страницу повода
+          const href = isActive ? `/magazine/${OCCASIONS_CATEGORY_SLUG}` : `/magazine/${OCCASIONS_CATEGORY_SLUG}/${slug}`;
 
-        {/* Кнопки поводов */}
-        {occasions
-          .filter((occasion) => occasion.slug && occasion.is_active)
-          .map((occasion) => {
-            const isActive = activeSlug === occasion.slug;
-
-            return (
-              <button
-                key={occasion.id}
-                type="button"
-                onClick={() => handleOccasionClick(occasion.slug || null)}
-                className={`
-                  inline-flex items-center justify-center
-                  h-8 md:h-9
-                  px-3 md:px-4
-                  text-sm font-medium
-                  transition-colors duration-200
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
-                  focus-visible:ring-[var(--color-bg-main)]
-                  rounded
-                  ${
-                    isActive
-                      ? "bg-black text-white border border-black"
-                      : "bg-white text-color-text-main border border-[var(--color-outline-border)] hover:bg-[rgba(31,42,31,0.06)]"
-                  }
-                `}
-                aria-current={isActive ? "page" : undefined}
-                aria-label={`Фильтр: ${occasion.name}${isActive ? " (активен)" : ""}`}
-              >
-                {occasion.name}
-              </button>
-            );
-          })}
-      </div>
+          return (
+            <Link
+              key={occasion.id}
+              href={href}
+              scroll={false}
+              className={`
+                inline-flex items-center justify-center rounded border px-4 py-2 text-sm font-medium
+                transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2
+                border-[var(--color-outline-border)] text-color-text-main
+                ${isActive ? "bg-btn-chip-active" : "bg-white hover:bg-[rgba(31,42,31,0.06)]"}
+              `}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={isActive ? `${occasion.name} (активен)` : occasion.name}
+            >
+              {occasion.name}
+            </Link>
+          );
+        })}
     </div>
   );
 }

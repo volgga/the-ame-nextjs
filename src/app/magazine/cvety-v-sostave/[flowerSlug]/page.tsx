@@ -11,8 +11,8 @@ import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE, filterProductsByCategorySlug } from "@/lib/catalogCategories";
 import { normalizeFlowerKey } from "@/lib/normalizeFlowerKey";
-import { extractFlowersFromProduct } from "@/lib/extractFlowersFromProduct";
-import { getFlowersInCompositionSubcategories } from "@/lib/subcategories";
+import { getFlowersInCompositionList } from "@/lib/getAllFlowers";
+import { getFlowerBySlug, getProductIdsByFlowerId } from "@/lib/flowers";
 import { FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
 import {
   canonicalUrl,
@@ -30,8 +30,8 @@ type FlowerPageProps = {
 };
 
 export async function generateStaticParams() {
-  const subcategories = await getFlowersInCompositionSubcategories();
-  return subcategories.filter((sub) => sub.slug && sub.is_active).map((sub) => ({ flowerSlug: sub.slug! }));
+  const list = await getFlowersInCompositionList();
+  return list.map((flower) => ({ flowerSlug: flower.slug }));
 }
 
 export async function generateMetadata({ params }: FlowerPageProps): Promise<Metadata> {
@@ -42,22 +42,14 @@ export async function generateMetadata({ params }: FlowerPageProps): Promise<Met
     return { title: "Цветы в составе | The Ame" };
   }
 
-  const subcategories = await getFlowersInCompositionSubcategories();
-  const flower = subcategories.find((sub) => sub.slug === flowerSlug && sub.is_active);
-
-  if (!flower) {
-    return { title: "Цветы в составе | The Ame" };
-  }
-
-  // SEO title: если указан seo_title → используем его, иначе шаблон
-  const title = flower.seo_title?.trim()
+  const flower = await getFlowerBySlug(flowerSlug);
+  const name = flower?.name ?? flowerSlug;
+  const title = flower?.seo_title?.trim()
     ? `${flower.seo_title.trim()} | ${SITE_NAME}`
-    : `${flower.name} в ${CITY} — купить с доставкой | ${SITE_NAME}`;
-
-  // SEO description: если указан seo_description → используем его, иначе шаблон
-  const description = flower.seo_description?.trim()
+    : `${name} в ${CITY} — купить с доставкой | ${SITE_NAME}`;
+  const description = flower?.seo_description?.trim()
     ? truncateDescription(flower.seo_description, 160)
-    : `Букеты с ${flower.name.toLowerCase()} в ${CITY}. Свежие цветы с доставкой по городу. Широкий выбор композиций — The Ame.`;
+    : `Букеты с ${name.toLowerCase()} в ${CITY}. Свежие цветы с доставкой по городу. Широкий выбор композиций — The Ame.`;
 
   const url = canonicalUrl(`/magazine/${FLOWERS_IN_COMPOSITION_CATEGORY_SLUG}/${flowerSlug}`);
   return {
@@ -85,17 +77,18 @@ export default async function FlowerPage({ params, searchParams }: FlowerPagePro
   const flowerParam = resolvedSearchParams.flower;
   if (flowerParam && typeof flowerParam === "string") {
     const normalized = normalizeFlowerKey(flowerParam);
-    const subcategories = await getFlowersInCompositionSubcategories();
-    const flower = subcategories.find((sub) => normalizeFlowerKey(sub.name) === normalized && sub.slug);
-    if (flower?.slug) {
-      permanentRedirect(`/magazine/${FLOWERS_IN_COMPOSITION_CATEGORY_SLUG}/${flower.slug}`);
+    const list = await getFlowersInCompositionList();
+    const flowerItem = list.find((f) => normalizeFlowerKey(f.name) === normalized);
+    if (flowerItem?.slug) {
+      permanentRedirect(`/magazine/${FLOWERS_IN_COMPOSITION_CATEGORY_SLUG}/${flowerItem.slug}`);
     }
   }
 
-  const [categories, allProducts, subcategories] = await Promise.all([
+  const [categories, allProducts, flowersList, flower] = await Promise.all([
     getCategories(),
     getAllCatalogProducts(),
-    getFlowersInCompositionSubcategories(),
+    getFlowersInCompositionList(),
+    getFlowerBySlug(flowerSlug),
   ]);
 
   const category = getCategoryBySlug(categories, FLOWERS_IN_COMPOSITION_CATEGORY_SLUG);
@@ -103,22 +96,28 @@ export default async function FlowerPage({ params, searchParams }: FlowerPagePro
     notFound();
   }
 
-  // Находим цветок по slug
-  const flower = subcategories.find((sub) => sub.slug === flowerSlug && sub.is_active);
-  if (!flower) {
+  const flowerItem = flowersList.find((f) => f.slug === flowerSlug);
+  if (!flowerItem || !flower) {
     notFound();
   }
 
   let products = filterProductsByCategorySlug(allProducts, FLOWERS_IN_COMPOSITION_CATEGORY_SLUG);
 
-  // Фильтрация по цветку
-  const flowerFilterKey = normalizeFlowerKey(flower.name);
-  products = products.filter((product) => {
-    const productFlowers = extractFlowersFromProduct(product).map((f) => normalizeFlowerKey(f));
-    return productFlowers.includes(flowerFilterKey);
-  });
+  // Фильтрация по цветку: по связи product_flowers
+  const productIdsWithFlower = await getProductIdsByFlowerId(flower.id);
+  if (productIdsWithFlower.size > 0) {
+    products = products.filter((p) => productIdsWithFlower.has(p.id));
+  } else {
+    // Fallback: по compositionFlowers (если product_flowers ещё не заполнены)
+    const flowerFilterKey = normalizeFlowerKey(flower.name);
+    products = products.filter((p) => {
+      const comp = p.compositionFlowers ?? [];
+      return comp.some((f) => normalizeFlowerKey(f) === flowerFilterKey);
+    });
+  }
 
   const seoText = category.description?.trim() || DEFAULT_CATEGORY_SEO_TEXT;
+  const pageDescription = flower.seo_description?.trim() || flower.description?.trim() || seoText;
 
   const priceBounds = (() => {
     const prices = products.map((p) => p.price).filter(Number.isFinite);
@@ -135,7 +134,6 @@ export default async function FlowerPage({ params, searchParams }: FlowerPagePro
     { label: flower.name },
   ];
 
-  // Фильтруем категории: убираем виртуальные (Все цветы, Каталог) и дубли по slug
   const filteredCategories = categories
     .filter(
       (c) =>
@@ -151,9 +149,7 @@ export default async function FlowerPage({ params, searchParams }: FlowerPagePro
 
   const chips = [{ slug: "", name: ALL_CATALOG.title, isAll: true }, ...uniqueCategories];
 
-  // H1 и описание страницы
   const pageTitle = flower.name.toUpperCase();
-  const pageDescription = flower.seo_description?.trim() || seoText;
 
   return (
     <div className="min-h-screen bg-page-bg">
@@ -176,7 +172,7 @@ export default async function FlowerPage({ params, searchParams }: FlowerPagePro
         </div>
 
         <div className={SECTION_GAP}>
-          <FlowerFilterButtons flowers={subcategories} />
+          <FlowerFilterButtons flowers={flowersList} />
         </div>
 
         <div className={SECTION_GAP}>

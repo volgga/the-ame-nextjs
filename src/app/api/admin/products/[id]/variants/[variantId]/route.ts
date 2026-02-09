@@ -34,6 +34,7 @@ const updateSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => (v === "" ? null : v)), // Обратная совместимость - игнорируется на клиенте
+  bouquet_colors: z.array(z.string()).optional().nullable(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; variantId: string }> }) {
@@ -63,8 +64,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     // В БД колонка названия варианта — title. API принимает size; маппим в title для update.
-    const { size, ...rest } = parsed.data;
-    const dbUpdate = size !== undefined ? { ...rest, title: size } : rest;
+    const { size, bouquet_colors, ...rest } = parsed.data;
+    const dbUpdate: Record<string, unknown> = size !== undefined ? { ...rest, title: size } : { ...rest };
+    if (bouquet_colors !== undefined) {
+      dbUpdate.bouquet_colors =
+        Array.isArray(bouquet_colors) && bouquet_colors.length > 0
+          ? bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
+          : null;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
