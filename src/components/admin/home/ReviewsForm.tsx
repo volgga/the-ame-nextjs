@@ -35,7 +35,10 @@ type ReviewsFormProps = {
 /**
  * ReviewsForm — форма редактирования отзывов для использования в модалке.
  */
-export const ReviewsForm = forwardRef<ReviewsFormRef, ReviewsFormProps>(function ReviewsForm({ onDirtyChange, formRef: formRefProp }, ref) {
+export const ReviewsForm = forwardRef<ReviewsFormRef, ReviewsFormProps>(function ReviewsForm(
+  { onDirtyChange, formRef: formRefProp },
+  ref
+) {
   const resolvedRef = formRefProp ?? ref;
   const [data, setData] = useState<ReviewsData | null>(null);
   const [initialSnapshot, setInitialSnapshot] = useState<string>("");
@@ -75,27 +78,31 @@ export const ReviewsForm = forwardRef<ReviewsFormRef, ReviewsFormProps>(function
     setInitialSnapshot(snapshot(updated));
   }, [data]);
 
-  useImperativeHandle(resolvedRef, () => ({
-    save: async () => {
-      setSaving(true);
-      setError("");
-      try {
-        await performSave();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      } catch (e) {
-        setError((e as Error).message || "Не удалось сохранить");
-        throw e;
-      } finally {
-        setSaving(false);
-      }
-    },
-    resetToInitial: () => {
-      if (initialSnapshot === "") return;
-      const parsed = JSON.parse(initialSnapshot) as ReviewsData;
-      setData((prev) => (prev ? { ...prev, ...parsed } : null));
-    },
-  }), [initialSnapshot, performSave]);
+  useImperativeHandle(
+    resolvedRef,
+    () => ({
+      save: async () => {
+        setSaving(true);
+        setError("");
+        try {
+          await performSave();
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        } catch (e) {
+          setError((e as Error).message || "Не удалось сохранить");
+          throw e;
+        } finally {
+          setSaving(false);
+        }
+      },
+      resetToInitial: () => {
+        if (initialSnapshot === "") return;
+        const parsed = JSON.parse(initialSnapshot) as ReviewsData;
+        setData((prev) => (prev ? { ...prev, ...parsed } : null));
+      },
+    }),
+    [initialSnapshot, performSave]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -184,9 +191,7 @@ export const ReviewsForm = forwardRef<ReviewsFormRef, ReviewsFormProps>(function
       {error && <p className="text-sm text-red-600">{error}</p>}
       <form onSubmit={handleSave} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-[#111] mb-2">
-            Количество оценок
-          </label>
+          <label className="block text-sm font-medium text-[#111] mb-2">Количество оценок</label>
           <input
             type="number"
             min="0"
@@ -202,24 +207,28 @@ export const ReviewsForm = forwardRef<ReviewsFormRef, ReviewsFormProps>(function
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[#111] mb-2">
-            Отзыв #2
-          </label>
+          <label className="block text-sm font-medium text-[#111] mb-2">Отзыв #2</label>
           <textarea
             value={formData.review2_text}
-            onChange={(e) => setData((d) => (d ? { ...d, review2_text: e.target.value } : { ...DEFAULT_DATA, review2_text: e.target.value }))}
+            onChange={(e) =>
+              setData((d) =>
+                d ? { ...d, review2_text: e.target.value } : { ...DEFAULT_DATA, review2_text: e.target.value }
+              )
+            }
             rows={6}
             className="w-full rounded border border-gray-300 px-3 py-2 text-[#111] font-mono text-sm"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[#111] mb-2">
-            Отзыв #3
-          </label>
+          <label className="block text-sm font-medium text-[#111] mb-2">Отзыв #3</label>
           <textarea
             value={formData.review3_text}
-            onChange={(e) => setData((d) => (d ? { ...d, review3_text: e.target.value } : { ...DEFAULT_DATA, review3_text: e.target.value }))}
+            onChange={(e) =>
+              setData((d) =>
+                d ? { ...d, review3_text: e.target.value } : { ...DEFAULT_DATA, review3_text: e.target.value }
+              )
+            }
             rows={6}
             className="w-full rounded border border-gray-300 px-3 py-2 text-[#111] font-mono text-sm"
           />

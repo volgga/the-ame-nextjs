@@ -174,9 +174,13 @@ export async function POST(request: Request) {
         await logLeadEvent("saved_failed", { formType: FORM_TYPE, error: supabaseError.message });
       } else if (leadData?.id) {
         leadId = leadData.id;
-        await logLeadEvent("saved", {
-          formType: FORM_TYPE,
-        }, leadId);
+        await logLeadEvent(
+          "saved",
+          {
+            formType: FORM_TYPE,
+          },
+          leadId
+        );
       }
     } catch (supabaseErr) {
       const errorMessage = supabaseErr instanceof Error ? supabaseErr.message : String(supabaseErr);

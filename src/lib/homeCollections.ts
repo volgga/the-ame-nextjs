@@ -12,6 +12,7 @@ export type HomeCollection = {
   name: string;
   categorySlug: string;
   sort_order: number;
+  description?: string | null;
 };
 
 async function getActiveHomeCollectionsUncached(): Promise<HomeCollection[]> {
@@ -22,7 +23,7 @@ async function getActiveHomeCollectionsUncached(): Promise<HomeCollection[]> {
   try {
     const { data, error } = await supabase
       .from("home_collections")
-      .select("id, image_url, name, category_slug, sort_order")
+      .select("id, image_url, name, category_slug, sort_order, description")
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
 
@@ -34,6 +35,7 @@ async function getActiveHomeCollectionsUncached(): Promise<HomeCollection[]> {
       name: r.name ?? "",
       categorySlug: r.category_slug ?? "magazin",
       sort_order: r.sort_order ?? 0,
+      description: r.description ?? null,
     }));
   } catch {
     return [];

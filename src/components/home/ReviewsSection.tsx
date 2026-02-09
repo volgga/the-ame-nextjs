@@ -15,10 +15,7 @@ type ReviewsSectionProps = {
 export function ReviewsSection({ reviews }: ReviewsSectionProps) {
   const ratingText = `на основе ${reviews.ratingCount} оценок`;
   return (
-    <section
-      className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP}`}
-      aria-labelledby="reviews-heading"
-    >
+    <section className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP}`} aria-labelledby="reviews-heading">
       <div className="container mx-auto px-4 md:px-6">
         {/* Разделительная линия над секцией */}
         <div className="flex justify-center mb-6 md:mb-8">
@@ -76,16 +73,12 @@ export function ReviewsSection({ reviews }: ReviewsSectionProps) {
 
           {/* Карточка №2: Отзыв */}
           <div className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-auto bg-header-bg rounded-xl p-5 md:p-6">
-            <p className="text-sm md:text-base text-header-foreground leading-relaxed">
-              {reviews.review2Text}
-            </p>
+            <p className="text-sm md:text-base text-header-foreground leading-relaxed">{reviews.review2Text}</p>
           </div>
 
           {/* Карточка №3: Отзыв с эмодзи */}
           <div className="flex-shrink-0 w-[280px] sm:w-[300px] md:w-auto bg-header-bg rounded-xl p-5 md:p-6">
-            <p className="text-sm md:text-base text-header-foreground leading-relaxed">
-              {reviews.review3Text}
-            </p>
+            <p className="text-sm md:text-base text-header-foreground leading-relaxed">{reviews.review3Text}</p>
           </div>
         </div>
       </div>

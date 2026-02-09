@@ -70,10 +70,7 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
     setError(null);
 
     try {
-      const pageUrl =
-        typeof window !== "undefined"
-          ? window.location.pathname + window.location.search
-          : "";
+      const pageUrl = typeof window !== "undefined" ? window.location.pathname + window.location.search : "";
       const payload = {
         phone: phoneE164,
         name: fromName.trim() || undefined,
@@ -105,11 +102,7 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
   const content = (
     <>
       {/* Overlay — выше хедера (z-40); фиксированный поверх страницы */}
-      <div
-        className="fixed inset-0 z-[60] bg-black/40"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      <div className="fixed inset-0 z-[60] bg-black/40" onClick={onClose} aria-hidden="true" />
 
       {/* Modal — fixed, выше overlay; скролл при переполнении */}
       <div
@@ -149,7 +142,8 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
           <>
             <h2 className="text-xl font-semibold text-color-text-main mb-3">Намекнуть ?</h2>
             <p className="text-sm text-color-text-secondary mb-6 leading-relaxed">
-              Если эта композиция вам по душе и вы мечтаете получить её в подарок — заполните форму. Близкому человеку придёт сообщение с вашим лёгким намёком.
+              Если эта композиция вам по душе и вы мечтаете получить её в подарок — заполните форму. Близкому человеку
+              придёт сообщение с вашим лёгким намёком.
             </p>
 
             {/* Форма: на mobile одна колонка, ровные отступы, без горизонтального скролла */}
@@ -183,20 +177,13 @@ export function GiftHintModal({ isOpen, onClose, product }: GiftHintModalProps) 
                   />
                 </div>
                 <div className="min-w-0 flex flex-col">
-                  <PhoneInput
-                    value={phone}
-                    onChange={setPhone}
-                    label="Телефон"
-                    required
-                  />
+                  <PhoneInput value={phone} onChange={setPhone} label="Телефон" required />
                 </div>
               </div>
 
               {/* Комментарий — во всю ширину, необязательно */}
               <div className="min-w-0">
-                <label className="block text-sm font-medium text-color-text-main mb-1.5">
-                  Комментарий
-                </label>
+                <label className="block text-sm font-medium text-color-text-main mb-1.5">Комментарий</label>
                 <textarea
                   placeholder="Комментарий к подарку"
                   value={comment}

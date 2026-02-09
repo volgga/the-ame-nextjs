@@ -21,11 +21,7 @@ export async function GET() {
     await requireAdmin();
     const supabase = getSupabaseAdmin();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
-      .from("product_details")
-      .select("kit")
-      .eq("id", 1)
-      .maybeSingle();
+    const { data, error } = await (supabase as any).from("product_details").select("kit").eq("id", 1).maybeSingle();
 
     if (error) {
       const isTableMissing =

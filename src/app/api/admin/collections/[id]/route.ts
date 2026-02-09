@@ -14,6 +14,7 @@ const updateSchema = z.object({
   category_slug: z.string().min(1).optional(),
   sort_order: z.number().int().optional(),
   is_active: z.boolean().optional(),
+  description: z.string().nullable().optional(),
 });
 
 export async function PATCH(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

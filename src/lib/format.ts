@@ -79,8 +79,7 @@ export function formatOneClickMessage(data: OneClickFormData, _leadId?: string):
   const name = data.name?.trim();
   const productTitle = data.productTitle?.trim();
   const productLink =
-    data.productUrl?.trim() ||
-    buildAbsoluteUrl(data.productPath?.trim() || data.pageUrl?.trim() || null);
+    data.productUrl?.trim() || buildAbsoluteUrl(data.productPath?.trim() || data.pageUrl?.trim() || null);
 
   let message = `🛒 <b>Купить в 1 клик (горячий лид)</b>
 
@@ -134,8 +133,7 @@ export function formatGiftHintMessage(data: GiftHintFormData, _leadId?: string):
   const recipientName = data.recipientName?.trim();
   const productTitle = data.productTitle?.trim();
   const productLink =
-    data.productUrl?.trim() ||
-    buildAbsoluteUrl(data.productPath?.trim() || data.pageUrl?.trim() || null);
+    data.productUrl?.trim() || buildAbsoluteUrl(data.productPath?.trim() || data.pageUrl?.trim() || null);
   const preferredDate = data.preferredDate?.trim();
   const comment = data.comment?.trim();
 

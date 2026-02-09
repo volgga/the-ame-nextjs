@@ -9,7 +9,7 @@ import { parseCompositionFlowers } from "@/lib/parseCompositionFlowers";
 /**
  * Извлекает массив цветов из товара.
  * Приоритет: compositionFlowers, затем парсинг из composition.
- * 
+ *
  * @param product - товар
  * @returns массив названий цветов (нормализованные)
  */
@@ -27,7 +27,7 @@ export function extractFlowersFromProduct(product: Product): string[] {
 /**
  * Извлекает уникальные цветы из массива товаров.
  * Используется для генерации списка доступных цветов.
- * 
+ *
  * @param products - массив товаров
  * @returns отсортированный массив уникальных названий цветов
  */

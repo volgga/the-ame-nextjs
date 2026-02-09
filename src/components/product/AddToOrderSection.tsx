@@ -111,7 +111,9 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
       } else {
         el.scrollTo({ left: nextScroll, behavior: "smooth" });
       }
-      setTimeout(() => { isProgrammaticScrollRef.current = false; }, 500);
+      setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+      }, 500);
     };
     const id = setInterval(tick, AUTO_SCROLL_INTERVAL_MS);
     return () => clearInterval(id);
@@ -126,7 +128,9 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
       const step = 580;
       const delta = direction === "left" ? -step : step;
       el.scrollBy({ left: delta, behavior: "smooth" });
-      setTimeout(() => { isProgrammaticScrollRef.current = false; }, 500);
+      setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+      }, 500);
     },
     [pauseAutoScroll]
   );
@@ -142,10 +146,7 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
   }
 
   return (
-    <section
-      className={`bg-page-bg pb-12 md:pb-16 ${MAIN_PAGE_BLOCK_GAP}`}
-      aria-labelledby="add-to-order-heading"
-    >
+    <section className={`bg-page-bg pb-12 md:pb-16 ${MAIN_PAGE_BLOCK_GAP}`} aria-labelledby="add-to-order-heading">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex justify-center mb-6 md:mb-8">
           <div className="w-full max-w-5xl section-divider-line" aria-hidden />
@@ -198,20 +199,12 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
             >
               {top && (
                 <div className="flex-shrink-0">
-                  <FlowerCard
-                    flower={top}
-                    product={products.find((p) => p.id === top.id)}
-                    showNewBadge={false}
-                  />
+                  <FlowerCard flower={top} product={products.find((p) => p.id === top.id)} showNewBadge={false} />
                 </div>
               )}
               {bottom && (
                 <div className="flex-shrink-0">
-                  <FlowerCard
-                    flower={bottom}
-                    product={products.find((p) => p.id === bottom.id)}
-                    showNewBadge={false}
-                  />
+                  <FlowerCard flower={bottom} product={products.find((p) => p.id === bottom.id)} showNewBadge={false} />
                 </div>
               )}
             </div>

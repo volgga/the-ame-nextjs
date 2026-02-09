@@ -291,8 +291,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
   }, []);
 
   // Стандартная цена по зоне (без ночного тарифа): бесплатно при достижении порога, иначе price.
-  const getStandardZonePrice = (zone: DeliveryZone) =>
-    state.total >= zone.freeFrom ? 0 : zone.price;
+  const getStandardZonePrice = (zone: DeliveryZone) => (state.total >= zone.freeFrom ? 0 : zone.price);
 
   // Единый расчёт стоимости доставки: по району, порог бесплатной доставки, ночной тариф ×2 только при сумме ниже порога.
   const getDeliveryPrice = () => {
@@ -397,7 +396,12 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
       const el = document.getElementById(fieldId);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
-        const toFocus = el instanceof HTMLLabelElement ? el.querySelector<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input, select, button, textarea") : el;
+        const toFocus =
+          el instanceof HTMLLabelElement
+            ? el.querySelector<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>(
+                "input, select, button, textarea"
+              )
+            : el;
         (toFocus as HTMLElement)?.focus?.();
       }
     }, 100);
@@ -445,16 +449,24 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
               type="text"
               placeholder="Имя и фамилия"
               value={customerName}
-              onChange={(e) => { setCustomerName(e.target.value); clearFieldError(FIELD_IDS.customerName); }}
+              onChange={(e) => {
+                setCustomerName(e.target.value);
+                clearFieldError(FIELD_IDS.customerName);
+              }}
               className={`w-full px-4 py-3 min-h-[48px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.customerName ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
             />
-            {firstInvalidField === FIELD_IDS.customerName && <p className="text-sm text-red-600 mt-1">Заполните имя и фамилию</p>}
+            {firstInvalidField === FIELD_IDS.customerName && (
+              <p className="text-sm text-red-600 mt-1">Заполните имя и фамилию</p>
+            )}
           </div>
           <div>
             <PhoneInput
               id={FIELD_IDS.customerPhone}
               value={customerPhone}
-              onChange={(v) => { setCustomerPhone(v); clearFieldError(FIELD_IDS.customerPhone); }}
+              onChange={(v) => {
+                setCustomerPhone(v);
+                clearFieldError(FIELD_IDS.customerPhone);
+              }}
               label="Телефон"
               required
               error={firstInvalidField === FIELD_IDS.customerPhone ? "Введите корректный номер телефона" : undefined}
@@ -530,19 +542,31 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
                 type="text"
                 placeholder="Имя получателя"
                 value={recipientName}
-                onChange={(e) => { setRecipientName(e.target.value); clearFieldError(FIELD_IDS.recipientName); }}
+                onChange={(e) => {
+                  setRecipientName(e.target.value);
+                  clearFieldError(FIELD_IDS.recipientName);
+                }}
                 className={`w-full px-4 py-3 min-h-[48px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.recipientName ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
               />
-              {firstInvalidField === FIELD_IDS.recipientName && <p className="text-sm text-red-600 mt-1">Заполните имя получателя</p>}
+              {firstInvalidField === FIELD_IDS.recipientName && (
+                <p className="text-sm text-red-600 mt-1">Заполните имя получателя</p>
+              )}
             </div>
             <div>
               <PhoneInput
                 id={FIELD_IDS.recipientPhone}
                 value={recipientPhone}
-                onChange={(v) => { setRecipientPhone(v); clearFieldError(FIELD_IDS.recipientPhone); }}
+                onChange={(v) => {
+                  setRecipientPhone(v);
+                  clearFieldError(FIELD_IDS.recipientPhone);
+                }}
                 label="Телефон получателя"
                 required
-                error={firstInvalidField === FIELD_IDS.recipientPhone ? "Введите корректный номер телефона получателя" : undefined}
+                error={
+                  firstInvalidField === FIELD_IDS.recipientPhone
+                    ? "Введите корректный номер телефона получателя"
+                    : undefined
+                }
               />
             </div>
           </div>
@@ -560,7 +584,10 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
             <button
               id={FIELD_IDS.deliveryZone}
               type="button"
-              onClick={() => { setIsDeliveryDropdownOpen(!isDeliveryDropdownOpen); clearFieldError(FIELD_IDS.deliveryZone); }}
+              onClick={() => {
+                setIsDeliveryDropdownOpen(!isDeliveryDropdownOpen);
+                clearFieldError(FIELD_IDS.deliveryZone);
+              }}
               className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-left flex items-center justify-between bg-white ${firstInvalidField === FIELD_IDS.deliveryZone ? "border-red-500 focus:ring-red-500/30" : isDeliveryDropdownOpen ? "border-border-block" : "border-gray-300"}`}
             >
               <span className={selectedZone ? "text-gray-900" : "text-gray-500"}>
@@ -584,7 +611,9 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
               </svg>
             </button>
 
-            {firstInvalidField === FIELD_IDS.deliveryZone && <p className="text-sm text-red-600 mt-1">Выберите район доставки или самовывоз</p>}
+            {firstInvalidField === FIELD_IDS.deliveryZone && (
+              <p className="text-sm text-red-600 mt-1">Выберите район доставки или самовывоз</p>
+            )}
             {isDeliveryDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setIsDeliveryDropdownOpen(false)} />
@@ -674,10 +703,15 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
               type="text"
               placeholder="Улица, номер дома, подъезд, квартира, этаж"
               value={deliveryAddress}
-              onChange={(e) => { setDeliveryAddress(e.target.value); clearFieldError(FIELD_IDS.deliveryAddress); }}
+              onChange={(e) => {
+                setDeliveryAddress(e.target.value);
+                clearFieldError(FIELD_IDS.deliveryAddress);
+              }}
               className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryAddress ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
             />
-            {firstInvalidField === FIELD_IDS.deliveryAddress && <p className="text-sm text-red-600 mt-1">Укажите адрес доставки</p>}
+            {firstInvalidField === FIELD_IDS.deliveryAddress && (
+              <p className="text-sm text-red-600 mt-1">Укажите адрес доставки</p>
+            )}
           </div>
         )}
 
@@ -685,26 +719,38 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
         {(deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails)) && (
           <div className="flex flex-col md:flex-row md:gap-4 gap-3">
             <div className="w-full min-w-0 md:flex-1">
-              <label className="block text-sm mb-1 text-color-text-main">Дата доставки <span className="text-red-500">*</span></label>
+              <label className="block text-sm mb-1 text-color-text-main">
+                Дата доставки <span className="text-red-500">*</span>
+              </label>
               <input
                 id={FIELD_IDS.deliveryDate}
                 type="date"
                 value={deliveryDate}
-                onChange={(e) => { setDeliveryDate(e.target.value); clearFieldError(FIELD_IDS.deliveryDate); }}
+                onChange={(e) => {
+                  setDeliveryDate(e.target.value);
+                  clearFieldError(FIELD_IDS.deliveryDate);
+                }}
                 min={getMinDate()}
                 lang="ru"
                 className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
               />
-              {firstInvalidField === FIELD_IDS.deliveryDate && <p className="text-sm text-red-600 mt-1">Выберите дату доставки</p>}
+              {firstInvalidField === FIELD_IDS.deliveryDate && (
+                <p className="text-sm text-red-600 mt-1">Выберите дату доставки</p>
+              )}
             </div>
             {/* Время доставки: скрыто при "Уточнить время и адрес у получателя"; при самовывозе — показываем */}
             {!(!isRecipientSelf && askRecipientForDetails) && (
               <div className="w-full min-w-0 md:flex-1">
-                <label className="block text-sm mb-1 text-color-text-main">Время доставки <span className="text-red-500">*</span></label>
+                <label className="block text-sm mb-1 text-color-text-main">
+                  Время доставки <span className="text-red-500">*</span>
+                </label>
                 <select
                   id={FIELD_IDS.deliveryTime}
                   value={deliveryTime}
-                  onChange={(e) => { setDeliveryTime(e.target.value); clearFieldError(FIELD_IDS.deliveryTime); }}
+                  onChange={(e) => {
+                    setDeliveryTime(e.target.value);
+                    clearFieldError(FIELD_IDS.deliveryTime);
+                  }}
                   className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryTime ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
                 >
                   <option value="">Выберите время</option>
@@ -714,7 +760,9 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
                     </option>
                   ))}
                 </select>
-                {firstInvalidField === FIELD_IDS.deliveryTime && <p className="text-sm text-red-600 mt-1">Выберите время доставки</p>}
+                {firstInvalidField === FIELD_IDS.deliveryTime && (
+                  <p className="text-sm text-red-600 mt-1">Выберите время доставки</p>
+                )}
                 {deliveryTime === "Доставка ночью" && (
                   <p className="text-xs mt-1" style={{ color: "#6b7280" }}>
                     Мы свяжемся с вами для уточнения времени
@@ -777,17 +825,25 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
           />
           <span className="text-sm">Согласие на получение рассылки</span>
         </label>
-        <label id={FIELD_IDS.agreePrivacy} className={`flex items-start gap-2 cursor-pointer ${firstInvalidField === FIELD_IDS.agreePrivacy ? "rounded ring-2 ring-red-500 ring-offset-1" : ""}`}>
+        <label
+          id={FIELD_IDS.agreePrivacy}
+          className={`flex items-start gap-2 cursor-pointer ${firstInvalidField === FIELD_IDS.agreePrivacy ? "rounded ring-2 ring-red-500 ring-offset-1" : ""}`}
+        >
           <input
             type="checkbox"
             checked={agreePrivacy}
-            onChange={(e) => { setAgreePrivacy(e.target.checked); clearFieldError(FIELD_IDS.agreePrivacy); }}
+            onChange={(e) => {
+              setAgreePrivacy(e.target.checked);
+              clearFieldError(FIELD_IDS.agreePrivacy);
+            }}
             className="mt-1 w-4 h-4 accent-primary"
             required
           />
           <span className="text-sm">Согласие с политикой конфиденциальности и договором оферты</span>
         </label>
-        {firstInvalidField === FIELD_IDS.agreePrivacy && <p className="text-sm text-red-600 mt-1">Необходимо согласие с политикой конфиденциальности</p>}
+        {firstInvalidField === FIELD_IDS.agreePrivacy && (
+          <p className="text-sm text-red-600 mt-1">Необходимо согласие с политикой конфиденциальности</p>
+        )}
         <label className="flex items-start gap-2 cursor-pointer">
           <input
             type="checkbox"

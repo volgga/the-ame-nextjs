@@ -73,10 +73,7 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
 
     setLoading(true);
     try {
-      const pageUrl =
-        typeof window !== "undefined"
-          ? window.location.pathname + window.location.search
-          : "";
+      const pageUrl = typeof window !== "undefined" ? window.location.pathname + window.location.search : "";
       const payload = {
         phone: phoneE164,
         name: name.trim() || undefined,
@@ -131,7 +128,11 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
           <div className="flex items-center gap-3 p-3 bg-[rgba(31,42,31,0.06)] rounded-xl mb-6">
             <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-[#ece9e2]">
               <Image
-                src={product.image?.trim() && (product.image.startsWith("http") || product.image.startsWith("/")) ? product.image : "/placeholder.svg"}
+                src={
+                  product.image?.trim() && (product.image.startsWith("http") || product.image.startsWith("/"))
+                    ? product.image
+                    : "/placeholder.svg"
+                }
                 alt={product.name}
                 fill
                 sizes="56px"

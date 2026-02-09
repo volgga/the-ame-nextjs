@@ -6,6 +6,12 @@
 import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 
+export type FlowerSection = {
+  key: string; // нормализованный ключ цветка (например "розы")
+  title: string; // отображаемое название (например "Розы")
+  description: string; // SEO/описание для этого цветка
+};
+
 export type Category = {
   id: string;
   name: string;
@@ -16,6 +22,8 @@ export type Category = {
   description?: string | null;
   /** Ручной SEO заголовок (title). Если заполнен — используется в <title> вместо автогенерации. */
   seo_title?: string | null;
+  /** Подразделы по цветам (только для категории "Цветы в составе") */
+  flower_sections?: FlowerSection[] | null;
 };
 
 /** Дефолтный SEO-текст, если у категории нет своего seoText. */
@@ -37,7 +45,7 @@ async function getCategoriesUncached(): Promise<Category[]> {
   try {
     const { data, error } = await supabase
       .from("categories")
-      .select("id, name, slug, sort_order, is_active, description, seo_title")
+      .select("id, name, slug, sort_order, is_active, description, seo_title, flower_sections")
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
 
@@ -51,6 +59,7 @@ async function getCategoriesUncached(): Promise<Category[]> {
       is_active: r.is_active ?? true,
       description: r.description ?? null,
       seo_title: r.seo_title ?? null,
+      flower_sections: Array.isArray(r.flower_sections) ? (r.flower_sections as FlowerSection[]) : null,
     }));
   } catch {
     return FALLBACK_CATEGORIES;

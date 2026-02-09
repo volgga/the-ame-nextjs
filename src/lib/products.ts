@@ -35,6 +35,8 @@ export type Product = {
   ogImage?: string | null;
   /** Состав букета (ручной ввод). У вариантного товара — из выбранного варианта. */
   composition?: string | null;
+  /** Массив названий цветов для фильтрации (из composition_flowers или парсинг из composition) */
+  compositionFlowers?: string[] | null;
   /** Высота букета, см */
   sizeHeightCm?: number | null;
   /** Ширина букета, см */
@@ -64,6 +66,7 @@ type ProductsRow = {
   name: string;
   description?: string | null;
   composition_size?: string | null;
+  composition_flowers?: string[] | null;
   height_cm?: number | null;
   width_cm?: number | null;
   image_url?: string | null;
@@ -92,13 +95,11 @@ type ProductsRow = {
  */
 async function slugsToCategoryNames(categorySlugs: string[] | null | undefined): Promise<string[]> {
   if (!categorySlugs || categorySlugs.length === 0) return [];
-  
+
   try {
     const allCategories = await getCategories();
     const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
-    return categorySlugs
-      .map((slug) => categoryMap.get(slug))
-      .filter((name): name is string => Boolean(name));
+    return categorySlugs.map((slug) => categoryMap.get(slug)).filter((name): name is string => Boolean(name));
   } catch {
     return [];
   }
@@ -131,7 +132,7 @@ async function rowToProduct(row: ProductsRow, getCategoryNames?: (slugs: string[
     }
   }
 
-    return {
+  return {
     id: String(row.id),
     slug,
     title: row.name ?? "",
@@ -145,6 +146,10 @@ async function rowToProduct(row: ProductsRow, getCategoryNames?: (slugs: string[
     ogDescription: row.og_description ?? null,
     ogImage: row.og_image ?? null,
     composition: row.composition_size?.trim() || null,
+    compositionFlowers:
+      Array.isArray(row.composition_flowers) && row.composition_flowers.length > 0
+        ? row.composition_flowers.filter((f): f is string => typeof f === "string" && f.length > 0)
+        : null,
     sizeHeightCm: row.height_cm != null ? Number(row.height_cm) : null,
     sizeWidthCm: row.width_cm != null ? Number(row.width_cm) : null,
     categorySlug: row.category_slug ?? null,
@@ -178,7 +183,7 @@ export async function getAllProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
+        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -203,24 +208,20 @@ export async function getAllProducts(): Promise<Product[]> {
     // Загружаем все категории один раз для кэширования
     const allCategories = await getCategories();
     const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
-    
+
     // Создаем кэш для преобразования слогов в названия
     const categoryNamesCache = new Map<string, string[]>();
     const getCategoryNames = (slugs: string[]): string[] => {
       const cacheKey = slugs.sort().join(",");
       if (!categoryNamesCache.has(cacheKey)) {
-        const names = slugs
-          .map((slug) => categoryMap.get(slug))
-          .filter((name): name is string => Boolean(name));
+        const names = slugs.map((slug) => categoryMap.get(slug)).filter((name): name is string => Boolean(name));
         categoryNamesCache.set(cacheKey, names);
       }
       return categoryNamesCache.get(cacheKey)!;
     };
 
     // Преобразуем все строки в Product с категориями
-    return Promise.all(
-      data.map((row) => rowToProduct(row as ProductsRow, getCategoryNames))
-    );
+    return Promise.all(data.map((row) => rowToProduct(row as ProductsRow, getCategoryNames)));
   } catch (e) {
     console.error("[getAllProducts]", e instanceof Error ? e.message : String(e));
     return [];
@@ -244,7 +245,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     const base = supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
+        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null");

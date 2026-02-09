@@ -12,9 +12,9 @@ const BUTTON_LABELS: Record<string, string> = {
 };
 
 export function ContactMessengersRow() {
-  const providers = MESSENGER_ORDER
-    .map((type) => contactProviders.find((p) => p.type === type))
-    .filter((p): p is NonNullable<typeof p> => p != null && p.url != null);
+  const providers = MESSENGER_ORDER.map((type) => contactProviders.find((p) => p.type === type)).filter(
+    (p): p is NonNullable<typeof p> => p != null && p.url != null
+  );
 
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-2">

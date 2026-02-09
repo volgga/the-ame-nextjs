@@ -41,13 +41,17 @@ function parseProductId(id: string): { type: "simple"; uuid: string } | { type: 
 }
 
 /** Принимаем любую строку или null для image_url (Supabase storage URL может иметь спецсимволы) */
-const optionalImageUrl = z.union([z.string(), z.null(), z.literal("")]).optional().transform((v) => (v === "" ? null : v));
+const optionalImageUrl = z
+  .union([z.string(), z.null(), z.literal("")])
+  .optional()
+  .transform((v) => (v === "" ? null : v));
 
 const updateSimpleSchema = z.object({
   name: z.string().min(1).optional(),
   slug: z.string().optional(),
   description: z.string().optional().nullable(),
   composition_size: z.string().optional().nullable(),
+  composition_flowers: z.array(z.string()).optional().nullable(),
   height_cm: z.number().int().min(0).optional().nullable(),
   width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0).optional(),
@@ -66,7 +70,12 @@ const updateSimpleSchema = z.object({
   seo_keywords: z.string().max(500).optional().nullable(),
   og_title: z.string().max(300).optional().nullable(),
   og_description: z.string().max(500).optional().nullable(),
-  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
+  og_image: z
+    .string()
+    .max(2000)
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" ? null : v)),
 });
 
 const updateVariantSchema = z.object({
@@ -74,6 +83,7 @@ const updateVariantSchema = z.object({
   slug: z.string().optional(),
   description: z.string().optional().nullable(),
   composition: z.string().optional().nullable(),
+  composition_flowers: z.array(z.string()).optional().nullable(),
   height_cm: z.number().int().min(0).optional().nullable(),
   width_cm: z.number().int().min(0).optional().nullable(),
   image_url: optionalImageUrl,
@@ -86,7 +96,12 @@ const updateVariantSchema = z.object({
   seo_description: z.string().max(500).optional().nullable(),
   og_title: z.string().max(300).optional().nullable(),
   og_description: z.string().max(500).optional().nullable(),
-  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
+  og_image: z
+    .string()
+    .max(2000)
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" ? null : v)),
 });
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -175,7 +190,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       if (result.data.name && !result.data.slug) {
         updates.slug = slugify(result.data.name);
       }
-      
+
       // Логика для is_new и new_until:
       // Если is_new = true и new_until не задан -> установить now() + 30 days
       // Если is_new = false -> new_until = null
@@ -192,7 +207,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           updates.new_until = null;
         }
       }
-      
+
       const categorySlugs = result.data.category_slugs?.filter(Boolean) ?? null;
       if (categorySlugs !== null) {
         updates.category_slugs = categorySlugs;
@@ -200,6 +215,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       } else if (result.data.category_slug !== undefined) {
         updates.category_slug = result.data.category_slug;
       }
+
+      // Обработка composition_flowers для products
+      if (result.data.composition_flowers !== undefined) {
+        updates.composition_flowers =
+          Array.isArray(result.data.composition_flowers) && result.data.composition_flowers.length > 0
+            ? result.data.composition_flowers
+            : null;
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("products")
@@ -227,6 +251,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     delete updates.composition;
     delete updates.height_cm;
     delete updates.width_cm; // variant_products has no size fields (they are in product_variants)
+
+    // Обработка composition_flowers для variant_products
+    if (result.data.composition_flowers !== undefined) {
+      updates.composition_flowers =
+        Array.isArray(result.data.composition_flowers) && result.data.composition_flowers.length > 0
+          ? result.data.composition_flowers
+          : null;
+    }
+
     if (result.data.name && !result.data.slug) {
       updates.slug = slugify(result.data.name);
     }

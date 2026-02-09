@@ -43,13 +43,13 @@ export async function PATCH(request: NextRequest) {
 
     if (slugOrder.length > 0) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: categoryRows, error: catError } = await (supabase as any)
-        .from("categories")
-        .select("slug");
+      const { data: categoryRows, error: catError } = await (supabase as any).from("categories").select("slug");
       if (catError) {
         return NextResponse.json({ error: "Ошибка загрузки категорий" }, { status: 500 });
       }
-      const validSlugs = new Set((categoryRows ?? []).map((r: { slug: string }) => String(r.slug ?? "").trim()).filter(Boolean));
+      const validSlugs = new Set(
+        (categoryRows ?? []).map((r: { slug: string }) => String(r.slug ?? "").trim()).filter(Boolean)
+      );
       const invalid = slugOrder.filter((s) => !validSlugs.has(s));
       if (invalid.length > 0) {
         return NextResponse.json(
@@ -69,7 +69,10 @@ export async function PATCH(request: NextRequest) {
     if (deleteError) {
       if (deleteError.code === "42P01") {
         return NextResponse.json(
-          { error: "Таблица add_on_products_categories не создана. Выполните миграцию scripts/migrations/add-on-products-categories.sql" },
+          {
+            error:
+              "Таблица add_on_products_categories не создана. Выполните миграцию scripts/migrations/add-on-products-categories.sql",
+          },
           { status: 500 }
         );
       }
@@ -80,9 +83,7 @@ export async function PATCH(request: NextRequest) {
     if (slugOrder.length > 0) {
       const rows = slugOrder.map((category_slug, i) => ({ category_slug, sort_order: i }));
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: insertError } = await (supabase as any)
-        .from("add_on_products_categories")
-        .insert(rows);
+      const { error: insertError } = await (supabase as any).from("add_on_products_categories").insert(rows);
 
       if (insertError) {
         console.error("[admin/add-on-products PATCH] insert:", insertError);

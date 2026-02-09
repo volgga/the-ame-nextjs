@@ -22,11 +22,7 @@ const MIN_TOKEN_LEN = 2;
 const STEM_LEN = 4;
 
 function normalize(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/ё/g, "е")
-    .replace(/\s+/g, " ")
-    .trim();
+  return s.toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
 }
 
 function tokenize(query: string): string[] {
@@ -106,10 +102,7 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
     return () => m.removeEventListener("change", handler);
   }, []);
 
-  const results = useMemo(
-    () => (query.trim() ? searchProducts(products, query) : []),
-    [products, query]
-  );
+  const results = useMemo(() => (query.trim() ? searchProducts(products, query) : []), [products, query]);
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -204,81 +197,12 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
       </button>
 
       {isOpen &&
-        (isMobile
-          ? createPortal(
-              <div
-                ref={panelRef}
-                className="fixed left-2 right-2 z-[75] w-[calc(100vw-16px)] max-w-[400px] mx-auto bg-white border border-[#1F2A1F] rounded-xl shadow-xl overflow-hidden"
-                style={{ top: HEADER_HEIGHT_MOBILE_PX + 8 }}
-                role="dialog"
-                aria-label="Поиск товаров"
-              >
-                <div className="p-3 border-b border-gray-200">
-                  <input
-                    ref={inputRef}
-                    type="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Поиск товаров…"
-                    className="w-full px-3 py-2 text-sm text-color-text-main bg-page-bg border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-header-foreground focus:ring-offset-1"
-                    autoComplete="off"
-                    aria-label="Поисковый запрос"
-                  />
-                </div>
-                <div className="max-h-[320px] overflow-y-auto">
-                  {loading ? (
-                    <div className="py-8 text-center text-sm text-color-text-secondary">
-                      Загрузка…
-                    </div>
-                  ) : query.trim() === "" ? (
-                    <div className="py-6 text-center text-sm text-color-text-secondary">
-                      Введите запрос для поиска
-                    </div>
-                  ) : results.length === 0 ? (
-                    <div className="py-8 text-center text-sm text-color-text-secondary">
-                      Ничего не найдено
-                    </div>
-                  ) : (
-                    <ul className="divide-y divide-gray-100">
-                      {results.slice(0, 8).map((product) => (
-                        <li key={product.id}>
-                          <Link
-                            href={buildProductUrl({
-                              name: product.title,
-                              productSlug: product.slug ?? null,
-                            })}
-                            onClick={(e) => handleProductClick(e, product)}
-                            className="flex gap-3 p-3 hover:bg-gray-50 transition-colors"
-                          >
-                            <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#ece9e2] shrink-0">
-                              <Image
-                                src={product.image?.trim() && (product.image.startsWith("http") || product.image.startsWith("/")) ? product.image : "/placeholder.svg"}
-                                alt=""
-                                fill
-                                sizes="48px"
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-color-text-main line-clamp-2">
-                                {product.title}
-                              </p>
-                              <p className="text-xs text-color-text-secondary mt-0.5">
-                                {formatPrice(product.price)}
-                              </p>
-                            </div>
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>,
-              document.body
-            )
-          : (
+        (isMobile ? (
+          createPortal(
             <div
-              className="absolute right-0 top-full z-[75] mt-2 w-[min(400px,calc(100vw-32px))] bg-white border border-[#1F2A1F] rounded-xl shadow-xl overflow-hidden"
+              ref={panelRef}
+              className="fixed left-2 right-2 z-[75] w-[calc(100vw-16px)] max-w-[400px] mx-auto bg-white border border-[#1F2A1F] rounded-xl shadow-xl overflow-hidden"
+              style={{ top: HEADER_HEIGHT_MOBILE_PX + 8 }}
               role="dialog"
               aria-label="Поиск товаров"
             >
@@ -296,17 +220,11 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
               </div>
               <div className="max-h-[320px] overflow-y-auto">
                 {loading ? (
-                  <div className="py-8 text-center text-sm text-color-text-secondary">
-                    Загрузка…
-                  </div>
+                  <div className="py-8 text-center text-sm text-color-text-secondary">Загрузка…</div>
                 ) : query.trim() === "" ? (
-                  <div className="py-6 text-center text-sm text-color-text-secondary">
-                    Введите запрос для поиска
-                  </div>
+                  <div className="py-6 text-center text-sm text-color-text-secondary">Введите запрос для поиска</div>
                 ) : results.length === 0 ? (
-                  <div className="py-8 text-center text-sm text-color-text-secondary">
-                    Ничего не найдено
-                  </div>
+                  <div className="py-8 text-center text-sm text-color-text-secondary">Ничего не найдено</div>
                 ) : (
                   <ul className="divide-y divide-gray-100">
                     {results.slice(0, 8).map((product) => (
@@ -321,7 +239,12 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                         >
                           <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#ece9e2] shrink-0">
                             <Image
-                              src={product.image?.trim() && (product.image.startsWith("http") || product.image.startsWith("/")) ? product.image : "/placeholder.svg"}
+                              src={
+                                product.image?.trim() &&
+                                (product.image.startsWith("http") || product.image.startsWith("/"))
+                                  ? product.image
+                                  : "/placeholder.svg"
+                              }
                               alt=""
                               fill
                               sizes="48px"
@@ -329,12 +252,8 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                             />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-color-text-main line-clamp-2">
-                              {product.title}
-                            </p>
-                            <p className="text-xs text-color-text-secondary mt-0.5">
-                              {formatPrice(product.price)}
-                            </p>
+                            <p className="text-sm font-medium text-color-text-main line-clamp-2">{product.title}</p>
+                            <p className="text-xs text-color-text-secondary mt-0.5">{formatPrice(product.price)}</p>
                           </div>
                         </Link>
                       </li>
@@ -342,8 +261,72 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                   </ul>
                 )}
               </div>
+            </div>,
+            document.body
+          )
+        ) : (
+          <div
+            className="absolute right-0 top-full z-[75] mt-2 w-[min(400px,calc(100vw-32px))] bg-white border border-[#1F2A1F] rounded-xl shadow-xl overflow-hidden"
+            role="dialog"
+            aria-label="Поиск товаров"
+          >
+            <div className="p-3 border-b border-gray-200">
+              <input
+                ref={inputRef}
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Поиск товаров…"
+                className="w-full px-3 py-2 text-sm text-color-text-main bg-page-bg border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-header-foreground focus:ring-offset-1"
+                autoComplete="off"
+                aria-label="Поисковый запрос"
+              />
             </div>
-          ))}
+            <div className="max-h-[320px] overflow-y-auto">
+              {loading ? (
+                <div className="py-8 text-center text-sm text-color-text-secondary">Загрузка…</div>
+              ) : query.trim() === "" ? (
+                <div className="py-6 text-center text-sm text-color-text-secondary">Введите запрос для поиска</div>
+              ) : results.length === 0 ? (
+                <div className="py-8 text-center text-sm text-color-text-secondary">Ничего не найдено</div>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {results.slice(0, 8).map((product) => (
+                    <li key={product.id}>
+                      <Link
+                        href={buildProductUrl({
+                          name: product.title,
+                          productSlug: product.slug ?? null,
+                        })}
+                        onClick={(e) => handleProductClick(e, product)}
+                        className="flex gap-3 p-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#ece9e2] shrink-0">
+                          <Image
+                            src={
+                              product.image?.trim() &&
+                              (product.image.startsWith("http") || product.image.startsWith("/"))
+                                ? product.image
+                                : "/placeholder.svg"
+                            }
+                            alt=""
+                            fill
+                            sizes="48px"
+                            className="object-cover"
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-color-text-main line-clamp-2">{product.title}</p>
+                          <p className="text-xs text-color-text-secondary mt-0.5">{formatPrice(product.price)}</p>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        ))}
     </div>
   );
 }

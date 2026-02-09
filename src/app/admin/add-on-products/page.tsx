@@ -31,13 +31,7 @@ type AddOnItem = {
   name: string;
 };
 
-function SortableAddOnRow({
-  item,
-  onRemove,
-}: {
-  item: AddOnItem;
-  onRemove: () => void;
-}) {
+function SortableAddOnRow({ item, onRemove }: { item: AddOnItem; onRemove: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.slug,
   });
@@ -134,9 +128,7 @@ export default function AdminAddOnProductsPage() {
     setItems(arrayMove(items, oldIndex, newIndex));
   }
 
-  const availableToAdd = allCategories.filter(
-    (c) => hasValidSlug(c) && !items.some((i) => i.slug === c.slug)
-  );
+  const availableToAdd = allCategories.filter((c) => hasValidSlug(c) && !items.some((i) => i.slug === c.slug));
 
   function handleAdd() {
     if (!addSlug) return;
@@ -216,7 +208,9 @@ export default function AdminAddOnProductsPage() {
       <div className="space-y-2">
         <h3 className="text-sm font-medium text-[#111]">Порядок категорий (сверху вниз)</h3>
         {items.length === 0 ? (
-          <p className="text-gray-500 text-sm">Нет категорий. Добавьте категории выше — по умолчанию используются Сладости, Вазы, Шары, Игрушки.</p>
+          <p className="text-gray-500 text-sm">
+            Нет категорий. Добавьте категории выше — по умолчанию используются Сладости, Вазы, Шары, Игрушки.
+          </p>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={items.map((i) => i.slug)} strategy={verticalListSortingStrategy}>

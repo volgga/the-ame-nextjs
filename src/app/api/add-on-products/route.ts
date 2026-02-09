@@ -27,7 +27,9 @@ export type AddOnProductsResponse = {
 };
 
 function norm(s: string | null | undefined): string {
-  return String(s ?? "").trim().toLowerCase();
+  return String(s ?? "")
+    .trim()
+    .toLowerCase();
 }
 
 function productMatchesCategory(p: Product, categorySlug: string): boolean {

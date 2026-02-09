@@ -29,7 +29,11 @@ export function CategoryChips({ categories, currentSlug }: CategoryChipsProps) {
     .filter((cat) => !hasAllCategory || cat.slug !== "posmotret-vse-tsvety");
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-wrap justify-center gap-2.5" role="group" aria-label="Категории каталога">
+    <div
+      className="w-full max-w-5xl mx-auto flex flex-wrap justify-center gap-2.5"
+      role="group"
+      aria-label="Категории каталога"
+    >
       {filteredCategories.map((cat, index) => {
         const href = cat.isAll
           ? ALL_CATALOG.href
@@ -39,9 +43,7 @@ export function CategoryChips({ categories, currentSlug }: CategoryChipsProps) {
         const isActive = cat.isAll ? currentSlug === null : cat.slug === currentSlug;
         // Создаем уникальный ключ: для isAll используем специальный префикс, для остальных - slug
         // Добавляем индекс на случай дубликатов slug
-        const uniqueKey = cat.isAll 
-          ? `all-flowers-${ALL_CATALOG.href}` 
-          : `${cat.slug || `category-${index}`}-${href}`;
+        const uniqueKey = cat.isAll ? `all-flowers-${ALL_CATALOG.href}` : `${cat.slug || `category-${index}`}-${href}`;
 
         return (
           <Link

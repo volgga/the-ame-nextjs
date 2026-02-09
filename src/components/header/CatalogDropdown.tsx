@@ -45,16 +45,18 @@ function splitIntoFourColumns<T>(items: T[]): T[][] {
 /** Список для выпадающего меню: первым "Все цветы", далее категории. Исключаем magazin, posmotret-vse-tsvety, "Каталог" и дубли "Все цветы". */
 function buildMenuItems(categories: { name: string; slug: string }[]): MenuItem[] {
   const withoutMagazin = categories.filter(
-    (c) =>
-      c.slug !== "magazin" &&
-      c.slug !== "posmotret-vse-tsvety" &&
-      c.name !== "Каталог" &&
-      c.name !== "Все цветы"
+    (c) => c.slug !== "magazin" && c.slug !== "posmotret-vse-tsvety" && c.name !== "Каталог" && c.name !== "Все цветы"
   );
   const list =
     withoutMagazin.length > 0
-      ? [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...withoutMagazin.map((c) => ({ label: c.name, href: categoryHref(c.slug) }))]
-      : [{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` }))];
+      ? [
+          { label: ALL_CATALOG.title, href: ALL_CATALOG.href },
+          ...withoutMagazin.map((c) => ({ label: c.name, href: categoryHref(c.slug) })),
+        ]
+      : [
+          { label: ALL_CATALOG.title, href: ALL_CATALOG.href },
+          ...FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` })),
+        ];
   return list.length > MAX_ITEMS ? list.slice(0, MAX_ITEMS) : list;
 }
 

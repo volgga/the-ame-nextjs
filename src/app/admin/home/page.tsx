@@ -19,22 +19,19 @@ const ReviewsForm = dynamic(
   () => import("@/components/admin/home/ReviewsForm").then((m) => ({ default: m.ReviewsForm })),
   { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
 );
-const AboutForm = dynamic(
-  () => import("@/components/admin/home/AboutForm").then((m) => ({ default: m.AboutForm })),
-  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
-);
-const FaqForm = dynamic(
-  () => import("@/components/admin/home/FaqForm").then((m) => ({ default: m.FaqForm })),
-  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
-);
+const AboutForm = dynamic(() => import("@/components/admin/home/AboutForm").then((m) => ({ default: m.AboutForm })), {
+  loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" />,
+});
+const FaqForm = dynamic(() => import("@/components/admin/home/FaqForm").then((m) => ({ default: m.FaqForm })), {
+  loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" />,
+});
 const OrderBlockForm = dynamic(
   () => import("@/components/admin/home/OrderBlockForm").then((m) => ({ default: m.OrderBlockForm })),
   { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
 );
-const PromoForm = dynamic(
-  () => import("@/components/admin/home/PromoForm").then((m) => ({ default: m.PromoForm })),
-  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
-);
+const PromoForm = dynamic(() => import("@/components/admin/home/PromoForm").then((m) => ({ default: m.PromoForm })), {
+  loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" />,
+});
 
 /**
  * Раздел «Главная страница» в админке.

@@ -120,7 +120,9 @@ export default function PrivacyPage() {
 
         {/* 3. Права и обязанности Оператора */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">3. Основные права и обязанности Оператора</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">
+            3. Основные права и обязанности Оператора
+          </h2>
           <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>3.1.</strong> Оператор имеет право:
@@ -301,7 +303,9 @@ export default function PrivacyPage() {
 
         {/* 6. Принципы обработки */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">6. Принципы обработки персональных данных</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">
+            6. Принципы обработки персональных данных
+          </h2>
           <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>6.1.</strong> Обработка персональных данных осуществляется на законной и справедливой основе.
@@ -342,7 +346,9 @@ export default function PrivacyPage() {
 
         {/* 7. Цели обработки */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">7. Цели обработки персональных данных</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">
+            7. Цели обработки персональных данных
+          </h2>
           <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>7.1.</strong> Цель обработки персональных данных Пользователя:
@@ -402,7 +408,9 @@ export default function PrivacyPage() {
 
         {/* 9. Условия обработки */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">9. Условия обработки персональных данных</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">
+            9. Условия обработки персональных данных
+          </h2>
           <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>9.1.</strong> Обработка персональных данных осуществляется с согласия субъекта персональных данных
@@ -546,7 +554,9 @@ export default function PrivacyPage() {
 
         {/* 13. Конфиденциальность */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">13. Конфиденциальность персональных данных</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">
+            13. Конфиденциальность персональных данных
+          </h2>
           <p className="text-base md:text-lg text-color-text-main leading-relaxed">
             Оператор и иные лица, получившие доступ к персональным данным, обязаны не раскрывать третьим лицам и не
             распространять персональные данные без согласия субъекта персональных данных, если иное не предусмотрено

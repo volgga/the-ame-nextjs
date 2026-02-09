@@ -19,7 +19,7 @@
 export function normalizeFlowerKey(name: string): string {
   if (!name || typeof name !== "string") return "";
 
-  let key = name
+  const key = name
     .trim()
     .toLowerCase()
     // Заменяем ё на е

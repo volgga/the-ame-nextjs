@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { slugify } from "@/utils/slugify";
 import { Modal } from "@/components/ui/modal";
 import { parseCompositionFlowers } from "@/lib/parseCompositionFlowers";
+import { OCCASIONS_CATEGORY_SLUG } from "@/lib/constants";
 
 const ProductsList = dynamic(
   () => import("@/components/admin/products/ProductsList").then((m) => ({ default: m.ProductsList })),
@@ -54,12 +55,8 @@ type Variant = {
   width_cm: number | null;
   price: number;
   is_preorder: boolean;
-  image: ImageItem | null;
-  imageUrl?: string | null; // existing image URL (for edit)
+  is_new: boolean;
   sort_order: number;
-  seo_title: string;
-  seo_description: string;
-  og_image: string;
 };
 
 const initialForm = {
@@ -69,12 +66,6 @@ const initialForm = {
   height_cm: null as number | null,
   width_cm: null as number | null,
   price: 0,
-  seo_title: "",
-  seo_description: "",
-  seo_keywords: "",
-  og_title: "",
-  og_description: "",
-  og_image: "",
 };
 
 function AdminProductsPageContent() {
@@ -96,6 +87,13 @@ function AdminProductsPageContent() {
   const [selectedCategorySlugs, setSelectedCategorySlugs] = useState<string[]>([]);
   const [availableFlowers, setAvailableFlowers] = useState<string[]>([]);
   const [selectedFlowers, setSelectedFlowers] = useState<string[]>([]);
+  const [occasionsCategoryId, setOccasionsCategoryId] = useState<string | null>(null);
+  const [availableOccasionsSubcategories, setAvailableOccasionsSubcategories] = useState<
+    { id: string; name: string; category_id: string }[]
+  >([]);
+  const [selectedOccasionSubcategoryIds, setSelectedOccasionSubcategoryIds] = useState<string[]>([]);
+  const [loadingOccasions, setLoadingOccasions] = useState(false);
+  const [errorOccasions, setErrorOccasions] = useState("");
   const [createIsHidden, setCreateIsHidden] = useState(false);
   const [createIsPreorder, setCreateIsPreorder] = useState(false);
   const [createIsNew, setCreateIsNew] = useState(false);
@@ -113,7 +111,6 @@ function AdminProductsPageContent() {
   // Состояние для варианов товара
   const [variants, setVariants] = useState<Variant[]>([]);
   const [variantsDraggedIndex, setVariantsDraggedIndex] = useState<number | null>(null);
-  const [variantMainImage, setVariantMainImage] = useState<ImageItem | null>(null);
   // Множество id развернутых вариантов (первый добавленный — развернут по умолчанию)
   const [expandedVariants, setExpandedVariants] = useState<Set<string>>(new Set());
   // ID вариантов при открытии редактирования (для удаления удалённых в UI)
@@ -165,12 +162,44 @@ function AdminProductsPageContent() {
         setCategories(data.filter((c) => c.is_active))
       )
       .catch(() => setCategories([]));
-    
-    // Загружаем список доступных цветов
-    fetch("/api/admin/flowers")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: string[]) => setAvailableFlowers(data))
-      .catch(() => setAvailableFlowers([]));
+
+    // Загружаем список доступных цветов и подкатегорий
+    Promise.all([
+      fetch("/api/admin/flowers")
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data: string[]) => setAvailableFlowers(data))
+        .catch(() => setAvailableFlowers([])),
+      // Загружаем категорию "По поводу" и её подкатегории
+      (async () => {
+        try {
+          setLoadingOccasions(true);
+          setErrorOccasions("");
+          // Находим категорию "По поводу" по slug
+          const categoriesRes = await fetch("/api/admin/categories");
+          if (!categoriesRes.ok) throw new Error("Ошибка загрузки категорий");
+          const categories = await categoriesRes.json();
+          const occasionsCategory = categories.find((c: { slug: string }) => c.slug === OCCASIONS_CATEGORY_SLUG);
+          if (!occasionsCategory) {
+            setErrorOccasions(
+              'Категория "По поводу" не найдена. Примените миграцию categories-add-occasions-category.sql'
+            );
+            setLoadingOccasions(false);
+            return;
+          }
+          setOccasionsCategoryId(occasionsCategory.id);
+          // Загружаем подкатегории категории "По поводу"
+          const subcategoriesRes = await fetch(`/api/admin/subcategories?category_id=${occasionsCategory.id}`);
+          if (!subcategoriesRes.ok) throw new Error("Ошибка загрузки подкатегорий");
+          const occasionsSubcategories = await subcategoriesRes.json();
+          setAvailableOccasionsSubcategories(occasionsSubcategories);
+        } catch (e) {
+          console.error("[admin/products] Error loading occasions:", e);
+          setErrorOccasions(e instanceof Error ? e.message : "Ошибка загрузки");
+        } finally {
+          setLoadingOccasions(false);
+        }
+      })(),
+    ]);
   }, [createModalOpen]);
 
   // Открыть модалку при переходе с /admin/products/new или /admin/products?edit=id
@@ -208,9 +237,7 @@ function AdminProductsPageContent() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error ?? "Ошибка");
-      setProducts((prev) =>
-        prev.map((x) => (x.id === p.id ? { ...x, is_hidden: data.is_hidden ?? !p.is_hidden } : x))
-      );
+      setProducts((prev) => prev.map((x) => (x.id === p.id ? { ...x, is_hidden: data.is_hidden ?? !p.is_hidden } : x)));
     } catch (e) {
       setError(String(e));
     } finally {
@@ -271,12 +298,6 @@ function AdminProductsPageContent() {
           height_cm: isVariantProduct ? null : data.height_cm != null ? Number(data.height_cm) : null,
           width_cm: isVariantProduct ? null : data.width_cm != null ? Number(data.width_cm) : null,
           price: Number(data.price ?? data.min_price_cache ?? 0),
-          seo_title: data.seo_title ?? "",
-          seo_description: data.seo_description ?? "",
-          seo_keywords: data.seo_keywords ?? "",
-          og_title: data.og_title ?? "",
-          og_description: data.og_description ?? "",
-          og_image: data.og_image ?? "",
         });
         setCreateIsHidden(data.is_hidden ?? false);
         setCreateIsPreorder(data.is_preorder ?? false);
@@ -287,17 +308,66 @@ function AdminProductsPageContent() {
         // Загружаем выбранные цветы (если есть)
         setSelectedFlowers(
           Array.isArray(data.composition_flowers) && data.composition_flowers.length > 0
-            ? data.composition_flowers.filter((f): f is string => typeof f === "string" && f.length > 0)
+            ? data.composition_flowers.filter((f: unknown): f is string => typeof f === "string" && f.length > 0)
             : []
         );
+        // Загружаем привязанные подкатегории (включая подкатегории "По поводу")
+        // Сначала загружаем категорию "По поводу", если её ещё нет
+        const loadSelectedSubcategories = async () => {
+          try {
+            let categoryId = occasionsCategoryId;
+            if (!categoryId) {
+              // Загружаем категорию "По поводу" если её ещё нет
+              const categoriesRes = await fetch("/api/admin/categories");
+              if (categoriesRes.ok) {
+                const categories = await categoriesRes.json();
+                const occasionsCategory = categories.find((c: { slug: string }) => c.slug === OCCASIONS_CATEGORY_SLUG);
+                if (occasionsCategory) {
+                  categoryId = occasionsCategory.id;
+                  setOccasionsCategoryId(categoryId);
+                }
+              }
+            }
+            // Загружаем привязанные подкатегории
+            // Для вариантных товаров используем формат "vp-{id}"
+            let productIdForSubcategories = editProductId;
+            if (isVariantProduct) {
+              // Если editProductId это число или строка-число, добавляем префикс "vp-"
+              if (typeof editProductId === "string" && /^\d+$/.test(editProductId)) {
+                productIdForSubcategories = `vp-${editProductId}`;
+              } else if (typeof editProductId === "number") {
+                productIdForSubcategories = `vp-${editProductId}`;
+              }
+              // Если уже есть префикс "vp-", оставляем как есть
+            }
+            const subcategoriesRes = await fetch(`/api/admin/products/${productIdForSubcategories}/subcategories`);
+            if (!subcategoriesRes.ok) throw new Error("Ошибка загрузки подкатегорий");
+            const data: { id: string; category_id: string }[] = await subcategoriesRes.json();
+            // Фильтруем только подкатегории "По поводу"
+            if (categoryId) {
+              const occasionsSubcats = data.filter((s) => s.category_id === categoryId);
+              setSelectedOccasionSubcategoryIds(occasionsSubcats.map((s) => s.id));
+            } else {
+              setSelectedOccasionSubcategoryIds([]);
+            }
+          } catch (e) {
+            console.error("[admin/products] Error loading selected subcategories:", e);
+            setSelectedOccasionSubcategoryIds([]);
+          }
+        };
+        loadSelectedSubcategories();
         if (isVariantProduct) {
-          setExistingMainImageUrl(data.image_url ?? null);
-          setVariantMainImage(null);
-          setExistingImageUrls([]);
+          const main = data.image_url ? [data.image_url] : [];
+          const rest = Array.isArray(data.images) ? data.images.filter((u: unknown) => typeof u === "string" && u) : [];
+          const all = [...main, ...rest];
+          setExistingImageUrls(all);
           setProductImages([]);
           setProductImagesMainIndex(0);
+          setExistingMainImageUrl(null);
           const rawVariants = data.variants ?? [];
-          setInitialVariantIds(rawVariants.map((v: { id?: number }) => v.id).filter((id: unknown): id is number => typeof id === "number"));
+          setInitialVariantIds(
+            rawVariants.map((v: { id?: number }) => v.id).filter((id: unknown): id is number => typeof id === "number")
+          );
           const vars = rawVariants.map(
             (
               v: {
@@ -310,10 +380,7 @@ function AdminProductsPageContent() {
                 width_cm?: number | null;
                 price?: number;
                 is_preorder?: boolean;
-                image_url?: string | null;
-                seo_title?: string | null;
-                seo_description?: string | null;
-                og_image?: string | null;
+                is_new?: boolean;
               },
               idx: number
             ) => ({
@@ -324,12 +391,8 @@ function AdminProductsPageContent() {
               width_cm: v.width_cm != null ? Number(v.width_cm) : null,
               price: Number(v.price ?? 0),
               is_preorder: v.is_preorder ?? false,
-              image: null,
-              imageUrl: v.image_url ?? null,
+              is_new: v.is_new ?? false,
               sort_order: idx,
-              seo_title: v.seo_title ?? "",
-              seo_description: v.seo_description ?? "",
-              og_image: v.og_image ?? "",
             })
           );
           setVariants(vars);
@@ -358,9 +421,7 @@ function AdminProductsPageContent() {
 
   async function handleDeleteProduct() {
     if (!editProductId) return;
-    const confirmed = window.confirm(
-      "Вы уверены, что хотите удалить этот товар? Это действие нельзя отменить."
-    );
+    const confirmed = window.confirm("Вы уверены, что хотите удалить этот товар? Это действие нельзя отменить.");
     if (!confirmed) return;
     setDeleteLoading(true);
     setCreateError("");
@@ -386,6 +447,7 @@ function AdminProductsPageContent() {
     setEditProductId(null);
     setSelectedCategorySlugs([]);
     setSelectedFlowers([]);
+    setSelectedOccasionSubcategoryIds([]);
     setCreateIsHidden(false);
     setCreateIsPreorder(false);
     setCreateIsNew(false);
@@ -395,14 +457,10 @@ function AdminProductsPageContent() {
     setCreateError("");
     setSelectedFlowers([]);
     setInitialVariantIds([]);
-    variants.forEach((v) => {
-      if (v.image) URL.revokeObjectURL(v.image.previewUrl);
-    });
     setVariants([]);
     setExpandedVariants(new Set());
-    if (variantMainImage) URL.revokeObjectURL(variantMainImage.previewUrl);
-    setVariantMainImage(null);
-  }, [productImages, variants, variantMainImage]);
+    setExistingMainImageUrl(null);
+  }, [productImages, variants]);
 
   /** Валидация обязательных полей для обычного товара. Возвращает объект с ключами полей и текстами ошибок (пустой — если всё ок). */
   function validateCreateForm(): Record<string, string> {
@@ -426,7 +484,8 @@ function AdminProductsPageContent() {
     }
 
     if (createType === "variant") {
-      if (!variantMainImage && !existingMainImageUrl) errors.variantMainImage = "Загрузите главное фото товара";
+      const totalImages = existingImageUrls.length + productImages.length;
+      if (totalImages === 0) errors.images = "Загрузите хотя бы одно фото";
       if (selectedCategorySlugs.length === 0) errors.categories = "Выберите минимум одну категорию";
       if (variants.length === 0) errors.variants = "Добавьте хотя бы один вариант";
 
@@ -449,7 +508,6 @@ function AdminProductsPageContent() {
   function toggleFlower(flower: string) {
     setSelectedFlowers((prev) => (prev.includes(flower) ? prev.filter((f) => f !== flower) : [...prev, flower]));
   }
-
 
   function addProductImages(files: FileList | null) {
     if (!files?.length) return;
@@ -518,11 +576,8 @@ function AdminProductsPageContent() {
       width_cm: null,
       price: 0,
       is_preorder: false,
-      image: null,
+      is_new: false,
       sort_order: variants.length,
-      seo_title: "",
-      seo_description: "",
-      og_image: "",
     };
     setVariants((prev) => [...prev, newVariant]);
     // Первый вариант развернут по умолчанию, остальные — свернуты
@@ -533,8 +588,6 @@ function AdminProductsPageContent() {
 
   function removeVariant(id: string | number) {
     setVariants((prev) => {
-      const variant = prev.find((v) => v.id === id);
-      if (variant?.image) URL.revokeObjectURL(variant.image.previewUrl);
       return prev.filter((v) => v.id !== id).map((v, idx) => ({ ...v, sort_order: idx }));
     });
     setExpandedVariants((prev) => {
@@ -561,18 +614,6 @@ function AdminProductsPageContent() {
     setVariants((prev) => prev.map((v) => (v.id === id ? { ...v, ...updates } : v)));
   }
 
-  function addVariantImage(id: string | number, file: File) {
-    const variant = variants.find((v) => v.id === id);
-    if (variant?.image) URL.revokeObjectURL(variant.image.previewUrl);
-    updateVariant(id, { image: { file, previewUrl: URL.createObjectURL(file) } });
-  }
-
-  function removeVariantImage(id: string | number) {
-    const variant = variants.find((v) => v.id === id);
-    if (variant?.image) URL.revokeObjectURL(variant.image.previewUrl);
-    updateVariant(id, { image: null });
-  }
-
   function reorderVariants(fromIndex: number, toIndex: number) {
     if (fromIndex === toIndex) return;
     setVariants((prev) => {
@@ -581,16 +622,6 @@ function AdminProductsPageContent() {
       next.splice(toIndex, 0, removed);
       return next.map((v, idx) => ({ ...v, sort_order: idx }));
     });
-  }
-
-  function setMainImageForVariantProduct(file: File) {
-    if (variantMainImage) URL.revokeObjectURL(variantMainImage.previewUrl);
-    setVariantMainImage({ file, previewUrl: URL.createObjectURL(file) });
-  }
-
-  function removeMainImageForVariantProduct() {
-    if (variantMainImage) URL.revokeObjectURL(variantMainImage.previewUrl);
-    setVariantMainImage(null);
   }
 
   useEffect(() => {
@@ -690,12 +721,6 @@ function AdminProductsPageContent() {
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           composition_flowers: selectedFlowers.length > 0 ? selectedFlowers : null,
-          seo_title: createForm.seo_title.trim() || null,
-          seo_description: createForm.seo_description.trim() || null,
-          seo_keywords: createForm.seo_keywords.trim() || null,
-          og_title: createForm.og_title.trim() || null,
-          og_description: createForm.og_description.trim() || null,
-          og_image: createForm.og_image.trim() || null,
         };
         const url = `/api/admin/products/${editProductId}`;
         const res = await fetch(url, {
@@ -714,36 +739,51 @@ function AdminProductsPageContent() {
           }
           throw new Error(data?.error ?? "Ошибка сохранения");
         }
+        // Сохраняем привязки к подкатегориям "По поводу"
+        const productId = editProductId || data.id;
+        // Для вариантных товаров используем формат "vp-{id}" (но здесь createType всегда "simple" при редактировании)
+        const productIdForSubcategories = String(productId);
+        const saveRes = await fetch(`/api/admin/products/${productIdForSubcategories}/subcategories`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subcategory_ids: selectedOccasionSubcategoryIds.length > 0 ? selectedOccasionSubcategoryIds : null,
+          }),
+        });
+        if (!saveRes.ok) {
+          const errorData = await saveRes.json().catch(() => ({}));
+          console.error("[admin/products] Error saving subcategories:", errorData);
+        }
         closeCreateModal();
         load();
       } else {
-        let mainImageUrl: string | null = existingMainImageUrl;
-        if (variantMainImage) {
+        const uploadedUrls: string[] = [];
+        if (productImages.length > 0) {
           setProductImagesUploading(true);
-          const formData = new FormData();
-          formData.append("file", variantMainImage.file);
-          const res = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data?.error ?? "Ошибка загрузки главного фото");
-          mainImageUrl = data.image_url;
+          for (const item of productImages) {
+            const formData = new FormData();
+            formData.append("file", item.file);
+            const res = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error ?? "Ошибка загрузки изображения");
+            uploadedUrls.push(data.image_url);
+          }
           setProductImagesUploading(false);
         }
+        const allUrls = [...existingImageUrls, ...uploadedUrls];
+        const mainUrl = allUrls[productImagesMainIndex] ?? allUrls[0] ?? null;
+        const otherUrls = allUrls.filter((_, i) => i !== productImagesMainIndex);
         const payload = {
           name: createForm.name.trim(),
           description: createForm.description.trim() || null,
-          image_url: mainImageUrl,
+          image_url: mainUrl,
+          images: otherUrls.length > 0 ? otherUrls : null,
           is_active: true,
           is_hidden: createIsHidden,
           is_new: createIsNew,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           composition_flowers: selectedFlowers.length > 0 ? selectedFlowers : null,
-          seo_title: createForm.seo_title.trim() || null,
-          seo_description: createForm.seo_description.trim() || null,
-          seo_keywords: createForm.seo_keywords.trim() || null,
-          og_title: createForm.og_title.trim() || null,
-          og_description: createForm.og_description.trim() || null,
-          og_image: createForm.og_image.trim() || null,
         };
         const url = `/api/admin/products/${editProductId}`;
         const res = await fetch(url, {
@@ -775,15 +815,6 @@ function AdminProductsPageContent() {
         }
         for (const v of variants) {
           if (typeof v.id === "number") {
-            let variantImageUrl: string | null = v.imageUrl ?? null;
-            if (v.image) {
-              const formData = new FormData();
-              formData.append("file", v.image.file);
-              const upRes = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
-              const upData = await upRes.json();
-              if (!upRes.ok) throw new Error(upData?.error ?? "Ошибка загрузки фото варианта");
-              variantImageUrl = upData.image_url;
-            }
             const vRes = await fetch(`/api/admin/products/${editProductId}/variants/${v.id}`, {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
@@ -794,11 +825,8 @@ function AdminProductsPageContent() {
                 width_cm: v.width_cm ?? null,
                 price: v.is_preorder ? 0 : v.price,
                 is_preorder: v.is_preorder,
-                image_url: variantImageUrl,
+                is_new: v.is_new,
                 sort_order: v.sort_order,
-                seo_title: v.seo_title?.trim() || null,
-                seo_description: v.seo_description?.trim() || null,
-                og_image: v.og_image?.trim() || null,
               }),
             });
             if (!vRes.ok) {
@@ -806,15 +834,6 @@ function AdminProductsPageContent() {
               throw new Error(vData?.error ?? "Ошибка сохранения варианта");
             }
           } else {
-            let variantImageUrl: string | null = null;
-            if (v.image) {
-              const formData = new FormData();
-              formData.append("file", v.image.file);
-              const upRes = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
-              const upData = await upRes.json();
-              if (!upRes.ok) throw new Error(upData?.error ?? "Ошибка загрузки фото варианта");
-              variantImageUrl = upData.image_url;
-            }
             const vRes = await fetch(`/api/admin/products/${editProductId}/variants`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -825,12 +844,9 @@ function AdminProductsPageContent() {
                 width_cm: v.width_cm ?? null,
                 price: v.is_preorder ? 0 : v.price,
                 is_preorder: v.is_preorder,
-                image_url: variantImageUrl,
+                is_new: v.is_new,
                 sort_order: v.sort_order,
                 is_active: true,
-                seo_title: v.seo_title?.trim() || null,
-                seo_description: v.seo_description?.trim() || null,
-                og_image: v.og_image?.trim() || null,
               }),
             });
             if (!vRes.ok) {
@@ -923,12 +939,6 @@ function AdminProductsPageContent() {
           is_preorder: createIsPreorder,
           is_new: createIsNew,
           category_slugs,
-          seo_title: createForm.seo_title.trim() || null,
-          seo_description: createForm.seo_description.trim() || null,
-          seo_keywords: createForm.seo_keywords.trim() || null,
-          og_title: createForm.og_title.trim() || null,
-          og_description: createForm.og_description.trim() || null,
-          og_image: createForm.og_image.trim() || null,
         };
 
         const res = await fetch("/api/admin/products", {
@@ -937,7 +947,7 @@ function AdminProductsPageContent() {
           body: JSON.stringify(payload),
         });
         const raw = await res.text();
-        let data: { error?: string; fieldErrors?: Record<string, string[]> } = {};
+        let data: { error?: string; fieldErrors?: Record<string, string[]>; id?: string | number } = {};
         try {
           data = raw ? JSON.parse(raw) : {};
         } catch {
@@ -963,54 +973,45 @@ function AdminProductsPageContent() {
           return;
         }
       } else if (createType === "variant") {
-        // Загрузка главного фото для вариантного товара
-        setProductImagesUploading(true);
-        let mainImageUrl: string | null = null;
-
-        if (variantMainImage) {
-          const formData = new FormData();
-          formData.append("file", variantMainImage.file);
-          const res = await fetch("/api/admin/products/upload", {
-            method: "POST",
-            body: formData,
-          });
-          const data = await res.json();
-          if (!res.ok) {
-            const msg = data?.error ?? "Ошибка загрузки главного фото";
-            console.error("[admin/products] main image upload failed:", res.status, data);
-            setCreateError(`Не удалось загрузить главное фото: ${msg}`);
+        // Загрузка изображений для вариантного товара
+        const imageUrls: string[] = [];
+        if (productImages.length > 0) {
+          setProductImagesUploading(true);
+          try {
+            for (const item of productImages) {
+              const formData = new FormData();
+              formData.append("file", item.file);
+              const res = await fetch("/api/admin/products/upload", {
+                method: "POST",
+                body: formData,
+              });
+              const data = await res.json();
+              if (!res.ok) {
+                const msg = data?.error ?? "Ошибка загрузки изображения";
+                console.error("[admin/products] upload failed:", res.status, data);
+                setCreateError(`Не удалось загрузить изображения: ${msg}`);
+                setProductImagesUploading(false);
+                setCreateLoading(false);
+                return;
+              }
+              imageUrls.push(data.image_url);
+            }
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error("[admin/products] upload error:", err);
+            setCreateError(`Не удалось загрузить изображения: ${msg}`);
             setProductImagesUploading(false);
             setCreateLoading(false);
             return;
           }
-          mainImageUrl = data.image_url;
+          setProductImagesUploading(false);
         }
 
-        // Загрузка фото вариантов
-        const variantImageUrls: (string | null)[] = [];
-        for (const variant of variants) {
-          if (variant.image) {
-            const formData = new FormData();
-            formData.append("file", variant.image.file);
-            const res = await fetch("/api/admin/products/upload", {
-              method: "POST",
-              body: formData,
-            });
-            const data = await res.json();
-            if (!res.ok) {
-              const msg = data?.error ?? "Ошибка загрузки фото варианта";
-              console.error("[admin/products] variant image upload failed:", res.status, data);
-              setCreateError(`Не удалось загрузить фото варианта "${variant.name}": ${msg}`);
-              setProductImagesUploading(false);
-              setCreateLoading(false);
-              return;
-            }
-            variantImageUrls.push(data.image_url);
-          } else {
-            variantImageUrls.push(null);
-          }
-        }
-        setProductImagesUploading(false);
+        const mainUrl = imageUrls[productImagesMainIndex] ?? imageUrls[0] ?? undefined;
+        const otherUrls =
+          imageUrls.length > 0
+            ? [...imageUrls.slice(0, productImagesMainIndex), ...imageUrls.slice(productImagesMainIndex + 1)]
+            : [];
 
         // Создание вариантного товара с вариантами
         const slug = slugify(createForm.name);
@@ -1022,29 +1023,22 @@ function AdminProductsPageContent() {
           name: createForm.name.trim(),
           slug: slug || undefined,
           description: createForm.description.trim() || undefined,
-          image_url: mainImageUrl,
+          image_url: mainUrl ?? null,
+          images: otherUrls.length > 0 ? otherUrls : null,
           is_active: true,
           is_hidden: createIsHidden,
           category_slugs,
-          seo_title: createForm.seo_title.trim() || null,
-          seo_description: createForm.seo_description.trim() || null,
-          seo_keywords: createForm.seo_keywords.trim() || null,
-          og_title: createForm.og_title.trim() || null,
-          og_description: createForm.og_description.trim() || null,
-          og_image: createForm.og_image.trim() || null,
-          variants: variants.map((v, idx) => ({
+          composition_flowers,
+          variants: variants.map((v) => ({
             name: v.name.trim(),
             composition: v.composition.trim() || null,
             height_cm: v.height_cm ?? null,
             width_cm: v.width_cm ?? null,
             price: v.is_preorder ? 0 : v.price,
             is_preorder: v.is_preorder,
-            image_url: variantImageUrls[idx],
+            is_new: v.is_new,
             sort_order: v.sort_order,
             is_active: true,
-            seo_title: v.seo_title?.trim() || null,
-            seo_description: v.seo_description?.trim() || null,
-            og_image: v.og_image?.trim() || null,
           })),
         };
 
@@ -1054,7 +1048,7 @@ function AdminProductsPageContent() {
           body: JSON.stringify(payload),
         });
         const raw = await res.text();
-        let data: { error?: string; fieldErrors?: Record<string, string[]> } = {};
+        let data: { error?: string; fieldErrors?: Record<string, string[]>; id?: string | number } = {};
         try {
           data = raw ? JSON.parse(raw) : {};
         } catch {
@@ -1078,6 +1072,38 @@ function AdminProductsPageContent() {
           setCreateError(msg);
           setCreateLoading(false);
           return;
+        }
+        // Сохраняем привязки к подкатегориям "По поводу" для созданного товара
+        const createdProductId = data?.id;
+        if (createdProductId) {
+          const saveRes = await fetch(`/api/admin/products/${createdProductId}/subcategories`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subcategory_ids: selectedOccasionSubcategoryIds.length > 0 ? selectedOccasionSubcategoryIds : null,
+            }),
+          });
+          if (!saveRes.ok) {
+            const errorData = await saveRes.json().catch(() => ({}));
+            console.error("[admin/products] Error saving subcategories:", errorData);
+          }
+        }
+      } else if (createType === "variant") {
+        // Сохраняем привязки к подкатегориям "По поводу" для созданного вариантного товара
+        const variantData = data as { id?: number };
+        const createdVariantProductId = variantData.id ? `vp-${variantData.id}` : null;
+        if (createdVariantProductId) {
+          const saveRes = await fetch(`/api/admin/products/${createdVariantProductId}/subcategories`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              subcategory_ids: selectedOccasionSubcategoryIds.length > 0 ? selectedOccasionSubcategoryIds : null,
+            }),
+          });
+          if (!saveRes.ok) {
+            const errorData = await saveRes.json().catch(() => ({}));
+            console.error("[admin/products] Error saving subcategories:", errorData);
+          }
         }
       }
 
@@ -1158,13 +1184,8 @@ function AdminProductsPageContent() {
               setCreateForm(initialForm);
               setCreateError("");
               setFieldErrors({});
-              variants.forEach((v) => {
-                if (v.image) URL.revokeObjectURL(v.image.previewUrl);
-              });
               setVariants([]);
               setExpandedVariants(new Set());
-              if (variantMainImage) URL.revokeObjectURL(variantMainImage.previewUrl);
-              setVariantMainImage(null);
               setCreateModalOpen(true);
             }}
             className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
@@ -1231,176 +1252,130 @@ function AdminProductsPageContent() {
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
             >
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (editProductId != null) {
-                  handleEditSubmit(e);
-                } else {
-                  handleCreateSubmit(e);
-                }
-              }}
-              className="flex flex-col min-h-0"
-            >
-              <div className="relative flex shrink-0 items-center justify-center px-6 py-3 border-b border-border-block">
-                <h3 id="create-product-title" className="font-medium text-color-text-main">
-                  {isEditMode ? "Редактировать товар" : "Новый товар"}
-                </h3>
-                <button
-                  type="button"
-                  onClick={closeCreateModal}
-                  aria-label="Закрыть"
-                  className="absolute right-4 top-1/2 -translate-y-1/2 rounded p-1 text-color-text-secondary hover:bg-[rgba(31,42,31,0.08)] hover:text-color-text-main"
-                >
-                  <span className="sr-only">Закрыть</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-3">
-                {editLoading && <p className="text-sm text-color-text-secondary">Загрузка товара…</p>}
-                {createError && (
-                  <p className="text-sm text-red-600" role="alert">
-                    {createError}
-                  </p>
-                )}
-                <div>
-                  <span className="block text-sm font-medium text-color-text-main mb-1.5">Тип товара</span>
-                  <div className="flex gap-4">
-                    <label
-                      className={`flex items-center gap-2 ${isEditMode ? "cursor-default opacity-70" : "cursor-pointer"}`}
-                    >
-                      <input
-                        type="radio"
-                        name="createType"
-                        value="simple"
-                        checked={createType === "simple"}
-                        onChange={() => !isEditMode && setCreateType("simple")}
-                        disabled={isEditMode}
-                        className="border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                      />
-                      <span className="text-sm text-color-text-main">Обычный</span>
-                    </label>
-                    <label
-                      className={`flex items-center gap-2 ${isEditMode ? "cursor-default opacity-70" : "cursor-pointer"}`}
-                    >
-                      <input
-                        type="radio"
-                        name="createType"
-                        value="variant"
-                        checked={createType === "variant"}
-                        onChange={() => !isEditMode && setCreateType("variant")}
-                        disabled={isEditMode}
-                        className="border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                      />
-                      <span className="text-sm text-color-text-main">Варианты</span>
-                    </label>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editProductId != null) {
+                    handleEditSubmit(e);
+                  } else {
+                    handleCreateSubmit(e);
+                  }
+                }}
+                className="flex flex-col min-h-0"
+              >
+                <div className="relative flex shrink-0 items-center justify-center px-6 py-3 border-b border-border-block">
+                  <h3 id="create-product-title" className="font-medium text-color-text-main">
+                    {isEditMode ? "Редактировать товар" : "Новый товар"}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={closeCreateModal}
+                    aria-label="Закрыть"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 rounded p-1 text-color-text-secondary hover:bg-[rgba(31,42,31,0.08)] hover:text-color-text-main"
+                  >
+                    <span className="sr-only">Закрыть</span>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-3">
+                  {editLoading && <p className="text-sm text-color-text-secondary">Загрузка товара…</p>}
+                  {createError && (
+                    <p className="text-sm text-red-600" role="alert">
+                      {createError}
+                    </p>
+                  )}
+                  <div>
+                    <span className="block text-sm font-medium text-color-text-main mb-1.5">Тип товара</span>
+                    <div className="flex gap-4">
+                      <label
+                        className={`flex items-center gap-2 ${isEditMode ? "cursor-default opacity-70" : "cursor-pointer"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="createType"
+                          value="simple"
+                          checked={createType === "simple"}
+                          onChange={() => !isEditMode && setCreateType("simple")}
+                          disabled={isEditMode}
+                          className="border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                        />
+                        <span className="text-sm text-color-text-main">Обычный</span>
+                      </label>
+                      <label
+                        className={`flex items-center gap-2 ${isEditMode ? "cursor-default opacity-70" : "cursor-pointer"}`}
+                      >
+                        <input
+                          type="radio"
+                          name="createType"
+                          value="variant"
+                          checked={createType === "variant"}
+                          onChange={() => !isEditMode && setCreateType("variant")}
+                          disabled={isEditMode}
+                          className="border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                        />
+                        <span className="text-sm text-color-text-main">Варианты</span>
+                      </label>
+                    </div>
+                    {fieldErrors.type && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.type}</p>}
                   </div>
-                  {fieldErrors.type && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.type}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-color-text-main mb-1">Название</label>
-                  <input
-                    type="text"
-                    value={createForm.name}
-                    onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
-                    className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
-                    required
-                  />
-                  {fieldErrors.name && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.name}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-color-text-main mb-1">Описание</label>
-                  <textarea
-                    value={createForm.description}
-                    onChange={(e) => setCreateForm((f) => ({ ...f, description: e.target.value }))}
-                    className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
-                    rows={3}
-                  />
-                  {fieldErrors.description && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.description}</p>}
-                </div>
-                {createType === "simple" && (
-                  <>
-                    <div>
-                      <label className="block text-sm font-medium text-color-text-main mb-1">Изображения</label>
-                      <p className="text-xs text-color-text-secondary mb-1.5">
-                        Максимум 5 файлов. Первое изображение — главное, используется на витрине. Перетаскивайте для
-                        изменения порядка.
-                      </p>
-                      <input
-                        type="file"
-                        accept={ALLOWED_IMAGE_TYPES}
-                        multiple
-                        onChange={(e) => addProductImages(e.target.files)}
-                        disabled={existingImageUrls.length + productImages.length >= MAX_IMAGES}
-                        className="block w-full text-sm text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-3 file:py-1.5 file:text-white file:hover:bg-accent-btn-hover focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
-                      />
-                      {fieldErrors.images && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.images}</p>}
-                      {(existingImageUrls.length > 0 || productImages.length > 0) && (
-                        <div className="mt-3 flex flex-wrap gap-3">
-                          {existingImageUrls.map((url, index) => (
-                            <div
-                              key={`existing-${index}`}
-                              className="relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] border-border-block"
-                            >
-                              <img src={url} alt="" className="w-full h-full object-cover" />
-                              {productImagesMainIndex === index && (
-                                <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
-                                  Главное
-                                </span>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() => setProductImageMain(index)}
-                                title="Сделать главным"
-                                className="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 flex items-center justify-center text-xs hover:bg-white"
-                              >
-                                ★
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeExistingImage(index)}
-                                title="Удалить"
-                                className="absolute top-1 right-1 w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-sm leading-none"
-                              >
-                                ×
-                              </button>
-                            </div>
-                          ))}
-                          {productImages.map((item, index) => {
-                            const combinedIndex = existingImageUrls.length + index;
-                            return (
+                  <div>
+                    <label className="block text-sm font-medium text-color-text-main mb-1">Название</label>
+                    <input
+                      type="text"
+                      value={createForm.name}
+                      onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
+                      className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+                      required
+                    />
+                    {fieldErrors.name && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.name}</p>}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-color-text-main mb-1">Описание</label>
+                    <textarea
+                      value={createForm.description}
+                      onChange={(e) => setCreateForm((f) => ({ ...f, description: e.target.value }))}
+                      className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+                      rows={3}
+                    />
+                    {fieldErrors.description && (
+                      <p className="mt-0.5 text-xs text-red-600">{fieldErrors.description}</p>
+                    )}
+                  </div>
+                  {createType === "simple" && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Изображения</label>
+                        <p className="text-xs text-color-text-secondary mb-1.5">
+                          Максимум 5 файлов. Первое изображение — главное, используется на витрине. Перетаскивайте для
+                          изменения порядка.
+                        </p>
+                        <input
+                          type="file"
+                          accept={ALLOWED_IMAGE_TYPES}
+                          multiple
+                          onChange={(e) => addProductImages(e.target.files)}
+                          disabled={existingImageUrls.length + productImages.length >= MAX_IMAGES}
+                          className="block w-full text-sm text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-3 file:py-1.5 file:text-white file:hover:bg-accent-btn-hover focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+                        />
+                        {fieldErrors.images && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.images}</p>}
+                        {(existingImageUrls.length > 0 || productImages.length > 0) && (
+                          <div className="mt-3 flex flex-wrap gap-3">
+                            {existingImageUrls.map((url, index) => (
                               <div
-                                key={`file-${index}`}
-                                data-index={index}
-                                draggable
-                                onDragStart={() => setProductImagesDraggedIndex(index)}
-                                onDragOver={(ev) => ev.preventDefault()}
-                                onDrop={(ev) => {
-                                  ev.preventDefault();
-                                  const toIndex = parseInt(ev.currentTarget.getAttribute("data-index") ?? "0", 10);
-                                  if (productImagesDraggedIndex !== null && productImagesDraggedIndex !== toIndex) {
-                                    reorderProductImages(productImagesDraggedIndex, toIndex);
-                                  }
-                                  setProductImagesDraggedIndex(null);
-                                }}
-                                onDragEnd={() => setProductImagesDraggedIndex(null)}
-                                className={`relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] cursor-grab active:cursor-grabbing ${
-                                  productImagesDraggedIndex === index
-                                    ? "border-color-text-main opacity-80"
-                                    : "border-border-block"
-                                }`}
+                                key={`existing-${index}`}
+                                className="relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] border-border-block"
                               >
-                                <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
-                                {productImagesMainIndex === combinedIndex && (
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                {productImagesMainIndex === index && (
                                   <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
                                     Главное
                                   </span>
                                 )}
                                 <button
                                   type="button"
-                                  onClick={() => setProductImageMain(combinedIndex)}
+                                  onClick={() => setProductImageMain(index)}
                                   title="Сделать главным"
                                   className="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 flex items-center justify-center text-xs hover:bg-white"
                                 >
@@ -1408,763 +1383,951 @@ function AdminProductsPageContent() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => removeProductImage(index)}
+                                  onClick={() => removeExistingImage(index)}
                                   title="Удалить"
                                   className="absolute top-1 right-1 w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-sm leading-none"
                                 >
                                   ×
                                 </button>
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-color-text-main mb-1">Состав</label>
-                      <textarea
-                        value={createForm.composition_size}
-                        onChange={(e) => setCreateForm((f) => ({ ...f, composition_size: e.target.value }))}
-                        className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
-                        rows={3}
-                        placeholder="Розы 7 шт, Тюльпаны 8 шт, Гипсофила…"
-                      />
-                      <p className="mt-0.5 text-xs text-color-text-secondary">Укажите состав букета вручную</p>
-                      {fieldErrors.composition_size && (
-                        <p className="mt-0.5 text-xs text-red-600">{fieldErrors.composition_size}</p>
-                      )}
-                    </div>
-                    {/* Блок выбора цветов (фильтр) — под полем "Состав" */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-color-text-main">
-                          Цветы в составе (фильтр)
-                        </label>
-                        {createForm.composition_size && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const parsed = parseCompositionFlowers(createForm.composition_size);
-                              setSelectedFlowers(parsed);
-                            }}
-                            className="text-xs text-color-text-secondary hover:text-color-text-main underline"
-                          >
-                            Заполнить из состава
-                          </button>
+                            ))}
+                            {productImages.map((item, index) => {
+                              const combinedIndex = existingImageUrls.length + index;
+                              return (
+                                <div
+                                  key={`file-${index}`}
+                                  data-index={index}
+                                  draggable
+                                  onDragStart={() => setProductImagesDraggedIndex(index)}
+                                  onDragOver={(ev) => ev.preventDefault()}
+                                  onDrop={(ev) => {
+                                    ev.preventDefault();
+                                    const toIndex = parseInt(ev.currentTarget.getAttribute("data-index") ?? "0", 10);
+                                    if (productImagesDraggedIndex !== null && productImagesDraggedIndex !== toIndex) {
+                                      reorderProductImages(productImagesDraggedIndex, toIndex);
+                                    }
+                                    setProductImagesDraggedIndex(null);
+                                  }}
+                                  onDragEnd={() => setProductImagesDraggedIndex(null)}
+                                  className={`relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] cursor-grab active:cursor-grabbing ${
+                                    productImagesDraggedIndex === index
+                                      ? "border-color-text-main opacity-80"
+                                      : "border-border-block"
+                                  }`}
+                                >
+                                  <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
+                                  {productImagesMainIndex === combinedIndex && (
+                                    <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
+                                      Главное
+                                    </span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setProductImageMain(combinedIndex)}
+                                    title="Сделать главным"
+                                    className="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 flex items-center justify-center text-xs hover:bg-white"
+                                  >
+                                    ★
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeProductImage(index)}
+                                    title="Удалить"
+                                    className="absolute top-1 right-1 w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-sm leading-none"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
                         )}
                       </div>
-                      <p className="text-xs text-color-text-secondary mb-2">
-                        Выберите цветы для фильтрации. Список формируется автоматически из всех товаров.
-                      </p>
-                      {availableFlowers.length === 0 ? (
-                        <p className="text-sm text-color-text-secondary">Загрузка списка цветов...</p>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
-                          {[0, 1].map((col) => {
-                            const mid = Math.ceil(availableFlowers.length / 2);
-                            const list = col === 0 ? availableFlowers.slice(0, mid) : availableFlowers.slice(mid);
-                            return (
-                              <ul key={col} className="divide-y divide-border-block">
-                                {list.map((flower) => (
-                                  <li
-                                    key={flower}
-                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      id={`flower-${flower}`}
-                                      checked={selectedFlowers.includes(flower)}
-                                      onChange={() => toggleFlower(flower)}
-                                      className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                                    />
-                                    <label
-                                      htmlFor={`flower-${flower}`}
-                                      className="text-sm text-color-text-main cursor-pointer flex-1"
-                                    >
-                                      {flower}
-                                    </label>
-                                  </li>
-                                ))}
-                              </ul>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-color-text-main mb-1">Размер</label>
-                      <div className="flex gap-3 items-center">
-                        <div className="flex-1">
-                          <label className="sr-only">Высота, см</label>
-                          <input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={createForm.height_cm ?? ""}
-                            onChange={(e) =>
-                              setCreateForm((f) => ({
-                                ...f,
-                                height_cm: e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
-                              }))
-                            }
-                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                            placeholder="45"
-                            className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <span className="text-xs text-color-text-secondary mt-0.5 block">Высота, см</span>
-                        </div>
-                        <div className="flex-1">
-                          <label className="sr-only">Ширина, см</label>
-                          <input
-                            type="number"
-                            min={0}
-                            step={1}
-                            value={createForm.width_cm ?? ""}
-                            onChange={(e) =>
-                              setCreateForm((f) => ({
-                                ...f,
-                                width_cm: e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
-                              }))
-                            }
-                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                            placeholder="40"
-                            className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                          />
-                          <span className="text-xs text-color-text-secondary mt-0.5 block">Ширина, см</span>
-                        </div>
-                      </div>
-                      <p className="mt-0.5 text-xs text-color-text-secondary">Размер букета в сантиметрах</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-color-text-main mb-1">Цена (₽)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        value={createForm.price || ""}
-                        onChange={(e) => setCreateForm((f) => ({ ...f, price: parseFloat(e.target.value) || 0 }))}
-                        onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                        className="w-32 rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        required
-                      />
-                      {fieldErrors.price && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.price}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-color-text-main mb-1">Категории</label>
-                      {categories.length === 0 ? (
-                        <p className="text-sm text-color-text-secondary">Нет активных категорий.</p>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-40 overflow-y-auto">
-                          {[0, 1].map((col) => {
-                            const mid = Math.ceil(categories.length / 2);
-                            const list = col === 0 ? categories.slice(0, mid) : categories.slice(mid);
-                            return (
-                              <ul key={col} className="divide-y divide-border-block">
-                                {list.map((cat) => (
-                                  <li
-                                    key={cat.id}
-                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      id={`cat-${cat.slug}`}
-                                      checked={selectedCategorySlugs.includes(cat.slug)}
-                                      onChange={() => toggleCategorySlug(cat.slug)}
-                                      className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                                    />
-                                    <label
-                                      htmlFor={`cat-${cat.slug}`}
-                                      className="text-sm text-color-text-main cursor-pointer flex-1"
-                                    >
-                                      {cat.name}
-                                    </label>
-                                  </li>
-                                ))}
-                              </ul>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {fieldErrors.categories && (
-                        <p className="mt-0.5 text-xs text-red-600">{fieldErrors.categories}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-6">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={createIsHidden}
-                          onChange={(e) => setCreateIsHidden(e.target.checked)}
-                          className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                        />
-                        <span className="text-sm text-color-text-main">Скрыть с витрины</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={createIsPreorder}
-                          onChange={(e) => setCreateIsPreorder(e.target.checked)}
-                          className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                        />
-                        <span className="text-sm text-color-text-main">Предзаказ</span>
-                      </label>
-                    </div>
-                    <div>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={createIsNew}
-                          onChange={(e) => setCreateIsNew(e.target.checked)}
-                          className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                        />
-                        <span className="text-sm text-color-text-main">новый</span>
-                      </label>
-                      <p className="mt-1 text-xs text-color-text-secondary">
-                        На карточке товара в каталоге и «Рекомендуем» появится бейдж «новый». Автоматически скрывается через 30 дней.
-                      </p>
-                    </div>
-                    <div className="space-y-0.5 text-xs text-color-text-secondary">
-                      <p>«Скрыть с витрины» — товар не показывается на сайте, но остаётся в админке.</p>
-                      <p>«Предзаказ» — товар виден на витрине, вместо цены отображается текст «Предзаказ».</p>
-                    </div>
-                    <fieldset className="border border-border-block rounded-lg p-4 space-y-3">
-                      <legend className="text-sm font-medium text-color-text-main px-1">SEO</legend>
-                      <p className="text-xs text-color-text-secondary -mt-1">Если не заполнено — используется название товара / описание по умолчанию.</p>
                       <div>
-                        <label className="block text-xs text-color-text-main mb-0.5">SEO заголовок (title)</label>
-                        <input
-                          type="text"
-                          value={createForm.seo_title}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_title: e.target.value }))}
-                          placeholder="Например: Букет роз с доставкой"
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-color-text-main mb-0.5">SEO описание (description)</label>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Состав</label>
                         <textarea
-                          value={createForm.seo_description}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_description: e.target.value }))}
-                          rows={2}
-                          placeholder="До 160 символов рекомендуется"
-                          maxLength={500}
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
+                          value={createForm.composition_size}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, composition_size: e.target.value }))}
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+                          rows={3}
+                          placeholder="Розы 7 шт, Тюльпаны 8 шт, Гипсофила…"
                         />
-                        <p className="text-xs text-color-text-secondary mt-0.5">{createForm.seo_description.length}/500</p>
+                        <p className="mt-0.5 text-xs text-color-text-secondary">Укажите состав букета вручную</p>
+                        {fieldErrors.composition_size && (
+                          <p className="mt-0.5 text-xs text-red-600">{fieldErrors.composition_size}</p>
+                        )}
                       </div>
+                      {/* Блок выбора цветов (фильтр) — под полем "Состав" */}
                       <div>
-                        <label className="block text-xs text-color-text-main mb-0.5">Ключевые слова (через запятую)</label>
-                        <input
-                          type="text"
-                          value={createForm.seo_keywords}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_keywords: e.target.value }))}
-                          placeholder="цветы, букет, розы"
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-color-text-main mb-0.5">OG title (опционально)</label>
-                        <input
-                          type="text"
-                          value={createForm.og_title}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, og_title: e.target.value }))}
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-color-text-main mb-0.5">OG description (опционально)</label>
-                        <input
-                          type="text"
-                          value={createForm.og_description}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, og_description: e.target.value }))}
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-color-text-main mb-0.5">OG image URL (опционально)</label>
-                        <input
-                          type="text"
-                          value={createForm.og_image}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, og_image: e.target.value }))}
-                          placeholder="https://..."
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
-                        />
-                      </div>
-                    </fieldset>
-                  </>
-                )}
-                {createType === "variant" && (
-                  <>
-                    {/* Блок вариантов */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-medium text-color-text-main">Варианты</label>
-                        <button
-                          type="button"
-                          onClick={addVariant}
-                          className="text-sm px-3 py-1 rounded text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
-                        >
-                          Добавить вариант
-                        </button>
-                      </div>
-                      {fieldErrors.variants && <p className="mb-2 text-xs text-red-600">{fieldErrors.variants}</p>}
-                      {variants.length === 0 && (
-                        <p className="text-sm text-color-text-secondary py-3 text-center border border-border-block rounded">
-                          Нет вариантов. Нажмите «Добавить вариант».
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-sm font-medium text-color-text-main">
+                            Цветы в составе (фильтр)
+                          </label>
+                          {createForm.composition_size && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const parsed = parseCompositionFlowers(createForm.composition_size);
+                                setSelectedFlowers(parsed);
+                              }}
+                              className="text-xs text-color-text-secondary hover:text-color-text-main underline"
+                            >
+                              Заполнить из состава
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-xs text-color-text-secondary mb-2">
+                          Выберите цветы для фильтрации. Список формируется автоматически из всех товаров.
                         </p>
-                      )}
-                      {variants.length > 0 && (
-                        <div className="space-y-2">
-                          {variants.map((variant, idx) => {
-                            const isExpanded = expandedVariants.has(String(variant.id));
-                            return (
-                              <div
-                                key={variant.id}
-                                data-index={idx}
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={(e) => {
-                                  e.preventDefault();
-                                  const toIndex = parseInt(e.currentTarget.getAttribute("data-index") ?? "0", 10);
-                                  if (variantsDraggedIndex !== null && variantsDraggedIndex !== toIndex) {
-                                    reorderVariants(variantsDraggedIndex, toIndex);
-                                  }
-                                  setVariantsDraggedIndex(null);
-                                }}
-                                className={`border rounded-lg bg-[rgba(31,42,31,0.04)] ${
-                                  variantsDraggedIndex === idx
-                                    ? "border-color-text-main opacity-80"
-                                    : "border-border-block"
-                                }`}
-                              >
-                                {/* Шапка варианта (всегда видна) */}
-                                <div
-                                  className="flex items-center gap-2 px-2.5 py-2 cursor-pointer select-none"
-                                  onClick={() => toggleVariantExpanded(variant.id)}
-                                >
-                                  {/* Drag handle */}
-                                  <span
-                                    draggable
-                                    onDragStart={(e) => {
-                                      e.stopPropagation();
-                                      setVariantsDraggedIndex(idx);
-                                    }}
-                                    onDragEnd={() => setVariantsDraggedIndex(null)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="cursor-grab active:cursor-grabbing text-color-text-secondary hover:text-color-text-main px-0.5"
-                                    title="Перетащить"
-                                  >
-                                    ⋮⋮
-                                  </span>
-                                  {/* Стрелка */}
-                                  <span className="text-color-text-secondary text-xs w-3">
-                                    {isExpanded ? "▼" : "▶"}
-                                  </span>
-                                  {/* Название и инфо */}
-                                  <div className="flex-1 min-w-0 flex items-center gap-2">
-                                    <span className="text-sm font-medium text-color-text-main truncate">
-                                      {variant.name || `Вариант ${idx + 1}`}
-                                    </span>
-                                    {variant.is_preorder ? (
-                                      <span className="text-xs px-1.5 py-0.5 rounded bg-[rgba(111,131,99,0.2)] text-color-bg-main">
-                                        Предзаказ
-                                      </span>
-                                    ) : variant.price > 0 ? (
-                                      <span className="text-xs text-color-text-secondary">
-                                        {variant.price.toLocaleString("ru-RU")} ₽
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                </div>
-
-                                {/* Контент варианта (только если развернут) */}
-                                {isExpanded && (
-                                  <div className="px-2.5 pb-2.5 pt-1 space-y-2 border-t border-border-block">
-                                    <div>
+                        {availableFlowers.length === 0 ? (
+                          <p className="text-sm text-color-text-secondary">Загрузка списка цветов...</p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
+                            {[0, 1].map((col) => {
+                              const mid = Math.ceil(availableFlowers.length / 2);
+                              const list = col === 0 ? availableFlowers.slice(0, mid) : availableFlowers.slice(mid);
+                              return (
+                                <ul key={col} className="divide-y divide-border-block">
+                                  {list.map((flower) => (
+                                    <li
+                                      key={flower}
+                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                    >
                                       <input
-                                        type="text"
-                                        placeholder="Название варианта"
-                                        value={variant.name}
-                                        onChange={(e) => updateVariant(variant.id, { name: e.target.value })}
-                                        className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+                                        type="checkbox"
+                                        id={`flower-${flower}`}
+                                        checked={selectedFlowers.includes(flower)}
+                                        onChange={() => toggleFlower(flower)}
+                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                                       />
-                                      {fieldErrors[`variant_${idx}_name`] && (
-                                        <p className="mt-0.5 text-xs text-red-600">
-                                          {fieldErrors[`variant_${idx}_name`]}
-                                        </p>
+                                      <label
+                                        htmlFor={`flower-${flower}`}
+                                        className="text-sm text-color-text-main cursor-pointer flex-1"
+                                      >
+                                        {flower}
+                                      </label>
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      {/* Блок выбора "По поводу" (подкатегории категории "По поводу") */}
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">По поводу</label>
+                        <p className="text-xs text-color-text-secondary mb-2">
+                          Выберите подкатегории &quot;По поводу&quot; для этого товара.
+                        </p>
+                        {loadingOccasions ? (
+                          <p className="text-sm text-color-text-secondary">Загрузка списка...</p>
+                        ) : errorOccasions ? (
+                          <div className="text-sm text-red-600">
+                            <p>{errorOccasions}</p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const loadOccasions = async () => {
+                                  try {
+                                    setLoadingOccasions(true);
+                                    setErrorOccasions("");
+                                    const categoriesRes = await fetch("/api/admin/categories");
+                                    if (!categoriesRes.ok) throw new Error("Ошибка загрузки категорий");
+                                    const categories = await categoriesRes.json();
+                                    const occasionsCategory = categories.find(
+                                      (c: { slug: string }) => c.slug === OCCASIONS_CATEGORY_SLUG
+                                    );
+                                    if (!occasionsCategory) {
+                                      setErrorOccasions(
+                                        'Категория "По поводу" не найдена. Примените миграцию categories-add-occasions-category.sql'
+                                      );
+                                      return;
+                                    }
+                                    setOccasionsCategoryId(occasionsCategory.id);
+                                    const subcategoriesRes = await fetch(
+                                      `/api/admin/subcategories?category_id=${occasionsCategory.id}`
+                                    );
+                                    if (!subcategoriesRes.ok) throw new Error("Ошибка загрузки подкатегорий");
+                                    const occasionsSubcategories = await subcategoriesRes.json();
+                                    setAvailableOccasionsSubcategories(occasionsSubcategories);
+                                  } catch (e) {
+                                    setErrorOccasions(e instanceof Error ? e.message : "Ошибка загрузки");
+                                  } finally {
+                                    setLoadingOccasions(false);
+                                  }
+                                };
+                                loadOccasions();
+                              }}
+                              className="mt-2 text-xs underline text-blue-600 hover:text-blue-800"
+                            >
+                              Повторить загрузку
+                            </button>
+                          </div>
+                        ) : availableOccasionsSubcategories.length === 0 ? (
+                          <p className="text-sm text-color-text-secondary">
+                            Нет подкатегорий. Добавьте в админке → По поводу.
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
+                            {[0, 1].map((col) => {
+                              const mid = Math.ceil(availableOccasionsSubcategories.length / 2);
+                              const list =
+                                col === 0
+                                  ? availableOccasionsSubcategories.slice(0, mid)
+                                  : availableOccasionsSubcategories.slice(mid);
+                              return (
+                                <ul key={col} className="divide-y divide-border-block">
+                                  {list.map((subcategory) => (
+                                    <li
+                                      key={subcategory.id}
+                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        id={`occasion-subcat-${subcategory.id}`}
+                                        checked={selectedOccasionSubcategoryIds.includes(subcategory.id)}
+                                        onChange={() => {
+                                          setSelectedOccasionSubcategoryIds((prev) =>
+                                            prev.includes(subcategory.id)
+                                              ? prev.filter((id) => id !== subcategory.id)
+                                              : [...prev, subcategory.id]
+                                          );
+                                        }}
+                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                      />
+                                      <label
+                                        htmlFor={`occasion-subcat-${subcategory.id}`}
+                                        className="text-sm text-color-text-main cursor-pointer flex-1"
+                                      >
+                                        {subcategory.name}
+                                      </label>
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Размер</label>
+                        <div className="flex gap-3 items-center">
+                          <div className="flex-1">
+                            <label className="sr-only">Высота, см</label>
+                            <input
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={createForm.height_cm ?? ""}
+                              onChange={(e) =>
+                                setCreateForm((f) => ({
+                                  ...f,
+                                  height_cm: e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
+                                }))
+                              }
+                              onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                              placeholder="45"
+                              className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <span className="text-xs text-color-text-secondary mt-0.5 block">Высота, см</span>
+                          </div>
+                          <div className="flex-1">
+                            <label className="sr-only">Ширина, см</label>
+                            <input
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={createForm.width_cm ?? ""}
+                              onChange={(e) =>
+                                setCreateForm((f) => ({
+                                  ...f,
+                                  width_cm: e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
+                                }))
+                              }
+                              onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                              placeholder="40"
+                              className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <span className="text-xs text-color-text-secondary mt-0.5 block">Ширина, см</span>
+                          </div>
+                        </div>
+                        <p className="mt-0.5 text-xs text-color-text-secondary">Размер букета в сантиметрах</p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Цена (₽)</label>
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.01}
+                          value={createForm.price || ""}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, price: parseFloat(e.target.value) || 0 }))}
+                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                          className="w-32 rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          required
+                        />
+                        {fieldErrors.price && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.price}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Категории</label>
+                        {categories.length === 0 ? (
+                          <p className="text-sm text-color-text-secondary">Нет активных категорий.</p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-40 overflow-y-auto">
+                            {[0, 1].map((col) => {
+                              const mid = Math.ceil(categories.length / 2);
+                              const list = col === 0 ? categories.slice(0, mid) : categories.slice(mid);
+                              return (
+                                <ul key={col} className="divide-y divide-border-block">
+                                  {list.map((cat) => (
+                                    <li
+                                      key={cat.id}
+                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        id={`cat-${cat.slug}`}
+                                        checked={selectedCategorySlugs.includes(cat.slug)}
+                                        onChange={() => toggleCategorySlug(cat.slug)}
+                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                      />
+                                      <label
+                                        htmlFor={`cat-${cat.slug}`}
+                                        className="text-sm text-color-text-main cursor-pointer flex-1"
+                                      >
+                                        {cat.name}
+                                      </label>
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {fieldErrors.categories && (
+                          <p className="mt-0.5 text-xs text-red-600">{fieldErrors.categories}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-6">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={createIsHidden}
+                            onChange={(e) => setCreateIsHidden(e.target.checked)}
+                            className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                          />
+                          <span className="text-sm text-color-text-main">Скрыть с витрины</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={createIsPreorder}
+                            onChange={(e) => setCreateIsPreorder(e.target.checked)}
+                            className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                          />
+                          <span className="text-sm text-color-text-main">Предзаказ</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={createIsNew}
+                            onChange={(e) => setCreateIsNew(e.target.checked)}
+                            className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                          />
+                          <span className="text-sm text-color-text-main">Новый</span>
+                        </label>
+                      </div>
+                      <div className="space-y-0.5 text-xs text-color-text-secondary">
+                        <p>«Скрыть с витрины» — товар не показывается на сайте, но остаётся в админке.</p>
+                        <p>«Предзаказ» — товар виден на витрине, вместо цены отображается текст «Предзаказ».</p>
+                        <p>
+                          «Новый» — на карточке товара в каталоге и «Рекомендуем» появится бейдж «новый». Автоматически
+                          скрывается через 30 дней.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  {createType === "variant" && (
+                    <>
+                      {/* Блок вариантов */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="block text-sm font-medium text-color-text-main">Варианты</label>
+                          <button
+                            type="button"
+                            onClick={addVariant}
+                            className="text-sm px-3 py-1 rounded text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+                          >
+                            Добавить вариант
+                          </button>
+                        </div>
+                        {fieldErrors.variants && <p className="mb-2 text-xs text-red-600">{fieldErrors.variants}</p>}
+                        {variants.length === 0 && (
+                          <p className="text-sm text-color-text-secondary py-3 text-center border border-border-block rounded">
+                            Нет вариантов. Нажмите «Добавить вариант».
+                          </p>
+                        )}
+                        {variants.length > 0 && (
+                          <div className="space-y-2">
+                            {variants.map((variant, idx) => {
+                              const isExpanded = expandedVariants.has(String(variant.id));
+                              return (
+                                <div
+                                  key={variant.id}
+                                  data-index={idx}
+                                  onDragOver={(e) => e.preventDefault()}
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    const toIndex = parseInt(e.currentTarget.getAttribute("data-index") ?? "0", 10);
+                                    if (variantsDraggedIndex !== null && variantsDraggedIndex !== toIndex) {
+                                      reorderVariants(variantsDraggedIndex, toIndex);
+                                    }
+                                    setVariantsDraggedIndex(null);
+                                  }}
+                                  className={`border rounded-lg bg-[rgba(31,42,31,0.04)] ${
+                                    variantsDraggedIndex === idx
+                                      ? "border-color-text-main opacity-80"
+                                      : "border-border-block"
+                                  }`}
+                                >
+                                  {/* Шапка варианта (всегда видна) */}
+                                  <div
+                                    className="flex items-center gap-1.5 px-2 py-1.5 cursor-pointer select-none"
+                                    onClick={() => toggleVariantExpanded(variant.id)}
+                                  >
+                                    {/* Drag handle */}
+                                    <span
+                                      draggable
+                                      onDragStart={(e) => {
+                                        e.stopPropagation();
+                                        setVariantsDraggedIndex(idx);
+                                      }}
+                                      onDragEnd={() => setVariantsDraggedIndex(null)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="cursor-grab active:cursor-grabbing text-color-text-secondary hover:text-color-text-main px-0.5 text-xs"
+                                      title="Перетащить"
+                                    >
+                                      ⋮⋮
+                                    </span>
+                                    {/* Стрелка */}
+                                    <span className="text-color-text-secondary text-xs w-2.5">
+                                      {isExpanded ? "▼" : "▶"}
+                                    </span>
+                                    {/* Название и инфо */}
+                                    <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-sm font-medium text-color-text-main truncate">
+                                        {variant.name || `Вариант ${idx + 1}`}
+                                      </span>
+                                      {variant.is_preorder && (
+                                        <span className="text-[10px] px-1 py-0.5 rounded bg-[rgba(111,131,99,0.2)] text-color-bg-main">
+                                          Предзаказ
+                                        </span>
+                                      )}
+                                      {variant.is_new && (
+                                        <span className="text-[10px] px-1 py-0.5 rounded bg-[rgba(111,131,99,0.2)] text-color-bg-main">
+                                          Новый
+                                        </span>
+                                      )}
+                                      {!variant.is_preorder && variant.price > 0 && (
+                                        <span className="text-xs text-color-text-secondary">
+                                          {variant.price.toLocaleString("ru-RU")} ₽
+                                        </span>
                                       )}
                                     </div>
-                                    <div>
-                                      <label className="block text-xs text-color-text-main mb-0.5">Состав</label>
-                                      <textarea
-                                        placeholder="Розы 7 шт, Тюльпаны 8 шт, Гипсофила…"
-                                        value={variant.composition}
-                                        onChange={(e) => updateVariant(variant.id, { composition: e.target.value })}
-                                        className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
-                                        rows={2}
-                                      />
-                                      <p className="mt-0.5 text-xs text-color-text-secondary">
-                                        Укажите состав букета вручную
-                                      </p>
-                                    </div>
-                                    <div>
-                                      <label className="block text-xs text-color-text-main mb-0.5">Размер</label>
-                                      <div className="flex gap-2 items-center">
-                                        <div className="flex-1">
-                                          <input
-                                            type="number"
-                                            min={0}
-                                            step={1}
-                                            value={variant.height_cm ?? ""}
-                                            onChange={(e) =>
-                                              updateVariant(variant.id, {
-                                                height_cm:
-                                                  e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
-                                              })
-                                            }
-                                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                                            placeholder="45"
-                                            className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                          />
-                                          <span className="text-xs text-color-text-secondary block">Высота, см</span>
-                                        </div>
-                                        <div className="flex-1">
-                                          <input
-                                            type="number"
-                                            min={0}
-                                            step={1}
-                                            value={variant.width_cm ?? ""}
-                                            onChange={(e) =>
-                                              updateVariant(variant.id, {
-                                                width_cm:
-                                                  e.target.value === "" ? null : parseInt(e.target.value, 10) || null,
-                                              })
-                                            }
-                                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                                            placeholder="40"
-                                            className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                          />
-                                          <span className="text-xs text-color-text-secondary block">Ширина, см</span>
-                                        </div>
-                                      </div>
-                                      <p className="mt-0.5 text-xs text-color-text-secondary">
-                                        Размер букета в сантиметрах
-                                      </p>
-                                    </div>
-                                    <div className="flex gap-2 items-start">
-                                      <div className="flex-1">
+                                  </div>
+
+                                  {/* Контент варианта (только если развернут) */}
+                                  {isExpanded && (
+                                    <div className="px-2.5 pb-2 pt-1 space-y-1.5 border-t border-border-block">
+                                      <div>
                                         <input
-                                          type="number"
-                                          min={0}
-                                          step={0.01}
-                                          placeholder="Цена (₽)"
-                                          value={variant.price || ""}
-                                          onChange={(e) =>
-                                            updateVariant(variant.id, { price: parseFloat(e.target.value) || 0 })
-                                          }
-                                          onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                                          disabled={variant.is_preorder}
-                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-[rgba(31,42,31,0.06)]"
+                                          type="text"
+                                          placeholder="Название варианта"
+                                          value={variant.name}
+                                          onChange={(e) => updateVariant(variant.id, { name: e.target.value })}
+                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                                         />
-                                        {fieldErrors[`variant_${idx}_price`] && (
+                                        {fieldErrors[`variant_${idx}_name`] && (
                                           <p className="mt-0.5 text-xs text-red-600">
-                                            {fieldErrors[`variant_${idx}_price`]}
+                                            {fieldErrors[`variant_${idx}_name`]}
                                           </p>
                                         )}
                                       </div>
-                                      <label className="flex items-center gap-1 pt-1">
-                                        <input
-                                          type="checkbox"
-                                          checked={variant.is_preorder}
-                                          onChange={(e) => updateVariant(variant.id, { is_preorder: e.target.checked })}
-                                          className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                                        />
-                                        <span className="text-xs text-color-text-main">Предзаказ</span>
-                                      </label>
-                                    </div>
-                                    <div>
-                                      <label className="block text-xs text-color-text-secondary mb-1">
-                                        Фото варианта
-                                      </label>
-                                      {variant.image ? (
-                                        <div className="relative w-16 h-16 rounded border border-border-block overflow-hidden">
-                                          <img
-                                            src={variant.image.previewUrl}
-                                            alt=""
-                                            className="w-full h-full object-cover"
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                          <label className="block text-xs text-color-text-main mb-0.5">Состав</label>
+                                          <textarea
+                                            placeholder="Розы 7 шт, Тюльпаны 8 шт…"
+                                            value={variant.composition}
+                                            onChange={(e) => updateVariant(variant.id, { composition: e.target.value })}
+                                            className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+                                            rows={2}
                                           />
-                                          <button
-                                            type="button"
-                                            onClick={() => removeVariantImage(variant.id)}
-                                            className="absolute top-0 right-0 w-4 h-4 rounded-bl bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 text-xs leading-none"
-                                          >
-                                            ×
-                                          </button>
                                         </div>
-                                      ) : variant.imageUrl ? (
-                                        <div className="relative w-16 h-16 rounded border border-border-block overflow-hidden">
-                                          <img src={variant.imageUrl} alt="" className="w-full h-full object-cover" />
+                                        <div>
+                                          <label className="block text-xs text-color-text-main mb-0.5">Размер</label>
+                                          <div className="flex gap-1.5">
+                                            <div className="flex-1">
+                                              <input
+                                                type="number"
+                                                min={0}
+                                                step={1}
+                                                value={variant.height_cm ?? ""}
+                                                onChange={(e) =>
+                                                  updateVariant(variant.id, {
+                                                    height_cm:
+                                                      e.target.value === ""
+                                                        ? null
+                                                        : parseInt(e.target.value, 10) || null,
+                                                  })
+                                                }
+                                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                                placeholder="45"
+                                                className="w-full rounded border border-border-block bg-white px-2 py-1 text-xs text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                              />
+                                              <span className="text-[10px] text-color-text-secondary block">
+                                                Высота, см
+                                              </span>
+                                            </div>
+                                            <div className="flex-1">
+                                              <input
+                                                type="number"
+                                                min={0}
+                                                step={1}
+                                                value={variant.width_cm ?? ""}
+                                                onChange={(e) =>
+                                                  updateVariant(variant.id, {
+                                                    width_cm:
+                                                      e.target.value === ""
+                                                        ? null
+                                                        : parseInt(e.target.value, 10) || null,
+                                                  })
+                                                }
+                                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                                placeholder="40"
+                                                className="w-full rounded border border-border-block bg-white px-2 py-1 text-xs text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                              />
+                                              <span className="text-[10px] text-color-text-secondary block">
+                                                Ширина, см
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-2">
+                                        <div>
                                           <input
-                                            type="file"
-                                            accept={ALLOWED_IMAGE_TYPES}
-                                            onChange={(e) => {
-                                              const file = e.target.files?.[0];
-                                              if (file) addVariantImage(variant.id, file);
-                                            }}
-                                            className="mt-1 block w-full text-xs file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-2 file:py-1 file:text-white file:hover:bg-accent-btn-hover"
+                                            type="number"
+                                            min={0}
+                                            step={0.01}
+                                            placeholder="Цена (₽)"
+                                            value={variant.price || ""}
+                                            onChange={(e) =>
+                                              updateVariant(variant.id, { price: parseFloat(e.target.value) || 0 })
+                                            }
+                                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                            disabled={variant.is_preorder}
+                                            className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-[rgba(31,42,31,0.06)]"
                                           />
+                                          {fieldErrors[`variant_${idx}_price`] && (
+                                            <p className="mt-0.5 text-xs text-red-600">
+                                              {fieldErrors[`variant_${idx}_price`]}
+                                            </p>
+                                          )}
                                         </div>
-                                      ) : (
-                                        <input
-                                          type="file"
-                                          accept={ALLOWED_IMAGE_TYPES}
-                                          onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) addVariantImage(variant.id, file);
-                                          }}
-                                          className="block w-full text-xs text-color-text-main file:mr-2 file:rounded file:border-0 file:border-border-block file:bg-white file:px-2 file:py-1 file:text-color-text-main file:hover:bg-[rgba(31,42,31,0.08)]"
-                                        />
-                                      )}
-                                    </div>
-                                    <div className="border-t border-border-block pt-2 space-y-2">
-                                      <label className="block text-xs text-color-text-secondary font-medium">SEO варианта</label>
-                                      <div>
-                                        <input
-                                          type="text"
-                                          placeholder="SEO title"
-                                          value={variant.seo_title ?? ""}
-                                          onChange={(e) => updateVariant(variant.id, { seo_title: e.target.value })}
-                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm"
-                                        />
+                                        <div className="flex items-center gap-3">
+                                          <label className="flex items-center gap-1 cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={variant.is_preorder}
+                                              onChange={(e) =>
+                                                updateVariant(variant.id, { is_preorder: e.target.checked })
+                                              }
+                                              className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                            />
+                                            <span className="text-xs text-color-text-main">Предзаказ</span>
+                                          </label>
+                                          <label className="flex items-center gap-1 cursor-pointer">
+                                            <input
+                                              type="checkbox"
+                                              checked={variant.is_new}
+                                              onChange={(e) => updateVariant(variant.id, { is_new: e.target.checked })}
+                                              className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                            />
+                                            <span className="text-xs text-color-text-main">Новый</span>
+                                          </label>
+                                        </div>
                                       </div>
-                                      <div>
-                                        <textarea
-                                          placeholder="SEO description (до 160 символов)"
-                                          value={variant.seo_description ?? ""}
-                                          onChange={(e) => updateVariant(variant.id, { seo_description: e.target.value })}
-                                          rows={2}
-                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm"
-                                        />
-                                      </div>
-                                      <div>
-                                        <input
-                                          type="text"
-                                          placeholder="OG image URL"
-                                          value={variant.og_image ?? ""}
-                                          onChange={(e) => updateVariant(variant.id, { og_image: e.target.value })}
-                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm"
-                                        />
+                                      {/* Кнопка удаления — только в развернутом состоянии */}
+                                      <div className="pt-1 border-t border-border-block">
+                                        <button
+                                          type="button"
+                                          onClick={() => removeVariant(variant.id)}
+                                          className="text-xs text-color-text-secondary hover:text-red-600"
+                                        >
+                                          Удалить вариант
+                                        </button>
                                       </div>
                                     </div>
-                                    {/* Кнопка удаления — только в развернутом состоянии */}
-                                    <div className="pt-1 border-t border-border-block">
-                                      <button
-                                        type="button"
-                                        onClick={() => removeVariant(variant.id)}
-                                        className="text-xs text-color-text-secondary hover:text-red-600"
-                                      >
-                                        Удалить вариант
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Главное фото товара */}
-                    <div>
-                      <label className="block text-sm font-medium text-color-text-main mb-1">Главное фото товара</label>
-                      <p className="text-xs text-color-text-secondary mb-1.5">
-                        Это фото используется как главное изображение товара на витрине.
-                      </p>
-                      {variantMainImage ? (
-                        <div className="relative w-20 h-20 rounded-lg border border-border-block overflow-hidden">
-                          <img src={variantMainImage.previewUrl} alt="" className="w-full h-full object-cover" />
-                          <button
-                            type="button"
-                            onClick={removeMainImageForVariantProduct}
-                            className="absolute top-0 right-0 w-5 h-5 rounded-bl bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 text-xs leading-none"
-                          >
-                            ×
-                          </button>
+                      {/* Блок выбора цветов (фильтр) — для товара с вариантами */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-sm font-medium text-color-text-main">
+                            Цветы в составе (фильтр)
+                          </label>
                         </div>
-                      ) : existingMainImageUrl ? (
-                        <div className="relative w-20 h-20 rounded-lg border border-border-block overflow-hidden">
-                          <img src={existingMainImageUrl} alt="" className="w-full h-full object-cover" />
-                          <p className="text-xs text-color-text-secondary mt-1">Загрузите новый файл, чтобы заменить</p>
-                          <input
-                            type="file"
-                            accept={ALLOWED_IMAGE_TYPES}
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) setMainImageForVariantProduct(file);
-                            }}
-                            className="mt-1 block w-full text-sm text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-3 file:py-1.5 file:text-white file:hover:bg-accent-btn-hover"
-                          />
-                        </div>
-                      ) : (
+                        <p className="text-xs text-color-text-secondary mb-2">
+                          Выберите цветы для фильтрации. Список формируется автоматически из всех товаров.
+                        </p>
+                        {availableFlowers.length === 0 ? (
+                          <p className="text-sm text-color-text-secondary">Загрузка списка цветов...</p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
+                            {[0, 1].map((col) => {
+                              const mid = Math.ceil(availableFlowers.length / 2);
+                              const list = col === 0 ? availableFlowers.slice(0, mid) : availableFlowers.slice(mid);
+                              return (
+                                <ul key={col} className="divide-y divide-border-block">
+                                  {list.map((flower) => (
+                                    <li
+                                      key={flower}
+                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        id={`variant-flower-${flower}`}
+                                        checked={selectedFlowers.includes(flower)}
+                                        onChange={() => toggleFlower(flower)}
+                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                      />
+                                      <label
+                                        htmlFor={`variant-flower-${flower}`}
+                                        className="text-sm text-color-text-main cursor-pointer flex-1"
+                                      >
+                                        {flower}
+                                      </label>
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Блок выбора "По поводу" (подкатегории категории "По поводу") — для товара с вариантами */}
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">По поводу</label>
+                        <p className="text-xs text-color-text-secondary mb-2">
+                          Выберите подкатегории &quot;По поводу&quot; для этого товара.
+                        </p>
+                        {loadingOccasions ? (
+                          <p className="text-sm text-color-text-secondary">Загрузка списка...</p>
+                        ) : errorOccasions ? (
+                          <div className="text-sm text-red-600">
+                            <p>{errorOccasions}</p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const loadOccasions = async () => {
+                                  try {
+                                    setLoadingOccasions(true);
+                                    setErrorOccasions("");
+                                    const categoriesRes = await fetch("/api/admin/categories");
+                                    if (!categoriesRes.ok) throw new Error("Ошибка загрузки категорий");
+                                    const categories = await categoriesRes.json();
+                                    const occasionsCategory = categories.find(
+                                      (c: { slug: string }) => c.slug === OCCASIONS_CATEGORY_SLUG
+                                    );
+                                    if (!occasionsCategory) {
+                                      setErrorOccasions(
+                                        'Категория "По поводу" не найдена. Примените миграцию categories-add-occasions-category.sql'
+                                      );
+                                      return;
+                                    }
+                                    setOccasionsCategoryId(occasionsCategory.id);
+                                    const subcategoriesRes = await fetch(
+                                      `/api/admin/subcategories?category_id=${occasionsCategory.id}`
+                                    );
+                                    if (!subcategoriesRes.ok) throw new Error("Ошибка загрузки подкатегорий");
+                                    const occasionsSubcategories = await subcategoriesRes.json();
+                                    setAvailableOccasionsSubcategories(occasionsSubcategories);
+                                  } catch (e) {
+                                    setErrorOccasions(e instanceof Error ? e.message : "Ошибка загрузки");
+                                  } finally {
+                                    setLoadingOccasions(false);
+                                  }
+                                };
+                                loadOccasions();
+                              }}
+                              className="mt-2 text-xs underline text-blue-600 hover:text-blue-800"
+                            >
+                              Повторить загрузку
+                            </button>
+                          </div>
+                        ) : availableOccasionsSubcategories.length === 0 ? (
+                          <p className="text-sm text-color-text-secondary">
+                            Нет подкатегорий. Добавьте в админке → По поводу.
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
+                            {[0, 1].map((col) => {
+                              const mid = Math.ceil(availableOccasionsSubcategories.length / 2);
+                              const list =
+                                col === 0
+                                  ? availableOccasionsSubcategories.slice(0, mid)
+                                  : availableOccasionsSubcategories.slice(mid);
+                              return (
+                                <ul key={col} className="divide-y divide-border-block">
+                                  {list.map((subcategory) => (
+                                    <li
+                                      key={subcategory.id}
+                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        id={`variant-occasion-subcat-${subcategory.id}`}
+                                        checked={selectedOccasionSubcategoryIds.includes(subcategory.id)}
+                                        onChange={() => {
+                                          setSelectedOccasionSubcategoryIds((prev) =>
+                                            prev.includes(subcategory.id)
+                                              ? prev.filter((id) => id !== subcategory.id)
+                                              : [...prev, subcategory.id]
+                                          );
+                                        }}
+                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                      />
+                                      <label
+                                        htmlFor={`variant-occasion-subcat-${subcategory.id}`}
+                                        className="text-sm text-color-text-main cursor-pointer flex-1"
+                                      >
+                                        {subcategory.name}
+                                      </label>
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Изображения товара */}
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Изображения</label>
+                        <p className="text-xs text-color-text-secondary mb-1.5">
+                          Максимум 5 файлов. Первое изображение — главное, используется на витрине. Перетаскивайте для
+                          изменения порядка.
+                        </p>
                         <input
                           type="file"
                           accept={ALLOWED_IMAGE_TYPES}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) setMainImageForVariantProduct(file);
-                          }}
+                          multiple
+                          onChange={(e) => addProductImages(e.target.files)}
+                          disabled={existingImageUrls.length + productImages.length >= MAX_IMAGES}
                           className="block w-full text-sm text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-3 file:py-1.5 file:text-white file:hover:bg-accent-btn-hover focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                         />
-                      )}
-                      {fieldErrors.variantMainImage && (
-                        <p className="mt-0.5 text-xs text-red-600">{fieldErrors.variantMainImage}</p>
-                      )}
-                    </div>
-
-                    <fieldset className="border border-border-block rounded-lg p-4 space-y-3">
-                      <legend className="text-sm font-medium text-color-text-main px-1">SEO товара</legend>
-                      <p className="text-xs text-color-text-secondary -mt-1">Если не заполнено — используется название товара / описание по умолчанию.</p>
-                      <div>
-                        <label className="block text-xs text-color-text-main mb-0.5">SEO заголовок (title)</label>
-                        <input
-                          type="text"
-                          value={createForm.seo_title}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_title: e.target.value }))}
-                          placeholder="Например: Букет роз с доставкой"
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-color-text-main mb-0.5">SEO описание (description)</label>
-                        <textarea
-                          value={createForm.seo_description}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, seo_description: e.target.value }))}
-                          rows={2}
-                          placeholder="До 160 символов рекомендуется"
-                          maxLength={500}
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-color-text-main mb-0.5">OG image URL (опционально)</label>
-                        <input
-                          type="text"
-                          value={createForm.og_image}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, og_image: e.target.value }))}
-                          placeholder="https://..."
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm"
-                        />
-                      </div>
-                    </fieldset>
-
-                    {/* Категории */}
-                    <div>
-                      <label className="block text-sm font-medium text-color-text-main mb-1">Категории</label>
-                      {categories.length === 0 ? (
-                        <p className="text-sm text-color-text-secondary">Нет активных категорий.</p>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-40 overflow-y-auto">
-                          {[0, 1].map((col) => {
-                            const mid = Math.ceil(categories.length / 2);
-                            const list = col === 0 ? categories.slice(0, mid) : categories.slice(mid);
-                            return (
-                              <ul key={col} className="divide-y divide-border-block">
-                                {list.map((cat) => (
-                                  <li
-                                    key={cat.id}
-                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                        {fieldErrors.images && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.images}</p>}
+                        {(existingImageUrls.length > 0 || productImages.length > 0) && (
+                          <div className="mt-3 flex flex-wrap gap-3">
+                            {existingImageUrls.map((url, index) => (
+                              <div
+                                key={`existing-${index}`}
+                                className="relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] border-border-block"
+                              >
+                                <img src={url} alt="" className="w-full h-full object-cover" />
+                                {productImagesMainIndex === index && (
+                                  <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
+                                    Главное
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => setProductImageMain(index)}
+                                  title="Сделать главным"
+                                  className="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 flex items-center justify-center text-xs hover:bg-white"
+                                >
+                                  ★
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeExistingImage(index)}
+                                  title="Удалить"
+                                  className="absolute top-1 right-1 w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-sm leading-none"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            ))}
+                            {productImages.map((item, index) => {
+                              const combinedIndex = existingImageUrls.length + index;
+                              return (
+                                <div
+                                  key={`file-${index}`}
+                                  data-index={index}
+                                  draggable
+                                  onDragStart={() => setProductImagesDraggedIndex(index)}
+                                  onDragOver={(ev) => ev.preventDefault()}
+                                  onDrop={(ev) => {
+                                    ev.preventDefault();
+                                    const toIndex = parseInt(ev.currentTarget.getAttribute("data-index") ?? "0", 10);
+                                    if (productImagesDraggedIndex !== null && productImagesDraggedIndex !== toIndex) {
+                                      reorderProductImages(productImagesDraggedIndex, toIndex);
+                                    }
+                                    setProductImagesDraggedIndex(null);
+                                  }}
+                                  onDragEnd={() => setProductImagesDraggedIndex(null)}
+                                  className={`relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] cursor-grab active:cursor-grabbing ${
+                                    productImagesDraggedIndex === index
+                                      ? "border-color-text-main opacity-80"
+                                      : "border-border-block"
+                                  }`}
+                                >
+                                  <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
+                                  {productImagesMainIndex === combinedIndex && (
+                                    <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
+                                      Главное
+                                    </span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => setProductImageMain(combinedIndex)}
+                                    title="Сделать главным"
+                                    className="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 flex items-center justify-center text-xs hover:bg-white"
                                   >
-                                    <input
-                                      type="checkbox"
-                                      id={`cat-${cat.slug}`}
-                                      checked={selectedCategorySlugs.includes(cat.slug)}
-                                      onChange={() => toggleCategorySlug(cat.slug)}
-                                      className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                                    />
-                                    <label
-                                      htmlFor={`cat-${cat.slug}`}
-                                      className="text-sm text-color-text-main cursor-pointer flex-1"
-                                    >
-                                      {cat.name}
-                                    </label>
-                                  </li>
-                                ))}
-                              </ul>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {fieldErrors.categories && (
-                        <p className="mt-0.5 text-xs text-red-600">{fieldErrors.categories}</p>
-                      )}
-                    </div>
+                                    ★
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeProductImage(index)}
+                                    title="Удалить"
+                                    className="absolute top-1 right-1 w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-sm leading-none"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
 
-                    {/* Скрыть с витрины */}
-                    <div>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={createIsHidden}
-                          onChange={(e) => setCreateIsHidden(e.target.checked)}
-                          className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                        />
-                        <span className="text-sm text-color-text-main">Скрыть с витрины</span>
-                      </label>
-                      <p className="mt-1 text-xs text-color-text-secondary">
-                        Товар не показывается на сайте, но остаётся в админке.
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="flex shrink-0 flex-wrap gap-2 px-6 py-3 border-t border-border-block">
-                <button
-                  type="submit"
-                  disabled={createLoading || productImagesUploading || editLoading || deleteLoading}
-                  className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
-                >
-                  {productImagesUploading
-                    ? "Загрузка изображений…"
-                    : createLoading
-                      ? isEditMode
-                        ? "Сохранение…"
-                        : "Создание…"
-                      : isEditMode
-                        ? "Сохранить изменения"
-                        : "Создать"}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeCreateModal}
-                  className="rounded border border-outline-btn-border px-4 py-2 text-color-text-main hover:bg-outline-btn-hover-bg"
-                >
-                  Отмена
-                </button>
-                {isEditMode && (
+                      {/* Категории */}
+                      <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Категории</label>
+                        {categories.length === 0 ? (
+                          <p className="text-sm text-color-text-secondary">Нет активных категорий.</p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-40 overflow-y-auto">
+                            {[0, 1].map((col) => {
+                              const mid = Math.ceil(categories.length / 2);
+                              const list = col === 0 ? categories.slice(0, mid) : categories.slice(mid);
+                              return (
+                                <ul key={col} className="divide-y divide-border-block">
+                                  {list.map((cat) => (
+                                    <li
+                                      key={cat.id}
+                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        id={`cat-${cat.slug}`}
+                                        checked={selectedCategorySlugs.includes(cat.slug)}
+                                        onChange={() => toggleCategorySlug(cat.slug)}
+                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                      />
+                                      <label
+                                        htmlFor={`cat-${cat.slug}`}
+                                        className="text-sm text-color-text-main cursor-pointer flex-1"
+                                      >
+                                        {cat.name}
+                                      </label>
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {fieldErrors.categories && (
+                          <p className="mt-0.5 text-xs text-red-600">{fieldErrors.categories}</p>
+                        )}
+                      </div>
+
+                      {/* Скрыть с витрины */}
+                      <div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={createIsHidden}
+                            onChange={(e) => setCreateIsHidden(e.target.checked)}
+                            className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                          />
+                          <span className="text-sm text-color-text-main">Скрыть с витрины</span>
+                        </label>
+                        <p className="mt-1 text-xs text-color-text-secondary">
+                          Товар не показывается на сайте, но остаётся в админке.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="flex shrink-0 flex-wrap gap-2 px-6 py-3 border-t border-border-block">
+                  <button
+                    type="submit"
+                    disabled={createLoading || productImagesUploading || editLoading || deleteLoading}
+                    className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
+                  >
+                    {productImagesUploading
+                      ? "Загрузка изображений…"
+                      : createLoading
+                        ? isEditMode
+                          ? "Сохранение…"
+                          : "Создание…"
+                        : isEditMode
+                          ? "Сохранить изменения"
+                          : "Создать"}
+                  </button>
                   <button
                     type="button"
-                    onClick={handleDeleteProduct}
-                    disabled={createLoading || productImagesUploading || editLoading || deleteLoading}
-                    className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={closeCreateModal}
+                    className="rounded border border-outline-btn-border px-4 py-2 text-color-text-main hover:bg-outline-btn-hover-bg"
                   >
-                    {deleteLoading ? "Удаление…" : "Удалить"}
+                    Отмена
                   </button>
-                )}
-              </div>
-            </form>
-          </div>
-        </div>,
+                  {isEditMode && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteProduct}
+                      disabled={createLoading || productImagesUploading || editLoading || deleteLoading}
+                      className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {deleteLoading ? "Удаление…" : "Удалить"}
+                    </button>
+                  )}
+                </div>
+              </form>
+            </div>
+          </div>,
           document.body
         )}
 
-      <Modal
-        isOpen={detailsModalOpen}
-        onClose={() => setDetailsModalOpen(false)}
-        title="Детали товаров"
-      >
+      <Modal isOpen={detailsModalOpen} onClose={() => setDetailsModalOpen(false)} title="Детали товаров">
         <div className="space-y-4">
           {detailsLoading && <p className="text-sm text-color-text-secondary">Загрузка…</p>}
-          {detailsError && <p className="text-sm text-red-600" role="alert">{detailsError}</p>}
+          {detailsError && (
+            <p className="text-sm text-red-600" role="alert">
+              {detailsError}
+            </p>
+          )}
           <div>
             <label className="block text-sm font-medium text-color-text-main mb-1">Подарок при заказе</label>
             <textarea

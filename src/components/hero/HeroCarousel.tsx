@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import type { HeroSlide } from "@/lib/heroSlides";
 import { ChevronArrow } from "./ChevronArrow";
 
@@ -31,6 +31,7 @@ function getAlignClass(align: HeroSlide["buttonAlign"]): string {
 
 const AUTOPLAY_MS = 5000;
 const TRANSITION_MS = 800;
+const TRANSITION_SAFETY_MS = TRANSITION_MS + 100; // Fallback timeout для сброса lock
 
 type HeroCarouselProps = {
   slides?: HeroSlide[];
@@ -48,16 +49,21 @@ type HeroCarouselProps = {
  */
 export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
   const slides = propSlides && propSlides.length > 0 ? propSlides : FALLBACK_SLIDES;
-  
+
   // Дублируем слайды для бесшовного loop: [last, ...slides, first]
   const loopSlides = useMemo(() => {
     return slides.length > 1 ? [slides[slides.length - 1], ...slides, slides[0]] : slides;
   }, [slides]);
-  const realIndexOffset = useMemo(() => slides.length > 1 ? 1 : 0, [slides.length]);
+  const realIndexOffset = useMemo(() => (slides.length > 1 ? 1 : 0), [slides.length]);
 
   const [index, setIndex] = useState(realIndexOffset);
   const [isRevealActive, setIsRevealActive] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(true);
+
+  // Lock для предотвращения повторных кликов во время анимации
+  const isAnimatingRef = useRef(false);
+  const slideContainerRef = useRef<HTMLDivElement>(null);
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Проверяем prefers-reduced-motion
@@ -75,25 +81,73 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
     return () => clearTimeout(timer);
   }, []);
 
+  // Обработчик завершения transition для сброса lock
+  useEffect(() => {
+    const container = slideContainerRef.current;
+    if (!container) return;
+
+    const handleTransitionEnd = (e: TransitionEvent) => {
+      // Проверяем, что это transition для transform (анимация слайда)
+      if (e.propertyName === "transform" && isAnimatingRef.current) {
+        isAnimatingRef.current = false;
+        if (transitionTimeoutRef.current) {
+          clearTimeout(transitionTimeoutRef.current);
+          transitionTimeoutRef.current = null;
+        }
+      }
+    };
+
+    container.addEventListener("transitionend", handleTransitionEnd);
+
+    return () => {
+      container.removeEventListener("transitionend", handleTransitionEnd);
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Автопрокрутка с бесшовным loop
   useEffect(() => {
     if (slides.length <= 1) return;
-    
+
     const totalSlides = loopSlides.length;
     const t = window.setInterval(() => {
+      // Пропускаем автопрокрутку, если идет анимация от клика пользователя
+      if (isAnimatingRef.current) return;
+
+      // Устанавливаем lock для автопрокрутки
+      isAnimatingRef.current = true;
+
+      // Fallback timeout для сброса lock
+      if (transitionTimeoutRef.current) {
+        clearTimeout(transitionTimeoutRef.current);
+      }
+      transitionTimeoutRef.current = setTimeout(() => {
+        isAnimatingRef.current = false;
+        transitionTimeoutRef.current = null;
+      }, TRANSITION_SAFETY_MS);
+
       setIndex((i) => {
         const next = i + 1;
-        // Если дошли до последнего (дубликат первого), перепрыгиваем на оригинал без анимации
+        // Если дошли до последнего (дубликат первого), ждём окончания анимации и перепрыгиваем на оригинал без анимации
         if (next >= totalSlides - 1) {
-          setIsTransitioning(false);
-          requestAnimationFrame(() => {
+          // Ждём завершения transition перед перепрыгиванием
+          setTimeout(() => {
+            setIsTransitioning(false);
             requestAnimationFrame(() => {
               setIndex(realIndexOffset);
               requestAnimationFrame(() => {
                 setIsTransitioning(true);
+                // Сбрасываем lock после перепрыгивания
+                isAnimatingRef.current = false;
+                if (transitionTimeoutRef.current) {
+                  clearTimeout(transitionTimeoutRef.current);
+                  transitionTimeoutRef.current = null;
+                }
               });
             });
-          });
+          }, TRANSITION_MS);
           return next;
         }
         return next;
@@ -104,20 +158,44 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
 
   const prev = useCallback(() => {
     if (slides.length <= 1) return;
+
+    // Блокируем повторные клики во время анимации
+    if (isAnimatingRef.current) return;
+
     const totalSlides = loopSlides.length;
+
+    // Устанавливаем lock
+    isAnimatingRef.current = true;
+
+    // Fallback timeout для сброса lock (на случай если transitionend не сработает)
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+    }
+    transitionTimeoutRef.current = setTimeout(() => {
+      isAnimatingRef.current = false;
+      transitionTimeoutRef.current = null;
+    }, TRANSITION_SAFETY_MS);
+
     setIndex((i) => {
       const next = i - 1;
-      // Если дошли до первого (дубликат последнего), перепрыгиваем на оригинал без анимации
+      // Если дошли до первого (дубликат последнего), ждём окончания анимации и перепрыгиваем на оригинал без анимации
       if (next < realIndexOffset) {
-        setIsTransitioning(false);
-        requestAnimationFrame(() => {
+        // Ждём завершения transition перед перепрыгиванием
+        setTimeout(() => {
+          setIsTransitioning(false);
           requestAnimationFrame(() => {
             setIndex(totalSlides - 2);
             requestAnimationFrame(() => {
               setIsTransitioning(true);
+              // Сбрасываем lock после перепрыгивания
+              isAnimatingRef.current = false;
+              if (transitionTimeoutRef.current) {
+                clearTimeout(transitionTimeoutRef.current);
+                transitionTimeoutRef.current = null;
+              }
             });
           });
-        });
+        }, TRANSITION_MS);
         return next;
       }
       return next;
@@ -126,20 +204,44 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
 
   const next = useCallback(() => {
     if (slides.length <= 1) return;
+
+    // Блокируем повторные клики во время анимации
+    if (isAnimatingRef.current) return;
+
     const totalSlides = loopSlides.length;
+
+    // Устанавливаем lock
+    isAnimatingRef.current = true;
+
+    // Fallback timeout для сброса lock (на случай если transitionend не сработает)
+    if (transitionTimeoutRef.current) {
+      clearTimeout(transitionTimeoutRef.current);
+    }
+    transitionTimeoutRef.current = setTimeout(() => {
+      isAnimatingRef.current = false;
+      transitionTimeoutRef.current = null;
+    }, TRANSITION_SAFETY_MS);
+
     setIndex((i) => {
       const next = i + 1;
-      // Если дошли до последнего (дубликат первого), перепрыгиваем на оригинал без анимации
+      // Если дошли до последнего (дубликат первого), ждём окончания анимации и перепрыгиваем на оригинал без анимации
       if (next >= totalSlides - 1) {
-        setIsTransitioning(false);
-        requestAnimationFrame(() => {
+        // Ждём завершения transition перед перепрыгиванием
+        setTimeout(() => {
+          setIsTransitioning(false);
           requestAnimationFrame(() => {
             setIndex(realIndexOffset);
             requestAnimationFrame(() => {
               setIsTransitioning(true);
+              // Сбрасываем lock после перепрыгивания
+              isAnimatingRef.current = false;
+              if (transitionTimeoutRef.current) {
+                clearTimeout(transitionTimeoutRef.current);
+                transitionTimeoutRef.current = null;
+              }
             });
           });
-        });
+        }, TRANSITION_MS);
         return next;
       }
       return next;
@@ -152,8 +254,11 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
   return (
     <section className="relative hero-full-width bg-[#fff8ea] overflow-hidden pb-4 md:pb-6 -mx-0.5 md:-mx-8">
       <div className="relative w-full h-[510px] min-[768px]:h-[420px] min-[1200px]:h-[500px] min-[1440px]:h-[560px] min-[1440px]:max-h-[680px]">
-        <div className={`absolute inset-0 overflow-hidden bg-[#ece9e2] hero-reveal ${isRevealActive ? "hero-reveal--active" : ""}`}>
+        <div
+          className={`absolute inset-0 overflow-hidden bg-[#ece9e2] hero-reveal ${isRevealActive ? "hero-reveal--active" : ""}`}
+        >
           <div
+            ref={slideContainerRef}
             className="flex h-full transition-transform ease-in-out"
             style={{
               width: `${loopSlides.length * 100}%`,

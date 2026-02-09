@@ -171,3 +171,33 @@ export interface ProductListItem {
   is_preorder?: boolean;
   sort_order: number;
 }
+
+// ============================
+// По поводу (Occasions)
+// ============================
+
+export interface Occasion {
+  id: string;
+  name: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// ============================
+// Подкатегории (Subcategories)
+// ============================
+
+export interface Subcategory {
+  id: string;
+  category_id: string;
+  name: string;
+  slug?: string | null;
+  title?: string | null;
+  description?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  sort_order?: number | null;
+  is_active?: boolean | null;
+  created_at?: string;
+  updated_at?: string;
+}

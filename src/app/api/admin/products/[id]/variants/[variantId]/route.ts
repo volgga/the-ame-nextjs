@@ -9,7 +9,10 @@ async function requireAdmin() {
   if (!ok) throw new Error("unauthorized");
 }
 
-const optionalImageUrl = z.union([z.string(), z.null(), z.literal("")]).optional().transform((v) => (v === "" ? null : v));
+const optionalImageUrl = z
+  .union([z.string(), z.null(), z.literal("")])
+  .optional()
+  .transform((v) => (v === "" ? null : v));
 
 const updateSchema = z.object({
   size: z.string().min(1).optional(),
@@ -18,13 +21,19 @@ const updateSchema = z.object({
   width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0).optional(),
   is_preorder: z.boolean().optional(),
+  is_new: z.boolean().optional(),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
-  image_url: optionalImageUrl,
+  image_url: optionalImageUrl, // Обратная совместимость - игнорируется на клиенте
   description: z.string().optional().nullable(),
-  seo_title: z.string().max(300).optional().nullable(),
-  seo_description: z.string().max(500).optional().nullable(),
-  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
+  seo_title: z.string().max(300).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
+  seo_description: z.string().max(500).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
+  og_image: z
+    .string()
+    .max(2000)
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" ? null : v)), // Обратная совместимость - игнорируется на клиенте
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; variantId: string }> }) {

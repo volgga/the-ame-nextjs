@@ -40,7 +40,8 @@ const DEFAULT_FAQ_ITEMS: FaqItem[] = [
   {
     id: "5",
     question: "Можно ли добавить открытку к букету?",
-    answer: "Да, вы можете добавить открытку с личным текстом при оформлении заказа. Мы передадим её вместе с букетом получателю.",
+    answer:
+      "Да, вы можете добавить открытку с личным текстом при оформлении заказа. Мы передадим её вместе с букетом получателю.",
   },
   {
     id: "6",
@@ -68,11 +69,7 @@ async function getHomeFaqUncached(): Promise<FaqItem[]> {
   if (!url || !key) return DEFAULT_FAQ_ITEMS;
 
   try {
-    const { data, error } = await supabase
-      .from("home_reviews")
-      .select("faq_items")
-      .limit(1)
-      .single();
+    const { data, error } = await supabase.from("home_reviews").select("faq_items").limit(1).single();
 
     if (error || !data?.faq_items) return DEFAULT_FAQ_ITEMS;
 

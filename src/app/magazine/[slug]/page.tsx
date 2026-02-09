@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound, redirect, permanentRedirect } from "next/navigation";
 import { Suspense } from "react";
 import { Breadcrumbs, SECTION_GAP } from "@/components/ui/breadcrumbs";
 import { CategoryChips } from "@/components/catalog/category-chips";
 import { ProductToolbar } from "@/components/catalog/product-toolbar";
 import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
+import { FlowerFilterButtons } from "@/components/catalog/flower-filter-buttons";
+import { Container } from "@/components/layout/Container";
 import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE, filterProductsByCategorySlug } from "@/lib/catalogCategories";
+import { normalizeFlowerKey } from "@/lib/normalizeFlowerKey";
+import { getOccasionsSubcategories } from "@/lib/subcategories";
+import { OCCASIONS_CATEGORY_SLUG, FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
+import { OccasionFilterButtons } from "@/components/catalog/occasion-filter-buttons";
 import {
   canonicalUrl,
   truncateDescription,
@@ -27,7 +33,6 @@ type MagazineCategoryPageProps = {
 
 const VIRTUAL_CATEGORY_SLUGS = ["magazin", "posmotret-vse-tsvety"] as const;
 
-
 export async function generateStaticParams() {
   const categories = await getCategories();
   return categories
@@ -35,10 +40,7 @@ export async function generateStaticParams() {
     .map((c) => ({ slug: c.slug }));
 }
 
-export async function generateMetadata({
-  params,
-  searchParams,
-}: MagazineCategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: MagazineCategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
   const categories = await getCategories();
@@ -85,13 +87,47 @@ export async function generateMetadata({
   };
 }
 
-export default async function MagazineCategoryPage({ params }: MagazineCategoryPageProps) {
+export default async function MagazineCategoryPage({ params, searchParams }: MagazineCategoryPageProps) {
   const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const flowerParam = resolvedSearchParams.flower;
+  const occasionParam = resolvedSearchParams.occasion;
 
   if (slug === "magazin") redirect("/magazin");
   if (slug === "posmotret-vse-tsvety") redirect("/posmotret-vse-tsvety");
 
-  const [categories, allProducts] = await Promise.all([getCategories(), getAllCatalogProducts()]);
+  const isOccasionsCategory = slug === OCCASIONS_CATEGORY_SLUG;
+  const isFlowersInCompositionCategory = slug === FLOWERS_IN_COMPOSITION_CATEGORY_SLUG;
+
+  // Редиректы со старых query-URL на новые slug-URL
+  if (isOccasionsCategory && occasionParam && typeof occasionParam === "string") {
+    const occasionsSubcategories = await getOccasionsSubcategories();
+    const occasion = occasionsSubcategories.find((sub) => sub.id === occasionParam && sub.slug);
+    if (occasion?.slug) {
+      permanentRedirect(`/magazine/${OCCASIONS_CATEGORY_SLUG}/${occasion.slug}`);
+    }
+  }
+
+  if (isFlowersInCompositionCategory && flowerParam && typeof flowerParam === "string") {
+    const { getFlowersInCompositionSubcategories } = await import("@/lib/subcategories");
+    const flowersSubcategories = await getFlowersInCompositionSubcategories();
+    const normalized = normalizeFlowerKey(flowerParam);
+    const flower = flowersSubcategories.find(
+      (sub) => normalizeFlowerKey(sub.name) === normalized && sub.slug && sub.is_active
+    );
+    if (flower?.slug) {
+      permanentRedirect(`/magazine/${FLOWERS_IN_COMPOSITION_CATEGORY_SLUG}/${flower.slug}`);
+    }
+  }
+
+  const [categories, allProducts, occasionsSubcategories, flowersSubcategories] = await Promise.all([
+    getCategories(),
+    getAllCatalogProducts(),
+    isOccasionsCategory ? getOccasionsSubcategories() : Promise.resolve([]),
+    isFlowersInCompositionCategory
+      ? (await import("@/lib/subcategories")).getFlowersInCompositionSubcategories()
+      : Promise.resolve([]),
+  ]);
 
   const category = getCategoryBySlug(categories, slug);
 
@@ -129,28 +165,48 @@ export default async function MagazineCategoryPage({ params }: MagazineCategoryP
     )
     .map((c) => ({ slug: c.slug, name: c.name, isAll: false }));
 
-  const uniqueCategories = Array.from(
-    new Map(filteredCategories.map((cat) => [cat.slug, cat])).values()
-  );
+  const uniqueCategories = Array.from(new Map(filteredCategories.map((cat) => [cat.slug, cat])).values());
 
-  const chips = [
-    { slug: "", name: ALL_CATALOG.title, isAll: true },
-    ...uniqueCategories,
-  ];
+  const chips = [{ slug: "", name: ALL_CATALOG.title, isAll: true }, ...uniqueCategories];
+
+  // Определяем заголовок и описание в зависимости от выбранного цветка
+  let pageTitle = category.name;
+  let pageDescription = seoText;
+
+  if (isFlowersInCompositionCategory && flowerParam && typeof flowerParam === "string") {
+    const flowerKey = normalizeFlowerKey(flowerParam);
+    const flowerSection = category.flower_sections?.find((section) => section.key === flowerKey);
+
+    if (flowerSection) {
+      // Используем индивидуальные заголовок и описание из админки
+      pageTitle = flowerSection.title;
+      pageDescription = flowerSection.description || seoText;
+    } else {
+      // Fallback: используем отображаемое название цветка (capitalize)
+      const flowerName = flowerParam
+        .split(/[\s\-_]+/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(" ");
+      pageTitle = flowerName;
+      pageDescription = `${seoText} Фильтр: ${flowerName}.`;
+    }
+  }
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-4 md:px-8 pt-2 pb-8 md:pt-4 md:pb-10">
+      <Container className="pt-2 pb-8 md:pt-4 md:pb-10">
         {/* A) Breadcrumb — на мобильной отступ A = заголовок↔описание */}
         <Breadcrumbs items={breadcrumbItems} className="mt-0 mb-2 md:mb-4" />
 
         {/* B+C) Заголовок + SEO текст; на мобильной компактнее — видно без скролла */}
         <div className={`grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-3 md:gap-8 md:items-start ${SECTION_GAP}`}>
           <h1 className="text-2xl md:text-4xl lg:text-[2.5rem] font-bold text-foreground uppercase tracking-tight">
-            {category.name}
+            {pageTitle}
           </h1>
           <div className="mt-1 md:mt-0 md:max-h-[120px] md:overflow-y-auto">
-            <p className="text-xs md:text-[15px] leading-snug md:leading-relaxed text-foreground/90">{seoText}</p>
+            <p className="text-xs md:text-[15px] leading-snug md:leading-relaxed text-foreground/90">
+              {pageDescription}
+            </p>
           </div>
         </div>
 
@@ -158,6 +214,20 @@ export default async function MagazineCategoryPage({ params }: MagazineCategoryP
         <div className={SECTION_GAP}>
           <CategoryChips categories={chips} currentSlug={slug} />
         </div>
+
+        {/* D.5) Flower filter buttons (только для категории "Цветы в составе") */}
+        {isFlowersInCompositionCategory && flowersSubcategories.length > 0 && (
+          <div className={SECTION_GAP}>
+            <FlowerFilterButtons flowers={flowersSubcategories} />
+          </div>
+        )}
+
+        {/* D.6) Occasion filter buttons (только для категории "По поводу") */}
+        {isOccasionsCategory && occasionsSubcategories.length > 0 && (
+          <div className={SECTION_GAP}>
+            <OccasionFilterButtons occasions={occasionsSubcategories} />
+          </div>
+        )}
 
         {/* E) Product toolbar */}
         <div className={SECTION_GAP}>
@@ -174,7 +244,7 @@ export default async function MagazineCategoryPage({ params }: MagazineCategoryP
         >
           <FlowerCatalog products={products} />
         </Suspense>
-      </div>
+      </Container>
     </div>
   );
 }

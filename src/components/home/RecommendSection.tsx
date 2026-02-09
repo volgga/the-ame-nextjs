@@ -126,7 +126,9 @@ export function RecommendSection({ products }: RecommendSectionProps) {
       } else {
         el.scrollTo({ left: nextScroll, behavior: "smooth" });
       }
-      setTimeout(() => { isProgrammaticScrollRef.current = false; }, 500);
+      setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+      }, 500);
     };
 
     const id = setInterval(tick, AUTO_SCROLL_INTERVAL_MS);
@@ -143,7 +145,9 @@ export function RecommendSection({ products }: RecommendSectionProps) {
       const step = 580;
       const delta = direction === "left" ? -step : step;
       el.scrollBy({ left: delta, behavior: "smooth" });
-      setTimeout(() => { isProgrammaticScrollRef.current = false; }, 500);
+      setTimeout(() => {
+        isProgrammaticScrollRef.current = false;
+      }, 500);
     },
     [pauseAutoScroll]
   );
@@ -151,10 +155,7 @@ export function RecommendSection({ products }: RecommendSectionProps) {
   if (!products.length) return null;
 
   return (
-    <section
-      className={`bg-page-bg pb-12 md:pb-16 ${MAIN_PAGE_BLOCK_GAP}`}
-      aria-labelledby="recommend-heading"
-    >
+    <section className={`bg-page-bg pb-12 md:pb-16 ${MAIN_PAGE_BLOCK_GAP}`} aria-labelledby="recommend-heading">
       <div className="container mx-auto px-4 md:px-6">
         {/* Разделительная линия над секцией */}
         <div className="flex justify-center mb-6 md:mb-8">
@@ -247,10 +248,7 @@ export function RecommendSection({ products }: RecommendSectionProps) {
           {flowers.map((flower) => {
             const product = products.find((p) => p.id === flower.id);
             return (
-              <div
-                key={flower.id}
-                className="flex-shrink-0 w-[230px] sm:w-[280px] md:w-[300px] lg:w-[320px]"
-              >
+              <div key={flower.id} className="flex-shrink-0 w-[230px] sm:w-[280px] md:w-[300px] lg:w-[320px]">
                 <FlowerCard flower={flower} product={product} />
               </div>
             );

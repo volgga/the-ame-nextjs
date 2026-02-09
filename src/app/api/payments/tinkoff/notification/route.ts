@@ -42,7 +42,10 @@ export async function POST(request: Request) {
         const paymentId = (payload.PaymentId ?? order.tinkoffPaymentId ?? order.paymentId) as string | undefined;
         await sendOrderTelegramMessage(formatPaymentSuccess(order, paymentId));
       } catch (err) {
-        console.error("[tinkoff-notification] payment success tg failed orderId=" + orderId, err instanceof Error ? err.message : err);
+        console.error(
+          "[tinkoff-notification] payment success tg failed orderId=" + orderId,
+          err instanceof Error ? err.message : err
+        );
       }
     } else if (status === "CANCELED" || status === "DEADLINE_EXPIRED" || status === "REJECTED" || !success) {
       await updateOrderStatus(orderId, order.status === "payment_pending" ? "failed" : "canceled");
@@ -53,7 +56,10 @@ export async function POST(request: Request) {
           status;
         await sendOrderTelegramMessage(formatPaymentFailed(order, reason));
       } catch (err) {
-        console.error("[tinkoff-notification] payment failed tg failed orderId=" + orderId, err instanceof Error ? err.message : err);
+        console.error(
+          "[tinkoff-notification] payment failed tg failed orderId=" + orderId,
+          err instanceof Error ? err.message : err
+        );
       }
     }
   } catch (err) {

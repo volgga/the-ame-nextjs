@@ -9,7 +9,10 @@ async function requireAdmin() {
   if (!ok) throw new Error("unauthorized");
 }
 
-const optionalImageUrl = z.union([z.string(), z.null(), z.literal("")]).optional().transform((v) => (v === "" ? null : v));
+const optionalImageUrl = z
+  .union([z.string(), z.null(), z.literal("")])
+  .optional()
+  .transform((v) => (v === "" ? null : v));
 
 const variantSchema = z.object({
   size: z.string().min(1),
@@ -18,13 +21,19 @@ const variantSchema = z.object({
   width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0),
   is_preorder: z.boolean().default(false),
+  is_new: z.boolean().default(false),
   is_active: z.boolean().default(true),
   sort_order: z.number().int().default(0),
-  image_url: optionalImageUrl,
+  image_url: optionalImageUrl, // Обратная совместимость - игнорируется на клиенте
   description: z.string().optional().nullable(),
-  seo_title: z.string().max(300).optional().nullable(),
-  seo_description: z.string().max(500).optional().nullable(),
-  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
+  seo_title: z.string().max(300).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
+  seo_description: z.string().max(500).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
+  og_image: z
+    .string()
+    .max(2000)
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" ? null : v)), // Обратная совместимость - игнорируется на клиенте
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -60,13 +69,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         width_cm: parsed.data.width_cm ?? null,
         price: parsed.data.price,
         is_preorder: parsed.data.is_preorder,
+        is_new: parsed.data.is_new ?? false,
         is_active: parsed.data.is_active,
         sort_order: parsed.data.sort_order,
-        image_url: parsed.data.image_url ?? null,
+        image_url: parsed.data.image_url ?? null, // Обратная совместимость
         description: parsed.data.description ?? null,
-        seo_title: parsed.data.seo_title?.trim() || null,
-        seo_description: parsed.data.seo_description?.trim() || null,
-        og_image: parsed.data.og_image?.trim() || null,
+        seo_title: parsed.data.seo_title?.trim() || null, // Обратная совместимость
+        seo_description: parsed.data.seo_description?.trim() || null, // Обратная совместимость
+        og_image: parsed.data.og_image?.trim() || null, // Обратная совместимость
       })
       .select()
       .single();

@@ -169,10 +169,11 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
           <div className="w-full max-w-5xl section-divider-line" aria-hidden />
         </div>
         <div className={MAIN_PAGE_BLOCK_GAP_MARGIN}>
-          <div className="flex flex-col items-start gap-2 md:flex-row md:items-baseline md:justify-between md:gap-4">
+          {/* Верхняя строка: заголовок слева, кнопка "Смотреть всё" справа */}
+          <div className="flex items-center justify-between gap-4">
             <h2
               id="collections-heading"
-              className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)] uppercase tracking-tight"
+              className="text-3xl md:text-4xl lg:text-[48px] font-bold text-[var(--color-text-main)] uppercase tracking-tight"
             >
               КОЛЛЕКЦИИ THE ÁME
             </h2>
@@ -188,10 +189,11 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
         <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {collections.map((col) => {
             const href =
-              !col.categorySlug || col.categorySlug === "magazin"
-                ? "/magazin"
-                : `/magazine/${col.categorySlug}`;
-            const imageSrc = col.imageUrl?.trim() && (col.imageUrl.startsWith("http") || col.imageUrl.startsWith("/")) ? col.imageUrl : "/placeholder.svg";
+              !col.categorySlug || col.categorySlug === "magazin" ? "/magazin" : `/magazine/${col.categorySlug}`;
+            const imageSrc =
+              col.imageUrl?.trim() && (col.imageUrl.startsWith("http") || col.imageUrl.startsWith("/"))
+                ? col.imageUrl
+                : "/placeholder.svg";
             const cardKey = col.id;
             const rowInfo = cardRowMap.get(cardKey);
             const isRowVisible = rowInfo ? visibleRows.has(rowInfo.rowIndex) : false;
@@ -208,24 +210,46 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                   }
                 }}
                 href={href}
-                className={`group relative block w-full aspect-square overflow-hidden rounded-2xl bg-[#ece9e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2 reveal reveal--stagger ${isRowVisible ? "reveal--in" : ""}`}
+                className={`group relative block w-full overflow-hidden rounded-2xl bg-[#ece9e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2 reveal reveal--stagger ${isRowVisible ? "reveal--in" : ""}`}
                 style={{ "--stagger-delay": `${staggerDelay}ms` } as React.CSSProperties}
                 aria-label={col.name}
               >
-                <Image
-                  src={imageSrc}
-                  alt=""
-                  fill
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                />
-                <div
-                  className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/60 to-transparent"
-                  aria-hidden
-                />
-                <span className="absolute bottom-0 left-0 right-0 p-3 text-white font-semibold text-base md:text-lg drop-shadow-md">
-                  {col.name}
-                </span>
+                {/* Изображение с overlay */}
+                <div className="relative w-full aspect-square overflow-hidden">
+                  <Image
+                    src={imageSrc}
+                    alt=""
+                    fill
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                  />
+                  {/* Градиент снизу для читаемости текста */}
+                  <div
+                    className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/35 via-black/20 to-transparent pointer-events-none"
+                    aria-hidden
+                  />
+                  {/* Overlay: название сверху слева, стрелка сверху справа, описание снизу */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    {/* Название коллекции - сверху слева */}
+                    <h3 className="absolute top-4 left-4 md:top-5 md:left-5 text-white font-bold text-lg md:text-xl lg:text-2xl uppercase tracking-tight drop-shadow-lg">
+                      {col.name}
+                    </h3>
+                    {/* Стрелка - сверху справа */}
+                    <div className="absolute top-4 right-4 md:top-5 md:right-5">
+                      <ArrowRight
+                        className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-lg"
+                        strokeWidth={2.5}
+                        aria-hidden
+                      />
+                    </div>
+                    {/* Описание - снизу на фото */}
+                    {col.description && col.description.trim() && (
+                      <p className="absolute bottom-4 left-4 md:bottom-5 md:left-5 right-4 md:right-5 text-white text-sm md:text-base leading-relaxed drop-shadow-lg">
+                        {col.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </Link>
             );
           })}

@@ -85,7 +85,13 @@ export function PromoCodeBlock({
 
   return (
     <div className={isCheckout ? "space-y-2" : "mt-4 space-y-2"}>
-      <label className={isCheckout ? "block text-base font-semibold mb-2 text-color-text-main" : "block text-sm font-medium text-[#111]"}>
+      <label
+        className={
+          isCheckout
+            ? "block text-base font-semibold mb-2 text-color-text-main"
+            : "block text-sm font-medium text-[#111]"
+        }
+      >
         Промокод
       </label>
       {totals.promo ? (

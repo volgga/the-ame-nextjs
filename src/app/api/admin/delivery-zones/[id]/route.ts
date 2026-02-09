@@ -16,32 +16,23 @@ const updateSchema = z.object({
   subareas_text: z.string().optional().nullable(),
 });
 
-export async function PATCH(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;
     const body = await _request.json();
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Неверные данные", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
     const payload: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
-    if (parsed.data.zone_title !== undefined)
-      payload.zone_title = parsed.data.zone_title.trim();
+    if (parsed.data.zone_title !== undefined) payload.zone_title = parsed.data.zone_title.trim();
     if (parsed.data.paid_up_to !== undefined) payload.paid_up_to = parsed.data.paid_up_to;
-    if (parsed.data.delivery_price !== undefined)
-      payload.delivery_price = parsed.data.delivery_price;
+    if (parsed.data.delivery_price !== undefined) payload.delivery_price = parsed.data.delivery_price;
     if (parsed.data.free_from !== undefined) payload.free_from = parsed.data.free_from;
-    if (parsed.data.subareas_text !== undefined)
-      payload.subareas_text = parsed.data.subareas_text?.trim() || null;
+    if (parsed.data.subareas_text !== undefined) payload.subareas_text = parsed.data.subareas_text?.trim() || null;
 
     const supabase = getSupabaseAdmin();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -62,10 +53,7 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     await requireAdmin();
     const { id } = await params;

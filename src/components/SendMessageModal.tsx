@@ -122,9 +122,7 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
           <div className="grid grid-cols-3 items-center gap-2 pt-4 px-6 sticky top-0 bg-white z-10 pb-2">
             <div className="w-10" aria-hidden />
             <div className="text-center">
-              <h2 className="text-lg font-bold uppercase tracking-tight text-color-text-main">
-                ОТПРАВИТЬ СООБЩЕНИЕ
-              </h2>
+              <h2 className="text-lg font-bold uppercase tracking-tight text-color-text-main">ОТПРАВИТЬ СООБЩЕНИЕ</h2>
             </div>
             <div className="flex justify-end">
               <button
@@ -141,7 +139,12 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
           <div className="px-6 pb-6 space-y-4">
             <form onSubmit={handleFormSubmit} className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-color-text-main mb-1">Имя <span className="text-red-500" aria-hidden>*</span></label>
+                <label className="block text-sm font-medium text-color-text-main mb-1">
+                  Имя{" "}
+                  <span className="text-red-500" aria-hidden>
+                    *
+                  </span>
+                </label>
                 <input
                   type="text"
                   placeholder="Как к Вам обращаться?"
@@ -156,7 +159,12 @@ export function SendMessageModal({ isOpen, onClose }: SendMessageModalProps) {
                 {nameError && <p className="mt-1 text-sm text-red-600">{nameError}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium text-color-text-main mb-1">Телефон <span className="text-red-500" aria-hidden>*</span></label>
+                <label className="block text-sm font-medium text-color-text-main mb-1">
+                  Телефон{" "}
+                  <span className="text-red-500" aria-hidden>
+                    *
+                  </span>
+                </label>
                 <input
                   type="tel"
                   placeholder="+7 (000) 000-00-00"

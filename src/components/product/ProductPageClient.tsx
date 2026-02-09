@@ -4,7 +4,17 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, ChevronDown, Heart, Bell, Minus, Plus, ArrowLeftRight, ArrowUpDown } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Heart,
+  Bell,
+  Minus,
+  Plus,
+  ArrowLeftRight,
+  ArrowUpDown,
+} from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import type { Product } from "@/lib/products";
@@ -12,6 +22,7 @@ import type { ProductDetails } from "@/lib/productDetails";
 import { Flower, getCartLineId } from "@/types/flower";
 import { Breadcrumbs, BREADCRUMB_SPACING } from "@/components/ui/breadcrumbs";
 import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
+import { Container } from "@/components/layout/Container";
 import { FullscreenViewer } from "./FullscreenViewer";
 import { GiftHintModal } from "./GiftHintModal";
 import { ContactMessengersRow } from "./ContactMessengersRow";
@@ -171,12 +182,7 @@ function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClos
                 />
               </div>
               <div>
-                <PhoneInput
-                  value={phone}
-                  onChange={setPhone}
-                  label="Телефон"
-                  required
-                />
+                <PhoneInput value={phone} onChange={setPhone} label="Телефон" required />
               </div>
 
               {error && <p className="text-sm text-red-600">{error}</p>}
@@ -231,16 +237,22 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
   // Client-side update metadata when variant changes (variant has its own SEO fields)
   useEffect(() => {
     if (!hasVariants || !selectedVariant) return;
-    const v = selectedVariant as { seo_title?: string | null; seo_description?: string | null; og_image?: string | null };
+    const v = selectedVariant as {
+      seo_title?: string | null;
+      seo_description?: string | null;
+      og_image?: string | null;
+    };
     const title = v.seo_title?.trim();
     const desc = v.seo_description?.trim();
-    if (title) {
-      document.title = `${title} | The Ame`;
-    }
-    const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc && desc) {
-      metaDesc.setAttribute("content", desc);
-    }
+    useEffect(() => {
+      if (title) {
+        document.title = `${title} | The Ame`;
+      }
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc && desc) {
+        metaDesc.setAttribute("content", desc);
+      }
+    }, [title, desc]);
   }, [hasVariants, selectedVariant]);
 
   // Храним предыдущий product.id чтобы сбросить индекс только при смене товара
@@ -375,7 +387,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     <>
       <div className="bg-page-bg">
         {/* Контейнер с нормальным отступом сверху, компактным снизу */}
-        <div className="container mx-auto px-6 md:px-8 pt-3 pb-8 md:pt-4 md:pb-10">
+        <Container className="pt-3 pb-8 md:pt-4 md:pb-10">
           {/* Хлебные крошки — минимальный отступ до контента */}
           <Breadcrumbs items={breadcrumbItems} className={BREADCRUMB_SPACING} />
 
@@ -547,68 +559,68 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
 
                 {/* Блок действий */}
                 <div>
-                {/* Первая строка: количество, CTA кнопки, избранное. На mobile — компактно в одну строку. */}
-                <div className="flex flex-row items-center gap-1.5 md:gap-2 mb-4 flex-nowrap">
-                  {/* Селектор количества */}
-                  <div className="flex items-center border border-border-block rounded-lg bg-white overflow-hidden flex-shrink-0 h-8 md:h-9">
-                    <button
-                      type="button"
-                      onClick={() => handleQuantityChange(-1)}
-                      disabled={quantity <= 1}
-                      className="px-1.5 md:px-2 py-1 md:py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-r border-border-block"
-                      aria-label="Уменьшить количество"
-                    >
-                      <Minus className="w-3.5 h-3.5" />
-                    </button>
-                    <div className="px-2 md:px-2.5 py-1 md:py-1.5 text-xs md:text-sm font-medium text-color-text-main min-w-[1.75rem] md:min-w-[2rem] text-center border-r border-border-block">
-                      {quantity}
+                  {/* Первая строка: количество, CTA кнопки, избранное. На mobile — компактно в одну строку. */}
+                  <div className="flex flex-row items-center gap-1.5 md:gap-2 mb-4 flex-nowrap">
+                    {/* Селектор количества */}
+                    <div className="flex items-center border border-border-block rounded-lg bg-white overflow-hidden flex-shrink-0 h-8 md:h-9">
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(-1)}
+                        disabled={quantity <= 1}
+                        className="px-1.5 md:px-2 py-1 md:py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-r border-border-block"
+                        aria-label="Уменьшить количество"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="px-2 md:px-2.5 py-1 md:py-1.5 text-xs md:text-sm font-medium text-color-text-main min-w-[1.75rem] md:min-w-[2rem] text-center border-r border-border-block">
+                        {quantity}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleQuantityChange(1)}
+                        className="px-1.5 md:px-2 py-1 md:py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors"
+                        aria-label="Увеличить количество"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
                     </div>
+
+                    {/* CTA кнопки: на mobile уменьшены (h-8, text-xs, px-2), в одну строку */}
+                    <div className="flex flex-1 gap-1.5 md:gap-2 min-w-0 min-h-0">
+                      {/* Кнопка "В КОРЗИНУ" - зелёная залитая */}
+                      <button
+                        onClick={handleAddToCart}
+                        className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0 touch-manipulation"
+                      >
+                        В КОРЗИНУ
+                      </button>
+
+                      {/* Кнопка "КУПИТЬ СЕЙЧАС" */}
+                      <button
+                        onClick={handleBuyNow}
+                        className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all btn-product-cta min-w-0 touch-manipulation"
+                      >
+                        КУПИТЬ СЕЙЧАС
+                      </button>
+                    </div>
+
+                    {/* Кнопка избранного — в одну строку с CTA, на mobile компактнее */}
                     <button
                       type="button"
-                      onClick={() => handleQuantityChange(1)}
-                      className="px-1.5 md:px-2 py-1 md:py-1.5 text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors"
-                      aria-label="Увеличить количество"
+                      onClick={handleToggleFavorite}
+                      className={`btn-favorite group h-8 w-8 min-h-[36px] min-w-[36px] md:h-9 md:min-h-[44px] md:w-9 md:min-w-[44px] flex items-center justify-center flex-shrink-0 ${isInFavorites ? "selected" : ""}`}
+                      aria-label={isInFavorites ? "Убрать из избранного" : "Добавить в избранное"}
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Heart
+                        className={`w-4 h-4 transition-colors ${
+                          isInFavorites
+                            ? "fill-[var(--color-text-main)] text-[var(--color-text-main)]"
+                            : "text-[var(--color-text-main)] group-hover:text-[var(--header-foreground)]"
+                        }`}
+                        strokeWidth={1.5}
+                      />
                     </button>
                   </div>
-
-                  {/* CTA кнопки: на mobile уменьшены (h-8, text-xs, px-2), в одну строку */}
-                  <div className="flex flex-1 gap-1.5 md:gap-2 min-w-0 min-h-0">
-                    {/* Кнопка "В КОРЗИНУ" - зелёная залитая */}
-                    <button
-                      onClick={handleAddToCart}
-                      className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0 touch-manipulation"
-                    >
-                      В КОРЗИНУ
-                    </button>
-
-                    {/* Кнопка "КУПИТЬ СЕЙЧАС" */}
-                    <button
-                      onClick={handleBuyNow}
-                      className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all btn-product-cta min-w-0 touch-manipulation"
-                    >
-                      КУПИТЬ СЕЙЧАС
-                    </button>
-                  </div>
-
-                  {/* Кнопка избранного — в одну строку с CTA, на mobile компактнее */}
-                  <button
-                    type="button"
-                    onClick={handleToggleFavorite}
-                    className={`btn-favorite group h-8 w-8 min-h-[36px] min-w-[36px] md:h-9 md:min-h-[44px] md:w-9 md:min-w-[44px] flex items-center justify-center flex-shrink-0 ${isInFavorites ? "selected" : ""}`}
-                    aria-label={isInFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-                  >
-                    <Heart
-                      className={`w-4 h-4 transition-colors ${
-                        isInFavorites
-                          ? "fill-[var(--color-text-main)] text-[var(--color-text-main)]"
-                          : "text-[var(--color-text-main)] group-hover:text-[var(--header-foreground)]"
-                      }`}
-                      strokeWidth={1.5}
-                    />
-                  </button>
-                </div>
 
                   {/* Вторая строка: "Намекнуть о подарке" */}
                   <button
@@ -670,8 +682,8 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                   >
                     <p>
                       {[
-                        displaySizeHeight != null && displaySizeHeight > 0 ? `высота ${displaySizeHeight} см` : null,
-                        displaySizeWidth != null && displaySizeWidth > 0 ? `ширина ${displaySizeWidth} см` : null,
+                        displaySizeHeight != null && displaySizeHeight > 0 ? `Высота ${displaySizeHeight} см` : null,
+                        displaySizeWidth != null && displaySizeWidth > 0 ? `Ширина ${displaySizeWidth} см` : null,
                       ]
                         .filter(Boolean)
                         .join(", ")}
@@ -694,9 +706,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                   isOpen={openedAccordion === "Подарок при заказе"}
                   onToggle={() => handleAccordionToggle("Подарок при заказе")}
                 >
-                  <p className="whitespace-pre-line">
-                    {productDetails.kit.trim() || "—"}
-                  </p>
+                  <p className="whitespace-pre-line">{productDetails.kit.trim() || "—"}</p>
                 </AccordionItem>
 
                 <AccordionItem
@@ -706,16 +716,10 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                   onToggle={() => handleAccordionToggle("Доставка и оплата")}
                 >
                   <p>
-                    Доставка цветов по Сочи доступна в любое время суток.
-                    Вы можете оформить заказ заранее или в день получения,
-                    указав удобный интервал доставки.
-                    Среднее время ожидания — от 60 минут.
-                    Подробные условия и стоимость доставки
-                    смотрите на странице{" "}
-                    <Link
-                      href="/delivery-and-payments"
-                      className="text-color-text-main underline hover:no-underline"
-                    >
+                    Доставка цветов по Сочи доступна в любое время суток. Вы можете оформить заказ заранее или в день
+                    получения, указав удобный интервал доставки. Среднее время ожидания — от 60 минут. Подробные условия
+                    и стоимость доставки смотрите на странице{" "}
+                    <Link href="/delivery-and-payments" className="text-color-text-main underline hover:no-underline">
                       «Доставка и оплата»
                     </Link>
                     .
@@ -742,7 +746,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
               </div>
             </div>
           </div>
-        </div>
+        </Container>
       </div>
 
       <AddToOrderSection products={addToOrderProducts} />

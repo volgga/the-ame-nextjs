@@ -178,10 +178,7 @@ function PaymentSuccessContent() {
         <div className="max-w-md w-full text-center">
           <p className="text-color-text-secondary mb-4">{error}</p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
-            <Link
-              href="/"
-              className="inline-flex justify-center px-6 py-3 rounded-full font-semibold btn-outline"
-            >
+            <Link href="/" className="inline-flex justify-center px-6 py-3 rounded-full font-semibold btn-outline">
               На главную
             </Link>
             <button

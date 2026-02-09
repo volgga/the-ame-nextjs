@@ -14,13 +14,8 @@ export default function NotFound() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-5 py-16">
       <h1 className="text-6xl font-semibold text-neutral-800">404</h1>
-      <p className="mt-3 text-center text-lg text-neutral-600">
-        Страница не найдена
-      </p>
-      <Link
-        href="/"
-        className="mt-8 rounded-lg bg-neutral-900 px-6 py-3 text-white transition hover:bg-neutral-800"
-      >
+      <p className="mt-3 text-center text-lg text-neutral-600">Страница не найдена</p>
+      <Link href="/" className="mt-8 rounded-lg bg-neutral-900 px-6 py-3 text-white transition hover:bg-neutral-800">
         На главную
       </Link>
     </div>

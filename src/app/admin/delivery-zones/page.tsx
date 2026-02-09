@@ -216,43 +216,26 @@ export default function AdminDeliveryZonesPage() {
         </button>
       </div>
 
-      {error && !creating && !editing && (
-        <p className="text-sm text-red-600">{error}</p>
-      )}
+      {error && !creating && !editing && <p className="text-sm text-red-600">{error}</p>}
 
       {(creating || editing) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={closeModal}
-            aria-hidden
-          />
+          <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
           <div
             className="relative w-full max-w-[480px] max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <form
-              onSubmit={handleSaveForm}
-              className="flex flex-col min-h-0 overflow-y-auto"
-            >
+            <form onSubmit={handleSaveForm} className="flex flex-col min-h-0 overflow-y-auto">
               <div className="flex-1 p-6">
-                <h3 className="mb-4 font-medium text-[#111]">
-                  {creating ? "Новая зона" : "Редактирование"}
-                </h3>
-                {error && (creating || editing) && (
-                  <p className="mb-3 text-sm text-red-600">{error}</p>
-                )}
+                <h3 className="mb-4 font-medium text-[#111]">{creating ? "Новая зона" : "Редактирование"}</h3>
+                {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium text-[#111]">
-                      Название района *
-                    </label>
+                    <label className="block text-sm font-medium text-[#111]">Название района *</label>
                     <input
                       type="text"
                       value={form.zone_title}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, zone_title: e.target.value }))
-                      }
+                      onChange={(e) => setForm((f) => ({ ...f, zone_title: e.target.value }))}
                       className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
                       required
                       autoFocus
@@ -260,9 +243,7 @@ export default function AdminDeliveryZonesPage() {
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-[#111]">
-                        до (₽)
-                      </label>
+                      <label className="block text-sm font-medium text-[#111]">до (₽)</label>
                       <input
                         type="number"
                         min={0}
@@ -277,9 +258,7 @@ export default function AdminDeliveryZonesPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#111]">
-                        цена (₽)
-                      </label>
+                      <label className="block text-sm font-medium text-[#111]">цена (₽)</label>
                       <input
                         type="number"
                         min={0}
@@ -287,17 +266,14 @@ export default function AdminDeliveryZonesPage() {
                         onChange={(e) =>
                           setForm((f) => ({
                             ...f,
-                            delivery_price:
-                              parseInt(e.target.value, 10) || 0,
+                            delivery_price: parseInt(e.target.value, 10) || 0,
                           }))
                         }
                         className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-[#111]">
-                        бесплатно от (₽)
-                      </label>
+                      <label className="block text-sm font-medium text-[#111]">бесплатно от (₽)</label>
                       <input
                         type="number"
                         min={0}
@@ -313,14 +289,10 @@ export default function AdminDeliveryZonesPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-[#111]">
-                      Подзоны (опционально)
-                    </label>
+                    <label className="block text-sm font-medium text-[#111]">Подзоны (опционально)</label>
                     <textarea
                       value={form.subareas_text}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, subareas_text: e.target.value }))
-                      }
+                      onChange={(e) => setForm((f) => ({ ...f, subareas_text: e.target.value }))}
                       rows={3}
                       className="mt-1 w-full resize-y rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
                       placeholder="Донская, Виноградная, ..."
@@ -366,23 +338,14 @@ export default function AdminDeliveryZonesPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="px-4 py-3 font-medium text-[#111] w-10">№</th>
-                <th className="px-4 py-3 font-medium text-[#111]">
-                  Район
-                </th>
-                <th className="px-4 py-3 font-medium text-[#111]">
-                  до (₽) / цена (₽) / бесплатно от (₽)
-                </th>
-                <th className="px-4 py-3 font-medium text-[#111] w-32">
-                  Действия
-                </th>
+                <th className="px-4 py-3 font-medium text-[#111]">Район</th>
+                <th className="px-4 py-3 font-medium text-[#111]">до (₽) / цена (₽) / бесплатно от (₽)</th>
+                <th className="px-4 py-3 font-medium text-[#111] w-32">Действия</th>
               </tr>
             </thead>
             <tbody>
               {zones.map((zone, i) => (
-                <tr
-                  key={zone.id}
-                  className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50"
-                >
+                <tr key={zone.id} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50">
                   <td className="px-4 py-3 text-gray-500">
                     <div className="flex items-center gap-0.5">
                       <button
@@ -396,9 +359,7 @@ export default function AdminDeliveryZonesPage() {
                       </button>
                       <button
                         type="button"
-                        disabled={
-                          i === zones.length - 1 || movingId !== null
-                        }
+                        disabled={i === zones.length - 1 || movingId !== null}
                         onClick={() => handleMoveDown(zone)}
                         className="rounded p-0.5 text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
                         aria-label="Вниз"
@@ -407,13 +368,10 @@ export default function AdminDeliveryZonesPage() {
                       </button>
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-medium text-[#111]">
-                    {zone.zone_title}
-                  </td>
+                  <td className="px-4 py-3 font-medium text-[#111]">{zone.zone_title}</td>
                   <td className="px-4 py-3 text-[#111]">
-                    до {zone.paid_up_to.toLocaleString("ru-RU")} ₽ —{" "}
-                    {zone.delivery_price.toLocaleString("ru-RU")} ₽ / от{" "}
-                    {zone.free_from.toLocaleString("ru-RU")} ₽ — Бесплатно
+                    до {zone.paid_up_to.toLocaleString("ru-RU")} ₽ — {zone.delivery_price.toLocaleString("ru-RU")} ₽ /
+                    от {zone.free_from.toLocaleString("ru-RU")} ₽ — Бесплатно
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
@@ -449,18 +407,12 @@ export default function AdminDeliveryZonesPage() {
           </table>
         </div>
       ) : (
-        <p className="py-8 text-center text-gray-500">
-          Нет зон. Нажмите «Добавить зону».
-        </p>
+        <p className="py-8 text-center text-gray-500">Нет зон. Нажмите «Добавить зону».</p>
       )}
 
       {deleteConfirmId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/30"
-            onClick={() => setDeleteConfirmId(null)}
-            aria-hidden
-          />
+          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}

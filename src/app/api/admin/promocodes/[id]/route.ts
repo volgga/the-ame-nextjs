@@ -80,12 +80,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (parsed.data.endsAt !== undefined) payload.ends_at = parsed.data.endsAt;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase as any)
-      .from("promo_codes")
-      .update(payload)
-      .eq("id", id)
-      .select()
-      .single();
+    const { data, error } = await (supabase as any).from("promo_codes").update(payload).eq("id", id).select().single();
 
     if (error) throw error;
     if (!data) return NextResponse.json({ error: "Не найдено" }, { status: 404 });

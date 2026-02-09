@@ -95,8 +95,7 @@ export async function PATCH(request: NextRequest) {
     if (isTableMissing) {
       return NextResponse.json(
         {
-          error:
-            "Таблица home_reviews не создана. Выполните миграции из scripts/migrations/",
+          error: "Таблица home_reviews не создана. Выполните миграции из scripts/migrations/",
         },
         { status: 500 }
       );

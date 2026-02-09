@@ -9,9 +9,7 @@ async function requireAdmin() {
 }
 
 const reorderSchema = z.object({
-  items: z.array(
-    z.object({ id: z.string().uuid(), sort_order: z.number().int().min(0) })
-  ),
+  items: z.array(z.object({ id: z.string().uuid(), sort_order: z.number().int().min(0) })),
 });
 
 export async function POST(request: NextRequest) {
@@ -20,10 +18,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = reorderSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Неверные данные", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();

@@ -90,28 +90,32 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
     setInitialSnapshot(snapshot(updated));
   }, [data]);
 
-  useImperativeHandle(resolvedRef, () => ({
-    save: async () => {
-      setSaving(true);
-      setError("");
-      try {
-        await performSave();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      } catch (e) {
-        setError((e as Error).message || "Не удалось сохранить");
-        throw e;
-      } finally {
-        setSaving(false);
-      }
-    },
-    resetToInitial: () => {
-      if (initialSnapshot === "") return;
-      const parsed = JSON.parse(initialSnapshot) as OrderBlockData;
-      setData(parsed);
-      setPreviewUrl(parsed.imageUrl);
-    },
-  }), [initialSnapshot, performSave]);
+  useImperativeHandle(
+    resolvedRef,
+    () => ({
+      save: async () => {
+        setSaving(true);
+        setError("");
+        try {
+          await performSave();
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        } catch (e) {
+          setError((e as Error).message || "Не удалось сохранить");
+          throw e;
+        } finally {
+          setSaving(false);
+        }
+      },
+      resetToInitial: () => {
+        if (initialSnapshot === "") return;
+        const parsed = JSON.parse(initialSnapshot) as OrderBlockData;
+        setData(parsed);
+        setPreviewUrl(parsed.imageUrl);
+      },
+    }),
+    [initialSnapshot, performSave]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);

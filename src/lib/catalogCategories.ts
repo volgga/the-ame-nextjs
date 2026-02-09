@@ -45,7 +45,7 @@ export function categoriesToNav(categories: Category[]): { label: string; slug: 
  * Учитывает categorySlug и массив categorySlugs (из products/variant_products).
  */
 export function filterProductsByCategorySlug<
-  T extends { slug: string; categorySlug?: string | null; categorySlugs?: string[] | null }
+  T extends { slug: string; categorySlug?: string | null; categorySlugs?: string[] | null },
 >(products: T[], categorySlug: string): T[] {
   return products.filter(
     (p) => p.categorySlug === categorySlug || (p.categorySlugs && p.categorySlugs.includes(categorySlug))

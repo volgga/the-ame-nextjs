@@ -87,7 +87,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   const handlePromoRemoveSuccess = useCallback(() => {
     setTotals((t) =>
-      t ? { ...t, discount: 0, total: t.subtotal, promo: null } : { subtotal, discount: 0, total: subtotal, promo: null }
+      t
+        ? { ...t, discount: 0, total: t.subtotal, promo: null }
+        : { subtotal, discount: 0, total: subtotal, promo: null }
     );
   }, [subtotal]);
 
@@ -132,17 +134,11 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   <CartItemsList />
                   {/* Итоги */}
                   <div className="mt-4 text-right space-y-1">
-                    <div className="text-[#111]">
-                      Подытог: {formatPrice(displayTotals.subtotal)}
-                    </div>
+                    <div className="text-[#111]">Подытог: {formatPrice(displayTotals.subtotal)}</div>
                     {displayTotals.discount > 0 && (
-                      <div className="text-green-600">
-                        Скидка: -{formatPrice(displayTotals.discount)}
-                      </div>
+                      <div className="text-green-600">Скидка: -{formatPrice(displayTotals.discount)}</div>
                     )}
-                    <div className="font-bold text-lg">
-                      Итого: {formatPrice(displayTotals.total)}
-                    </div>
+                    <div className="font-bold text-lg">Итого: {formatPrice(displayTotals.total)}</div>
                   </div>
                   <UpsellSection />
                 </>

@@ -96,7 +96,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-const optionalImageUrl = z.union([z.string(), z.null(), z.literal("")]).optional().transform((v) => (v === "" ? null : v));
+const optionalImageUrl = z
+  .union([z.string(), z.null(), z.literal("")])
+  .optional()
+  .transform((v) => (v === "" ? null : v));
 
 const createSimpleSchema = z.object({
   type: z.literal("simple"),
@@ -104,6 +107,7 @@ const createSimpleSchema = z.object({
   slug: z.string().optional(),
   description: z.string().optional(),
   composition_size: z.string().optional().nullable(),
+  composition_flowers: z.array(z.string()).optional().nullable(),
   height_cm: z.number().int().min(0).optional().nullable(),
   width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0),
@@ -121,7 +125,12 @@ const createSimpleSchema = z.object({
   seo_keywords: z.string().max(500).optional().nullable(),
   og_title: z.string().max(300).optional().nullable(),
   og_description: z.string().max(500).optional().nullable(),
-  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
+  og_image: z
+    .string()
+    .max(2000)
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" ? null : v)),
 });
 
 const createVariantSchema = z.object({
@@ -129,6 +138,7 @@ const createVariantSchema = z.object({
   name: z.string().min(1),
   slug: z.string().optional(),
   description: z.string().optional(),
+  composition_flowers: z.array(z.string()).optional().nullable(),
   image_url: optionalImageUrl,
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
@@ -139,7 +149,12 @@ const createVariantSchema = z.object({
   seo_keywords: z.string().max(500).optional().nullable(),
   og_title: z.string().max(300).optional().nullable(),
   og_description: z.string().max(500).optional().nullable(),
-  og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
+  og_image: z
+    .string()
+    .max(2000)
+    .optional()
+    .nullable()
+    .transform((v) => (v === "" ? null : v)),
   variants: z
     .array(
       z.object({
@@ -149,12 +164,18 @@ const createVariantSchema = z.object({
         width_cm: z.number().int().min(0).optional().nullable(),
         price: z.number().min(0),
         is_preorder: z.boolean().default(false),
-        image_url: optionalImageUrl,
+        is_new: z.boolean().default(false),
+        image_url: optionalImageUrl, // Обратная совместимость - игнорируется на клиенте
         sort_order: z.number().default(0),
         is_active: z.boolean().default(true),
-        seo_title: z.string().max(300).optional().nullable(),
-        seo_description: z.string().max(500).optional().nullable(),
-        og_image: z.string().max(2000).optional().nullable().transform((v) => (v === "" ? null : v)),
+        seo_title: z.string().max(300).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
+        seo_description: z.string().max(500).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
+        og_image: z
+          .string()
+          .max(2000)
+          .optional()
+          .nullable()
+          .transform((v) => (v === "" ? null : v)), // Обратная совместимость - игнорируется на клиенте
       })
     )
     .min(1),
@@ -185,7 +206,7 @@ export async function POST(request: NextRequest) {
       const slug = parsed.data.slug?.trim() || slugify(parsed.data.name) || crypto.randomUUID();
       const categorySlugs = parsed.data.category_slugs?.filter(Boolean) ?? null;
       const mainCategorySlug = categorySlugs?.[0] ?? parsed.data.category_slug ?? null;
-      
+
       // Логика для is_new и new_until:
       // Если is_new = true и new_until не задан -> установить now() + 30 days
       // Если is_new = false -> new_until = null
@@ -197,7 +218,7 @@ export async function POST(request: NextRequest) {
       } else if (!parsed.data.is_new) {
         newUntil = null;
       }
-      
+
       const { data, error } = await sb
         .from("products")
         .insert({
@@ -205,6 +226,10 @@ export async function POST(request: NextRequest) {
           slug,
           description: parsed.data.description ?? null,
           composition_size: parsed.data.composition_size ?? null,
+          composition_flowers:
+            parsed.data.composition_flowers && parsed.data.composition_flowers.length > 0
+              ? parsed.data.composition_flowers
+              : null,
           height_cm: parsed.data.height_cm ?? null,
           width_cm: parsed.data.width_cm ?? null,
           price: parsed.data.price,
@@ -259,6 +284,10 @@ export async function POST(request: NextRequest) {
           name: parsed.data.name,
           slug,
           description: parsed.data.description ?? null,
+          composition_flowers:
+            parsed.data.composition_flowers && parsed.data.composition_flowers.length > 0
+              ? parsed.data.composition_flowers
+              : null,
           image_url: parsed.data.image_url ?? null,
           min_price_cache: minPrice,
           is_active: parsed.data.is_active,
@@ -288,12 +317,13 @@ export async function POST(request: NextRequest) {
         width_cm: v.width_cm ?? null,
         price: v.price,
         is_preorder: v.is_preorder,
-        image_url: v.image_url ?? null,
+        is_new: v.is_new ?? false,
+        image_url: v.image_url ?? null, // Обратная совместимость
         sort_order: v.sort_order,
         is_active: v.is_active,
-        seo_title: v.seo_title?.trim() || null,
-        seo_description: v.seo_description?.trim() || null,
-        og_image: v.og_image?.trim() || null,
+        seo_title: v.seo_title?.trim() || null, // Обратная совместимость
+        seo_description: v.seo_description?.trim() || null, // Обратная совместимость
+        og_image: v.og_image?.trim() || null, // Обратная совместимость
       }));
 
       const { error: variantsError } = await sb.from("product_variants").insert(variantsToInsert);

@@ -221,7 +221,9 @@ export const MarqueeForm = forwardRef<MarqueeFormRef, MarqueeFormProps>(function
             placeholder="https://... или /magazine/..."
             className="w-full rounded border border-gray-300 px-3 py-2 text-[#111] text-sm"
           />
-          <p className="mt-0.5 text-xs text-gray-500">Пусто — дорожка не кликабельна. Допустимы http(s):// или путь /...</p>
+          <p className="mt-0.5 text-xs text-gray-500">
+            Пусто — дорожка не кликабельна. Допустимы http(s):// или путь /...
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2 pt-2">

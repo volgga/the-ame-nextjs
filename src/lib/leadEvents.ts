@@ -32,11 +32,7 @@ export interface LeadEventMeta {
  * @param meta - Метаданные события (без секретов)
  * @param leadId - Опциональный ID лида
  */
-export async function logLeadEvent(
-  type: LeadEventType,
-  meta: LeadEventMeta = {},
-  leadId?: string
-): Promise<void> {
+export async function logLeadEvent(type: LeadEventType, meta: LeadEventMeta = {}, leadId?: string): Promise<void> {
   try {
     const supabase = getSupabaseAdmin();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

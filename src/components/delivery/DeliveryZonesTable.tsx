@@ -49,9 +49,7 @@ export function DeliveryZonesTable({ zones }: DeliveryZonesTableProps) {
                       </button>
                     )}
                     <div className="min-w-0">
-                      <div className="text-base md:text-lg text-[#000] font-medium">
-                        {z.title}
-                      </div>
+                      <div className="text-base md:text-lg text-[#000] font-medium">{z.title}</div>
                       {hasSubareas && (
                         <div
                           className="overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out"
@@ -60,9 +58,7 @@ export function DeliveryZonesTable({ zones }: DeliveryZonesTableProps) {
                             opacity: isExpanded ? 1 : 0,
                           }}
                         >
-                          <p className="pt-1.5 text-xs md:text-sm text-[#7e7e7e] leading-relaxed">
-                            {z.conditions}
-                          </p>
+                          <p className="pt-1.5 text-xs md:text-sm text-[#7e7e7e] leading-relaxed">{z.conditions}</p>
                         </div>
                       )}
                     </div>
@@ -70,9 +66,7 @@ export function DeliveryZonesTable({ zones }: DeliveryZonesTableProps) {
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm md:text-base md:shrink-0">
                     <div className="text-[#7e7e7e]">
                       до {z.paidUpTo.toLocaleString("ru-RU")} ₽ —{" "}
-                      <span className="text-[#000] font-medium">
-                        {z.price.toLocaleString("ru-RU")} ₽
-                      </span>
+                      <span className="text-[#000] font-medium">{z.price.toLocaleString("ru-RU")} ₽</span>
                     </div>
                     <div className="text-[#7e7e7e] sm:ml-4">
                       от {z.freeFrom.toLocaleString("ru-RU")} ₽ —{" "}
@@ -86,8 +80,7 @@ export function DeliveryZonesTable({ zones }: DeliveryZonesTableProps) {
         </div>
 
         <p className="mt-6 text-sm md:text-base text-[#7e7e7e] text-left">
-          Доставка работает круглосуточно. Стоимость доставки с 22:00 до 09:00
-          осуществляется по двойному тарифу.
+          Доставка работает круглосуточно. Стоимость доставки с 22:00 до 09:00 осуществляется по двойному тарифу.
         </p>
       </CardContent>
     </Card>

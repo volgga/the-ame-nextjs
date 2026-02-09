@@ -206,9 +206,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                             type="button"
                             onClick={() => setCurrentImageIndex(idx)}
                             className={`w-2 h-2 rounded-full transition-all ${
-                              idx === currentImageIndex
-                                ? "bg-white w-6"
-                                : "bg-white/50 hover:bg-white/75"
+                              idx === currentImageIndex ? "bg-white w-6" : "bg-white/50 hover:bg-white/75"
                             }`}
                             aria-label={`Фото ${idx + 1}`}
                           />
@@ -231,9 +229,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
               {/* Цена */}
               <div className="mb-4">
                 <span className="text-2xl font-bold text-color-text-main">
-                  {product.isPreorder
-                    ? "Предзаказ"
-                    : `${product.price.toLocaleString("ru-RU")} ₽`}
+                  {product.isPreorder ? "Предзаказ" : `${product.price.toLocaleString("ru-RU")} ₽`}
                 </span>
               </div>
 
@@ -248,9 +244,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
               {/* Категории — показываем только если есть данные, сразу под "Состав" */}
               {product.categories && product.categories.length > 0 && (
                 <div className="mb-4">
-                  <p className="text-xs text-color-text-secondary">
-                    Категории: {product.categories.join(", ")}
-                  </p>
+                  <p className="text-xs text-color-text-secondary">Категории: {product.categories.join(", ")}</p>
                 </div>
               )}
 
@@ -286,8 +280,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                   onClick={handleAddToCart}
                   className="w-full py-3 px-4 rounded-full bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active text-white font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 flex items-center justify-center gap-2"
                 >
-                  <ShoppingCart className="w-5 h-5" />
-                  В корзину
+                  <ShoppingCart className="w-5 h-5" />В корзину
                 </button>
                 <button
                   type="button"

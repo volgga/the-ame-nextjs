@@ -98,11 +98,7 @@ export function ProductRowCard({
           }}
           className={`${iconClass} disabled:opacity-50 disabled:cursor-not-allowed`}
         >
-          {product.is_hidden ? (
-            <EyeOff size={iconSize} strokeWidth={2} />
-          ) : (
-            <Eye size={iconSize} strokeWidth={2} />
-          )}
+          {product.is_hidden ? <EyeOff size={iconSize} strokeWidth={2} /> : <Eye size={iconSize} strokeWidth={2} />}
         </button>
         <button
           type="button"

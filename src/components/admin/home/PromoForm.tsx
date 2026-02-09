@@ -391,7 +391,11 @@ export const PromoForm = forwardRef<PromoFormRef, PromoFormProps>(function Promo
             >
               {saving ? "Сохранение…" : "Сохранить"}
             </button>
-            <button type="button" onClick={closeForm} className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50">
+            <button
+              type="button"
+              onClick={closeForm}
+              className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
+            >
               Отмена
             </button>
           </div>
@@ -435,13 +439,14 @@ export const PromoForm = forwardRef<PromoFormRef, PromoFormProps>(function Promo
                   <td className="px-3 py-2 font-mono uppercase">{row.code}</td>
                   <td className="px-3 py-2">{row.name}</td>
                   <td className="px-3 py-2">{row.discountType === "PERCENT" ? "%" : "₽"}</td>
-                  <td className="px-3 py-2">
-                    {row.discountType === "PERCENT" ? `${row.value}%` : `${row.value} ₽`}
-                  </td>
+                  <td className="px-3 py-2">{row.discountType === "PERCENT" ? `${row.value}%` : `${row.value} ₽`}</td>
                   <td className="px-3 py-2">{row.isActive ? "Да" : "Нет"}</td>
                   <td className="px-3 py-2 text-gray-500">
                     {row.startsAt || row.endsAt
-                      ? [row.startsAt ? new Date(row.startsAt).toLocaleDateString("ru-RU") : "", row.endsAt ? new Date(row.endsAt).toLocaleDateString("ru-RU") : ""]
+                      ? [
+                          row.startsAt ? new Date(row.startsAt).toLocaleDateString("ru-RU") : "",
+                          row.endsAt ? new Date(row.endsAt).toLocaleDateString("ru-RU") : "",
+                        ]
                           .filter(Boolean)
                           .join(" – ")
                       : "—"}
