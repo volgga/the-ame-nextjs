@@ -44,7 +44,10 @@ type AboutFormProps = {
 /**
  * AboutForm — форма редактирования секции "О нас" для использования в модалке.
  */
-export const AboutForm = forwardRef<AboutFormRef, AboutFormProps>(function AboutForm({ onDirtyChange, formRef: formRefProp }, ref) {
+export const AboutForm = forwardRef<AboutFormRef, AboutFormProps>(function AboutForm(
+  { onDirtyChange, formRef: formRefProp },
+  ref
+) {
   const resolvedRef = formRefProp ?? ref;
   const [data, setData] = useState<AboutData | null>(null);
   const [initialSnapshot, setInitialSnapshot] = useState<string>("");
@@ -87,28 +90,32 @@ export const AboutForm = forwardRef<AboutFormRef, AboutFormProps>(function About
     setInitialSnapshot(snapshot(updated));
   }, [data]);
 
-  useImperativeHandle(resolvedRef, () => ({
-    save: async () => {
-      setSaving(true);
-      setError("");
-      try {
-        await performSave();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      } catch (e) {
-        setError((e as Error).message || "Не удалось сохранить");
-        throw e;
-      } finally {
-        setSaving(false);
-      }
-    },
-    resetToInitial: () => {
-      if (initialSnapshot === "") return;
-      const parsed = JSON.parse(initialSnapshot) as AboutData;
-      setData(parsed);
-      setPreviewUrl(parsed.imageUrl);
-    },
-  }), [initialSnapshot, performSave]);
+  useImperativeHandle(
+    resolvedRef,
+    () => ({
+      save: async () => {
+        setSaving(true);
+        setError("");
+        try {
+          await performSave();
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        } catch (e) {
+          setError((e as Error).message || "Не удалось сохранить");
+          throw e;
+        } finally {
+          setSaving(false);
+        }
+      },
+      resetToInitial: () => {
+        if (initialSnapshot === "") return;
+        const parsed = JSON.parse(initialSnapshot) as AboutData;
+        setData(parsed);
+        setPreviewUrl(parsed.imageUrl);
+      },
+    }),
+    [initialSnapshot, performSave]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -237,7 +244,9 @@ export const AboutForm = forwardRef<AboutFormRef, AboutFormProps>(function About
           <input
             type="text"
             value={formData.title}
-            onChange={(e) => setData((d) => (d ? { ...d, title: e.target.value } : { ...DEFAULT_DATA, title: e.target.value }))}
+            onChange={(e) =>
+              setData((d) => (d ? { ...d, title: e.target.value } : { ...DEFAULT_DATA, title: e.target.value }))
+            }
             className="w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
           />
         </div>
@@ -246,7 +255,9 @@ export const AboutForm = forwardRef<AboutFormRef, AboutFormProps>(function About
           <label className="block text-sm font-medium text-[#111] mb-1">Текст</label>
           <textarea
             value={formData.text}
-            onChange={(e) => setData((d) => (d ? { ...d, text: e.target.value } : { ...DEFAULT_DATA, text: e.target.value }))}
+            onChange={(e) =>
+              setData((d) => (d ? { ...d, text: e.target.value } : { ...DEFAULT_DATA, text: e.target.value }))
+            }
             rows={10}
             className="w-full rounded border border-gray-300 px-3 py-2 text-[#111] text-sm"
           />

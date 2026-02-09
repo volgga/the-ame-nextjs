@@ -57,12 +57,5 @@ export default async function MagazinPage() {
   const cat = getCategoryBySlug(categories, "magazin");
   const title = cat?.name ?? FALLBACK_TITLE;
   const description = cat?.description?.trim() ?? FALLBACK_DESCRIPTION;
-  return (
-    <AllFlowersPage
-      title={title}
-      description={description}
-      breadcrumbLabel={title}
-      currentSlug="magazin"
-    />
-  );
+  return <AllFlowersPage title={title} description={description} breadcrumbLabel={title} currentSlug="magazin" />;
 }

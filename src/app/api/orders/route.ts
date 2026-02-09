@@ -66,7 +66,10 @@ export async function POST(request: Request) {
       const text = formatOrderPlaced(result.order);
       await sendOrderTelegramMessage(text);
     } catch (err) {
-      console.error("[orders] order created tg failed orderId=" + result.order.id, err instanceof Error ? err.message : err);
+      console.error(
+        "[orders] order created tg failed orderId=" + result.order.id,
+        err instanceof Error ? err.message : err
+      );
     }
 
     return NextResponse.json({

@@ -11,12 +11,19 @@ async function requireAdmin() {
 /** Допустимый формат slug: только латиница, цифры, дефис */
 const SLUG_REGEX = /^[a-z0-9-]+$/;
 
+const flowerSectionSchema = z.object({
+  key: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string(),
+});
+
 const updateSchema = z.object({
   name: z.string().min(1).optional(),
   slug: z.string().min(1).optional(),
   is_active: z.boolean().optional(),
   description: z.string().max(5000).optional().nullable(),
   seo_title: z.string().max(200).optional().nullable(),
+  flower_sections: z.array(flowerSectionSchema).optional().nullable(),
 });
 
 /** Уникальный slug; если занят другой записью (не excludeId), добавляем -2, -3, ... */
@@ -49,11 +56,24 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
     if (!parsed.success) {
       return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
-    const payload: { name?: string; slug?: string; is_active?: boolean; description?: string | null; seo_title?: string | null } = {};
+    const payload: {
+      name?: string;
+      slug?: string;
+      is_active?: boolean;
+      description?: string | null;
+      seo_title?: string | null;
+      flower_sections?: unknown;
+    } = {};
     if (parsed.data.name !== undefined) payload.name = parsed.data.name.trim();
     if (parsed.data.is_active !== undefined) payload.is_active = parsed.data.is_active;
     if (parsed.data.description !== undefined) payload.description = parsed.data.description?.trim() || null;
     if (parsed.data.seo_title !== undefined) payload.seo_title = parsed.data.seo_title?.trim() || null;
+    if (parsed.data.flower_sections !== undefined) {
+      payload.flower_sections =
+        Array.isArray(parsed.data.flower_sections) && parsed.data.flower_sections.length > 0
+          ? parsed.data.flower_sections
+          : null;
+    }
 
     if (parsed.data.slug !== undefined) {
       const slugTrimmed = parsed.data.slug.trim();

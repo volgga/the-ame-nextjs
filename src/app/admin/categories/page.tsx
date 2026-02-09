@@ -1,11 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { Category } from "@/components/admin/categories/CategoryCard";
 import { slugify } from "@/utils/slugify";
-import { normalizeFlowerKey } from "@/lib/normalizeFlowerKey";
-import type { FlowerSection } from "@/lib/categories";
 
 const CategoriesGrid = dynamic(
   () => import("@/components/admin/categories/CategoriesGrid").then((m) => ({ default: m.CategoriesGrid })),
@@ -33,18 +32,10 @@ export default function AdminCategoriesPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [editing, setEditing] = useState<Category | null>(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", is_active: true, description: "", seo_title: "", flower_sections: [] as FlowerSection[] });
-  
-  // Убеждаемся, что flower_sections всегда массив
-  const flowerSections = Array.isArray(form.flower_sections) ? form.flower_sections : [];
+  const [form, setForm] = useState({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [availableFlowers, setAvailableFlowers] = useState<{ key: string; label: string }[]>([]);
-  const [showFlowerPicker, setShowFlowerPicker] = useState(false);
-  
-  // Безопасные массивы для использования в рендере
-  const safeAvailableFlowers = Array.isArray(availableFlowers) ? availableFlowers : [];
 
   const isDirty = !areOrdersEqual(categoriesFromServer, categoriesDraft);
 
@@ -77,40 +68,9 @@ export default function AdminCategoriesPage() {
   function closeModal() {
     setCreating(false);
     setEditing(null);
-    setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "", flower_sections: [] });
+    setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
     setIsSlugManuallyEdited(false);
-    setShowFlowerPicker(false);
   }
-
-  // Загрузка доступных цветов при открытии редактирования категории "Цветы в составе"
-  useEffect(() => {
-    if (!editing || editing.slug !== "cvety-v-sostave") {
-      setAvailableFlowers([]);
-      return;
-    }
-    fetch("/api/admin/flowers")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((flowers: unknown) => {
-        const flowersArray = Array.isArray(flowers) ? flowers.filter((f): f is string => typeof f === "string") : [];
-        setAvailableFlowers(flowersArray.map((f) => ({ key: normalizeFlowerKey(f), label: f })));
-      })
-      .catch(() => setAvailableFlowers([]));
-  }, [editing]);
-
-  // Загрузка flower_sections при открытии редактирования
-  useEffect(() => {
-    if (editing) {
-      const flowerSectionsFromEditing = (editing as any).flower_sections;
-      setForm({
-        name: editing.name,
-        slug: editing.slug,
-        is_active: editing.is_active,
-        description: editing.description ?? "",
-        seo_title: editing.seo_title ?? "",
-        flower_sections: Array.isArray(flowerSectionsFromEditing) ? flowerSectionsFromEditing : [],
-      });
-    }
-  }, [editing]);
 
   useEffect(() => {
     if (!creating && !editing) return;
@@ -163,7 +123,6 @@ export default function AdminCategoriesPage() {
             is_active: form.is_active,
             description: form.description.trim() || null,
             seo_title: form.seo_title.trim() || null,
-            flower_sections: form.slug === "cvety-v-sostave" && flowerSections.length > 0 ? flowerSections : null,
           }),
         });
         const data = await res.json();
@@ -172,7 +131,7 @@ export default function AdminCategoriesPage() {
         setCategoriesFromServer((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
         setCategoriesDraft((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
         setCreating(false);
-        setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "", flower_sections: [] });
+        setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
         setIsSlugManuallyEdited(false);
       } else if (editing) {
         const res = await fetch(`/api/admin/categories/${editing.id}`, {
@@ -184,12 +143,10 @@ export default function AdminCategoriesPage() {
             is_active: form.is_active,
             description: form.description.trim() || null,
             seo_title: form.seo_title.trim() || null,
-            flower_sections: (editing.slug === "cvety-v-sostave" || slugTrimmed === "cvety-v-sostave") && flowerSections.length > 0 ? flowerSections : null,
           }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Ошибка");
-        const flowerSectionsFromData = (data as any).flower_sections;
         const updated = {
           ...editing,
           name: data.name,
@@ -197,12 +154,11 @@ export default function AdminCategoriesPage() {
           is_active: data.is_active,
           description: data.description ?? null,
           seo_title: data.seo_title ?? null,
-          flower_sections: Array.isArray(flowerSectionsFromData) ? flowerSectionsFromData : null,
         };
         setCategoriesFromServer((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setCategoriesDraft((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setEditing(null);
-        setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "", flower_sections: [] });
+        setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
         setIsSlugManuallyEdited(false);
       }
     } catch (e) {
@@ -367,7 +323,8 @@ export default function AdminCategoriesPage() {
                       placeholder="vazy"
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      Автоматически из названия. Если измените вручную — дальнейшее изменение названия не перезапишет slug.
+                      Автоматически из названия. Если измените вручную — дальнейшее изменение названия не перезапишет
+                      slug.
                     </p>
                   </div>
                   <div>
@@ -397,97 +354,6 @@ export default function AdminCategoriesPage() {
                       Если заполнено — используется в &lt;title&gt; страницы категории вместо автогенерации.
                     </p>
                   </div>
-                  {/* Секция подразделов по цветам (только для категории "Цветы в составе") */}
-                  {(form.slug === "cvety-v-sostave" || editing?.slug === "cvety-v-sostave") && (
-                    <div className="border-t border-gray-200 pt-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-medium text-[#111]">Подразделы (цветы)</label>
-                        {safeAvailableFlowers.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setShowFlowerPicker(!showFlowerPicker)}
-                            className="text-xs text-blue-600 hover:text-blue-800 underline"
-                          >
-                            Добавить цветок
-                          </button>
-                        )}
-                      </div>
-                      {showFlowerPicker && (
-                        <div className="mb-3 max-h-40 overflow-y-auto border border-gray-200 rounded p-2">
-                          {safeAvailableFlowers
-                            .filter((f) => !flowerSections.some((s) => s.key === f.key))
-                            .map((flower) => (
-                              <button
-                                key={flower.key}
-                                type="button"
-                                onClick={() => {
-                                  setForm((f) => ({
-                                    ...f,
-                                    flower_sections: [
-                                      ...(Array.isArray(f.flower_sections) ? f.flower_sections : []),
-                                      { key: flower.key, title: flower.label, description: "" },
-                                    ],
-                                  }));
-                                  setShowFlowerPicker(false);
-                                }}
-                                className="block w-full text-left px-2 py-1 text-sm hover:bg-gray-100 rounded"
-                              >
-                                {flower.label}
-                              </button>
-                            ))}
-                        </div>
-                      )}
-                      {flowerSections.length > 0 ? (
-                        <div className="space-y-2">
-                          {flowerSections.map((section, idx) => (
-                            <div key={section.key} className="border border-gray-200 rounded p-3">
-                              <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-[#111]">{section.title}</span>
-                                <button
-                                  type="button"
-                                onClick={() => {
-                                  setForm((f) => ({
-                                    ...f,
-                                    flower_sections: (Array.isArray(f.flower_sections) ? f.flower_sections : []).filter((_, i) => i !== idx),
-                                  }));
-                                }}
-                                  className="text-xs text-red-600 hover:text-red-800"
-                                >
-                                  Удалить
-                                </button>
-                              </div>
-                              <input
-                                type="text"
-                                value={section.title}
-                                onChange={(e) => {
-                                  const current = Array.isArray(form.flower_sections) ? form.flower_sections : [];
-                                  const updated = [...current];
-                                  updated[idx] = { ...updated[idx], title: e.target.value };
-                                  setForm((f) => ({ ...f, flower_sections: updated }));
-                                }}
-                                placeholder="Заголовок"
-                                className="w-full mb-2 rounded border border-gray-300 px-2 py-1 text-sm text-[#111]"
-                              />
-                              <textarea
-                                value={section.description}
-                                onChange={(e) => {
-                                  const current = Array.isArray(form.flower_sections) ? form.flower_sections : [];
-                                  const updated = [...current];
-                                  updated[idx] = { ...updated[idx], description: e.target.value };
-                                  setForm((f) => ({ ...f, flower_sections: updated }));
-                                }}
-                                placeholder="Описание"
-                                rows={2}
-                                className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-[#111]"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-gray-500">Нет подразделов. Нажмите "Добавить цветок" для добавления.</p>
-                      )}
-                    </div>
-                  )}
                   <div>
                     <label className="flex items-center gap-2">
                       <input
@@ -541,13 +407,13 @@ export default function AdminCategoriesPage() {
           onEdit={(cat) => {
             setEditing(cat);
             setCreating(false);
-setForm({
-            name: cat.name,
-            slug: cat.slug ?? slugify(cat.name),
-            is_active: cat.is_active,
-            description: cat.description ?? "",
-            seo_title: cat.seo_title ?? "",
-          });
+            setForm({
+              name: cat.name,
+              slug: cat.slug ?? slugify(cat.name),
+              is_active: cat.is_active,
+              description: cat.description ?? "",
+              seo_title: cat.seo_title ?? "",
+            });
             setIsSlugManuallyEdited(false);
           }}
           onToggleActive={handleToggleActive}

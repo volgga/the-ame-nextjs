@@ -1,15 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import {
-  Droplets,
-  Scissors,
-  SunDim,
-  RefreshCw,
-  Gift,
-  Heart,
-  Droplet,
-  Leaf,
-} from "lucide-react";
+import { Droplets, Scissors, SunDim, RefreshCw, Gift, Heart, Droplet, Leaf } from "lucide-react";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 import { contactProviders } from "@/lib/contactProviders";
 
@@ -69,11 +60,7 @@ const CARE_BASKET_ITEMS: { icon: React.ReactNode; text: string }[] = [
   },
 ];
 
-const MESSENGER_ORDER: ("whatsapp" | "telegram" | "max")[] = [
-  "whatsapp",
-  "telegram",
-  "max",
-];
+const MESSENGER_ORDER: ("whatsapp" | "telegram" | "max")[] = ["whatsapp", "telegram", "max"];
 const BUTTON_LABELS: Record<string, string> = {
   whatsapp: "WHATSAPP",
   telegram: "TELEGRAM",
@@ -81,9 +68,9 @@ const BUTTON_LABELS: Record<string, string> = {
 };
 
 export default function CarePage() {
-  const ctaProviders = MESSENGER_ORDER.map((type) =>
-    contactProviders.find((p) => p.type === type)
-  ).filter((p): p is (typeof contactProviders)[0] => p != null && p.url != null);
+  const ctaProviders = MESSENGER_ORDER.map((type) => contactProviders.find((p) => p.type === type)).filter(
+    (p): p is (typeof contactProviders)[0] => p != null && p.url != null
+  );
 
   return (
     <div className="min-h-screen bg-page-bg">
@@ -94,15 +81,10 @@ export default function CarePage() {
 
         {/* Блок 1: Уход за букетом */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-semibold text-color-text-main mb-4">
-            Уход за букетом
-          </h2>
+          <h2 className="text-xl md:text-2xl font-semibold text-color-text-main mb-4">Уход за букетом</h2>
           <ul className="space-y-2">
             {CARE_BOUQUET_ITEMS.map((item, i) => (
-              <li
-                key={i}
-                className="flex gap-3 items-start text-base md:text-lg text-color-text-main leading-relaxed"
-              >
+              <li key={i} className="flex gap-3 items-start text-base md:text-lg text-color-text-main leading-relaxed">
                 <span className="mt-0.5" aria-hidden>
                   {item.icon}
                 </span>
@@ -119,10 +101,7 @@ export default function CarePage() {
           </h2>
           <ul className="space-y-2">
             {CARE_BASKET_ITEMS.map((item, i) => (
-              <li
-                key={i}
-                className="flex gap-3 items-start text-base md:text-lg text-color-text-main leading-relaxed"
-              >
+              <li key={i} className="flex gap-3 items-start text-base md:text-lg text-color-text-main leading-relaxed">
                 <span className="mt-0.5" aria-hidden>
                   {item.icon}
                 </span>

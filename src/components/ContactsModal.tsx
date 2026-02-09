@@ -134,8 +134,12 @@ export function ContactsModal({ isOpen, onClose, providers, socialOnly = false }
           >
             <div className="w-10" aria-hidden />
             <div className="flex flex-col items-center justify-center gap-1 min-h-0">
-              <p className="text-xl md:text-2xl font-bold leading-tight text-color-text-main m-0 text-center whitespace-nowrap">The Áme</p>
-              <p className="text-xs md:text-sm text-muted-foreground leading-tight m-0 text-center whitespace-nowrap tracking-normal">ЦВЕТЫ × ЧУВСТВА</p>
+              <p className="text-xl md:text-2xl font-bold leading-tight text-color-text-main m-0 text-center whitespace-nowrap">
+                The Áme
+              </p>
+              <p className="text-xs md:text-sm text-muted-foreground leading-tight m-0 text-center whitespace-nowrap tracking-normal">
+                ЦВЕТЫ × ЧУВСТВА
+              </p>
             </div>
             <div className="flex justify-end">
               <button
@@ -267,9 +271,7 @@ export function ContactsModal({ isOpen, onClose, providers, socialOnly = false }
                     </div>
                     {/* Название: по левому краю, без truncate, помещается целиком */}
                     <div className="flex-1 flex items-center justify-start min-w-0 pr-2">
-                      <span className="font-semibold text-white text-left text-sm min-w-0">
-                        {provider.label}
-                      </span>
+                      <span className="font-semibold text-white text-left text-sm min-w-0">{provider.label}</span>
                     </div>
                   </a>
                 ))}

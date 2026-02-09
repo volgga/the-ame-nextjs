@@ -30,6 +30,7 @@ export default function AdminHomeCollectionsPage() {
     category_slug: "magazin",
     is_active: true,
     sort_order: 0,
+    description: "",
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -41,8 +42,18 @@ export default function AdminHomeCollectionsPage() {
 
   const isDirty = !areOrdersEqual(collectionsFromServer, collectionsDraft);
 
-  function formSnapshot(f: { name: string; category_slug: string; is_active: boolean; sort_order: number }, hasFile: boolean) {
-    return JSON.stringify({ name: f.name, category_slug: f.category_slug, is_active: f.is_active, sort_order: f.sort_order, fileSelected: hasFile });
+  function formSnapshot(
+    f: { name: string; category_slug: string; is_active: boolean; sort_order: number; description: string },
+    hasFile: boolean
+  ) {
+    return JSON.stringify({
+      name: f.name,
+      category_slug: f.category_slug,
+      is_active: f.is_active,
+      sort_order: f.sort_order,
+      description: f.description,
+      fileSelected: hasFile,
+    });
   }
 
   const isFormDirty =
@@ -92,7 +103,7 @@ export default function AdminHomeCollectionsPage() {
     setShowCloseConfirm(false);
     setCreating(false);
     setEditing(null);
-    setForm({ file: null, name: "", category_slug: "magazin", sort_order: 0, is_active: true });
+    setForm({ file: null, name: "", category_slug: "magazin", sort_order: 0, is_active: true, description: "" });
     initialFormSnapshotRef.current = "";
   }
 
@@ -120,6 +131,7 @@ export default function AdminHomeCollectionsPage() {
         category_slug: string;
         is_active: boolean;
         sort_order: number;
+        description: string;
       };
       setForm((prev) => ({
         ...prev,
@@ -127,6 +139,7 @@ export default function AdminHomeCollectionsPage() {
         category_slug: parsed.category_slug ?? "magazin",
         is_active: parsed.is_active ?? true,
         sort_order: parsed.sort_order ?? 0,
+        description: parsed.description ?? "",
         file: null,
       }));
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -145,7 +158,7 @@ export default function AdminHomeCollectionsPage() {
     }
     modalWasOpenRef.current = !!open;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot only when modal opens; full `form` would retrigger on every keystroke
-  }, [creating, editing, form.name, form.category_slug, form.is_active, form.sort_order, form.file]);
+  }, [creating, editing, form.name, form.category_slug, form.is_active, form.sort_order, form.description, form.file]);
 
   useEffect(() => {
     if (!creating && !editing) return;
@@ -221,6 +234,7 @@ export default function AdminHomeCollectionsPage() {
             category_slug: form.category_slug || "magazin",
             sort_order: collectionsDraft.length,
             is_active: form.is_active,
+            description: form.description.trim() || null,
           }),
         });
         const data = await res.json();
@@ -229,7 +243,14 @@ export default function AdminHomeCollectionsPage() {
         setCollectionsFromServer((s) => [...s, newCol].sort((a, b) => a.sort_order - b.sort_order));
         setCollectionsDraft((s) => [...s, newCol].sort((a, b) => a.sort_order - b.sort_order));
         setCreating(false);
-        setForm({ file: null, name: "", category_slug: "magazin", sort_order: collectionsDraft.length, is_active: true });
+        setForm({
+          file: null,
+          name: "",
+          category_slug: "magazin",
+          sort_order: collectionsDraft.length,
+          is_active: true,
+          description: "",
+        });
         if (saveThenCloseRef.current) {
           saveThenCloseRef.current = false;
           closeModal();
@@ -249,6 +270,7 @@ export default function AdminHomeCollectionsPage() {
             category_slug: form.category_slug || editing.category_slug,
             sort_order: form.sort_order,
             is_active: form.is_active,
+            description: form.description.trim() || null,
           }),
         });
         const data = await res.json();
@@ -260,11 +282,12 @@ export default function AdminHomeCollectionsPage() {
           category_slug: form.category_slug || editing.category_slug,
           sort_order: form.sort_order,
           is_active: form.is_active,
+          description: form.description.trim() || null,
         };
         setCollectionsFromServer((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setCollectionsDraft((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setEditing(null);
-        setForm({ file: null, name: "", category_slug: "magazin", sort_order: 0, is_active: true });
+        setForm({ file: null, name: "", category_slug: "magazin", sort_order: 0, is_active: true, description: "" });
         if (saveThenCloseRef.current) {
           saveThenCloseRef.current = false;
           closeModal();
@@ -353,7 +376,14 @@ export default function AdminHomeCollectionsPage() {
           onClick={() => {
             setCreating(true);
             setEditing(null);
-            setForm({ file: null, name: "", category_slug: "magazin", sort_order: collectionsDraft.length, is_active: true });
+            setForm({
+              file: null,
+              name: "",
+              category_slug: "magazin",
+              sort_order: collectionsDraft.length,
+              is_active: true,
+              description: "",
+            });
           }}
           className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
         >
@@ -369,9 +399,7 @@ export default function AdminHomeCollectionsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <form id="collections-modal-form" onSubmit={handleSaveForm}>
-              <h3 className="mb-4 font-medium text-[#111]">
-                {creating ? "Новая коллекция" : "Редактирование"}
-              </h3>
+              <h3 className="mb-4 font-medium text-[#111]">{creating ? "Новая коллекция" : "Редактирование"}</h3>
               {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
               <div className="space-y-3">
                 <div>
@@ -434,6 +462,19 @@ export default function AdminHomeCollectionsPage() {
                       : `Карточка поведёт в /magazine/${form.category_slug}`}
                   </p>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#111]">Описание</label>
+                  <p className="mt-0.5 text-xs text-gray-500 mb-1">
+                    Показывается под заголовком секции на главной (берётся из первой активной коллекции по порядку)
+                  </p>
+                  <textarea
+                    value={form.description}
+                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                    rows={3}
+                    placeholder="Введите описание коллекции..."
+                    className="w-full rounded border border-gray-300 px-3 py-2 text-[#111] text-sm"
+                  />
+                </div>
                 <div className="flex items-center gap-4">
                   <label className="flex items-center gap-2">
                     <input
@@ -448,9 +489,7 @@ export default function AdminHomeCollectionsPage() {
                     <input
                       type="number"
                       value={form.sort_order}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, sort_order: parseInt(e.target.value, 10) || 0 }))
-                      }
+                      onChange={(e) => setForm((f) => ({ ...f, sort_order: parseInt(e.target.value, 10) || 0 }))}
                       className="mt-1 w-20 rounded border px-2 py-1"
                     />
                   </div>
@@ -530,6 +569,7 @@ export default function AdminHomeCollectionsPage() {
               category_slug: col.category_slug || "magazin",
               sort_order: col.sort_order,
               is_active: col.is_active,
+              description: col.description || "",
             });
           }}
         />

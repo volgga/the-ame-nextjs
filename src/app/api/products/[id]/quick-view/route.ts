@@ -113,7 +113,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (UUID_REGEX.test(id)) {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, description, composition_size, image_url, images, price, category_slug, category_slugs, is_preorder")
+        .select(
+          "id, name, description, composition_size, image_url, images, price, category_slug, category_slugs, is_preorder"
+        )
         .eq("id", id)
         .or("is_active.eq.true,is_active.is.null")
         .or("is_hidden.eq.false,is_hidden.is.null")
@@ -130,9 +132,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           : [];
 
       // Если есть основное изображение, добавляем его первым
-      const allImages = data.image_url
-        ? [data.image_url, ...images.filter((img) => img !== data.image_url)]
-        : images;
+      const allImages = data.image_url ? [data.image_url, ...images.filter((img) => img !== data.image_url)] : images;
 
       // Получаем категории (из category_slugs или category_slug)
       const categories: string[] = [];

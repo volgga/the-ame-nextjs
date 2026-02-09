@@ -7,10 +7,6 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
 };
 
-export default function PaymentFailLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function PaymentFailLayout({ children }: { children: React.ReactNode }) {
   return children;
 }

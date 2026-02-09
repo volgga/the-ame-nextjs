@@ -37,7 +37,10 @@ export async function POST(request: Request) {
     const failUrl = `${baseFail}${sep(baseFail)}orderId=${order.id}`;
     if (!successUrl.startsWith("http") || !failUrl.startsWith("http")) {
       return NextResponse.json(
-        { error: "Задайте NEXT_PUBLIC_SITE_URL или TINKOFF_SUCCESS_URL/TINKOFF_FAIL_URL (абсолютные URL) для редиректа после оплаты." },
+        {
+          error:
+            "Задайте NEXT_PUBLIC_SITE_URL или TINKOFF_SUCCESS_URL/TINKOFF_FAIL_URL (абсолютные URL) для редиректа после оплаты.",
+        },
         { status: 502 }
       );
     }

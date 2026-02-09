@@ -56,19 +56,19 @@ export function normalizeCategoryNameForTitle(name: string): string {
  */
 export function normalizeText(text: string | null | undefined): string {
   if (!text || typeof text !== "string") return "";
-  
+
   // Удаляем HTML-теги и заменяем на пробелы
   let normalized = text.replace(/<[^>]+>/g, " ");
-  
+
   // Заменяем различные типы пробелов и переносов на обычный пробел
   normalized = normalized.replace(/[\r\n\t\u00A0\u2000-\u200B\u2028\u2029]+/g, " ");
-  
+
   // Нормализуем кавычки (разные типы кавычек → обычные)
   normalized = normalized.replace(/["""'']/g, '"');
-  
+
   // Удаляем множественные пробелы
   normalized = normalized.replace(/\s+/g, " ");
-  
+
   // Убираем пробелы в начале и конце
   return normalized.trim();
 }
@@ -80,13 +80,13 @@ export function normalizeText(text: string | null | undefined): string {
 export function truncateDescription(text: string | null | undefined, maxLength = 160): string {
   const normalized = normalizeText(text);
   if (!normalized) return "";
-  
+
   if (normalized.length <= maxLength) return normalized;
-  
+
   // Обрезаем до maxLength - 3 (для "..."), затем ищем последний пробел
   const cut = normalized.slice(0, maxLength - 3);
   const lastSpace = cut.lastIndexOf(" ");
-  
+
   // Если пробел найден и не в самом начале — обрезаем по пробелу
   // Иначе обрезаем жестко (для очень длинных слов)
   return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + "...";
@@ -118,7 +118,9 @@ const INDEXABLE_PARAMS = new Set([
   "utm_content",
 ]);
 
-export function hasIndexableQueryParams(searchParams: URLSearchParams | Record<string, string | string[] | undefined>): boolean {
+export function hasIndexableQueryParams(
+  searchParams: URLSearchParams | Record<string, string | string[] | undefined>
+): boolean {
   if (searchParams instanceof URLSearchParams) {
     for (const key of searchParams.keys()) {
       if (INDEXABLE_PARAMS.has(key.toLowerCase())) return true;
@@ -129,4 +131,56 @@ export function hasIndexableQueryParams(searchParams: URLSearchParams | Record<s
     if (INDEXABLE_PARAMS.has(key.toLowerCase())) return true;
   }
   return false;
+}
+
+/**
+ * Автоматическая генерация meta description из HTML контента (fallback для excerpt).
+ * Удаляет HTML теги, нормализует пробелы, обрезает до maxLen символов без обрыва слова.
+ *
+ * @param input - HTML контент или текст
+ * @param maxLen - Максимальная длина (по умолчанию 160 символов)
+ * @returns Описание для meta description
+ */
+export function buildAutoDescription(input: string | null | undefined, maxLen = 160): string {
+  // Если input пустой → возвращаем безопасный дефолт
+  if (!input || typeof input !== "string" || input.trim().length === 0) {
+    return "Статья в блоге The Ame о цветах, флористике и вдохновении.";
+  }
+
+  // Удаляем HTML теги и заменяем на пробелы
+  let text = input.replace(/<[^>]+>/g, " ");
+
+  // Декодируем базовые HTML сущности (минимум: &nbsp; → пробел)
+  text = text
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  // Сжимаем множественные пробелы, переносы строк, табы в один пробел
+  text = text.replace(/[\r\n\t\u00A0\u2000-\u200B\u2028\u2029]+/g, " ");
+  text = text.replace(/\s+/g, " ");
+
+  // Убираем пробелы в начале и конце
+  text = text.trim();
+
+  // Если текст пустой после очистки → дефолт
+  if (text.length === 0) {
+    return "Статья в блоге The Ame о цветах, флористике и вдохновении.";
+  }
+
+  // Если текст короче maxLen → возвращаем как есть
+  if (text.length <= maxLen) {
+    return text;
+  }
+
+  // Обрезаем до maxLen - 1 (для многоточия), ищем последний пробел
+  const cut = text.slice(0, maxLen - 1);
+  const lastSpace = cut.lastIndexOf(" ");
+
+  // Если пробел найден и не в самом начале → обрезаем по пробелу
+  // Иначе обрезаем жестко (для очень длинных слов)
+  return (lastSpace > 0 ? cut.slice(0, lastSpace) : cut) + "…";
 }

@@ -38,7 +38,11 @@ export async function GET(request: Request) {
 
   if (order) {
     const status =
-      order.status === "paid" ? "paid" : order.status === "failed" || order.status === "canceled" ? "failed" : "pending";
+      order.status === "paid"
+        ? "paid"
+        : order.status === "failed" || order.status === "canceled"
+          ? "failed"
+          : "pending";
     return NextResponse.json({ status });
   }
 

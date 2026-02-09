@@ -91,11 +91,7 @@ export function FaqSection({ faqItems }: FaqSectionProps) {
   }
 
   return (
-    <section
-      ref={sectionRef}
-      className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP}`}
-      aria-labelledby="faq-heading"
-    >
+    <section ref={sectionRef} className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP}`} aria-labelledby="faq-heading">
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex justify-center mb-6 md:mb-8">
           <div className="w-full max-w-5xl section-divider-line" aria-hidden />
@@ -152,17 +148,25 @@ export function FaqSection({ faqItems }: FaqSectionProps) {
                   id={`faq-answer-${item.id}`}
                   className="overflow-hidden ease-in-out"
                   style={{
-                    height: showContent ? (typeof answerHeight === "number" ? `${answerHeight}px` : answerHeight) : "0px",
+                    height: showContent
+                      ? typeof answerHeight === "number"
+                        ? `${answerHeight}px`
+                        : answerHeight
+                      : "0px",
                     transition: `height ${ANSWER_TRANSITION_MS}ms ease, opacity ${ANSWER_TRANSITION_MS - 80}ms ease, transform ${ANSWER_TRANSITION_MS}ms ease`,
                     opacity:
                       showContent &&
-                      ((isOpen && (openContentHeight === "auto" || (typeof openContentHeight === "number" && openContentHeight > 0))) ||
+                      ((isOpen &&
+                        (openContentHeight === "auto" ||
+                          (typeof openContentHeight === "number" && openContentHeight > 0))) ||
                         (isClosing && closingHeight > 0))
                         ? 1
                         : 0,
                     transform:
                       showContent &&
-                      ((isOpen && (openContentHeight === "auto" || (typeof openContentHeight === "number" && openContentHeight > 0))) ||
+                      ((isOpen &&
+                        (openContentHeight === "auto" ||
+                          (typeof openContentHeight === "number" && openContentHeight > 0))) ||
                         (isClosing && closingHeight > 0))
                         ? "translateY(0)"
                         : "translateY(-4px)",

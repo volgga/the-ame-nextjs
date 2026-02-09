@@ -14,16 +14,13 @@ import {
   CANONICAL_BASE,
 } from "@/lib/seo";
 
-const FALLBACK_DESCRIPTION =
-  "Все цветы с доставкой по Сочи. Свежие букеты и удобный заказ — The Ame.";
+const FALLBACK_DESCRIPTION = "Все цветы с доставкой по Сочи. Свежие букеты и удобный заказ — The Ame.";
 
 type PosmotretVseTsvetyPageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export async function generateMetadata({
-  searchParams,
-}: PosmotretVseTsvetyPageProps): Promise<Metadata> {
+export async function generateMetadata({ searchParams }: PosmotretVseTsvetyPageProps): Promise<Metadata> {
   const resolvedSearchParams = await searchParams;
   const categories = await getCategories();
   const cat = getCategoryBySlug(categories, "posmotret-vse-tsvety");
@@ -33,9 +30,8 @@ export async function generateMetadata({
   const lowerName = normalizedName.toLowerCase();
   const hasSochi = lowerName.includes("сочи");
   const hasDelivery = lowerName.includes("доставка");
-  const title = hasSochi || hasDelivery
-    ? `${normalizedName} | The Ame`
-    : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
+  const title =
+    hasSochi || hasDelivery ? `${normalizedName} | The Ame` : `Купить ${normalizedName} в Сочи с доставкой | The Ame`;
   // Если есть описание категории → использовать его (нормализованное и обрезанное до ≤160 символов)
   // Иначе fallback
   const description =

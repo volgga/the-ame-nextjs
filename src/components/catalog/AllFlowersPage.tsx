@@ -3,6 +3,7 @@ import { Breadcrumbs, SECTION_GAP } from "@/components/ui/breadcrumbs";
 import { CategoryChips } from "@/components/catalog/category-chips";
 import { ProductToolbar } from "@/components/catalog/product-toolbar";
 import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
+import { Container } from "@/components/layout/Container";
 import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE } from "@/lib/catalogCategories";
@@ -55,18 +56,13 @@ export async function AllFlowersPage({
     )
     .map((c) => ({ slug: c.slug, name: c.name, isAll: false }));
 
-  const uniqueCategories = Array.from(
-    new Map(filteredCategories.map((cat) => [cat.slug, cat])).values()
-  );
+  const uniqueCategories = Array.from(new Map(filteredCategories.map((cat) => [cat.slug, cat])).values());
 
-  const chips = [
-    { slug: "", name: ALL_CATALOG.title, isAll: true },
-    ...uniqueCategories,
-  ];
+  const chips = [{ slug: "", name: ALL_CATALOG.title, isAll: true }, ...uniqueCategories];
 
   return (
     <div className="min-h-screen bg-page-bg">
-      <div className="container px-4 md:px-8 pt-2 pb-8 md:pt-4 md:pb-10">
+      <Container className="pt-2 pb-8 md:pt-4 md:pb-10">
         {showBreadcrumbs && <Breadcrumbs items={breadcrumbItems} className="mt-0 mb-2 md:mb-4" />}
 
         <div className={`grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-3 md:gap-8 md:items-start ${SECTION_GAP}`}>
@@ -74,7 +70,9 @@ export async function AllFlowersPage({
             {title}
           </h1>
           <div className="mt-1 md:mt-0 md:max-h-[120px] md:overflow-y-auto">
-            <p className="text-xs md:text-[15px] leading-snug md:leading-relaxed text-color-text-secondary">{description}</p>
+            <p className="text-xs md:text-[15px] leading-snug md:leading-relaxed text-color-text-secondary">
+              {description}
+            </p>
           </div>
         </div>
 
@@ -97,7 +95,7 @@ export async function AllFlowersPage({
         >
           <FlowerCatalog products={products} />
         </Suspense>
-      </div>
+      </Container>
     </div>
   );
 }

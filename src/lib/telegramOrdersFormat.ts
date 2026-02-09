@@ -6,10 +6,7 @@
 import type { OrderRecord, OrderItemPayload } from "@/types/order";
 
 function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function opt(value: string | undefined | null): string {
@@ -35,10 +32,7 @@ function formatItemLine(item: OrderItemPayload): string {
   const qty = item.quantity ?? 1;
   const nameRaw = item.name ?? "—";
   const variantPart = item.variantTitle?.trim() ? ` (вариант: ${escapeHtml(item.variantTitle.trim())})` : "";
-  const namePart =
-    qty > 1
-      ? `${escapeHtml(nameRaw)}${variantPart} × ${qty}`
-      : `${escapeHtml(nameRaw)}${variantPart}`;
+  const namePart = qty > 1 ? `${escapeHtml(nameRaw)}${variantPart} × ${qty}` : `${escapeHtml(nameRaw)}${variantPart}`;
   const url = productFullUrl(item.productPath);
   if (url) {
     return `Товар: ${namePart} — <a href="${escapeHtml(url)}">${url}</a>`;
@@ -146,8 +140,7 @@ export function formatOrderNotification(options: FormatOrderNotificationOptions)
   if (opt(c.notes)) {
     lines.push(`Комментарий к заказу: ${opt(c.notes)}`);
   }
-  const promocodeRaw =
-    c.promocode ?? (c as Record<string, unknown>).promocode ?? (c as Record<string, unknown>).promo;
+  const promocodeRaw = c.promocode ?? (c as Record<string, unknown>).promocode ?? (c as Record<string, unknown>).promo;
   const promocodeStr =
     promocodeRaw != null && String(promocodeRaw).trim() !== "" ? escapeHtml(String(promocodeRaw).trim()) : "—";
   lines.push(`Промокод: ${promocodeStr}`);

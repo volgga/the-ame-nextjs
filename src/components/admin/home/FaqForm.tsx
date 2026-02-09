@@ -10,14 +10,54 @@ type FaqItem = {
 };
 
 const DEFAULT_FAQ_ITEMS: FaqItem[] = [
-  { id: "1", question: "Как быстро осуществляется доставка цветов по Сочи?", answer: "Доставка цветов по Сочи осуществляется ежедневно. Вы можете оформить заказ заранее или в день доставки, выбрав удобное время. Минимальное время доставки — от 45 минут." },
-  { id: "2", question: "В какие районы Сочи вы доставляете?", answer: "Мы доставляем цветы во все основные районы города Сочи. При оформлении заказа вы можете указать точный адрес, и мы подтвердим возможность доставки." },
-  { id: "3", question: "Как оплатить заказ?", answer: "Мы принимаем различные способы оплаты: наличными при получении, банковской картой онлайн или при получении. Все способы оплаты доступны при оформлении заказа." },
-  { id: "4", question: "Насколько свежие цветы вы используете?", answer: "Мы работаем только со свежими цветами и создаём букеты, которые сохраняют свежесть как можно дольше. Качество контролируется на всех этапах — от сборки до передачи получателю." },
-  { id: "5", question: "Можно ли добавить открытку к букету?", answer: "Да, вы можете добавить открытку с личным текстом при оформлении заказа. Мы передадим её вместе с букетом получателю." },
-  { id: "6", question: "Что делать, если цветы не подошли?", answer: "Если у вас возникли вопросы по качеству или составу букета, пожалуйста, свяжитесь с нами. Мы всегда готовы помочь и решить любую ситуацию." },
-  { id: "7", question: "Можно ли заказать букет заранее?", answer: "Да, вы можете оформить заказ заранее, выбрав удобную дату и время доставки. Это особенно удобно для важных событий и праздников." },
-  { id: "8", question: "Какие виды букетов вы предлагаете?", answer: "В нашем каталоге представлены классические и авторские композиции, букеты из роз, монобукеты, цветы в коробке и цветы в корзине. Мы регулярно обновляем ассортимент, следуя современным тенденциям флористики." },
+  {
+    id: "1",
+    question: "Как быстро осуществляется доставка цветов по Сочи?",
+    answer:
+      "Доставка цветов по Сочи осуществляется ежедневно. Вы можете оформить заказ заранее или в день доставки, выбрав удобное время. Минимальное время доставки — от 45 минут.",
+  },
+  {
+    id: "2",
+    question: "В какие районы Сочи вы доставляете?",
+    answer:
+      "Мы доставляем цветы во все основные районы города Сочи. При оформлении заказа вы можете указать точный адрес, и мы подтвердим возможность доставки.",
+  },
+  {
+    id: "3",
+    question: "Как оплатить заказ?",
+    answer:
+      "Мы принимаем различные способы оплаты: наличными при получении, банковской картой онлайн или при получении. Все способы оплаты доступны при оформлении заказа.",
+  },
+  {
+    id: "4",
+    question: "Насколько свежие цветы вы используете?",
+    answer:
+      "Мы работаем только со свежими цветами и создаём букеты, которые сохраняют свежесть как можно дольше. Качество контролируется на всех этапах — от сборки до передачи получателю.",
+  },
+  {
+    id: "5",
+    question: "Можно ли добавить открытку к букету?",
+    answer:
+      "Да, вы можете добавить открытку с личным текстом при оформлении заказа. Мы передадим её вместе с букетом получателю.",
+  },
+  {
+    id: "6",
+    question: "Что делать, если цветы не подошли?",
+    answer:
+      "Если у вас возникли вопросы по качеству или составу букета, пожалуйста, свяжитесь с нами. Мы всегда готовы помочь и решить любую ситуацию.",
+  },
+  {
+    id: "7",
+    question: "Можно ли заказать букет заранее?",
+    answer:
+      "Да, вы можете оформить заказ заранее, выбрав удобную дату и время доставки. Это особенно удобно для важных событий и праздников.",
+  },
+  {
+    id: "8",
+    question: "Какие виды букетов вы предлагаете?",
+    answer:
+      "В нашем каталоге представлены классические и авторские композиции, букеты из роз, монобукеты, цветы в коробке и цветы в корзине. Мы регулярно обновляем ассортимент, следуя современным тенденциям флористики.",
+  },
 ];
 
 function itemsSnapshot(list: FaqItem[]): string {
@@ -37,7 +77,10 @@ type FaqFormProps = {
 /**
  * FaqForm — форма редактирования FAQ в модалке. Аккордеон + перетаскивание за handle.
  */
-export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm({ onDirtyChange, formRef: formRefProp }, ref) {
+export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm(
+  { onDirtyChange, formRef: formRefProp },
+  ref
+) {
   const resolvedRef = formRefProp ?? ref;
   const [items, setItems] = useState<FaqItem[]>([]);
   const [initialSnapshot, setInitialSnapshot] = useState<string>("");
@@ -70,31 +113,35 @@ export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm({ o
     setInitialSnapshot(itemsSnapshot(updated));
   }, [items]);
 
-  useImperativeHandle(resolvedRef, () => ({
-    save: async () => {
-      setSaving(true);
-      setError("");
-      try {
-        await performSave();
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
-      } catch (e) {
-        setError((e as Error).message || "Не удалось сохранить");
-        throw e;
-      } finally {
-        setSaving(false);
-      }
-    },
-    resetToInitial: () => {
-      if (initialSnapshot === "") return;
-      try {
-        const parsed = JSON.parse(initialSnapshot) as FaqItem[];
-        setItems(parsed);
-      } catch {
-        // ignore
-      }
-    },
-  }), [initialSnapshot, performSave]);
+  useImperativeHandle(
+    resolvedRef,
+    () => ({
+      save: async () => {
+        setSaving(true);
+        setError("");
+        try {
+          await performSave();
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        } catch (e) {
+          setError((e as Error).message || "Не удалось сохранить");
+          throw e;
+        } finally {
+          setSaving(false);
+        }
+      },
+      resetToInitial: () => {
+        if (initialSnapshot === "") return;
+        try {
+          const parsed = JSON.parse(initialSnapshot) as FaqItem[];
+          setItems(parsed);
+        } catch {
+          // ignore
+        }
+      },
+    }),
+    [initialSnapshot, performSave]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,7 +160,9 @@ export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm({ o
       setItems(loadedItems);
       setInitialSnapshot(itemsSnapshot(loadedItems));
       if (data._tableMissing) {
-        setError("⚠️ Таблица home_reviews не создана. Выполните миграцию из scripts/migrations/home-reviews-extend.sql");
+        setError(
+          "⚠️ Таблица home_reviews не создана. Выполните миграцию из scripts/migrations/home-reviews-extend.sql"
+        );
       }
     } catch (e) {
       console.error("[AdminFaq] Исключение при загрузке:", e);
@@ -246,7 +295,11 @@ export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm({ o
       <form onSubmit={handleSave} className="space-y-2">
         {items.map((item, index) => {
           const isExpanded = expandedId === item.id;
-          const shortQuestion = item.question.trim() ? (item.question.length > 50 ? item.question.slice(0, 50) + "…" : item.question) : "Вопрос без текста";
+          const shortQuestion = item.question.trim()
+            ? item.question.length > 50
+              ? item.question.slice(0, 50) + "…"
+              : item.question
+            : "Вопрос без текста";
           return (
             <div
               key={item.id}
@@ -279,7 +332,10 @@ export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm({ o
                 <div className="flex items-center gap-0.5 border-l border-gray-100">
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); moveItem(index, "up"); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      moveItem(index, "up");
+                    }}
                     disabled={index === 0}
                     className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
                     aria-label="Вверх"
@@ -288,7 +344,10 @@ export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm({ o
                   </button>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); moveItem(index, "down"); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      moveItem(index, "down");
+                    }}
                     disabled={index === items.length - 1}
                     className="p-1.5 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
                     aria-label="Вниз"
@@ -297,7 +356,10 @@ export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm({ o
                   </button>
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); removeItem(item.id); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeItem(item.id);
+                    }}
                     disabled={items.length <= 1}
                     className="p-1.5 rounded hover:bg-red-50 text-red-600 disabled:opacity-40 disabled:cursor-not-allowed"
                     aria-label="Удалить"

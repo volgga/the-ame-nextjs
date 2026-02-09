@@ -135,10 +135,7 @@ export async function tinkoffGetState(
   if (!terminalKey || !password) {
     return { error: "TINKOFF_TERMINAL_KEY or TINKOFF_PASSWORD not set" };
   }
-  const token = buildTinkoffToken(
-    { TerminalKey: terminalKey, PaymentId: paymentId },
-    password
-  );
+  const token = buildTinkoffToken({ TerminalKey: terminalKey, PaymentId: paymentId }, password);
   const res = await fetch(TINKOFF_GET_STATE_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

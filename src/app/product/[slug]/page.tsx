@@ -4,21 +4,13 @@ import { getProductDetails } from "@/lib/productDetails";
 import { getAddOnCategoriesOrder, buildAddToOrderProducts } from "@/lib/addOnProducts";
 import { notFound } from "next/navigation";
 import { ProductPageClient } from "@/components/product/ProductPageClient";
-import {
-  canonicalUrl,
-  truncateDescription,
-  ROBOTS_INDEX_FOLLOW,
-  CANONICAL_BASE,
-  SITE_NAME,
-  LOCALE,
-} from "@/lib/seo";
+import { canonicalUrl, truncateDescription, ROBOTS_INDEX_FOLLOW, CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-const PRODUCT_DESCRIPTION_FALLBACK =
-  " — свежие цветы с доставкой по Сочи. Удобный заказ и быстрая доставка — The Ame.";
+const PRODUCT_DESCRIPTION_FALLBACK = " — свежие цветы с доставкой по Сочи. Удобный заказ и быстрая доставка — The Ame.";
 
 export async function generateStaticParams() {
   const products = await getAllCatalogProducts();
@@ -42,23 +34,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? `${product.seoTitle.trim()} | The Ame`
     : `Купить ${product.title} в Сочи с доставкой — цветы и подарки | The Ame`;
   // Ручной SEO description или описание товара или fallback
-  const description =
-    product.seoDescription?.trim()
-      ? truncateDescription(product.seoDescription, 160)
-      : product.shortDescription && product.shortDescription.trim().length > 0
-        ? truncateDescription(product.shortDescription, 160)
-        : `${product.title}${PRODUCT_DESCRIPTION_FALLBACK}`;
+  const description = product.seoDescription?.trim()
+    ? truncateDescription(product.seoDescription, 160)
+    : product.shortDescription && product.shortDescription.trim().length > 0
+      ? truncateDescription(product.shortDescription, 160)
+      : `${product.title}${PRODUCT_DESCRIPTION_FALLBACK}`;
 
   const url = canonicalUrl(`/product/${slug}`);
   const ogTitle = product.ogTitle?.trim() || title;
   const ogDesc = product.ogDescription?.trim() || description;
   const imageUrl = product.ogImage?.trim()
-    ? (product.ogImage.startsWith("http") ? product.ogImage : `${CANONICAL_BASE}${product.ogImage.startsWith("/") ? "" : "/"}${product.ogImage}`)
+    ? product.ogImage.startsWith("http")
+      ? product.ogImage
+      : `${CANONICAL_BASE}${product.ogImage.startsWith("/") ? "" : "/"}${product.ogImage}`
     : product.image
-    ? product.image.startsWith("http")
-      ? product.image
-      : `${CANONICAL_BASE}${product.image.startsWith("/") ? "" : "/"}${product.image}`
-    : `${CANONICAL_BASE}/IMG_1543.PNG`;
+      ? product.image.startsWith("http")
+        ? product.image
+        : `${CANONICAL_BASE}${product.image.startsWith("/") ? "" : "/"}${product.image}`
+      : `${CANONICAL_BASE}/IMG_1543.PNG`;
 
   return {
     title,
@@ -83,7 +76,11 @@ function buildProductJsonLd(slug: string, product: { title: string; image: strin
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
-    image: product.image ? (product.image.startsWith("http") ? product.image : `${CANONICAL_BASE}${product.image.startsWith("/") ? "" : "/"}${product.image}`) : undefined,
+    image: product.image
+      ? product.image.startsWith("http")
+        ? product.image
+        : `${CANONICAL_BASE}${product.image.startsWith("/") ? "" : "/"}${product.image}`
+      : undefined,
     offers: {
       "@type": "Offer",
       price: product.price,
@@ -107,25 +104,14 @@ export default async function ProductPage({ params }: Props) {
     notFound();
   }
 
-  const addToOrderProducts = buildAddToOrderProducts(
-    allCatalogProducts,
-    addOnCategoryOrder,
-    product.id
-  );
+  const addToOrderProducts = buildAddToOrderProducts(allCatalogProducts, addOnCategoryOrder, product.id);
 
   const jsonLd = buildProductJsonLd(slug, product);
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-      <ProductPageClient
-        product={product}
-        productDetails={productDetails}
-        addToOrderProducts={addToOrderProducts}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <ProductPageClient product={product} productDetails={productDetails} addToOrderProducts={addToOrderProducts} />
     </>
   );
 }

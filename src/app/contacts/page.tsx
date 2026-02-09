@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Clock, MapPin, Phone, Mail, Instagram, Send } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Container } from "@/components/layout/Container";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo";
 
 const TITLE = "Контакты цветочного бутика The Ame в Сочи";
-const DESCRIPTION =
-  "Контакты и способы связи с The Ame. Заказ цветов с доставкой по Сочи, адрес, телефон и соцсети.";
+const DESCRIPTION = "Контакты и способы связи с The Ame. Заказ цветов с доставкой по Сочи, адрес, телефон и соцсети.";
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -95,7 +95,7 @@ const SOCIAL_LINKS: { Icon: LucideIcon; label: string; href: string; text: strin
 export default function ContactsPage() {
   return (
     <div className="bg-page-bg">
-      <div className="container mx-auto px-5 md:px-6 pt-12 pb-10">
+      <Container className="pt-12 pb-10">
         <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-2 lg:items-stretch">
           <div className="order-2 h-[320px] w-full overflow-hidden rounded-lg lg:order-1 lg:h-full">
             <iframe
@@ -189,7 +189,7 @@ export default function ContactsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </div>
   );
 }

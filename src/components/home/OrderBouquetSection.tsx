@@ -33,12 +33,7 @@ export type OrderBouquetSectionProps = {
  * Изображение справа — такой же размер и пропорции (1:1), как в блоке «О нас».
  * Форма заказа не изменяется.
  */
-export function OrderBouquetSection({
-  title,
-  subtitle1,
-  text,
-  imageUrl,
-}: OrderBouquetSectionProps = {}) {
+export function OrderBouquetSection({ title, subtitle1, text, imageUrl }: OrderBouquetSectionProps = {}) {
   const blockTitle = title?.trim() || DEFAULT_TITLE;
   const blockSubtitle1 = subtitle1?.trim() ?? DEFAULT_SUBTITLE1;
   const blockText = text?.trim() || DEFAULT_TEXT;
@@ -85,8 +80,7 @@ export function OrderBouquetSection({
     setSubmitting(true);
     setSubmitError("");
     try {
-      const pageUrl =
-        typeof window !== "undefined" ? window.location.pathname + window.location.search : undefined;
+      const pageUrl = typeof window !== "undefined" ? window.location.pathname + window.location.search : undefined;
       const payload = {
         phone: phoneE164,
         name: name.trim() || undefined,
@@ -111,10 +105,7 @@ export function OrderBouquetSection({
 
   return (
     <>
-      <section
-        className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP}`}
-        aria-labelledby="order-bouquet-heading"
-      >
+      <section className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP}`} aria-labelledby="order-bouquet-heading">
         <div className="container mx-auto px-4 md:px-6">
           {/* Разделительная линия между секциями (как на остальной главной) */}
           <div className="flex justify-center mb-6 md:mb-8">
@@ -143,7 +134,7 @@ export function OrderBouquetSection({
           {/* Flex: изображение слева по сетке контейнера, текст и форма справа */}
           <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-16">
             <div className="order-2 md:order-1 w-full md:flex-[0_0_50%]">
-                <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border-block bg-white">
+              <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border-block bg-white">
                 <Image
                   src={blockImageUrl}
                   alt="Букет вашей мечты"
@@ -171,7 +162,14 @@ export function OrderBouquetSection({
                 ) : null}
                 <p className="text-sm md:text-base text-[var(--color-text-main)] leading-normal whitespace-pre-line">
                   {blockText.split("—").flatMap((part, index) =>
-                    index === 0 ? [part] : [<span key={`dash-${index}`} className="text-[var(--color-text-secondary)]">—</span>, part]
+                    index === 0
+                      ? [part]
+                      : [
+                          <span key={`dash-${index}`} className="text-[var(--color-text-secondary)]">
+                            —
+                          </span>,
+                          part,
+                        ]
                   )}
                 </p>
 
@@ -226,20 +224,11 @@ export function OrderBouquetSection({
                     </label>
                     {consentError && <p className="mt-1 text-sm text-red-600">{consentError}</p>}
                   </div>
-                  {submitError && (
-                    <p className="text-sm text-red-600 text-center">{submitError}</p>
-                  )}
+                  {submitError && <p className="text-sm text-red-600 text-center">{submitError}</p>}
                   <div className="flex justify-center">
                     <button
                       type="submit"
-                      disabled={
-                        !name.trim() ||
-                        !phoneE164 ||
-                        !isPhoneValid ||
-                        !consent ||
-                        submitting ||
-                        submitted
-                      }
+                      disabled={!name.trim() || !phoneE164 || !isPhoneValid || !consent || submitting || submitted}
                       className="px-6 py-2.5 rounded-full font-medium transition-colors disabled:opacity-70 disabled:cursor-not-allowed bg-header-bg text-header-foreground hover:opacity-90 active:opacity-95"
                     >
                       {submitting ? "Отправка…" : submitted ? "Заявка отправлена" : "Отправить"}

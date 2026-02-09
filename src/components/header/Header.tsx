@@ -7,7 +7,7 @@ import { HeaderMain } from "./HeaderMain";
 import { useHeaderScrollDirection } from "@/hooks/useHeaderScrollDirection";
 import type { MarqueeSettings } from "@/lib/homeMarquee";
 
-const MARQUEE_H = 32;
+const MARQUEE_H = 28;
 const MAIN_H = 44;
 const TOP_BAR_H_DEFAULT = 44;
 const TOPBAR_TRANSITION_MS = 360;
@@ -74,10 +74,8 @@ export function Header({ marquee }: { marquee?: MarqueeSettings | null }) {
   const topbarVisible = effectiveMdOrLarger && isTopbarShown;
   const topbarMaskHeight = topbarVisible ? `${topbarHeightPx}px` : "0px";
   // На мобиле при скролле вниз скрываем основную строку; до mounted не скрываем (гидратация)
-  const mainBarVisible =
-    !mounted || effectiveMdOrLarger || headerMode === "expanded";
-  const spacerHeight =
-    marqueeHeight + (topbarVisible ? topbarHeightPx : 0) + (mainBarVisible ? MAIN_H : 0);
+  const mainBarVisible = !mounted || effectiveMdOrLarger || headerMode === "expanded";
+  const spacerHeight = marqueeHeight + (topbarVisible ? topbarHeightPx : 0) + (mainBarVisible ? MAIN_H : 0);
 
   return (
     <>
@@ -91,7 +89,7 @@ export function Header({ marquee }: { marquee?: MarqueeSettings | null }) {
       >
         {marqueeVisible && marquee && (
           <div
-            className="w-full relative z-10 bg-header-bg border-b border-header-foreground-secondary"
+            className="w-full relative z-10"
             style={{
               height: MARQUEE_H,
               margin: 0,
@@ -99,12 +97,7 @@ export function Header({ marquee }: { marquee?: MarqueeSettings | null }) {
               overflow: "hidden",
             }}
           >
-            <TopMarquee
-              text={marquee.text ?? ""}
-              href={marquee.link ?? undefined}
-              speed={50}
-              duplicates={6}
-            />
+            <TopMarquee text={marquee.text ?? ""} href={marquee.link ?? undefined} speed={50} duplicates={6} />
           </div>
         )}
 

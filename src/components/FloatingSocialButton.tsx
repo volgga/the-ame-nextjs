@@ -125,7 +125,11 @@ export function FloatingSocialButton() {
         {/* Иконки: crossfade prev / next; на мобильной меньше */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           {!showTwoLayers ? (
-            <img src={currentProvider.src} alt={currentProvider.label} className="w-7 h-7 md:w-8 md:h-8 object-contain block" />
+            <img
+              src={currentProvider.src}
+              alt={currentProvider.label}
+              className="w-7 h-7 md:w-8 md:h-8 object-contain block"
+            />
           ) : (
             <>
               <img
@@ -158,7 +162,12 @@ export function FloatingSocialButton() {
         />
       </button>
 
-      <ContactsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} providers={contactProviders} socialOnly />
+      <ContactsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        providers={contactProviders}
+        socialOnly
+      />
     </>
   );
 }

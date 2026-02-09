@@ -109,7 +109,12 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
               ];
         setCatalogItems(list);
       })
-      .catch(() => setCatalogItems([{ label: ALL_CATALOG.title, href: ALL_CATALOG.href }, ...FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` }))]));
+      .catch(() =>
+        setCatalogItems([
+          { label: ALL_CATALOG.title, href: ALL_CATALOG.href },
+          ...FALLBACK_CATEGORIES.map((c) => ({ label: c.label, href: `/magazine/${c.slug}` })),
+        ])
+      );
     return () => {
       cancelled = true;
     };
@@ -182,9 +187,9 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
 
   return (
     <>
-      <div 
-        className="relative w-full bg-header-bg flex items-center overflow-visible" 
-        style={{ 
+      <div
+        className="relative w-full bg-header-bg flex items-center overflow-visible"
+        style={{
           margin: 0,
           padding: 0,
           height: "100%",
@@ -216,7 +221,10 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
             </Link>
           </div>
 
-          <div className="relative z-10 flex items-center gap-0.5 md:gap-2 shrink-0" style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}>
+          <div
+            className="relative z-10 flex items-center gap-0.5 md:gap-2 shrink-0"
+            style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}
+          >
             <SearchDropdown isHeaderBarVisible={mainBarVisible} />
             <Link
               id="header-favorites"
@@ -257,15 +265,14 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
         >
           <div className="pointer-events-auto flex items-center gap-5 lg:gap-8">
             {NAV_LINKS.map(({ href, label, isCatalog, isClients }) => {
-              const isClientActive = CLIENT_LINKS.some((l) => pathname === l.href);
-              const isActive =
-                isClients
-                  ? isClientActive
-                  : href === CATALOG_HREF
-                    ? pathname === CATALOG_HREF ||
-                      pathname.startsWith(CATALOG_HREF + "/") ||
-                      pathname.startsWith("/magazine/")
-                    : pathname === href;
+              const isClientActive = CLIENT_LINKS.some((l) => pathname === l.href || pathname.startsWith(l.href + "/"));
+              const isActive = isClients
+                ? isClientActive
+                : href === CATALOG_HREF
+                  ? pathname === CATALOG_HREF ||
+                    pathname.startsWith(CATALOG_HREF + "/") ||
+                    pathname.startsWith("/magazine/")
+                  : pathname === href;
               const linkClass = `${navLinkBase} text-header-foreground ${navLinkUnderline} ${isActive ? "after:scale-x-100" : "after:scale-x-0 hover:after:scale-x-100"}`;
               if (isCatalog) {
                 return <CatalogDropdown key="catalog" triggerClassName={linkClass} isActive={isActive} />;
@@ -317,159 +324,185 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
             >
               {/* Внутренний контейнер: min-w-0 w-full — контент не раздувает drawer */}
               <div className="min-w-0 w-full max-w-full flex-1 flex flex-col min-h-0 overflow-x-hidden px-4 pb-4 pt-0">
-              {/* A) Top: лого (ссылка на главную) + ссылки */}
-              <div className="shrink-0 min-w-0 pt-6 pb-4" style={{ fontFamily: "Forum, serif" }}>
-                <Link href="/" onClick={() => setIsMenuOpen(false)} className="block text-4xl leading-none text-header-foreground">
-                  The Áme
-                </Link>
-              </div>
-              <nav className="shrink-0 min-w-0" aria-label="Навигация">
-                <ul className="space-y-2">
-                  {/* Каталог — раскрывающийся список категорий (без навигации по клику на заголовок) */}
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => setOpenSection((s) => (s === "catalog" ? null : "catalog"))}
-                      className={`${sidebarLinkClass} w-full text-left flex items-center justify-between gap-2`}
-                      aria-expanded={openSection === "catalog"}
-                      aria-controls="sidebar-catalog-list"
-                    >
-                      <span>Каталог</span>
-                      <ChevronDown className={`w-4 h-4 shrink-0 text-header-foreground ${openSection === "catalog" ? "rotate-180" : ""}`} strokeWidth={2} aria-hidden />
-                    </button>
-                    <div
-                      className="grid overflow-hidden"
-                      style={{
-                        gridTemplateRows: openSection === "catalog" ? "1fr" : "0fr",
-                        transition: reducedMotion ? "none" : "grid-template-rows 0.25s ease-out",
-                      }}
-                    >
-                      <div className="min-h-0">
-                        <ul id="sidebar-catalog-list" className="mt-1 space-y-1 pl-4 border-l-2 border-header-foreground" aria-label="Подменю Каталог">
-                          {catalogItems.map((item) => (
-                            <li key={item.href + item.label}>
-                              <Link href={item.href} onClick={() => setIsMenuOpen(false)} className={sidebarLinkClass}>
-                                {item.label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
+                {/* A) Top: лого (ссылка на главную) + ссылки */}
+                <div className="shrink-0 min-w-0 pt-6 pb-4" style={{ fontFamily: "Forum, serif" }}>
+                  <Link
+                    href="/"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="block text-4xl leading-none text-header-foreground"
+                  >
+                    The Áme
+                  </Link>
+                </div>
+                <nav className="shrink-0 min-w-0" aria-label="Навигация">
+                  <ul className="space-y-2">
+                    {/* Каталог — раскрывающийся список категорий (без навигации по клику на заголовок) */}
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => setOpenSection((s) => (s === "catalog" ? null : "catalog"))}
+                        className={`${sidebarLinkClass} w-full text-left flex items-center justify-between gap-2`}
+                        aria-expanded={openSection === "catalog"}
+                        aria-controls="sidebar-catalog-list"
+                      >
+                        <span>Каталог</span>
+                        <ChevronDown
+                          className={`w-4 h-4 shrink-0 text-header-foreground ${openSection === "catalog" ? "rotate-180" : ""}`}
+                          strokeWidth={2}
+                          aria-hidden
+                        />
+                      </button>
+                      <div
+                        className="grid overflow-hidden"
+                        style={{
+                          gridTemplateRows: openSection === "catalog" ? "1fr" : "0fr",
+                          transition: reducedMotion ? "none" : "grid-template-rows 0.25s ease-out",
+                        }}
+                      >
+                        <div className="min-h-0">
+                          <ul
+                            id="sidebar-catalog-list"
+                            className="mt-1 space-y-1 pl-4 border-l-2 border-header-foreground"
+                            aria-label="Подменю Каталог"
+                          >
+                            {catalogItems.map((item) => (
+                              <li key={item.href + item.label}>
+                                <Link
+                                  href={item.href}
+                                  onClick={() => setIsMenuOpen(false)}
+                                  className={sidebarLinkClass}
+                                >
+                                  {item.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                  {SIDEBAR_LINKS.map(({ href, label }) => (
-                    <li key={href + label}>
-                      <Link href={href} onClick={() => setIsMenuOpen(false)} className={sidebarLinkClass}>
-                        {label}
-                      </Link>
                     </li>
-                  ))}
-                  {/* Клиентам — раскрывающийся список (без навигации по клику на заголовок) */}
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => setOpenSection((s) => (s === "clients" ? null : "clients"))}
-                      className={`${sidebarLinkClass} w-full text-left flex items-center justify-between gap-2`}
-                      aria-expanded={openSection === "clients"}
-                      aria-controls="sidebar-clients-list"
-                    >
-                      <span>Клиентам</span>
-                      <ChevronDown className={`w-4 h-4 shrink-0 text-header-foreground ${openSection === "clients" ? "rotate-180" : ""}`} strokeWidth={2} aria-hidden />
-                    </button>
-                    <div
-                      className="grid overflow-hidden"
-                      style={{
-                        gridTemplateRows: openSection === "clients" ? "1fr" : "0fr",
-                        transition: reducedMotion ? "none" : "grid-template-rows 0.25s ease-out",
-                      }}
-                    >
-                      <div className="min-h-0">
-                        <ul id="sidebar-clients-list" className="mt-1 space-y-1 pl-4 border-l-2 border-header-foreground" aria-label="Подменю Клиентам">
-                          {CLIENT_LINKS.map(({ href, label }) => (
-                            <li key={href + label}>
-                              <Link href={href} onClick={() => setIsMenuOpen(false)} className={sidebarLinkClass}>
-                                {label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
+                    {SIDEBAR_LINKS.map(({ href, label }) => (
+                      <li key={href + label}>
+                        <Link href={href} onClick={() => setIsMenuOpen(false)} className={sidebarLinkClass}>
+                          {label}
+                        </Link>
+                      </li>
+                    ))}
+                    {/* Клиентам — раскрывающийся список (без навигации по клику на заголовок) */}
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => setOpenSection((s) => (s === "clients" ? null : "clients"))}
+                        className={`${sidebarLinkClass} w-full text-left flex items-center justify-between gap-2`}
+                        aria-expanded={openSection === "clients"}
+                        aria-controls="sidebar-clients-list"
+                      >
+                        <span>Клиентам</span>
+                        <ChevronDown
+                          className={`w-4 h-4 shrink-0 text-header-foreground ${openSection === "clients" ? "rotate-180" : ""}`}
+                          strokeWidth={2}
+                          aria-hidden
+                        />
+                      </button>
+                      <div
+                        className="grid overflow-hidden"
+                        style={{
+                          gridTemplateRows: openSection === "clients" ? "1fr" : "0fr",
+                          transition: reducedMotion ? "none" : "grid-template-rows 0.25s ease-out",
+                        }}
+                      >
+                        <div className="min-h-0">
+                          <ul
+                            id="sidebar-clients-list"
+                            className="mt-1 space-y-1 pl-4 border-l-2 border-header-foreground"
+                            aria-label="Подменю Клиентам"
+                          >
+                            {CLIENT_LINKS.map(({ href, label }) => (
+                              <li key={href + label}>
+                                <Link href={href} onClick={() => setIsMenuOpen(false)} className={sidebarLinkClass}>
+                                  {label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                </ul>
-              </nav>
+                    </li>
+                  </ul>
+                </nav>
 
-              {/* Соцсети + адрес: сразу под первой группой меню. Mobile: номер и кнопки по одной оси, по левому краю */}
-              <div className="shrink-0 min-w-0 pt-4 text-left">
-                <h3 className="text-base font-normal text-header-foreground mb-3 antialiased">Мы в соц. сетях</h3>
-                {/* Mobile: номер и кнопки в одной колонке, выравнивание по левому краю (как пункты меню), ширина по контенту */}
-                {/* Контейнер контактов (mobile): inline-flex, ширина по телефону; соцкнопки w-full = той же ширины, один столбец */}
-                <div className="inline-flex flex-col items-stretch w-fit min-w-0 md:contents">
-                  <a
-                    href="tel:+79939326095"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="md:hidden block w-fit text-left py-2.5 text-header-foreground text-sm font-medium mb-2 hover:opacity-80 no-underline"
-                  >
-                    +7 993 932-60-95
-                  </a>
-                  <div className="grid w-full min-w-0 grid-cols-1 gap-2 place-items-stretch md:w-full md:grid-cols-2 md:gap-2 sm:gap-3 md:place-items-stretch">
-                  <a
-                    href="tel:+79939326095"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`hidden md:flex col-span-2 ${sidebarContactBtnClass}`}
-                  >
-                    Позвонить нам
-                  </a>
-                  <a
-                    href="https://t.me/the_ame_flowers"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
-                  >
-                    Telegram
-                  </a>
-                  <a
-                    href="https://www.instagram.com/theame.flowers"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
-                  >
-                    Instagram
-                  </a>
-                  <a
-                    href="https://wa.me/message/XQDDWGSEL35LP1"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
-                  >
-                    WhatsApp
-                  </a>
-                  <a
-                    href="https://max.ru/u/f9LHodD0cOJJBRShH_taOp567aS5B7oZt4PZHqOvsl782HDW1tNY1II4OTY"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => setIsMenuOpen(false)}
-                    className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
-                  >
-                    Max
-                  </a>
+                {/* Соцсети + адрес: сразу под первой группой меню. Mobile: номер и кнопки по одной оси, по левому краю */}
+                <div className="shrink-0 min-w-0 pt-4 text-left">
+                  <h3 className="text-base font-normal text-header-foreground mb-3 antialiased">Мы в соц. сетях</h3>
+                  {/* Mobile: номер и кнопки в одной колонке, выравнивание по левому краю (как пункты меню), ширина по контенту */}
+                  {/* Контейнер контактов (mobile): inline-flex, ширина по телефону; соцкнопки w-full = той же ширины, один столбец */}
+                  <div className="inline-flex flex-col items-stretch w-fit min-w-0 md:contents">
+                    <a
+                      href="tel:+79939326095"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="md:hidden block w-fit text-left py-2.5 text-header-foreground text-sm font-medium mb-2 hover:opacity-80 no-underline"
+                    >
+                      +7 993 932-60-95
+                    </a>
+                    <div className="grid w-full min-w-0 grid-cols-1 gap-2 place-items-stretch md:w-full md:grid-cols-2 md:gap-2 sm:gap-3 md:place-items-stretch">
+                      <a
+                        href="tel:+79939326095"
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`hidden md:flex col-span-2 ${sidebarContactBtnClass}`}
+                      >
+                        Позвонить нам
+                      </a>
+                      <a
+                        href="https://t.me/the_ame_flowers"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
+                      >
+                        Telegram
+                      </a>
+                      <a
+                        href="https://www.instagram.com/theame.flowers"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
+                      >
+                        Instagram
+                      </a>
+                      <a
+                        href="https://wa.me/message/XQDDWGSEL35LP1"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
+                      >
+                        WhatsApp
+                      </a>
+                      <a
+                        href="https://max.ru/u/f9LHodD0cOJJBRShH_taOp567aS5B7oZt4PZHqOvsl782HDW1tNY1II4OTY"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setIsMenuOpen(false)}
+                        className={`w-full min-w-0 py-2 px-3 min-h-[40px] md:w-full md:py-2.5 md:min-h-[44px] ${sidebarContactBtnClass}`}
+                      >
+                        Max
+                      </a>
+                    </div>
+                  </div>
+                  <footer className="pt-4 text-sm opacity-85 leading-relaxed min-w-0 max-w-full overflow-hidden w-full">
+                    <a
+                      href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:opacity-90 transition-opacity text-sm leading-snug break-words whitespace-normal max-w-full overflow-hidden w-full block min-w-0 text-left"
+                    >
+                      Пластунская 123А, корпус 2, этаж 2, офис 84
+                    </a>
+                    <div className="max-w-full whitespace-normal break-words min-w-0 w-full">
+                      Пн–Вс с 09:00 до 21:00
+                    </div>
+                  </footer>
                 </div>
-                </div>
-                <footer className="pt-4 text-sm opacity-85 leading-relaxed min-w-0 max-w-full overflow-hidden w-full">
-                  <a
-                    href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:opacity-90 transition-opacity text-sm leading-snug break-words whitespace-normal max-w-full overflow-hidden w-full block min-w-0 text-left"
-                  >
-                    Пластунская 123А, корпус 2, этаж 2, офис 84
-                  </a>
-                  <div className="max-w-full whitespace-normal break-words min-w-0 w-full">Пн–Вс с 09:00 до 21:00</div>
-                </footer>
-              </div>
               </div>
             </div>
           </>,

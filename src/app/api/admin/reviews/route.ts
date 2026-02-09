@@ -27,7 +27,7 @@ export async function GET() {
       .select("id, rating_count, review2_text, review3_text")
       .limit(1)
       .maybeSingle();
-    
+
     if (error) {
       // Таблица не существует
       if (error.code === "42P01" || error.message?.includes("Could not find the table")) {
@@ -47,12 +47,12 @@ export async function GET() {
       // При любой другой ошибке тоже возвращаем дефолты, чтобы UI не падал
       return NextResponse.json(DEFAULT_REVIEWS_DATA);
     }
-    
+
     // Если данных нет, возвращаем дефолты
     if (!data) {
       return NextResponse.json(DEFAULT_REVIEWS_DATA);
     }
-    
+
     // Нормализуем данные - подставляем дефолты для null/undefined
     return NextResponse.json({
       id: data.id ?? null,
@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });
     }
     const supabase = getSupabaseAdmin();
-    
+
     // Пытаемся найти существующую запись (может не быть, если таблица пустая)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: existing, error: selectError } = await (supabase as any)
@@ -95,18 +95,18 @@ export async function PATCH(request: NextRequest) {
       .maybeSingle();
 
     // Если таблица не существует - возвращаем понятную ошибку
-    const isTableMissing = 
-      selectError && (
-        selectError.code === "42P01" || 
+    const isTableMissing =
+      selectError &&
+      (selectError.code === "42P01" ||
         selectError.message?.includes("Could not find the table") ||
-        selectError.message?.includes("does not exist")
-      );
-    
+        selectError.message?.includes("does not exist"));
+
     if (isTableMissing) {
       console.error("[admin/reviews PATCH] Таблица home_reviews не существует. Нужно выполнить миграцию.");
       return NextResponse.json(
-        { 
-          error: "Таблица home_reviews не создана в базе данных. Выполните миграцию из scripts/migrations/home-reviews.sql в Supabase SQL Editor. Подробная инструкция: scripts/migrations/README-home-reviews.md"
+        {
+          error:
+            "Таблица home_reviews не создана в базе данных. Выполните миграцию из scripts/migrations/home-reviews.sql в Supabase SQL Editor. Подробная инструкция: scripts/migrations/README-home-reviews.md",
         },
         { status: 500 }
       );
@@ -122,11 +122,7 @@ export async function PATCH(request: NextRequest) {
         updated_at: new Date().toISOString(),
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
-        .from("home_reviews")
-        .insert(insertData)
-        .select()
-        .single();
+      const { data, error } = await (supabase as any).from("home_reviews").insert(insertData).select().single();
       if (error) {
         console.error("[admin/reviews PATCH] Ошибка создания записи:", error.code, error.message, error.details);
         return NextResponse.json(
@@ -179,11 +175,7 @@ export async function PATCH(request: NextRequest) {
         updated_at: new Date().toISOString(),
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data, error } = await (supabase as any)
-        .from("home_reviews")
-        .insert(insertData)
-        .select()
-        .single();
+      const { data, error } = await (supabase as any).from("home_reviews").insert(insertData).select().single();
       if (error) {
         console.error("[admin/reviews PATCH] Ошибка создания записи:", error.code, error.message, error.details);
         return NextResponse.json(
@@ -199,9 +191,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     }
     console.error("[admin/reviews PATCH] Неожиданное исключение:", error.message, error.stack);
-    return NextResponse.json(
-      { error: `Ошибка обновления: ${error.message || "Неизвестная ошибка"}` },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: `Ошибка обновления: ${error.message || "Неизвестная ошибка"}` }, { status: 500 });
   }
 }

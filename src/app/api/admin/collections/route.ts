@@ -15,7 +15,7 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("home_collections")
-      .select("id, image_url, name, category_slug, sort_order, is_active")
+      .select("id, image_url, name, category_slug, sort_order, is_active, description")
       .order("sort_order", { ascending: true });
     if (error) throw error;
     return NextResponse.json(data ?? []);
@@ -34,6 +34,7 @@ const createSchema = z.object({
   category_slug: z.string().min(1),
   sort_order: z.number().int().default(0),
   is_active: z.boolean().default(true),
+  description: z.string().nullable().optional(),
 });
 
 export async function POST(request: NextRequest) {

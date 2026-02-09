@@ -17,6 +17,7 @@ type VariantProductsRow = {
   name: string;
   description: string | null;
   composition?: string | null;
+  composition_flowers?: string[] | null;
   height_cm?: number | null;
   width_cm?: number | null;
   image_url: string | null;
@@ -61,7 +62,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
+        "id, slug, name, description, composition_flowers, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -76,15 +77,13 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     // Загружаем все категории один раз для кэширования
     const allCategories = await getCategories();
     const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
-    
+
     // Создаем кэш для преобразования слогов в названия
     const categoryNamesCache = new Map<string, string[]>();
     const getCategoryNames = (slugs: string[]): string[] => {
       const cacheKey = slugs.sort().join(",");
       if (!categoryNamesCache.has(cacheKey)) {
-        const names = slugs
-          .map((slug) => categoryMap.get(slug))
-          .filter((name): name is string => Boolean(name));
+        const names = slugs.map((slug) => categoryMap.get(slug)).filter((name): name is string => Boolean(name));
         categoryNamesCache.set(cacheKey, names);
       }
       return categoryNamesCache.get(cacheKey)!;
@@ -101,9 +100,9 @@ export async function getAllVariantProducts(): Promise<Product[]> {
         if (row.category_slug && !categorySlugs.includes(row.category_slug)) {
           categorySlugs.push(row.category_slug);
         }
-        
+
         const categories = categorySlugs.length > 0 ? getCategoryNames(categorySlugs) : undefined;
-        
+
         return {
           id: VP_ID_PREFIX + String(row.id),
           slug: row.slug ?? "",
@@ -118,6 +117,10 @@ export async function getAllVariantProducts(): Promise<Product[]> {
           ogDescription: row.og_description ?? null,
           ogImage: row.og_image ?? null,
           composition: null,
+          compositionFlowers:
+            Array.isArray(row.composition_flowers) && row.composition_flowers.length > 0
+              ? row.composition_flowers.filter((f): f is string => typeof f === "string" && f.length > 0)
+              : null,
           sizeHeightCm: null,
           sizeWidthCm: null,
           categorySlug: row.category_slug ?? null,
@@ -154,7 +157,7 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
       .maybeSingle();
 
     if (error || !data) return null;
-    
+
     // Загружаем категории для преобразования
     const allCategories = await getCategories();
     const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
@@ -166,10 +169,11 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
     if (row.category_slug && !categorySlugs.includes(row.category_slug)) {
       categorySlugs.push(row.category_slug);
     }
-    const categories = categorySlugs.length > 0
-      ? categorySlugs.map((slug) => categoryMap.get(slug)).filter((name): name is string => Boolean(name))
-      : undefined;
-    
+    const categories =
+      categorySlugs.length > 0
+        ? categorySlugs.map((slug) => categoryMap.get(slug)).filter((name): name is string => Boolean(name))
+        : undefined;
+
     return {
       id: VP_ID_PREFIX + String(row.id),
       slug: row.slug ?? "",
@@ -210,7 +214,7 @@ export async function getVariantProductWithVariantsBySlug(
     const { data: vp, error: vpErr } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
+        "id, slug, name, description, composition_flowers, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -218,7 +222,7 @@ export async function getVariantProductWithVariantsBySlug(
       .maybeSingle();
 
     if (vpErr || !vp) return null;
-    
+
     // Загружаем категории для преобразования
     const allCategories = await getCategories();
     const categoryMap = new Map(allCategories.map((c) => [c.slug, c.name]));
@@ -230,10 +234,11 @@ export async function getVariantProductWithVariantsBySlug(
     if (row.category_slug && !categorySlugs.includes(row.category_slug)) {
       categorySlugs.push(row.category_slug);
     }
-    const categories = categorySlugs.length > 0
-      ? categorySlugs.map((slug) => categoryMap.get(slug)).filter((name): name is string => Boolean(name))
-      : undefined;
-    
+    const categories =
+      categorySlugs.length > 0
+        ? categorySlugs.map((slug) => categoryMap.get(slug)).filter((name): name is string => Boolean(name))
+        : undefined;
+
     const product: Product = {
       id: VP_ID_PREFIX + String(row.id),
       slug: row.slug ?? "",
@@ -248,6 +253,10 @@ export async function getVariantProductWithVariantsBySlug(
       ogDescription: row.og_description ?? null,
       ogImage: row.og_image ?? null,
       composition: null,
+      compositionFlowers:
+        Array.isArray(row.composition_flowers) && row.composition_flowers.length > 0
+          ? row.composition_flowers.filter((f): f is string => typeof f === "string" && f.length > 0)
+          : null,
       sizeHeightCm: null,
       sizeWidthCm: null,
       categorySlug: row.category_slug ?? null,

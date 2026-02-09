@@ -9,9 +9,7 @@ export type HeaderMode = "expanded" | "compact";
  * Переключение при любом ненулевом delta: вниз → compact, вверх → expanded.
  * Защита от дребезга: пока animationLockRef.current === true, скролл не меняет режим (lock снимается в Header по transitionend).
  */
-export function useHeaderScrollDirection(
-  animationLockRef?: React.MutableRefObject<boolean> | null
-): HeaderMode {
+export function useHeaderScrollDirection(animationLockRef?: React.MutableRefObject<boolean> | null): HeaderMode {
   const [mode, setMode] = useState<HeaderMode>("expanded");
   const lastScrollYRef = useRef(0);
   const previousScrollYRef = useRef(0);

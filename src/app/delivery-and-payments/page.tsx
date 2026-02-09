@@ -15,6 +15,7 @@ import {
   Video,
   GiftIcon,
 } from "lucide-react";
+import { Container } from "@/components/layout/Container";
 import { getDeliveryZones } from "@/lib/deliveryZones";
 import { DeliveryZonesTable } from "@/components/delivery/DeliveryZonesTable";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo";
@@ -68,14 +69,14 @@ export default async function DeliveryAndPaymentsPage() {
     <div className="min-h-screen bg-page-bg">
       {/* Hero */}
       <section className="py-6 md:py-8">
-        <div className="container mx-auto px-5 md:px-6 text-center">
+        <Container className="text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-1.5 md:mb-2 text-[#000] uppercase tracking-tight">
             Доставка и оплата
           </h1>
-        </div>
+        </Container>
       </section>
 
-      <div className="container mx-auto px-5 md:px-6 pb-6 md:pb-8">
+      <Container className="pb-6 md:pb-8">
         {/* Блок 1: Условия доставки */}
         <section className="mb-12 md:mb-16">
           <h2 className="text-3xl md:text-4xl font-bold mb-2 md:mb-3 text-[#000] uppercase tracking-tight text-center">
@@ -256,7 +257,7 @@ export default async function DeliveryAndPaymentsPage() {
             </div>
           </div>
         </section>
-      </div>
+      </Container>
     </div>
   );
 }

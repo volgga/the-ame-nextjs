@@ -262,7 +262,9 @@ export default function OfertaPage() {
 
         {/* 5. Составление букета и замена цветов */}
         <section className="mb-8 md:mb-10">
-          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">5. Составление букета и замена цветов</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-color-text-main mb-4">
+            5. Составление букета и замена цветов
+          </h2>
           <div className="space-y-4 text-base md:text-lg text-color-text-main leading-relaxed">
             <p>
               <strong>5.1.</strong> Букет (корзина), который Покупатель выбрали в нашем каталоге, будет изготовлен

@@ -1,13 +1,13 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FlowerCard } from "./FlowerCard";
 import { Flower } from "@/types/flower";
 import type { Product } from "@/lib/products";
 
-/** Карточек в одном блоке «ПОКАЗАТЬ ЕЩЕ»: mobile 12 рядов × 2 колонки = 24, desktop 6 рядов × 4 колонки = 24 */
+/** Карточек в одном блоке автоподгрузки: mobile 12 рядов × 2 колонки = 24, desktop 6 рядов × 4 колонки = 24 */
 const ROWS_MOBILE = 12;
 const ROWS_DESKTOP = 6;
 const COLS_MOBILE = 2;
@@ -27,8 +27,11 @@ type FlowerCatalogProps = {
 };
 
 export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => {
-  /** Сколько блоков показываем: mobile — 12 рядов за блок, desktop — 6 рядов за блок; каждый клик добавляет один блок */
+  /** Сколько блоков показываем: mobile — 12 рядов за блок, desktop — 6 рядов за блок; автоподгрузка добавляет один блок */
   const [visibleBlocks, setVisibleBlocks] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const isLoadingRef = useRef(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const minPriceParam = searchParams.get("minPrice");
@@ -111,6 +114,46 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   const visibleFlowers = sortedFlowers.slice(0, visibleCount);
   const hasMore = sortedFlowers.length > visibleCount;
 
+  // Функция для загрузки следующего блока
+  const loadMore = useCallback(() => {
+    if (isLoadingRef.current || !hasMore) return;
+
+    isLoadingRef.current = true;
+    setIsLoadingMore(true);
+
+    // Имитация небольшой задержки для плавности (данные уже есть, просто рендер)
+    setTimeout(() => {
+      setVisibleBlocks((b) => b + 1);
+      setIsLoadingMore(false);
+      isLoadingRef.current = false;
+    }, 150);
+  }, [hasMore]);
+
+  // IntersectionObserver для автоподгрузки при скролле
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && !isLoadingRef.current && hasMore) {
+          loadMore();
+        }
+      },
+      {
+        rootMargin: "600px", // Начинаем загрузку заранее (600px до появления sentinel)
+        threshold: 0,
+      }
+    );
+
+    observer.observe(sentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, loadMore]);
+
   return (
     <div>
       {/* Каталог: 2 колонки mobile, 4 на desktop; меньший gap — карточки крупнее */}
@@ -122,16 +165,16 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
         })}
       </div>
 
-      {/* Кнопка "ПОКАЗАТЬ ЕЩЕ": mobile — после 12 рядов, desktop — после 6 рядов; каждый клик добавляет следующий блок */}
-      {hasMore && (
+      {/* Sentinel элемент для автоподгрузки при скролле */}
+      {hasMore && <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />}
+
+      {/* Индикатор загрузки */}
+      {isLoadingMore && (
         <div className="mt-6 flex justify-center">
-          <button
-            type="button"
-            onClick={() => setVisibleBlocks((b) => b + 1)}
-            className="rounded-[9999px] border border-[var(--color-text-main)] bg-transparent px-6 py-2.5 text-sm font-medium text-[var(--color-text-main)] transition-colors hover:bg-[rgba(31,42,31,0.06)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-text-main)] focus-visible:ring-offset-2"
-          >
-            ПОКАЗАТЬ ЕЩЕ
-          </button>
+          <div className="flex items-center gap-2 text-color-text-secondary">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-text-main)] border-t-transparent" />
+            <span className="text-sm">Загрузка...</span>
+          </div>
         </div>
       )}
 

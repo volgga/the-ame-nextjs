@@ -31,11 +31,7 @@ function truncateForTelegram(text: string): string {
 /**
  * Fetch с таймаутом (AbortController).
  */
-async function fetchWithTimeout(
-  url: string,
-  options: RequestInit,
-  timeoutMs: number
-): Promise<Response> {
+async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -63,11 +59,7 @@ function shouldRetry(status: number | null): boolean {
   return true;
 }
 
-async function sendTelegramRequest(
-  url: string,
-  body: Record<string, unknown>,
-  retryCount = 0
-): Promise<void> {
+async function sendTelegramRequest(url: string, body: Record<string, unknown>, retryCount = 0): Promise<void> {
   let lastError: Error | null = null;
   let lastStatus: number | null = null;
   let lastResponseText: string | null = null;
@@ -116,9 +108,7 @@ async function sendTelegramRequest(
 
     const statusInfo = lastStatus != null ? ` (HTTP ${lastStatus})` : "";
     const responseInfo = lastResponseText ? ` Ответ: ${lastResponseText.slice(0, 200)}` : "";
-    throw new Error(
-      `Telegram: ${lastError.message}${statusInfo}${responseInfo}`
-    );
+    throw new Error(`Telegram: ${lastError.message}${statusInfo}${responseInfo}`);
   }
 }
 
@@ -176,8 +166,7 @@ export async function sendOrderTelegramMessage(text: string): Promise<void> {
   if (!chatId?.trim()) return;
 
   const envTid = process.env.TELEGRAM_ORDERS_THREAD_ID;
-  const threadId =
-    envTid != null ? (Number.parseInt(String(envTid).trim(), 10) || undefined) : undefined;
+  const threadId = envTid != null ? Number.parseInt(String(envTid).trim(), 10) || undefined : undefined;
 
   await sendTelegramMessage({
     chatId: chatId.trim(),

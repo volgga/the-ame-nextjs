@@ -11,6 +11,7 @@ export type Collection = {
   category_slug: string;
   sort_order: number;
   is_active: boolean;
+  description?: string | null;
 };
 
 type CollectionCardProps = {
@@ -50,11 +51,7 @@ export function CollectionCard({ collection, index, onEdit }: CollectionCardProp
       <div className="relative aspect-video w-full overflow-hidden bg-gray-100">
         {collection.image_url ? (
           <>
-            <img
-              src={collection.image_url}
-              alt={collection.name}
-              className="h-full w-full object-cover"
-            />
+            <img src={collection.image_url} alt={collection.name} className="h-full w-full object-cover" />
             <div
               className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/40"
               aria-hidden

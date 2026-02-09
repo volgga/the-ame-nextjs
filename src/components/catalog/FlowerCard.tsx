@@ -88,10 +88,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
   // Проверка эффективного статуса "новый": is_new = true AND new_until > now()
   // Бейдж показывается только если showNewBadge = true (по умолчанию true)
   const isNewEffective =
-    showNewBadge &&
-    product?.isNew === true &&
-    product?.newUntil != null &&
-    new Date(product.newUntil) > new Date();
+    showNewBadge && product?.isNew === true && product?.newUntil != null && new Date(product.newUntil) > new Date();
 
   const handleCartClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -126,9 +123,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
             onError={() => setImgError(true)}
           />
           {/* ❤️ Избранное и 🔍 Быстрый просмотр — показываются только при hover на фото (slide-in + fade), на touch скрыты */}
-          <div
-            className="absolute top-3 right-3 z-10 flex flex-col gap-1.5 opacity-0 translate-x-2 pointer-events-none transition-[opacity,transform] duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:translate-x-0 [@media(hover:hover)]:group-hover:pointer-events-auto"
-          >
+          <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5 opacity-0 translate-x-2 pointer-events-none transition-[opacity,transform] duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:translate-x-0 [@media(hover:hover)]:group-hover:pointer-events-auto">
             <button
               type="button"
               onClick={handleToggleFavorite}
@@ -170,9 +165,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
       <div className="mt-1.5 px-1 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
         <div className="flex flex-col justify-center shrink-0 min-w-0">
           {flower.priceFrom && (
-            <span className="text-[10px] font-normal text-color-text-secondary leading-tight md:sr-only">
-              от
-            </span>
+            <span className="text-[10px] font-normal text-color-text-secondary leading-tight md:sr-only">от</span>
           )}
           <span className="text-lg font-semibold text-color-text-main leading-none md:block">
             {flower.priceFrom ? (

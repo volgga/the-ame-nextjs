@@ -15,13 +15,7 @@ import { getHomeReviews } from "@/lib/homeReviews";
 import { getHomeAbout } from "@/lib/homeAbout";
 import { getHomeFaq } from "@/lib/homeFaq";
 import { getHomeOrderBlock } from "@/lib/homeOrderBlock";
-import {
-  CANONICAL_BASE,
-  SITE_NAME,
-  LOCALE,
-  ROBOTS_INDEX_FOLLOW,
-  canonicalUrl,
-} from "@/lib/seo";
+import { CANONICAL_BASE, SITE_NAME, LOCALE, ROBOTS_INDEX_FOLLOW, canonicalUrl } from "@/lib/seo";
 
 const HOME_TITLE = "Доставка цветов в Сочи — купить цветы в цветочном магазине The Ame";
 const HOME_DESCRIPTION =

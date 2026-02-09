@@ -19,11 +19,7 @@ export async function getProductDetails(): Promise<ProductDetails> {
   if (!url || !key) return DEFAULT;
 
   try {
-    const { data, error } = await supabase
-      .from("product_details")
-      .select("kit")
-      .eq("id", 1)
-      .maybeSingle();
+    const { data, error } = await supabase.from("product_details").select("kit").eq("id", 1).maybeSingle();
 
     if (error) {
       if (error.code === "42P01" || error.code === "PGRST116") return DEFAULT;
