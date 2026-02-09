@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { Category } from "@/components/admin/categories/CategoryCard";
+import type { Subcategory } from "@/types/admin";
 import { slugify } from "@/utils/slugify";
 
 const CategoriesGrid = dynamic(
@@ -36,6 +37,19 @@ export default function AdminCategoriesPage() {
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  // Состояние для подкатегорий
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [subcategoriesLoading, setSubcategoriesLoading] = useState(false);
+  const [editingSubcategory, setEditingSubcategory] = useState<Subcategory | null>(null);
+  const [creatingSubcategory, setCreatingSubcategory] = useState(false);
+  const [subcategoryForm, setSubcategoryForm] = useState({
+    name: "",
+    title: "",
+    description: "",
+    seo_title: "",
+    seo_description: "",
+  });
+  const [deleteSubcategoryConfirmId, setDeleteSubcategoryConfirmId] = useState<string | null>(null);
 
   const isDirty = !areOrdersEqual(categoriesFromServer, categoriesDraft);
 
@@ -70,7 +84,36 @@ export default function AdminCategoriesPage() {
     setEditing(null);
     setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
     setIsSlugManuallyEdited(false);
+    // Очищаем состояние подкатегорий
+    setSubcategories([]);
+    setEditingSubcategory(null);
+    setCreatingSubcategory(false);
+    setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+    setDeleteSubcategoryConfirmId(null);
   }
+
+  // Загрузка подкатегорий при открытии модалки редактирования
+  const loadSubcategories = useCallback(async (categoryId: string) => {
+    setSubcategoriesLoading(true);
+    try {
+      const res = await fetch(`/api/admin/subcategories?category_id=${categoryId}`);
+      if (!res.ok) throw new Error("Ошибка загрузки подкатегорий");
+      const data = await res.json();
+      setSubcategories(data);
+    } catch (e) {
+      console.error("[admin/categories] Error loading subcategories:", e);
+    } finally {
+      setSubcategoriesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (editing?.id) {
+      loadSubcategories(editing.id);
+    } else {
+      setSubcategories([]);
+    }
+  }, [editing?.id, loadSubcategories]);
 
   useEffect(() => {
     if (!creating && !editing) return;
@@ -89,6 +132,28 @@ export default function AdminCategoriesPage() {
     window.addEventListener("keydown", onEsc);
     return () => window.removeEventListener("keydown", onEsc);
   }, [deleteConfirmId]);
+
+  useEffect(() => {
+    if (!creatingSubcategory && !editingSubcategory) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setCreatingSubcategory(false);
+        setEditingSubcategory(null);
+        setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+      }
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [creatingSubcategory, editingSubcategory]);
+
+  useEffect(() => {
+    if (!deleteSubcategoryConfirmId) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDeleteSubcategoryConfirmId(null);
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [deleteSubcategoryConfirmId]);
 
   useEffect(() => {
     if (!isDirty) return;
@@ -213,6 +278,105 @@ export default function AdminCategoriesPage() {
     } catch (e) {
       setError(String(e));
     }
+  }
+
+  // Функции для работы с подкатегориями
+  async function handleSaveSubcategory(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editing?.id) return;
+    const nameTrimmed = subcategoryForm.name.trim();
+    if (!nameTrimmed) {
+      setError("Название подкатегории обязательно.");
+      return;
+    }
+    try {
+      if (creatingSubcategory) {
+        const res = await fetch("/api/admin/subcategories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            category_id: editing.id,
+            name: nameTrimmed,
+            title: subcategoryForm.title.trim() || null,
+            description: subcategoryForm.description.trim() || null,
+            seo_title: subcategoryForm.seo_title.trim() || null,
+            seo_description: subcategoryForm.seo_description.trim() || null,
+            sort_order: subcategories.length,
+            is_active: true,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        setSubcategories((s) => [...s, data].sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999)));
+        setCreatingSubcategory(false);
+        setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+      } else if (editingSubcategory) {
+        const res = await fetch(`/api/admin/subcategories/${editingSubcategory.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: nameTrimmed,
+            title: subcategoryForm.title.trim() || null,
+            description: subcategoryForm.description.trim() || null,
+            seo_title: subcategoryForm.seo_title.trim() || null,
+            seo_description: subcategoryForm.seo_description.trim() || null,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        setSubcategories((s) =>
+          s.map((x) => (x.id === editingSubcategory.id ? data : x)).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999))
+        );
+        setEditingSubcategory(null);
+        setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+      }
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
+  async function handleDeleteSubcategory(id: string) {
+    setDeleteSubcategoryConfirmId(null);
+    try {
+      const res = await fetch(`/api/admin/subcategories/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Ошибка удаления");
+      setSubcategories((s) => s.filter((x) => x.id !== id));
+      setEditingSubcategory(null);
+    } catch (e) {
+      setError(String(e));
+    }
+  }
+
+  function handleMoveSubcategory(id: string, direction: "up" | "down") {
+    const index = subcategories.findIndex((s) => s.id === id);
+    if (index === -1) return;
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === subcategories.length - 1) return;
+
+    const newSubcategories = [...subcategories];
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    [newSubcategories[index], newSubcategories[newIndex]] = [
+      newSubcategories[newIndex],
+      newSubcategories[index],
+    ];
+
+    // Обновляем sort_order
+    const updated = newSubcategories.map((s, i) => ({ ...s, sort_order: i }));
+    setSubcategories(updated);
+
+    // Сохраняем порядок на сервере
+    Promise.all(
+      updated.map((s, i) =>
+        fetch(`/api/admin/subcategories/${s.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sort_order: i }),
+        })
+      )
+    ).catch((e) => {
+      console.error("[admin/categories] Error reordering subcategories:", e);
+      setError("Ошибка сохранения порядка подкатегорий");
+    });
   }
 
   function handleReorder(newOrder: Category[]) {
@@ -364,6 +528,94 @@ export default function AdminCategoriesPage() {
                       <span className="text-sm text-[#111]">Активна</span>
                     </label>
                   </div>
+                  {/* Блок управления подкатегориями (только при редактировании) */}
+                  {editing && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-medium text-[#111]">Подкатегории</h4>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCreatingSubcategory(true);
+                            setEditingSubcategory(null);
+                            setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-800 underline"
+                        >
+                          + Добавить подкатегорию
+                        </button>
+                      </div>
+                      {subcategoriesLoading ? (
+                        <p className="text-xs text-gray-500">Загрузка подкатегорий...</p>
+                      ) : subcategories.length === 0 ? (
+                        <p className="text-xs text-gray-500">Нет подкатегорий</p>
+                      ) : (
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {subcategories.map((subcat, idx) => (
+                            <div
+                              key={subcat.id}
+                              className="flex items-center justify-between p-2 border border-gray-200 rounded text-sm"
+                            >
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <div className="flex flex-col gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveSubcategory(subcat.id, "up")}
+                                    disabled={idx === 0}
+                                    className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Вверх"
+                                  >
+                                    ↑
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveSubcategory(subcat.id, "down")}
+                                    disabled={idx === subcategories.length - 1}
+                                    className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                                    title="Вниз"
+                                  >
+                                    ↓
+                                  </button>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-[#111] truncate">{subcat.name}</p>
+                                  {subcat.title && (
+                                    <p className="text-xs text-gray-500 truncate">{subcat.title}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 ml-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingSubcategory(subcat);
+                                    setCreatingSubcategory(false);
+                                    setSubcategoryForm({
+                                      name: subcat.name,
+                                      title: subcat.title || "",
+                                      description: subcat.description || "",
+                                      seo_title: subcat.seo_title || "",
+                                      seo_description: subcat.seo_description || "",
+                                    });
+                                  }}
+                                  className="text-xs text-blue-600 hover:text-blue-800"
+                                >
+                                  Редактировать
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeleteSubcategoryConfirmId(subcat.id)}
+                                  className="text-xs text-red-600 hover:text-red-800"
+                                >
+                                  Удалить
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex gap-2 p-6 pt-4 border-t border-gray-100">
@@ -396,6 +648,153 @@ export default function AdminCategoriesPage() {
                 )}
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка создания/редактирования подкатегории */}
+      {(creatingSubcategory || editingSubcategory) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => {
+            setCreatingSubcategory(false);
+            setEditingSubcategory(null);
+            setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+          }} aria-hidden />
+          <div
+            className="relative w-full max-w-[600px] max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white hover:border-border-block-hover shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <form onSubmit={handleSaveSubcategory} className="flex flex-col min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto p-6">
+                <h3 className="mb-4 font-medium text-[#111]">
+                  {creatingSubcategory ? "Новая подкатегория" : "Редактирование подкатегории"}
+                </h3>
+                {error && (creatingSubcategory || editingSubcategory) && (
+                  <p className="mb-3 text-sm text-red-600">{error}</p>
+                )}
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">Название *</label>
+                    <input
+                      type="text"
+                      value={subcategoryForm.name}
+                      onChange={(e) => setSubcategoryForm({ ...subcategoryForm, name: e.target.value })}
+                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                      required
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">Заголовок</label>
+                    <input
+                      type="text"
+                      value={subcategoryForm.title}
+                      onChange={(e) => setSubcategoryForm({ ...subcategoryForm, title: e.target.value })}
+                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                      placeholder="Заполняется вручную"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">Ручное поле, не автозаполняется</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">Описание</label>
+                    <textarea
+                      value={subcategoryForm.description}
+                      onChange={(e) => setSubcategoryForm({ ...subcategoryForm, description: e.target.value })}
+                      rows={6}
+                      className="mt-2 w-full resize-y rounded border border-gray-300 px-3 py-2 text-[#111] text-sm min-h-[120px]"
+                      placeholder="Заполняется вручную"
+                      maxLength={5000}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {subcategoryForm.description.length}/5000 символов. Ручное поле, не автозаполняется
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">SEO заголовок (title)</label>
+                    <input
+                      type="text"
+                      value={subcategoryForm.seo_title}
+                      onChange={(e) => setSubcategoryForm({ ...subcategoryForm, seo_title: e.target.value })}
+                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                      placeholder="SEO заголовок"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#111]">SEO описание</label>
+                    <textarea
+                      value={subcategoryForm.seo_description}
+                      onChange={(e) => setSubcategoryForm({ ...subcategoryForm, seo_description: e.target.value })}
+                      rows={3}
+                      className="mt-2 w-full resize-y rounded border border-gray-300 px-3 py-2 text-[#111] text-sm"
+                      placeholder="SEO описание"
+                      maxLength={500}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{subcategoryForm.seo_description.length}/500 символов</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 p-6 pt-4 border-t border-gray-100">
+                <button
+                  type="submit"
+                  className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+                >
+                  Сохранить
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreatingSubcategory(false);
+                    setEditingSubcategory(null);
+                    setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+                  }}
+                  className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
+                >
+                  Отмена
+                </button>
+                {editingSubcategory && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDeleteSubcategoryConfirmId(editingSubcategory.id);
+                      setEditingSubcategory(null);
+                      setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+                    }}
+                    className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    Удалить
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка подтверждения удаления подкатегории */}
+      {deleteSubcategoryConfirmId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteSubcategoryConfirmId(null)} aria-hidden />
+          <div
+            className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="mb-4 text-[#111]">Точно удалить подкатегорию?</p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setDeleteSubcategoryConfirmId(null)}
+                className="rounded bg-gray-100 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-200"
+              >
+                Нет
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteSubcategory(deleteSubcategoryConfirmId)}
+                className="rounded px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
+              >
+                Да
+              </button>
+            </div>
           </div>
         </div>
       )}

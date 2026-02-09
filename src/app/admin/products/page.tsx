@@ -8,6 +8,7 @@ import { slugify } from "@/utils/slugify";
 import { Modal } from "@/components/ui/modal";
 import { parseCompositionFlowers } from "@/lib/parseCompositionFlowers";
 import { OCCASIONS_CATEGORY_SLUG } from "@/lib/constants";
+import { useAutoSyncCompositionFlowers } from "@/hooks/useAutoSyncCompositionFlowers";
 
 const ProductsList = dynamic(
   () => import("@/components/admin/products/ProductsList").then((m) => ({ default: m.ProductsList })),
@@ -508,6 +509,27 @@ function AdminProductsPageContent() {
   function toggleFlower(flower: string) {
     setSelectedFlowers((prev) => (prev.includes(flower) ? prev.filter((f) => f !== flower) : [...prev, flower]));
   }
+
+  // Автосинхронизация цветов из состава для обычного товара (только когда модалка открыта и тип "simple")
+  const { handleFlowerToggle: handleFlowerToggleSimple } = useAutoSyncCompositionFlowers(
+    createModalOpen && createType === "simple" ? createForm.composition_size : "",
+    availableFlowers,
+    selectedFlowers,
+    setSelectedFlowers
+  );
+
+  // Для вариантных товаров: собираем все составы из всех вариантов
+  const variantCompositions = createModalOpen && createType === "variant"
+    ? variants.map((v) => v.composition || "").filter((c) => c.trim().length > 0).join(", ")
+    : "";
+
+  // Автосинхронизация цветов из состава для вариантного товара
+  const { handleFlowerToggle: handleFlowerToggleVariant } = useAutoSyncCompositionFlowers(
+    variantCompositions,
+    availableFlowers,
+    selectedFlowers,
+    setSelectedFlowers
+  );
 
   function addProductImages(files: FileList | null) {
     if (!files?.length) return;
@@ -1497,7 +1519,7 @@ function AdminProductsPageContent() {
                                         type="checkbox"
                                         id={`flower-${flower}`}
                                         checked={selectedFlowers.includes(flower)}
-                                        onChange={() => toggleFlower(flower)}
+                                        onChange={(e) => handleFlowerToggleSimple(flower, e.target.checked)}
                                         className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                                       />
                                       <label
@@ -2005,7 +2027,7 @@ function AdminProductsPageContent() {
                                         type="checkbox"
                                         id={`variant-flower-${flower}`}
                                         checked={selectedFlowers.includes(flower)}
-                                        onChange={() => toggleFlower(flower)}
+                                        onChange={(e) => handleFlowerToggleVariant(flower, e.target.checked)}
                                         className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                                       />
                                       <label

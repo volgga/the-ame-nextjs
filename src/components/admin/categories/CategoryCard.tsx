@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Eye, EyeOff, Pencil, Trash2 } from "lucide-react";
@@ -120,13 +119,6 @@ export function CategoryCard({
         <p className={`mt-1 text-sm ${category.is_active ? "text-color-text-main" : "text-gray-400"}`}>
           {category.is_active ? "Активна" : "Неактивна"}
         </p>
-        <Link
-          href={`/admin/categories/${category.id}/subcategories`}
-          onClick={(e) => e.stopPropagation()}
-          className="mt-2 text-xs text-blue-600 hover:text-blue-800"
-        >
-          Подкатегории →
-        </Link>
       </div>
     </div>
   );
