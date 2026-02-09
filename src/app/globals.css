@@ -742,6 +742,8 @@ All colors MUST be HSL.
 /* Бейдж "НОВЫЙ" — эффект внешнего скругления слева, повторяющего радиус карточки (rounded-2xl = 1rem) */
 .new-badge {
   position: relative;
+  display: inline-block;
+  width: fit-content;
   /* Левая сторона без внутреннего скругления - создаем эффект "вытекания" */
   overflow: visible;
 }
