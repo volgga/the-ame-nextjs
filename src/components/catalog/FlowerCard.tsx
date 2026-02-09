@@ -112,7 +112,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
         <div className="group relative overflow-hidden rounded-2xl aspect-square bg-[#ece9e2]">
           {/* Бейдж "НОВЫЙ" — левый верхний угол */}
           {isNewEffective && (
-            <div className="absolute top-3 left-0 z-10 px-3 py-2 rounded-tl-2xl rounded-tr-lg rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-xs font-medium leading-none">
+            <div className="new-badge absolute top-4 left-0 z-10 px-3 py-2 rounded-tr-lg rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-xs font-medium leading-none">
               НОВЫЙ
             </div>
           )}
