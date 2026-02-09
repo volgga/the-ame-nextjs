@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { slugify } from "@/utils/slugify";
 import { Modal } from "@/components/ui/modal";
+import { parseCompositionFlowers } from "@/lib/parseCompositionFlowers";
 
 const ProductsList = dynamic(
   () => import("@/components/admin/products/ProductsList").then((m) => ({ default: m.ProductsList })),
@@ -93,6 +94,8 @@ function AdminProductsPageContent() {
   const [productImagesUploading, setProductImagesUploading] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string; is_active: boolean }[]>([]);
   const [selectedCategorySlugs, setSelectedCategorySlugs] = useState<string[]>([]);
+  const [availableFlowers, setAvailableFlowers] = useState<string[]>([]);
+  const [selectedFlowers, setSelectedFlowers] = useState<string[]>([]);
   const [createIsHidden, setCreateIsHidden] = useState(false);
   const [createIsPreorder, setCreateIsPreorder] = useState(false);
   const [createIsNew, setCreateIsNew] = useState(false);
@@ -162,6 +165,12 @@ function AdminProductsPageContent() {
         setCategories(data.filter((c) => c.is_active))
       )
       .catch(() => setCategories([]));
+    
+    // Загружаем список доступных цветов
+    fetch("/api/admin/flowers")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: string[]) => setAvailableFlowers(data))
+      .catch(() => setAvailableFlowers([]));
   }, [createModalOpen]);
 
   // Открыть модалку при переходе с /admin/products/new или /admin/products?edit=id
@@ -275,6 +284,12 @@ function AdminProductsPageContent() {
         setSelectedCategorySlugs(
           Array.isArray(data.category_slugs) ? data.category_slugs : data.category_slug ? [data.category_slug] : []
         );
+        // Загружаем выбранные цветы (если есть)
+        setSelectedFlowers(
+          Array.isArray(data.composition_flowers) && data.composition_flowers.length > 0
+            ? data.composition_flowers.filter((f): f is string => typeof f === "string" && f.length > 0)
+            : []
+        );
         if (isVariantProduct) {
           setExistingMainImageUrl(data.image_url ?? null);
           setVariantMainImage(null);
@@ -370,6 +385,7 @@ function AdminProductsPageContent() {
     setExistingMainImageUrl(null);
     setEditProductId(null);
     setSelectedCategorySlugs([]);
+    setSelectedFlowers([]);
     setCreateIsHidden(false);
     setCreateIsPreorder(false);
     setCreateIsNew(false);
@@ -377,6 +393,7 @@ function AdminProductsPageContent() {
     setCreateModalOpen(false);
     setCreateForm(initialForm);
     setCreateError("");
+    setSelectedFlowers([]);
     setInitialVariantIds([]);
     variants.forEach((v) => {
       if (v.image) URL.revokeObjectURL(v.image.previewUrl);
@@ -428,6 +445,11 @@ function AdminProductsPageContent() {
   function toggleCategorySlug(slug: string) {
     setSelectedCategorySlugs((prev) => (prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]));
   }
+
+  function toggleFlower(flower: string) {
+    setSelectedFlowers((prev) => (prev.includes(flower) ? prev.filter((f) => f !== flower) : [...prev, flower]));
+  }
+
 
   function addProductImages(files: FileList | null) {
     if (!files?.length) return;
@@ -667,6 +689,7 @@ function AdminProductsPageContent() {
           is_new: createIsNew,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
+          composition_flowers: selectedFlowers.length > 0 ? selectedFlowers : null,
           seo_title: createForm.seo_title.trim() || null,
           seo_description: createForm.seo_description.trim() || null,
           seo_keywords: createForm.seo_keywords.trim() || null,
@@ -714,6 +737,7 @@ function AdminProductsPageContent() {
           is_new: createIsNew,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
+          composition_flowers: selectedFlowers.length > 0 ? selectedFlowers : null,
           seo_title: createForm.seo_title.trim() || null,
           seo_description: createForm.seo_description.trim() || null,
           seo_keywords: createForm.seo_keywords.trim() || null,
@@ -881,6 +905,7 @@ function AdminProductsPageContent() {
             : [];
         const slug = slugify(createForm.name);
         const category_slugs = selectedCategorySlugs.length > 0 ? selectedCategorySlugs : null;
+        const composition_flowers = selectedFlowers.length > 0 ? selectedFlowers : null;
 
         const payload = {
           type: "simple",
@@ -990,6 +1015,7 @@ function AdminProductsPageContent() {
         // Создание вариантного товара с вариантами
         const slug = slugify(createForm.name);
         const category_slugs = selectedCategorySlugs.length > 0 ? selectedCategorySlugs : null;
+        const composition_flowers = selectedFlowers.length > 0 ? selectedFlowers : null;
 
         const payload = {
           type: "variant",
@@ -1406,6 +1432,63 @@ function AdminProductsPageContent() {
                       <p className="mt-0.5 text-xs text-color-text-secondary">Укажите состав букета вручную</p>
                       {fieldErrors.composition_size && (
                         <p className="mt-0.5 text-xs text-red-600">{fieldErrors.composition_size}</p>
+                      )}
+                    </div>
+                    {/* Блок выбора цветов (фильтр) — под полем "Состав" */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-sm font-medium text-color-text-main">
+                          Цветы в составе (фильтр)
+                        </label>
+                        {createForm.composition_size && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const parsed = parseCompositionFlowers(createForm.composition_size);
+                              setSelectedFlowers(parsed);
+                            }}
+                            className="text-xs text-color-text-secondary hover:text-color-text-main underline"
+                          >
+                            Заполнить из состава
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-xs text-color-text-secondary mb-2">
+                        Выберите цветы для фильтрации. Список формируется автоматически из всех товаров.
+                      </p>
+                      {availableFlowers.length === 0 ? (
+                        <p className="text-sm text-color-text-secondary">Загрузка списка цветов...</p>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
+                          {[0, 1].map((col) => {
+                            const mid = Math.ceil(availableFlowers.length / 2);
+                            const list = col === 0 ? availableFlowers.slice(0, mid) : availableFlowers.slice(mid);
+                            return (
+                              <ul key={col} className="divide-y divide-border-block">
+                                {list.map((flower) => (
+                                  <li
+                                    key={flower}
+                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      id={`flower-${flower}`}
+                                      checked={selectedFlowers.includes(flower)}
+                                      onChange={() => toggleFlower(flower)}
+                                      className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                    />
+                                    <label
+                                      htmlFor={`flower-${flower}`}
+                                      className="text-sm text-color-text-main cursor-pointer flex-1"
+                                    >
+                                      {flower}
+                                    </label>
+                                  </li>
+                                ))}
+                              </ul>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
                     <div>
