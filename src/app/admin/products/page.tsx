@@ -95,6 +95,7 @@ function AdminProductsPageContent() {
   const [selectedCategorySlugs, setSelectedCategorySlugs] = useState<string[]>([]);
   const [createIsHidden, setCreateIsHidden] = useState(false);
   const [createIsPreorder, setCreateIsPreorder] = useState(false);
+  const [createIsNew, setCreateIsNew] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const productImagesRef = useRef<ImageItem[]>([]);
   productImagesRef.current = productImages;
@@ -270,6 +271,7 @@ function AdminProductsPageContent() {
         });
         setCreateIsHidden(data.is_hidden ?? false);
         setCreateIsPreorder(data.is_preorder ?? false);
+        setCreateIsNew(data.is_new ?? false);
         setSelectedCategorySlugs(
           Array.isArray(data.category_slugs) ? data.category_slugs : data.category_slug ? [data.category_slug] : []
         );
@@ -370,6 +372,7 @@ function AdminProductsPageContent() {
     setSelectedCategorySlugs([]);
     setCreateIsHidden(false);
     setCreateIsPreorder(false);
+    setCreateIsNew(false);
     setFieldErrors({});
     setCreateModalOpen(false);
     setCreateForm(initialForm);
@@ -661,6 +664,7 @@ function AdminProductsPageContent() {
           is_active: true,
           is_hidden: createIsHidden,
           is_preorder: createIsPreorder,
+          is_new: createIsNew,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           seo_title: createForm.seo_title.trim() || null,
@@ -707,6 +711,7 @@ function AdminProductsPageContent() {
           image_url: mainImageUrl,
           is_active: true,
           is_hidden: createIsHidden,
+          is_new: createIsNew,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           seo_title: createForm.seo_title.trim() || null,
@@ -891,6 +896,7 @@ function AdminProductsPageContent() {
           is_active: true,
           is_hidden: createIsHidden,
           is_preorder: createIsPreorder,
+          is_new: createIsNew,
           category_slugs,
           seo_title: createForm.seo_title.trim() || null,
           seo_description: createForm.seo_description.trim() || null,
@@ -1519,6 +1525,20 @@ function AdminProductsPageContent() {
                         />
                         <span className="text-sm text-color-text-main">Предзаказ</span>
                       </label>
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={createIsNew}
+                          onChange={(e) => setCreateIsNew(e.target.checked)}
+                          className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                        />
+                        <span className="text-sm text-color-text-main">новый</span>
+                      </label>
+                      <p className="mt-1 text-xs text-color-text-secondary">
+                        На карточке товара в каталоге и «Рекомендуем» появится бейдж «новый». Автоматически скрывается через 30 дней.
+                      </p>
                     </div>
                     <div className="space-y-0.5 text-xs text-color-text-secondary">
                       <p>«Скрыть с витрины» — товар не показывается на сайте, но остаётся в админке.</p>

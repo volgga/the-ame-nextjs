@@ -201,6 +201,7 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
                   <FlowerCard
                     flower={top}
                     product={products.find((p) => p.id === top.id)}
+                    showNewBadge={false}
                   />
                 </div>
               )}
@@ -209,6 +210,7 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
                   <FlowerCard
                     flower={bottom}
                     product={products.find((p) => p.id === bottom.id)}
+                    showNewBadge={false}
                   />
                 </div>
               )}
