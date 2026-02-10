@@ -125,16 +125,17 @@ export async function syncFlowersFromProducts(): Promise<{ created: number; upda
     const existingRow = bySlug.get(key) ?? bySlug.get(name.toLowerCase().trim());
 
     if (!existingRow) {
-      const { error } = await sb.from("flowers").insert({
-        slug,
-        name: name.trim(),
-        title: null,
-        description: null,
-        seo_title: null,
-        seo_description: null,
-        is_active: true,
-        sort_order: nextOrder++,
-      });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (sb as any).from("flowers").insert({
+    slug,
+    name: name.trim(),
+    title: null,
+    description: null,
+    seo_title: null,
+    seo_description: null,
+    is_active: true,
+    sort_order: nextOrder++,
+  });
       if (!error) {
         created++;
         bySlug.set(key, { id: "", name, sort_order: nextOrder - 1 });
