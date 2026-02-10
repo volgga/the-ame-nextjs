@@ -71,3 +71,6 @@ pnpm-debug.log*
 # ======================
 .DS_Store
 .vercel
+
+docs/
+scripts/
