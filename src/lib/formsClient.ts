@@ -2,7 +2,7 @@
  * Клиентские функции для отправки данных форм на сервер.
  */
 
-import type { OneClickFormData, BouquetFormData, GiftHintFormData } from "./format";
+import type { OneClickFormData, BouquetFormData, GiftHintFormData, PreorderFormData } from "./format";
 
 /**
  * Ответ API формы
@@ -20,6 +20,24 @@ export interface FormResponse {
  */
 export async function submitOneClick(data: OneClickFormData): Promise<FormResponse> {
   const response = await fetch("/api/forms/one-click", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  return (await response.json()) as FormResponse;
+}
+
+/**
+ * Отправляет данные формы "Предзаказ".
+ *
+ * @param data - Данные формы
+ * @returns Promise с ответом сервера
+ */
+export async function submitPreorder(data: PreorderFormData): Promise<FormResponse> {
+  const response = await fetch("/api/forms/preorder", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

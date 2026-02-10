@@ -229,7 +229,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
               {/* Цена */}
               <div className="mb-4">
                 <span className="text-2xl font-bold text-color-text-main">
-                  {product.isPreorder ? "Предзаказ" : `${product.price.toLocaleString("ru-RU")} ₽`}
+                  {product.price.toLocaleString("ru-RU")} ₽
                 </span>
               </div>
 
