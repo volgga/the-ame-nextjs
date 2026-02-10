@@ -74,3 +74,9 @@ pnpm-debug.log*
 
 docs/
 scripts/
+
+DEPLOY-UBUNTU.md
+add-telegram-env.sh
+build-locally-and-deploy.sh
+deploy-commands.sh
+products_data.sql
