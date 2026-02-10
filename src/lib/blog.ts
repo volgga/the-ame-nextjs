@@ -20,6 +20,8 @@ export type BlogPost = {
   updated_at: string;
 };
 
+export type BlogPostNav = Pick<BlogPost, "id" | "slug" | "title">;
+
 /**
  * Получить все опубликованные посты (для публичной страницы)
  */
@@ -130,7 +132,10 @@ export async function getPublishedPostSlugs(): Promise<string[]> {
 /**
  * Получить соседние посты (prev/next) для навигации
  */
-export async function getAdjacentPosts(currentSlug: string): Promise<{ prev: BlogPost | null; next: BlogPost | null }> {
+export async function getAdjacentPosts(
+  currentSlug: string
+): Promise<{ prev: BlogPostNav | null; next: BlogPostNav | null }> {
+
   try {
     const supabase = getSupabaseServer();
 
