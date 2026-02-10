@@ -28,6 +28,7 @@ import { GiftHintModal } from "./GiftHintModal";
 import { ContactMessengersRow } from "./ContactMessengersRow";
 import { AddToOrderSection } from "./AddToOrderSection";
 import { runFlyToHeader } from "@/utils/flyToHeader";
+import { PreorderModal } from "@/components/cart/PreorderModal";
 
 type ProductPageClientProps = {
   product: Product;
@@ -244,15 +245,14 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     };
     const title = v.seo_title?.trim();
     const desc = v.seo_description?.trim();
-    useEffect(() => {
-      if (title) {
-        document.title = `${title} | The Ame`;
-      }
-      const metaDesc = document.querySelector('meta[name="description"]');
-      if (metaDesc && desc) {
-        metaDesc.setAttribute("content", desc);
-      }
-    }, [title, desc]);
+
+    if (title) {
+      document.title = `${title} | The Ame`;
+    }
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc && desc) {
+      metaDesc.setAttribute("content", desc);
+    }
   }, [hasVariants, selectedVariant]);
 
   // Храним предыдущий product.id чтобы сбросить индекс только при смене товара

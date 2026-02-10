@@ -60,6 +60,23 @@ export interface GiftHintFormData {
 }
 
 /**
+ * Данные формы "Предзаказ"
+ */
+export interface PreorderFormData {
+  phone: string;
+  name?: string | null;
+  /** Дата, выбранная пользователем (формат YYYY-MM-DD или другая строка) */
+  preorderDate: string;
+  productTitle?: string | null;
+  pageUrl?: string | null;
+  productId?: string | null;
+  /** Полный URL страницы товара (если передан — используется как ссылка) */
+  productUrl?: string | null;
+  /** Путь вида /product/slug (fallback для сборки ссылки) */
+  productPath?: string | null;
+}
+
+/**
  * Экранирует HTML-специальные символы для безопасного использования в HTML.
  */
 function escapeHtml(text: string): string {
@@ -160,4 +177,42 @@ export function formatGiftHintMessage(data: GiftHintFormData, _leadId?: string):
   text += `\n<b>Комментарий:</b> ${comment ? escapeHtml(comment) : "-"}`;
 
   return text.trim();
+}
+
+/**
+ * Форматирует сообщение для формы "Предзаказ".
+ * Формат (простой текст, без HTML-разметки), пример:
+ *
+ * ❗ Предзаказ
+ *
+ * Телефон: +75454545455
+ * Товар: теста
+ * Товар: http://localhost:3000/product/testa
+ * Дата: 2025-01-01
+ */
+export function formatPreorderMessage(data: PreorderFormData, _leadId?: string): string {
+  const name = data.name?.trim();
+  const productTitle = data.productTitle?.trim();
+  const productLink =
+    data.productUrl?.trim() || buildAbsoluteUrl(data.productPath?.trim() || data.pageUrl?.trim() || null);
+  const preorderDate = data.preorderDate?.trim();
+
+  const lines: string[] = [];
+  lines.push("❗ Предзаказ");
+  lines.push("");
+  if (name) {
+    lines.push(`Имя: ${name}`);
+  }
+  lines.push(`Телефон: ${data.phone}`);
+  if (productTitle) {
+    lines.push(`Товар: ${productTitle}`);
+  }
+  if (productLink) {
+    lines.push(`Товар: ${productLink}`);
+  }
+  if (preorderDate) {
+    lines.push(`Дата: ${preorderDate}`);
+  }
+
+  return lines.join("\n").trim();
 }

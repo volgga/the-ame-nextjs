@@ -10,6 +10,7 @@ import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { buildProductUrl } from "@/utils/buildProductUrl";
 import { QuickBuyModal } from "@/components/cart/QuickBuyModal";
+import { PreorderModal } from "@/components/cart/PreorderModal";
 import { QuickViewModal, type QuickViewProductData } from "@/components/catalog/QuickViewModal";
 import { runFlyToHeader } from "@/utils/flyToHeader";
 import type { Product } from "@/lib/products";
@@ -24,6 +25,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
   const { addToCart } = useCart();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
   const [quickBuyOpen, setQuickBuyOpen] = useState(false);
+  const [preorderOpen, setPreorderOpen] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [imgError, setImgError] = useState(false);
@@ -79,11 +81,11 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
     slug: flower.slug ?? product?.slug ?? null,
   };
 
-  const priceLabel = flower.isPreorder
-    ? "Предзаказ"
-    : flower.priceFrom
-      ? `от ${flower.price.toLocaleString("ru-RU")} ₽`
-      : `${flower.price.toLocaleString("ru-RU")} ₽`;
+  const isPreorder = flower.isPreorder ?? product?.isPreorder ?? false;
+
+  const priceLabel = flower.priceFrom
+    ? `от ${flower.price.toLocaleString("ru-RU")} ₽`
+    : `${flower.price.toLocaleString("ru-RU")} ₽`;
 
   // Проверка эффективного статуса "новый": is_new = true AND new_until > now()
   // Бейдж показывается только если showNewBadge = true (по умолчанию true)
@@ -171,9 +173,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
             {flower.priceFrom ? (
               <>
                 <span className="hidden md:inline">{priceLabel}</span>
-                <span className="md:hidden">
-                  {flower.isPreorder ? "Предзаказ" : `${flower.price.toLocaleString("ru-RU")} ₽`}
-                </span>
+                <span className="md:hidden">{`${flower.price.toLocaleString("ru-RU")} ₽`}</span>
               </>
             ) : (
               priceLabel
@@ -194,28 +194,55 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
               strokeWidth={1.5}
             />
           </button>
-          <button
-            type="button"
-            onClick={openQuickBuyModal}
-            className="product-cta min-h-[36px] py-0.5 rounded-full pl-2 pr-1.5 text-xs font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation hidden md:inline-flex"
-          >
-            Купить в 1 клик
-          </button>
-          <button
-            type="button"
-            onClick={handleCartClick}
-            className="product-cta h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
-            title={flower.inStock ? "В корзину" : "Предзаказ"}
-            aria-label={flower.inStock ? "В корзину" : "Предзаказ"}
-          >
-            <ShoppingCart className="w-3.5 h-3.5" strokeWidth={1.6} />
-          </button>
+          {isPreorder ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPreorderOpen(true);
+              }}
+              className="product-cta min-h-[36px] py-0.5 rounded-full px-4 text-xs font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
+            >
+              Предзаказ
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={openQuickBuyModal}
+                className="product-cta min-h-[36px] py-0.5 rounded-full pl-2 pr-1.5 text-xs font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation hidden md:inline-flex"
+              >
+                Купить в 1 клик
+              </button>
+              <button
+                type="button"
+                onClick={handleCartClick}
+                className="product-cta h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
+                title={flower.inStock ? "В корзину" : "Предзаказ"}
+                aria-label={flower.inStock ? "В корзину" : "Предзаказ"}
+              >
+                <ShoppingCart className="w-3.5 h-3.5" strokeWidth={1.6} />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
       <QuickBuyModal
         isOpen={quickBuyOpen}
         onClose={() => setQuickBuyOpen(false)}
+        product={{
+          id: flower.id,
+          name: flower.name,
+          image: flower.image,
+          price: flower.price,
+          productPath: productUrl,
+        }}
+      />
+      <PreorderModal
+        isOpen={preorderOpen}
+        onClose={() => setPreorderOpen(false)}
         product={{
           id: flower.id,
           name: flower.name,

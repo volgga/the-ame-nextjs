@@ -2,9 +2,9 @@
  * Типы и утилиты для работы с таблицей leads в Supabase.
  */
 
-import type { OneClickFormData, BouquetFormData, GiftHintFormData } from "./format";
+import type { OneClickFormData, BouquetFormData, GiftHintFormData, PreorderFormData } from "./format";
 
-export type LeadType = "one_click" | "bouquet" | "gift_hint";
+export type LeadType = "one_click" | "bouquet" | "gift_hint" | "preorder";
 
 /**
  * Payload для типа one_click
@@ -22,13 +22,18 @@ export type BouquetPayload = BouquetFormData;
 export type GiftHintPayload = GiftHintFormData;
 
 /**
+ * Payload для типа preorder
+ */
+export type PreorderPayload = PreorderFormData;
+
+/**
  * Данные для вставки в таблицу leads
  */
 export interface LeadInsert {
   type: LeadType;
   name: string | null;
   phone: string;
-  payload: OneClickPayload | BouquetPayload | GiftHintPayload;
+  payload: OneClickPayload | BouquetPayload | GiftHintPayload | PreorderPayload;
   page_url: string | null;
 }
 
@@ -72,6 +77,22 @@ export function createGiftHintPayload(data: GiftHintFormData): GiftHintPayload {
     comment: data.comment ?? null,
     pageUrl: data.pageUrl ?? null,
     productTitle: data.productTitle ?? null,
+    productId: data.productId ?? null,
+    productUrl: data.productUrl ?? null,
+    productPath: data.productPath ?? null,
+  };
+}
+
+/**
+ * Создает payload для preorder формы
+ */
+export function createPreorderPayload(data: PreorderFormData): PreorderPayload {
+  return {
+    phone: data.phone,
+    name: data.name ?? null,
+    preorderDate: data.preorderDate,
+    productTitle: data.productTitle ?? null,
+    pageUrl: data.pageUrl ?? null,
     productId: data.productId ?? null,
     productUrl: data.productUrl ?? null,
     productPath: data.productPath ?? null,
