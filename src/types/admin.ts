@@ -147,6 +147,10 @@ export interface ProductVariantRow {
   width_cm?: number | null;
   price: number;
   is_preorder: boolean;
+   /** Флаг "новый" для варианта */
+  is_new: boolean;
+  /** Дата окончания статуса "новый" для варианта (может быть null) */
+  new_until?: string | null;
   is_active: boolean;
   sort_order: number;
   image_url?: string | null;

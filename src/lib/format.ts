@@ -74,6 +74,10 @@ export interface PreorderFormData {
   productUrl?: string | null;
   /** Путь вида /product/slug (fallback для сборки ссылки) */
   productPath?: string | null;
+  /** Id варианта (если предзаказ оформлен для конкретного варианта) */
+  variantId?: string | null;
+  /** Название варианта (для аналитики) */
+  variantTitle?: string | null;
 }
 
 /**

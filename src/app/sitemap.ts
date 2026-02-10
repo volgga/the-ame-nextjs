@@ -1,13 +1,13 @@
 import type { MetadataRoute } from "next";
 import { getCategories } from "@/lib/categories";
 import { getAllCatalogProducts } from "@/lib/products";
-
-const BASE_URL = "https://theame.ru";
+import { getPublicBaseUrl } from "@/lib/base-url";
 
 /** Виртуальные слоги категорий — не включаем в sitemap (редиректы или отдельные страницы). */
 const VIRTUAL_CATEGORY_SLUGS = ["magazin", "posmotret-vse-tsvety"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const BASE_URL = getPublicBaseUrl();
   const now = new Date().toISOString().split("T")[0];
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE_URL, lastModified: now, changeFrequency: "daily", priority: 1 },

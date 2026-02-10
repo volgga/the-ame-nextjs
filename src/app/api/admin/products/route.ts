@@ -143,6 +143,7 @@ const createVariantSchema = z.object({
   image_url: optionalImageUrl,
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
+  is_new: z.boolean().default(false),
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
   seo_title: z.string().max(300).optional().nullable(),
@@ -166,7 +167,6 @@ const createVariantSchema = z.object({
         width_cm: z.number().int().min(0).optional().nullable(),
         price: z.number().min(0),
         is_preorder: z.boolean().default(false),
-        is_new: z.boolean().default(false),
         image_url: optionalImageUrl, // Обратная совместимость - игнорируется на клиенте
         sort_order: z.number().default(0),
         is_active: z.boolean().default(true),
@@ -280,9 +280,17 @@ export async function POST(request: NextRequest) {
       const categorySlugs = parsed.data.category_slugs?.filter(Boolean) ?? null;
       const mainCategorySlug = categorySlugs?.[0] ?? parsed.data.category_slug ?? null;
 
-      // Вычислить min_price_cache из вариантов (минимальная цена среди активных вариантов, не-предзаказов)
-      const variantsWithPrice = parsed.data.variants.filter((v) => !v.is_preorder && v.price > 0);
+      // Вычислить min_price_cache из вариантов (минимальная цена среди активных вариантов)
+      const variantsWithPrice = parsed.data.variants.filter((v) => v.price > 0);
       const minPrice = variantsWithPrice.length > 0 ? Math.min(...variantsWithPrice.map((v) => v.price)) : 0;
+
+      // Логика для is_new / new_until для variant_products
+      let vpNewUntil: string | null = null;
+      if (parsed.data.is_new) {
+        const now = new Date();
+        now.setDate(now.getDate() + 30);
+        vpNewUntil = now.toISOString();
+      }
 
       // Создать variant_product
       const { data: vpData, error: vpError } = await sb
@@ -299,6 +307,8 @@ export async function POST(request: NextRequest) {
           min_price_cache: minPrice,
           is_active: parsed.data.is_active,
           is_hidden: parsed.data.is_hidden,
+          is_new: parsed.data.is_new,
+          new_until: vpNewUntil,
           sort_order: 0,
           category_slug: mainCategorySlug,
           category_slugs: categorySlugs,
@@ -328,7 +338,6 @@ export async function POST(request: NextRequest) {
         width_cm: v.width_cm ?? null,
         price: v.price,
         is_preorder: v.is_preorder,
-        is_new: v.is_new ?? false,
         image_url: v.image_url ?? null, // Обратная совместимость
         sort_order: v.sort_order,
         is_active: v.is_active,

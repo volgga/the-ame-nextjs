@@ -21,7 +21,6 @@ const variantSchema = z.object({
   width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0),
   is_preorder: z.boolean().default(false),
-  is_new: z.boolean().default(false),
   is_active: z.boolean().default(true),
   sort_order: z.number().int().default(0),
   image_url: optionalImageUrl, // Обратная совместимость - игнорируется на клиенте
@@ -70,7 +69,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         width_cm: parsed.data.width_cm ?? null,
         price: parsed.data.price,
         is_preorder: parsed.data.is_preorder,
-        is_new: parsed.data.is_new ?? false,
         is_active: parsed.data.is_active,
         sort_order: parsed.data.sort_order,
         image_url: parsed.data.image_url ?? null, // Обратная совместимость

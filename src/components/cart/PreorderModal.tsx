@@ -14,6 +14,10 @@ export type PreorderProduct = {
   price: number;
   /** Путь к странице товара, например /product/slug (для полной ссылки в Telegram) */
   productPath?: string;
+  /** Id варианта (если предзаказ оформлен для конкретного варианта) */
+  variantId?: string | number;
+  /** Название варианта (для отображения/аналитики) */
+  variantTitle?: string | null;
 };
 
 type PreorderModalProps = {
@@ -104,6 +108,8 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
         pageUrl,
         productId: product.id || undefined,
         productPath: product.productPath || undefined,
+        variantId: product.variantId != null ? String(product.variantId) : undefined,
+        variantTitle: product.variantTitle || undefined,
       };
       const data = await submitPreorder(payload);
 

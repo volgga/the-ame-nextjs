@@ -29,6 +29,7 @@ import { ContactMessengersRow } from "./ContactMessengersRow";
 import { AddToOrderSection } from "./AddToOrderSection";
 import { runFlyToHeader } from "@/utils/flyToHeader";
 import { PreorderModal } from "@/components/cart/PreorderModal";
+import { buildProductUrl } from "@/utils/buildProductUrl";
 
 type ProductPageClientProps = {
   product: Product;
@@ -213,6 +214,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
   const [quickOrderOpen, setQuickOrderOpen] = useState(false);
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
   const [giftHintOpen, setGiftHintOpen] = useState(false);
+  const [preorderOpen, setPreorderOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const { addToCart, state: cartState, updateQuantity, openCartDrawer } = useCart();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
@@ -228,6 +230,17 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
   const displayComposition = selectedVariant ? (selectedVariant.composition ?? null) : (product.composition ?? null);
   const displaySizeHeight = selectedVariant ? (selectedVariant.height_cm ?? null) : (product.sizeHeightCm ?? null);
   const displaySizeWidth = selectedVariant ? (selectedVariant.width_cm ?? null) : (product.sizeWidthCm ?? null);
+
+  // Эффективный вариант для витрины: выбранный или первый
+  const effectiveVariant =
+    hasVariants && product.variants && product.variants.length > 0
+      ? selectedVariant ?? product.variants[0]!
+      : null;
+
+  // Флаг предзаказа на странице товара:
+  // приоритет у варианта, если он есть; иначе — у товара
+  const isPreorder = effectiveVariant ? Boolean(effectiveVariant.isPreorder) : Boolean(product.isPreorder);
+  const productPath = buildProductUrl({ name: product.title, productSlug: product.slug });
 
   useEffect(() => {
     if (hasVariants && selectedVariantId != null && !product.variants!.some((v) => v.id === selectedVariantId)) {
@@ -280,10 +293,11 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     occasion: [],
     slug: product.slug,
     categorySlug: product.categorySlug ?? null,
-    isPreorder: product.isPreorder ?? false,
-    ...(selectedVariant && {
-      variantId: selectedVariant.id,
-      variantTitle: selectedVariant.name ?? undefined,
+    // Для корзины/анимаций учитываем предзаказ по выбранному/первому варианту
+    isPreorder,
+    ...(effectiveVariant && {
+      variantId: effectiveVariant.id,
+      variantTitle: effectiveVariant.name ?? undefined,
     }),
   };
 
@@ -587,21 +601,33 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
 
                     {/* CTA кнопки: на mobile уменьшены (h-8, text-xs, px-2), в одну строку */}
                     <div className="flex flex-1 gap-1.5 md:gap-2 min-w-0 min-h-0">
-                      {/* Кнопка "В КОРЗИНУ" - зелёная залитая */}
-                      <button
-                        onClick={handleAddToCart}
-                        className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0 touch-manipulation"
-                      >
-                        В КОРЗИНУ
-                      </button>
+                      {isPreorder ? (
+                        <button
+                          type="button"
+                          onClick={() => setPreorderOpen(true)}
+                          className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0 touch-manipulation"
+                        >
+                          Сделать предзаказ
+                        </button>
+                      ) : (
+                        <>
+                          {/* Кнопка "В КОРЗИНУ" - зелёная залитая */}
+                          <button
+                            onClick={handleAddToCart}
+                            className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all flex items-center justify-center gap-2 btn-accent min-w-0 touch-manipulation"
+                          >
+                            В КОРЗИНУ
+                          </button>
 
-                      {/* Кнопка "КУПИТЬ СЕЙЧАС" */}
-                      <button
-                        onClick={handleBuyNow}
-                        className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all btn-product-cta min-w-0 touch-manipulation"
-                      >
-                        КУПИТЬ СЕЙЧАС
-                      </button>
+                          {/* Кнопка "КУПИТЬ СЕЙЧАС" */}
+                          <button
+                            onClick={handleBuyNow}
+                            className="flex-1 min-h-[36px] md:min-h-[44px] h-8 md:h-9 px-2 md:px-3 rounded-lg text-xs md:text-sm font-medium uppercase transition-all btn-product-cta min-w-0 touch-manipulation"
+                          >
+                            КУПИТЬ СЕЙЧАС
+                          </button>
+                        </>
+                      )}
                     </div>
 
                     {/* Кнопка избранного — в одну строку с CTA, на mobile компактнее */}
@@ -756,6 +782,21 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
 
       {/* Модалка "Намекнуть о подарке" */}
       <GiftHintModal isOpen={giftHintOpen} onClose={() => setGiftHintOpen(false)} product={product} />
+
+      {/* Модалка предзаказа */}
+      <PreorderModal
+        isOpen={preorderOpen}
+        onClose={() => setPreorderOpen(false)}
+        product={{
+          id: product.id,
+          name: product.title,
+          image: product.image,
+          price: displayPrice,
+          productPath,
+          variantId: effectiveVariant?.id,
+          variantTitle: effectiveVariant?.name ?? null,
+        }}
+      />
 
       <FullscreenViewer
         isOpen={fullscreenOpen}

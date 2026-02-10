@@ -33,6 +33,44 @@
 
 6. Проверка: `npm run dev` → открыть http://localhost:3000/admin → редирект на `/admin/login` → ввести логин `admin` и пароль → попасть в `/admin`. После этого логин работает локально.
 
+### Переменные окружения (общее)
+
+- Локально все секреты хранятся только в `.env.local` (файл игнорируется Git’ом, см. `.gitignore`).
+- На сервере (VPS, Docker, PM2, PaaS) переменные задаются через системный механизм окружения (`export VAR=...`, настройки сервиса и т.п.).
+- Шифрование/хранение ключей вне репозитория — на усмотрение инфраструктуры (например, secrets в CI/CD, Vault и др.).
+
+Базовый набор переменных (см. также `.env.example`):
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+
+# Админка
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD_HASH=$2b$10$...   # bcrypt-хеш
+ADMIN_SESSION_SECRET=...         # случайная строка 32+ символов
+
+# Базовый URL сайта
+SITE_URL=https://theame.ru
+NEXT_PUBLIC_SITE_URL=https://theame.ru
+
+# Tinkoff Internet Acquiring
+TINKOFF_TERMINAL_KEY=your_tinkoff_terminal_key
+TINKOFF_PASSWORD=your_tinkoff_password
+TINKOFF_SUCCESS_URL=            # опционально, если нужен кастомный Success URL
+TINKOFF_FAIL_URL=               # опционально, если нужен кастомный Fail URL
+TINKOFF_NOTIFICATION_URL=https://theame.ru/api/tinkoff-callback
+
+# Telegram Bot API
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+TELEGRAM_CHAT_ID=your_chat_id_here
+TELEGRAM_THREAD_ID=optional_thread_id_for_forums
+TELEGRAM_ORDERS_CHAT_ID=your_orders_chat_id_here
+TELEGRAM_ORDERS_THREAD_ID=optional_orders_thread_id
+```
+
 ## Telegram notifications (local)
 
 ### Переменные окружения
@@ -133,6 +171,6 @@ curl -X POST http://localhost:3000/api/forms/gift-hint \
 1. **Таблицы в Supabase** — выполните миграции в SQL Editor:
    - `scripts/migrations/create-leads-table.sql`
    - `scripts/migrations/create-lead-events-table.sql`
-2. **Переменные** — в `.env.local` должны быть заданы: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+2. **Переменные** — в `.env.local` должны быть заданы: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` и при работе оплаты — `TINKOFF_TERMINAL_KEY`, `TINKOFF_PASSWORD`, а также `SITE_URL`/`NEXT_PUBLIC_SITE_URL` для формирования абсолютных ссылок.
 3. **Токен бота** — скопируйте его из @BotFather без лишних символов (часто опечатка в конце: `9ZBYs` vs `9ZBs`).
 4. **Логи** — в терминале, где запущен `npm run dev`, смотрите сообщения вида `[forms/one-click] Ошибка Telegram:` — там будет причина.

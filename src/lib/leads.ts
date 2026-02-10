@@ -96,5 +96,7 @@ export function createPreorderPayload(data: PreorderFormData): PreorderPayload {
     productId: data.productId ?? null,
     productUrl: data.productUrl ?? null,
     productPath: data.productPath ?? null,
+    variantId: data.variantId ?? null,
+    variantTitle: data.variantTitle ?? null,
   };
 }

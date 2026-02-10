@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getOrderById, updateOrderStatus } from "@/services/orders";
+import { getServerBaseUrl } from "@/lib/base-url";
 import { tinkoffInit } from "@/lib/tinkoff";
 
 const bodySchema = z.object({
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Заказ уже оплачен" }, { status: 400 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+    const baseUrl = getServerBaseUrl();
     const baseSuccess = process.env.TINKOFF_SUCCESS_URL ?? `${baseUrl}/payment/success`;
     const baseFail = process.env.TINKOFF_FAIL_URL ?? `${baseUrl}/payment/fail`;
     const sep = (u: string) => (u.includes("?") ? "&" : "?");

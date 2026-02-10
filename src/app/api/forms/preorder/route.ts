@@ -87,6 +87,18 @@ function validateAndParse(body: unknown): PreorderFormData | { error: string } {
   }
   result.productPath = productPathValidation.normalized;
 
+  const variantIdValidation = validateStringField(data.variantId, "variantId", 100, false);
+  if (!variantIdValidation.valid) {
+    return { error: variantIdValidation.error! };
+  }
+  result.variantId = variantIdValidation.normalized;
+
+  const variantTitleValidation = validateStringField(data.variantTitle, "variantTitle", 200, false);
+  if (!variantTitleValidation.valid) {
+    return { error: variantTitleValidation.error! };
+  }
+  result.variantTitle = variantTitleValidation.normalized;
+
   return result;
 }
 

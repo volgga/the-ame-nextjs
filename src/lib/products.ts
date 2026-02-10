@@ -19,6 +19,8 @@ export type ProductVariantOption = {
   image_url?: string | null;
   /** Ключи цветов букета для фильтра */
   bouquetColors?: string[] | null;
+  /** Флаг предзаказа для конкретного варианта */
+  isPreorder?: boolean;
 };
 
 export type Product = {
