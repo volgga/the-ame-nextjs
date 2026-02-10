@@ -113,7 +113,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="overflow-y-auto flex-1 min-h-0">
-          <div className="relative flex items-center justify-center px-6 pt-4 pb-3 border-b border-border-block">
+          <div className="relative flex items-center justify-center px-4 sm:px-6 pt-4 pb-3 border-b border-border-block">
             <h2 className="text-xl md:text-2xl font-bold uppercase tracking-wide text-color-text-main">Корзина</h2>
             <button
               type="button"
@@ -124,7 +124,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <X className="w-6 h-6" />
             </button>
           </div>
-          <div className="p-6 pt-4 space-y-4">
+          <div className="p-4 sm:p-6 pt-4 space-y-4">
             <div>
               <h2 className="text-lg font-bold mb-4">Ваш заказ:</h2>
               {state.items.length === 0 ? (

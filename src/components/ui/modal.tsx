@@ -100,12 +100,12 @@ export function Modal({ isOpen, onClose, title, children, unsavedChanges = false
         aria-hidden="true"
       />
       <div
-        className="relative bg-white rounded-xl shadow-xl w-full max-w-[900px] max-h-[85vh] overflow-hidden flex flex-col border border-border-block"
+        className="relative bg-white rounded-xl shadow-xl w-full max-w-[900px] max-h-[90vh] overflow-hidden flex flex-col border border-border-block"
         style={{ zIndex: Z_PANEL }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Компактная шапка */}
-        <div className="flex items-center justify-between py-3 px-4 border-b border-border-block flex-shrink-0">
+        <div className="flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0">
           <h2 className="text-lg font-semibold text-[#111]">{title}</h2>
           <button
             type="button"
@@ -118,7 +118,7 @@ export function Modal({ isOpen, onClose, title, children, unsavedChanges = false
         </div>
 
         {/* Скроллируемый контент */}
-        <div className="overflow-y-auto flex-1 min-h-0 p-4">{children}</div>
+        <div className="overflow-y-auto flex-1 min-h-0 p-4 sm:p-6">{children}</div>
       </div>
 
       {/* Confirm при несохранённых изменениях */}

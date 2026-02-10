@@ -3,17 +3,31 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { Flower } from "@/types/flower";
 import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
 import { Heart, ShoppingCart, Search } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { buildProductUrl } from "@/utils/buildProductUrl";
-import { QuickBuyModal } from "@/components/cart/QuickBuyModal";
-import { PreorderModal } from "@/components/cart/PreorderModal";
-import { QuickViewModal, type QuickViewProductData } from "@/components/catalog/QuickViewModal";
+import type { QuickViewProductData } from "@/components/catalog/QuickViewModal";
 import { runFlyToHeader } from "@/utils/flyToHeader";
 import type { Product } from "@/lib/products";
+
+const QuickBuyModal = dynamic(
+  () => import("@/components/cart/QuickBuyModal").then((m) => m.QuickBuyModal),
+  { ssr: false }
+);
+
+const PreorderModal = dynamic(
+  () => import("@/components/cart/PreorderModal").then((m) => m.PreorderModal),
+  { ssr: false }
+);
+
+const QuickViewModal = dynamic(
+  () => import("@/components/catalog/QuickViewModal").then((m) => m.QuickViewModal),
+  { ssr: false }
+);
 
 interface FlowerCardProps {
   flower: Flower;
