@@ -976,6 +976,7 @@ function AdminProductsPageContent() {
     setCreateLoading(true);
 
     try {
+      let data: { error?: string; fieldErrors?: Record<string, string[]>; id?: string | number } = {};
       if (createType === "simple") {
         // Загрузка изображений для простого товара
         const imageUrls: string[] = [];
@@ -1046,7 +1047,7 @@ function AdminProductsPageContent() {
           body: JSON.stringify(payload),
         });
         const raw = await res.text();
-        let data: { error?: string; fieldErrors?: Record<string, string[]>; id?: string | number } = {};
+        data = {};
         try {
           data = raw ? JSON.parse(raw) : {};
         } catch {
@@ -1150,7 +1151,7 @@ function AdminProductsPageContent() {
           body: JSON.stringify(payload),
         });
         const raw = await res.text();
-        let data: { error?: string; fieldErrors?: Record<string, string[]>; id?: string | number } = {};
+        data = {};
         try {
           data = raw ? JSON.parse(raw) : {};
         } catch {
