@@ -352,7 +352,7 @@ export default function AdminDeliveryZonesPage() {
                         type="button"
                         disabled={i === 0 || movingId !== null}
                         onClick={() => handleMoveUp(zone)}
-                        className="rounded p-0.5 text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="rounded px-2 py-1.5 text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-[36px] min-w-[36px]"
                         aria-label="Вверх"
                       >
                         ↑
@@ -361,7 +361,7 @@ export default function AdminDeliveryZonesPage() {
                         type="button"
                         disabled={i === zones.length - 1 || movingId !== null}
                         onClick={() => handleMoveDown(zone)}
-                        className="rounded p-0.5 text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="rounded px-2 py-1.5 text-gray-500 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed min-h-[36px] min-w-[36px]"
                         aria-label="Вниз"
                       >
                         ↓
@@ -388,14 +388,14 @@ export default function AdminDeliveryZonesPage() {
                             subareas_text: zone.subareas_text ?? "",
                           });
                         }}
-                        className="rounded px-2 py-1 text-sm text-[#111] hover:bg-gray-200"
+                        className="rounded px-3 py-2 text-sm text-[#111] hover:bg-gray-200 min-h-[40px]"
                       >
                         Изменить
                       </button>
                       <button
                         type="button"
                         onClick={() => setDeleteConfirmId(zone.id)}
-                        className="rounded px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+                        className="rounded px-3 py-2 text-sm text-red-600 hover:bg-red-50 min-h-[40px]"
                       >
                         Удалить
                       </button>

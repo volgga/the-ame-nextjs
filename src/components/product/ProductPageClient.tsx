@@ -249,6 +249,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
   }, [product.variants, hasVariants, selectedVariantId]);
 
   // Client-side update metadata when variant changes (variant has its own SEO fields)
+  // eslint-disable-next-line react-hooks/immutability
   useEffect(() => {
     if (!hasVariants || !selectedVariant) return;
     const v = selectedVariant as {
