@@ -105,7 +105,7 @@ export async function syncFlowersFromProducts(): Promise<{ created: number; upda
   let created = 0;
   let updated = 0;
 
-  const { data: existing } = await sb
+  const { data: existing } = await (sb as any)
     .from("flowers")
     .select("id, slug, name, sort_order");
   const bySlug = new Map<string, { id: string; name: string; sort_order: number }>();
@@ -136,13 +136,14 @@ export async function syncFlowersFromProducts(): Promise<{ created: number; upda
     is_active: true,
     sort_order: nextOrder++,
   });
+
       if (!error) {
         created++;
         bySlug.set(key, { id: "", name, sort_order: nextOrder - 1 });
       }
     } else {
       if (existingRow.name !== name.trim()) {
-        const { error } = await sb
+        const { error } = await (sb as any)
           .from("flowers")
           .update({ name: name.trim(), updated_at: new Date().toISOString() })
           .eq("id", existingRow.id);
@@ -160,7 +161,7 @@ export async function syncFlowersFromProducts(): Promise<{ created: number; upda
 export async function deleteFlower(id: string): Promise<boolean> {
   try {
     const sb = getSupabaseAdmin();
-    const { error } = await sb.from("flowers").delete().eq("id", id);
+    const { error } = await (sb as any).from("flowers").delete().eq("id", id);
     return !error;
   } catch (e) {
     console.error("[deleteFlower]", e);
@@ -177,7 +178,7 @@ export async function updateFlower(
 ): Promise<Flower | null> {
   try {
     const sb = getSupabaseAdmin();
-    const { data, error } = await sb
+    const { data, error } = await (sb as any)
       .from("flowers")
       .update({
         ...(patch.name != null && { name: patch.name.trim() }),
@@ -209,7 +210,7 @@ export async function reorderFlowers(orderedIds: string[]): Promise<boolean> {
     const sb = getSupabaseAdmin();
     await Promise.all(
       orderedIds.map((id, i) =>
-        sb.from("flowers").update({ sort_order: i, updated_at: new Date().toISOString() }).eq("id", id)
+        (sb as any).from("flowers").update({ sort_order: i, updated_at: new Date().toISOString() }).eq("id", id)
       )
     );
     return true;
@@ -234,14 +235,14 @@ export async function ensureFlowers(names: string[]): Promise<Flower[]> {
     if (!slug || seen.has(slug)) continue;
     seen.add(slug);
 
-    const { data: existing } = await sb.from("flowers").select("id, slug, name, title, description, seo_title, seo_description, is_active, sort_order").eq("slug", slug).maybeSingle();
+    const { data: existing } = await (sb as any).from("flowers").select("id, slug, name, title, description, seo_title, seo_description, is_active, sort_order").eq("slug", slug).maybeSingle();
     if (existing) {
       result.push(existing as Flower);
       continue;
     }
-    const { data: maxOrder } = await sb.from("flowers").select("sort_order").order("sort_order", { ascending: false }).limit(1).maybeSingle();
+    const { data: maxOrder } = await (sb as any).from("flowers").select("sort_order").order("sort_order", { ascending: false }).limit(1).maybeSingle();
     const nextOrder = (maxOrder as { sort_order: number } | null)?.sort_order != null ? (maxOrder as { sort_order: number }).sort_order + 1 : 0;
-    const { data: inserted, error } = await sb.from("flowers").insert({ slug, name, is_active: true, sort_order: nextOrder }).select().single();
+    const { data: inserted, error } = await (sb as any).from("flowers").insert({ slug, name, is_active: true, sort_order: nextOrder }).select().single();
     if (!error && inserted) result.push(inserted as Flower);
   }
   return result;
@@ -273,10 +274,10 @@ export async function setProductFlowers(productId: string, flowerIds: string[], 
   const pid = toProductIdForDb(productId);
   const isVariant = productId.startsWith("vp-");
 
-  await sb.from("product_flowers").delete().eq("product_id", pid);
+  await (sb as any).from("product_flowers").delete().eq("product_id", pid);
   if (flowerIds.length > 0) {
     const rows = flowerIds.map((flower_id) => ({ product_id: pid, flower_id }));
-    const { error } = await sb.from("product_flowers").insert(rows);
+    const { error } = await (sb as any).from("product_flowers").insert(rows);
     if (error) return false;
   }
 
