@@ -1,8 +1,8 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-/.pnp
+# ======================
+# Dependencies
+# ======================
+node_modules/
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -10,72 +10,48 @@
 !.yarn/releases
 !.yarn/versions
 
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-deploy.log
-*.pem
-*.backup
-dump.backup
-products_data.sql
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-!.env.example
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-docs/
-scripts/
-
 # ======================
-# Dependencies & build
+# Build / Next.js
 # ======================
-node_modules/
 .next/
 out/
+build/
 dist/
+
+# ======================
+# Testing / Coverage
+# ======================
+coverage/
 
 # ======================
 # Environment variables
 # ======================
 .env
 .env.*
-.env.local
+!.env.example
 
 # ======================
-# TypeScript cache
+# TypeScript
 # ======================
 *.tsbuildinfo
+next-env.d.ts
 
 # ======================
-# Backups / dumps
+# Local docs & scripts
+# ======================
+docs/
+scripts/
+
+# ======================
+# Dumps / backups
 # ======================
 dump.backup
+*.backup
 products_data.sql
+deploy.log
 
 # ======================
-# Local deploy scripts
+# Local deploy helpers
 # ======================
 DEPLOY-UBUNTU.md
 deploy-commands.sh
@@ -83,9 +59,15 @@ build-locally-and-deploy.sh
 add-telegram-env.sh
 
 # ======================
-# OS / logs
+# Logs
 # ======================
-.DS_Store
 npm-debug.log*
 yarn-debug.log*
+yarn-error.log*
 pnpm-debug.log*
+
+# ======================
+# OS / misc
+# ======================
+.DS_Store
+.vercel
