@@ -223,162 +223,165 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
         </span>
       </button>
 
-      {/* Панель Цена + Порядок: на мобильной показывается при раскрытии; на md+ всегда */}
+      {/* Панель Цена + Цвет букета + Поиск/Порядок: на мобильной показывается при раскрытии; на md+ всегда */}
       <div
         className={`flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center justify-between gap-3 ${!mobileFiltersOpen ? "hidden md:flex" : ""}`}
       >
-        {/* Левая зона: Цена (trigger + popover) */}
-        <div className="relative" ref={popoverRef}>
-          <button
-            type="button"
-            onClick={() => setPopoverOpen((o) => !o)}
-            className={`${controlH} w-full md:w-auto inline-flex items-center justify-between md:justify-start gap-2 rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
-            aria-expanded={popoverOpen}
-            aria-haspopup="true"
-            aria-label="Фильтр по цене"
-          >
-            <span>{priceLabel}</span>
-            <ChevronDown
-              className={`h-4 w-4 shrink-0 text-color-text-secondary transition-transform ${popoverOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {popoverOpen && hasValidBounds && (
-            <div
-              className="absolute left-0 top-full z-50 mt-2 w-[min(100vw-2rem,380px)] rounded-lg border border-border-block bg-white p-4 shadow-elegant"
-              role="dialog"
-              aria-label="Выбор диапазона цен"
+        {/* Левая зона: Цена + Цвет букета */}
+        <div className="flex flex-col sm:flex-row items-stretch gap-3">
+          {/* Цена (trigger + popover) */}
+          <div className="relative" ref={popoverRef}>
+            <button
+              type="button"
+              onClick={() => setPopoverOpen((o) => !o)}
+              className={`${controlH} w-full md:w-auto inline-flex items-center justify-between md:justify-start gap-2 rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
+              aria-expanded={popoverOpen}
+              aria-haspopup="true"
+              aria-label="Фильтр по цене"
             >
-              {/* Одна строка: От [значение] | [range slider] | До [значение] */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="shrink-0 min-w-[72px]">
-                  <span className="block text-xs text-color-text-secondary">От</span>
-                  <span className="text-sm font-medium text-color-text-main">{formatPrice(localMin)}</span>
+              <span>{priceLabel}</span>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-color-text-secondary transition-transform ${popoverOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {popoverOpen && hasValidBounds && (
+              <div
+                className="absolute left-0 top-full z-50 mt-2 w-[min(100vw-2rem,380px)] rounded-lg border border-border-block bg-white p-4 shadow-elegant"
+                role="dialog"
+                aria-label="Выбор диапазона цен"
+              >
+                {/* Одна строка: От [значение] | [range slider] | До [значение] */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="shrink-0 min-w-[72px]">
+                    <span className="block text-xs text-color-text-secondary">От</span>
+                    <span className="text-sm font-medium text-color-text-main">{formatPrice(localMin)}</span>
+                  </div>
+
+                  <div className="flex-1 min-w-0 relative h-6 flex items-center">
+                    {/* Фон трека */}
+                    <div className="absolute inset-x-0 h-2 rounded-full bg-[rgba(31,42,31,0.12)] pointer-events-none" />
+                    {/* Заливка выбранного диапазона */}
+                    <div
+                      className="absolute h-2 rounded-full bg-[rgba(111,131,99,0.35)] pointer-events-none"
+                      style={{
+                        left: `${((localMin - priceMin) / (priceMax - priceMin)) * 100}%`,
+                        width: `${((localMax - localMin) / (priceMax - priceMin)) * 100}%`,
+                      }}
+                    />
+                    {/* Клик по треку: двигаем ближайший ползунок */}
+                    <div
+                      className="absolute inset-0 cursor-pointer"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const pct = (e.clientX - rect.left) / rect.width;
+                        const value = Math.round(priceMin + pct * (priceMax - priceMin));
+                        const valueStepped = Math.round(value / step) * step;
+                        const clamped = Math.max(priceMin, Math.min(priceMax, valueStepped));
+                        if (clamped < (localMin + localMax) / 2) {
+                          handleMinChange(Math.min(clamped, localMax - step));
+                        } else {
+                          handleMaxChange(Math.max(clamped, localMin + step));
+                        }
+                      }}
+                      role="presentation"
+                    />
+                    {/* Два range input — thumbs перекрывают клик-слой по z-index */}
+                    <input
+                      type="range"
+                      min={priceMin}
+                      max={priceMax}
+                      step={step}
+                      value={localMin}
+                      onChange={(e) => handleMinChange(Number(e.target.value))}
+                      className={rangeInputClass}
+                      aria-label="Минимальная цена"
+                    />
+                    <input
+                      type="range"
+                      min={priceMin}
+                      max={priceMax}
+                      step={step}
+                      value={localMax}
+                      onChange={(e) => handleMaxChange(Number(e.target.value))}
+                      className={rangeInputClass}
+                      aria-label="Максимальная цена"
+                    />
+                  </div>
+
+                  <div className="shrink-0 min-w-[72px] text-right">
+                    <span className="block text-xs text-color-text-secondary">До</span>
+                    <span className="text-sm font-medium text-color-text-main">{formatPrice(localMax)}</span>
+                  </div>
                 </div>
 
-                <div className="flex-1 min-w-0 relative h-6 flex items-center">
-                  {/* Фон трека */}
-                  <div className="absolute inset-x-0 h-2 rounded-full bg-[rgba(31,42,31,0.12)] pointer-events-none" />
-                  {/* Заливка выбранного диапазона */}
-                  <div
-                    className="absolute h-2 rounded-full bg-[rgba(111,131,99,0.35)] pointer-events-none"
-                    style={{
-                      left: `${((localMin - priceMin) / (priceMax - priceMin)) * 100}%`,
-                      width: `${((localMax - localMin) / (priceMax - priceMin)) * 100}%`,
-                    }}
-                  />
-                  {/* Клик по треку: двигаем ближайший ползунок */}
-                  <div
-                    className="absolute inset-0 cursor-pointer"
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      const pct = (e.clientX - rect.left) / rect.width;
-                      const value = Math.round(priceMin + pct * (priceMax - priceMin));
-                      const valueStepped = Math.round(value / step) * step;
-                      const clamped = Math.max(priceMin, Math.min(priceMax, valueStepped));
-                      if (clamped < (localMin + localMax) / 2) {
-                        handleMinChange(Math.min(clamped, localMax - step));
-                      } else {
-                        handleMaxChange(Math.max(clamped, localMin + step));
-                      }
-                    }}
-                    role="presentation"
-                  />
-                  {/* Два range input — thumbs перекрывают клик-слой по z-index */}
-                  <input
-                    type="range"
-                    min={priceMin}
-                    max={priceMax}
-                    step={step}
-                    value={localMin}
-                    onChange={(e) => handleMinChange(Number(e.target.value))}
-                    className={rangeInputClass}
-                    aria-label="Минимальная цена"
-                  />
-                  <input
-                    type="range"
-                    min={priceMin}
-                    max={priceMax}
-                    step={step}
-                    value={localMax}
-                    onChange={(e) => handleMaxChange(Number(e.target.value))}
-                    className={rangeInputClass}
-                    aria-label="Максимальная цена"
-                  />
-                </div>
-
-                <div className="shrink-0 min-w-[72px] text-right">
-                  <span className="block text-xs text-color-text-secondary">До</span>
-                  <span className="text-sm font-medium text-color-text-main">{formatPrice(localMax)}</span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handlePriceReset}
+                    className="flex-1 h-9 rounded-full border border-[var(--color-outline-border)] bg-white px-3 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+                    aria-label="Сбросить цену"
+                  >
+                    Сброс
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleApplyPrice}
+                    className="flex-1 h-9 rounded-full text-white px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+                    aria-label="Применить"
+                  >
+                    Применить
+                  </button>
                 </div>
               </div>
+            )}
+          </div>
 
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={handlePriceReset}
-                  className="flex-1 h-9 rounded-full border border-[var(--color-outline-border)] bg-white px-3 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
-                  aria-label="Сбросить цену"
-                >
-                  Сброс
-                </button>
-                <button
-                  type="button"
-                  onClick={handleApplyPrice}
-                  className="flex-1 h-9 rounded-full text-white px-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
-                  aria-label="Применить"
-                >
-                  Применить
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Цвет букета (dropdown) */}
-        <div className="relative" ref={colorPopoverRef}>
-          <button
-            type="button"
-            onClick={() => setColorPopoverOpen((o) => !o)}
-            className={`${controlH} w-full md:w-auto inline-flex items-center justify-between md:justify-start gap-2 rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
-            aria-expanded={colorPopoverOpen}
-            aria-haspopup="true"
-            aria-label="Фильтр по цвету букета"
-          >
-            <span>
-              {selectedColorKeys.length === 0
-                ? "Цвет букета"
-                : selectedColorKeys.length === 1
-                  ? BOUQUET_COLORS.find((c) => c.key === selectedColorKeys[0])?.label ?? "Цвет букета"
-                  : `Цвет (${selectedColorKeys.length})`}
-            </span>
-            <ChevronDown
-              className={`h-4 w-4 shrink-0 text-color-text-secondary transition-transform ${colorPopoverOpen ? "rotate-180" : ""}`}
-            />
-          </button>
-
-          {colorPopoverOpen && (
-            <div
-              className="absolute left-0 top-full z-50 mt-2 w-[min(100vw-2rem,320px)] rounded-lg border border-border-block bg-white p-2 shadow-elegant max-h-[70vh] overflow-y-auto"
-              role="dialog"
-              aria-label="Выбор цвета букета"
+          {/* Цвет букета (dropdown) */}
+          <div className="relative" ref={colorPopoverRef}>
+            <button
+              type="button"
+              onClick={() => setColorPopoverOpen((o) => !o)}
+              className={`${controlH} w-full md:w-auto inline-flex items-center justify-between md:justify-start gap-2 rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
+              aria-expanded={colorPopoverOpen}
+              aria-haspopup="true"
+              aria-label="Фильтр по цвету букета"
             >
-              {BOUQUET_COLORS.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => handleColorToggle(item.key)}
-                  className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-[rgba(31,42,31,0.06)] text-left min-h-[40px]"
-                >
-                  <BouquetColorSwatch item={item} />
-                  <span className="text-sm text-color-text-main flex-1">{item.label}</span>
-                  {selectedColorKeys.includes(item.key) && (
-                    <span className="text-accent-btn text-sm" aria-hidden>✓</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
+              <span>
+                {selectedColorKeys.length === 0
+                  ? "Цвет букета"
+                  : selectedColorKeys.length === 1
+                    ? BOUQUET_COLORS.find((c) => c.key === selectedColorKeys[0])?.label ?? "Цвет букета"
+                    : `Цвет (${selectedColorKeys.length})`}
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 text-color-text-secondary transition-transform ${colorPopoverOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {colorPopoverOpen && (
+              <div
+                className="absolute left-0 top-full z-50 mt-2 w-[min(100vw-2rem,320px)] rounded-lg border border-border-block bg-white p-2 shadow-elegant max-h-[70vh] overflow-y-auto"
+                role="dialog"
+                aria-label="Выбор цвета букета"
+              >
+                {BOUQUET_COLORS.map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => handleColorToggle(item.key)}
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-[rgba(31,42,31,0.06)] text-left min-h-[40px]"
+                  >
+                    <BouquetColorSwatch item={item} />
+                    <span className="text-sm text-color-text-main flex-1">{item.label}</span>
+                    {selectedColorKeys.includes(item.key) && (
+                      <span className="text-accent-btn text-sm" aria-hidden>✓</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Правая зона: Поиск + Порядок */}

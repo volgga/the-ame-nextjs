@@ -58,7 +58,6 @@ type Variant = {
   width_cm: number | null;
   price: number;
   is_preorder: boolean;
-  is_new: boolean;
   sort_order: number;
   bouquetColors?: string[];
 };
@@ -388,7 +387,6 @@ function AdminProductsPageContent() {
                 width_cm?: number | null;
                 price?: number;
                 is_preorder?: boolean;
-                is_new?: boolean;
                 bouquet_colors?: string[] | null;
               },
               idx: number
@@ -400,7 +398,6 @@ function AdminProductsPageContent() {
               width_cm: v.width_cm != null ? Number(v.width_cm) : null,
               price: Number(v.price ?? 0),
               is_preorder: v.is_preorder ?? false,
-              is_new: v.is_new ?? false,
               sort_order: idx,
               bouquetColors: Array.isArray(v.bouquet_colors) ? filterValidBouquetColorKeys(v.bouquet_colors) : [],
             })
@@ -500,10 +497,10 @@ function AdminProductsPageContent() {
       if (selectedCategorySlugs.length === 0) errors.categories = "Выберите минимум одну категорию";
       if (variants.length === 0) errors.variants = "Добавьте хотя бы один вариант";
 
-      // Валидация каждого варианта (состав/размер не обязательны)
+      // Валидация каждого варианта (состав/размер не обязательны, но цена должна быть > 0 всегда)
       variants.forEach((v, idx) => {
         if (!v.name.trim()) errors[`variant_${idx}_name`] = "Введите название варианта";
-        if (!v.is_preorder && (typeof v.price !== "number" || v.price <= 0)) {
+        if (typeof v.price !== "number" || v.price <= 0) {
           errors[`variant_${idx}_price`] = "Цена должна быть больше 0";
         }
       });
@@ -608,7 +605,6 @@ function AdminProductsPageContent() {
       width_cm: null,
       price: 0,
       is_preorder: false,
-      is_new: false,
       sort_order: variants.length,
       bouquetColors: [],
     };
@@ -884,11 +880,11 @@ function AdminProductsPageContent() {
                 composition: v.composition.trim() || null,
                 height_cm: v.height_cm ?? null,
                 width_cm: v.width_cm ?? null,
-                price: v.is_preorder ? 0 : v.price,
+                price: v.price,
                 is_preorder: v.is_preorder,
-                is_new: v.is_new,
                 sort_order: v.sort_order,
-                bouquet_colors: (v.bouquetColors && v.bouquetColors.length > 0) ? v.bouquetColors : null,
+                bouquet_colors:
+                  v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
               }),
             });
             if (!vRes.ok) {
@@ -904,12 +900,12 @@ function AdminProductsPageContent() {
                 composition: v.composition.trim() || null,
                 height_cm: v.height_cm ?? null,
                 width_cm: v.width_cm ?? null,
-                price: v.is_preorder ? 0 : v.price,
+                price: v.price,
                 is_preorder: v.is_preorder,
-                is_new: v.is_new,
                 sort_order: v.sort_order,
                 is_active: true,
-                bouquet_colors: (v.bouquetColors && v.bouquetColors.length > 0) ? v.bouquetColors : null,
+                bouquet_colors:
+                  v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
               }),
             });
             if (!vRes.ok) {
@@ -1130,6 +1126,7 @@ function AdminProductsPageContent() {
           images: otherUrls.length > 0 ? otherUrls : null,
           is_active: true,
           is_hidden: createIsHidden,
+          is_new: createIsNew,
           category_slugs,
           composition_flowers,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
@@ -1138,12 +1135,12 @@ function AdminProductsPageContent() {
             composition: v.composition.trim() || null,
             height_cm: v.height_cm ?? null,
             width_cm: v.width_cm ?? null,
-            price: v.is_preorder ? 0 : v.price,
+            price: v.price,
             is_preorder: v.is_preorder,
-            is_new: v.is_new,
             sort_order: v.sort_order,
             is_active: true,
-            bouquet_colors: (v.bouquetColors && v.bouquetColors.length > 0) ? v.bouquetColors : null,
+            bouquet_colors:
+              v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
           })),
         };
 
@@ -1928,7 +1925,9 @@ function AdminProductsPageContent() {
                       </div>
                       <div className="space-y-0.5 text-xs text-color-text-secondary">
                         <p>«Скрыть с витрины» — товар не показывается на сайте, но остаётся в админке.</p>
-                        <p>«Предзаказ» — товар виден на витрине, вместо цены отображается текст «Предзаказ».</p>
+                        <p>
+                          «Предзаказ» — товар виден на витрине, а кнопки «В корзину» заменяются на оформление предзаказа.
+                        </p>
                         <p>
                           «Новый» — на карточке товара в каталоге и «Рекомендуем» появится бейдж «новый». Автоматически
                           скрывается через 30 дней.
@@ -2012,12 +2011,8 @@ function AdminProductsPageContent() {
                                           Предзаказ
                                         </span>
                                       )}
-                                      {variant.is_new && (
-                                        <span className="text-[10px] px-1 py-0.5 rounded bg-[rgba(111,131,99,0.2)] text-color-bg-main">
-                                          Новый
-                                        </span>
-                                      )}
-                                      {!variant.is_preorder && variant.price > 0 && (
+                                      {/* Флаг "Новый" теперь только на уровне товара (не варианта) */}
+                                      {variant.price > 0 && (
                                         <span className="text-xs text-color-text-secondary">
                                           {variant.price.toLocaleString("ru-RU")} ₽
                                         </span>
@@ -2115,8 +2110,7 @@ function AdminProductsPageContent() {
                                               updateVariant(variant.id, { price: parseFloat(e.target.value) || 0 })
                                             }
                                             onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                                            disabled={variant.is_preorder}
-                                            className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-[rgba(31,42,31,0.06)]"
+                                            className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                           />
                                           {fieldErrors[`variant_${idx}_price`] && (
                                             <p className="mt-0.5 text-xs text-red-600">
@@ -2135,15 +2129,6 @@ function AdminProductsPageContent() {
                                               className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                                             />
                                             <span className="text-xs text-color-text-main">Предзаказ</span>
-                                          </label>
-                                          <label className="flex items-center gap-1 cursor-pointer">
-                                            <input
-                                              type="checkbox"
-                                              checked={variant.is_new}
-                                              onChange={(e) => updateVariant(variant.id, { is_new: e.target.checked })}
-                                              className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                                            />
-                                            <span className="text-xs text-color-text-main">Новый</span>
                                           </label>
                                         </div>
                                       </div>
@@ -2523,7 +2508,8 @@ function AdminProductsPageContent() {
 
                       {/* Скрыть с витрины */}
                       <div>
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <div className="flex flex-wrap gap-6">
+                          <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={createIsHidden}
@@ -2531,10 +2517,26 @@ function AdminProductsPageContent() {
                             className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                           />
                           <span className="text-sm text-color-text-main">Скрыть с витрины</span>
-                        </label>
-                        <p className="mt-1 text-xs text-color-text-secondary">
-                          Товар не показывается на сайте, но остаётся в админке.
-                        </p>
+                          </label>
+
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={createIsNew}
+                              onChange={(e) => setCreateIsNew(e.target.checked)}
+                              className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                            />
+                            <span className="text-sm text-color-text-main">Новый</span>
+                          </label>
+                        </div>
+
+                        <div className="mt-1 space-y-0.5 text-xs text-color-text-secondary">
+                          <p>«Скрыть с витрины» — товар не показывается на сайте, но остаётся в админке.</p>
+                          <p>
+                            «Новый» — на карточке товара в каталоге и «Рекомендуем» появится бейдж «новый». Автоматически
+                            скрывается через 30 дней.
+                          </p>
+                        </div>
                       </div>
                     </>
                   )}

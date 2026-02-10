@@ -9,6 +9,21 @@ async function requireAdmin() {
   if (!ok) throw new Error("unauthorized");
 }
 
+/** Извлечь человекочитаемое сообщение об ошибке (включая Supabase details/hint) */
+function getErrorMessage(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (typeof e === "object" && e !== null) {
+    const obj = e as Record<string, unknown>;
+    if (typeof obj.message === "string") {
+      let msg = obj.message;
+      if (typeof obj.hint === "string" && obj.hint) msg += ` (${obj.hint})`;
+      if (typeof obj.details === "string" && obj.details) msg += ` — ${obj.details}`;
+      return msg;
+    }
+  }
+  return "Ошибка обновления";
+}
+
 const optionalImageUrl = z
   .union([z.string(), z.null(), z.literal("")])
   .optional()
@@ -21,7 +36,6 @@ const updateSchema = z.object({
   width_cm: z.number().int().min(0).optional().nullable(),
   price: z.number().min(0).optional(),
   is_preorder: z.boolean().optional(),
-  is_new: z.boolean().optional(),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
   image_url: optionalImageUrl, // Обратная совместимость - игнорируется на клиенте
@@ -95,8 +109,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if ((e as Error).message === "unauthorized") {
       return NextResponse.json({ error: "Не авторизован" }, { status: 401 });
     }
+    const errMsg = getErrorMessage(e);
     console.error("[admin/products variants PATCH]", e);
-    return NextResponse.json({ error: "Ошибка обновления" }, { status: 500 });
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }
 

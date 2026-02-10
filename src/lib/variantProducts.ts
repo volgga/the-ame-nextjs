@@ -36,6 +36,8 @@ type VariantProductsRow = {
   og_description?: string | null;
   og_image?: string | null;
   bouquet_colors?: string[] | null;
+  is_new?: boolean | null;
+  new_until?: string | null;
 };
 
 export type ProductVariantPublic = {
@@ -50,6 +52,8 @@ export type ProductVariantPublic = {
   seo_description?: string | null;
   og_image?: string | null;
   bouquetColors?: string[] | null;
+  /** Флаг предзаказа для конкретного варианта */
+  isPreorder?: boolean;
 };
 
 /**
@@ -79,13 +83,22 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     const vpIds = (data as VariantProductsRow[]).map((r) => r.id);
     const { data: variantsData } = await supabase
       .from("product_variants")
-      .select("product_id, bouquet_colors")
+      .select("product_id, bouquet_colors, is_preorder, sort_order")
       .in("product_id", vpIds)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .order("sort_order", { ascending: true, nullsFirst: false });
     const colorsByProductId = new Map<number, string[]>();
+    const firstVariantPreorderByProductId = new Map<number, boolean>();
     for (const v of variantsData ?? []) {
-      const pid = (v as { product_id: number; bouquet_colors?: string[] | null }).product_id;
-      const arr = (v as { product_id: number; bouquet_colors?: string[] | null }).bouquet_colors;
+      const row = v as { product_id: number; bouquet_colors?: string[] | null; is_preorder?: boolean | null };
+      const pid = row.product_id;
+      const arr = row.bouquet_colors;
+
+      // Фиксируем флаг предзаказа только для ПЕРВОГО активного варианта (по sort_order)
+      if (!firstVariantPreorderByProductId.has(pid)) {
+        firstVariantPreorderByProductId.set(pid, row.is_preorder ?? false);
+      }
+
       if (!Array.isArray(arr)) continue;
       const keys = arr.filter((k): k is string => typeof k === "string" && k.length > 0);
       if (keys.length === 0) continue;
@@ -127,6 +140,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
           : [];
         const variantColors = colorsByProductId.get(row.id) ?? [];
         const mergedColors = [...new Set([...productColors, ...variantColors])];
+        const firstVariantIsPreorder = firstVariantPreorderByProductId.get(row.id) ?? false;
 
         return {
           id: VP_ID_PREFIX + String(row.id),
@@ -154,6 +168,10 @@ export async function getAllVariantProducts(): Promise<Product[]> {
           sortOrder: row.sort_order ?? 0,
           createdAt: row.created_at ?? undefined, // fallback для вторичной сортировки
           bouquetColors: mergedColors.length > 0 ? mergedColors : null,
+          // Для вариантных товаров флаг предзаказа на витрине определяется только по ПЕРВОМУ активному варианту
+          isPreorder: firstVariantIsPreorder,
+          isNew: row.is_new ?? false,
+          newUntil: row.new_until ?? null,
         } satisfies Product;
       })
     );
@@ -175,7 +193,7 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors"
+        "id, slug, name, description, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -223,6 +241,8 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
         Array.isArray(row.bouquet_colors) && row.bouquet_colors.length > 0
           ? row.bouquet_colors.filter((k): k is string => typeof k === "string" && k.length > 0)
           : null,
+      isNew: row.is_new ?? false,
+      newUntil: row.new_until ?? null,
     };
   } catch (e) {
     console.error(`${LOG_PREFIX} getVariantProductBySlug:`, e instanceof Error ? e.message : String(e));
@@ -244,7 +264,7 @@ export async function getVariantProductWithVariantsBySlug(
     const { data: vp, error: vpErr } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, composition_flowers, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors"
+        "id, slug, name, description, composition_flowers, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -299,7 +319,9 @@ export async function getVariantProductWithVariantsBySlug(
 
     const { data: vars, error: vErr } = await supabase
       .from("product_variants")
-      .select("id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image, bouquet_colors")
+      .select(
+        "id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image, bouquet_colors, is_preorder, is_new, new_until"
+      )
       .eq("product_id", (vp as { id: number }).id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
@@ -318,6 +340,9 @@ export async function getVariantProductWithVariantsBySlug(
         seo_description?: string | null;
         og_image?: string | null;
         bouquet_colors?: string[] | null;
+        is_preorder?: boolean | null;
+        is_new?: boolean | null;
+        new_until?: string | null;
       }) => ({
         id: v.id,
         name: v.title ?? "",
@@ -333,6 +358,8 @@ export async function getVariantProductWithVariantsBySlug(
           Array.isArray(v.bouquet_colors) && v.bouquet_colors.length > 0
             ? v.bouquet_colors.filter((k): k is string => typeof k === "string" && k.length > 0)
             : null,
+        isPreorder: v.is_preorder ?? false,
+        isNew: v.is_new ?? false,
       })
     );
     return { ...product, variants };

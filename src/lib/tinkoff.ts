@@ -42,6 +42,19 @@ export function buildTinkoffToken(params: Record<string, string | number | undef
 }
 
 /**
+ * Проверка обязательных env для Tinkoff.
+ * Если не заданы — кидаем явную ошибку, чтобы приложение не работало в полусломанном состоянии.
+ */
+function requireTinkoffEnv() {
+  const terminalKey = process.env.TINKOFF_TERMINAL_KEY;
+  const password = process.env.TINKOFF_PASSWORD;
+  if (!terminalKey || !password) {
+    throw new Error("TINKOFF_TERMINAL_KEY and TINKOFF_PASSWORD must be set in environment variables");
+  }
+  return { terminalKey, password };
+}
+
+/**
  * Вызов Tinkoff Init. TerminalKey и Password — только из env.
  * Возвращает { PaymentId, PaymentURL } или ошибку.
  */
@@ -53,12 +66,9 @@ export async function tinkoffInit(
     Data?: Record<string, string>;
   }
 ): Promise<{ PaymentId: string; PaymentURL: string } | { error: string; details?: unknown }> {
-  const terminalKey = params.TerminalKey ?? process.env.TINKOFF_TERMINAL_KEY;
-  const password = params.Password ?? process.env.TINKOFF_PASSWORD;
-
-  if (!terminalKey || !password) {
-    return { error: "TINKOFF_TERMINAL_KEY or TINKOFF_PASSWORD not set" };
-  }
+  const envCreds = requireTinkoffEnv();
+  const terminalKey = params.TerminalKey ?? envCreds.terminalKey;
+  const password = params.Password ?? envCreds.password;
 
   const body: TinkoffInitParams & { Token: string; Data?: Record<string, string> } = {
     TerminalKey: terminalKey,
@@ -130,11 +140,9 @@ export async function tinkoffGetState(
   paymentId: string,
   opts?: { TerminalKey?: string; Password?: string }
 ): Promise<{ Status: string } | { error: string }> {
-  const terminalKey = opts?.TerminalKey ?? process.env.TINKOFF_TERMINAL_KEY;
-  const password = opts?.Password ?? process.env.TINKOFF_PASSWORD;
-  if (!terminalKey || !password) {
-    return { error: "TINKOFF_TERMINAL_KEY or TINKOFF_PASSWORD not set" };
-  }
+  const envCreds = requireTinkoffEnv();
+  const terminalKey = opts?.TerminalKey ?? envCreds.terminalKey;
+  const password = opts?.Password ?? envCreds.password;
   const token = buildTinkoffToken({ TerminalKey: terminalKey, PaymentId: paymentId }, password);
   const res = await fetch(TINKOFF_GET_STATE_URL, {
     method: "POST",
