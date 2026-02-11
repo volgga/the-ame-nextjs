@@ -308,7 +308,10 @@ async function _getAllCatalogProductsUncached(): Promise<Product[]> {
 export async function getAllCatalogProducts(): Promise<Product[]> {
   const { unstable_cache } = await import("next/cache");
   try {
-    return await unstable_cache(_getAllCatalogProductsUncached, ["catalog-products"], { revalidate: 60 })();
+    return await unstable_cache(_getAllCatalogProductsUncached, ["catalog-products"], {
+      revalidate: 60,
+      tags: ["catalog-products"],
+    })();
   } catch (e) {
     console.error("[getAllCatalogProducts]", e instanceof Error ? e.message : String(e));
     return [];
