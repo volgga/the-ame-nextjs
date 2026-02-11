@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import type { Slide } from "@/components/admin/slides/SlideCard";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 const SlidesGrid = dynamic(
   () => import("@/components/admin/slides/SlidesGrid").then((m) => ({ default: m.SlidesGrid })),
@@ -54,11 +55,21 @@ export default function AdminSlidesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/slides");
-      if (!res.ok) throw new Error("Ошибка загрузки");
-      const data = await res.json();
-      setSlidesFromServer(data);
-      setSlidesDraft(data);
+      const url = "/api/admin/slides";
+      const res = await fetch(url);
+      const result = await parseAdminResponse<Slide[]>(res, { method: "GET", url });
+      if (!result.ok || !Array.isArray(result.data)) {
+        const apiError =
+          result.data && !Array.isArray(result.data) && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки";
+        throw new Error(message);
+      }
+      setSlidesFromServer(result.data);
+      setSlidesDraft(result.data);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -152,13 +163,26 @@ export default function AdminSlidesPage() {
     formData.append("file", file);
     if (slideId) formData.append("slideId", slideId);
 
-    const res = await fetch("/api/admin/slides/upload", {
+    const url = "/api/admin/slides/upload";
+    const res = await fetch(url, {
       method: "POST",
       body: formData,
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Ошибка загрузки");
-    return data.image_url;
+    const result = await parseAdminResponse<{ error?: string; image_url?: string }>(res, {
+      method: "POST",
+      url,
+    });
+    if (!result.ok) {
+      const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+      const message = apiError
+        ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+        : result.message ?? "Ошибка загрузки";
+      throw new Error(message);
+    }
+    if (!result.data?.image_url) {
+      throw new Error(result.message ?? "Ответ сервера не содержит image_url");
+    }
+    return result.data.image_url;
   }
 
   function getButtonPayload() {
@@ -197,7 +221,8 @@ export default function AdminSlidesPage() {
         }
         setUploading(true);
         const image_url = await uploadFile(form.file);
-        const res = await fetch("/api/admin/slides", {
+        const url = "/api/admin/slides";
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -207,8 +232,20 @@ export default function AdminSlidesPage() {
             ...buttonPayload,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<Slide & { error?: string }>(res, {
+          method: "POST",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         const newSlide = { ...data, sort_order: slidesDraft.length };
         setSlidesFromServer((s) => [...s, newSlide].sort((a, b) => a.sort_order - b.sort_order));
         setSlidesDraft((s) => [...s, newSlide].sort((a, b) => a.sort_order - b.sort_order));
@@ -228,7 +265,8 @@ export default function AdminSlidesPage() {
           setUploading(true);
           image_url = await uploadFile(form.file, editing.id);
         }
-        const res = await fetch(`/api/admin/slides/${editing.id}`, {
+        const url = `/api/admin/slides/${editing.id}`;
+        const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -238,8 +276,20 @@ export default function AdminSlidesPage() {
             ...buttonPayload,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<Slide & { error?: string }>(res, {
+          method: "PATCH",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         const updated = {
           ...editing,
           image_url,
@@ -290,14 +340,19 @@ export default function AdminSlidesPage() {
     setError("");
     try {
       const items = slidesDraft.map((s, i) => ({ id: s.id, sort_order: i }));
-      const res = await fetch("/api/admin/slides/reorder", {
+      const url = "/api/admin/slides/reorder";
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Ошибка сохранения");
+      const result = await parseAdminResponse<{ error?: string }>(res, { method: "POST", url });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка сохранения";
+        throw new Error(message);
       }
       const withOrder = slidesDraft.map((s, i) => ({ ...s, sort_order: i }));
       setSlidesFromServer(withOrder);

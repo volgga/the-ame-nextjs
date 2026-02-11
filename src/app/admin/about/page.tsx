@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { BlogRichEditor } from "@/components/admin/BlogRichEditor";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 type AboutPage = {
   id: number;
@@ -36,9 +37,22 @@ export default function AdminAboutPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/about-page");
-      if (!res.ok) throw new Error("Ошибка загрузки");
-      const data = await res.json();
+      const url = "/api/admin/about-page";
+      const res = await fetch(url);
+      const result = await parseAdminResponse<{ page: AboutPage } & { error?: string }>(res, {
+        method: "GET",
+        url,
+      });
+      if (!result.ok || !result.data?.page) {
+        const apiError = result.data && typeof (result.data as any).error === "string"
+          ? (result.data as any).error
+          : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки";
+        throw new Error(message);
+      }
+      const data = result.data;
       const page = data.page;
       setForm({
         title: page.title ?? null,
@@ -113,13 +127,19 @@ export default function AdminAboutPage() {
         body: formData,
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const errorMsg = data.error ?? "Ошибка загрузки изображения";
-        throw new Error(errorMsg);
+      const result = await parseAdminResponse<{ image_url?: string; path?: string; error?: string }>(res, {
+        method: "POST",
+        url: "/api/admin/about-page/upload",
+      });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки изображения";
+        throw new Error(message);
       }
 
-      const data = await res.json();
+      const data = result.data ?? {};
       setForm((prev) => ({
         ...prev,
         cover_image_url: data.image_url,
@@ -162,9 +182,16 @@ export default function AdminAboutPage() {
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Ошибка сохранения");
+      const result = await parseAdminResponse<{ error?: string }>(res, {
+        method: "PUT",
+        url: "/api/admin/about-page",
+      });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка сохранения";
+        throw new Error(message);
       }
 
       setSaved(true);

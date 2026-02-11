@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Subcategory } from "@/types/admin";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 export default function AdminSubcategoriesPage() {
   const params = useParams();
@@ -20,9 +21,20 @@ export default function AdminSubcategoriesPage() {
 
   const loadCategory = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/categories");
-      if (!res.ok) throw new Error("Ошибка загрузки категорий");
-      const data = await res.json();
+      const url = "/api/admin/categories";
+      const res = await fetch(url);
+      const result = await parseAdminResponse<any[]>(res, { method: "GET", url });
+      if (!result.ok || !Array.isArray(result.data)) {
+        const apiError =
+          result.data && !Array.isArray(result.data) && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки категорий";
+        throw new Error(message);
+      }
+      const data = result.data;
       const cat = data.find((c: { id: string }) => c.id === categoryId);
       if (!cat) {
         setError("Категория не найдена");
@@ -36,10 +48,20 @@ export default function AdminSubcategoriesPage() {
 
   const loadSubcategories = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/subcategories?category_id=${categoryId}`);
-      if (!res.ok) throw new Error("Ошибка загрузки");
-      const data = await res.json();
-      setSubcategories(data);
+      const url = `/api/admin/subcategories?category_id=${categoryId}`;
+      const res = await fetch(url);
+      const result = await parseAdminResponse<Subcategory[]>(res, { method: "GET", url });
+      if (!result.ok || !Array.isArray(result.data)) {
+        const apiError =
+          result.data && !Array.isArray(result.data) && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки";
+        throw new Error(message);
+      }
+      setSubcategories(result.data);
     } catch (e) {
       setError(String(e));
     }
@@ -84,7 +106,8 @@ export default function AdminSubcategoriesPage() {
     }
     try {
       if (creating) {
-        const res = await fetch("/api/admin/subcategories", {
+        const url = "/api/admin/subcategories";
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -94,13 +117,26 @@ export default function AdminSubcategoriesPage() {
             description: form.description.trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<Subcategory & { error?: string }>(res, {
+          method: "POST",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         setSubcategories((s) => [...s, data].sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999)));
         setCreating(false);
         setForm({ name: "", title: "", description: "" });
       } else if (editing) {
-        const res = await fetch(`/api/admin/subcategories/${editing.id}`, {
+        const url = `/api/admin/subcategories/${editing.id}`;
+        const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -109,8 +145,20 @@ export default function AdminSubcategoriesPage() {
             description: form.description.trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<Subcategory & { error?: string }>(res, {
+          method: "PATCH",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         setSubcategories((s) =>
           s.map((x) => (x.id === editing.id ? data : x)).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999))
         );
@@ -125,8 +173,16 @@ export default function AdminSubcategoriesPage() {
   async function handleDelete(id: string) {
     setDeleteConfirmId(null);
     try {
-      const res = await fetch(`/api/admin/subcategories/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Ошибка удаления");
+      const url = `/api/admin/subcategories/${id}`;
+      const res = await fetch(url, { method: "DELETE" });
+      const result = await parseAdminResponse<{ error?: string }>(res, { method: "DELETE", url });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка удаления";
+        throw new Error(message);
+      }
       setSubcategories((s) => s.filter((x) => x.id !== id));
       setEditing(null);
     } catch (e) {

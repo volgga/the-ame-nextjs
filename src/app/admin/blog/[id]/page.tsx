@@ -6,6 +6,7 @@ import Link from "next/link";
 import NextImage from "next/image";
 import { slugify } from "@/utils/slugify";
 import { BlogRichEditor } from "@/components/admin/BlogRichEditor";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 type BlogPost = {
   id: string;
@@ -51,10 +52,22 @@ export default function AdminBlogEditPage() {
     if (isNew) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/blog/${id}`);
-      if (!res.ok) throw new Error("Ошибка загрузки");
-      const data = await res.json();
-      const post = data.post;
+      const url = `/api/admin/blog/${id}`;
+      const res = await fetch(url);
+      const result = await parseAdminResponse<{ post: BlogPost } & { error?: string }>(res, {
+        method: "GET",
+        url,
+      });
+      if (!result.ok || !result.data?.post) {
+        const apiError = result.data && typeof (result.data as any).error === "string"
+          ? (result.data as any).error
+          : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки";
+        throw new Error(message);
+      }
+      const post = result.data.post;
       setForm({
         title: post.title ?? "",
         slug: post.slug ?? "",
@@ -142,14 +155,20 @@ export default function AdminBlogEditPage() {
         body: formData,
       });
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const errorMsg = data.error ?? "Ошибка загрузки изображения";
+      const result = await parseAdminResponse<{ image_url?: string; path?: string; error?: string }>(res, {
+        method: "POST",
+        url: "/api/admin/blog/upload",
+      });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки изображения";
         // Ошибка уже обработана на сервере с понятным сообщением
-        throw new Error(errorMsg);
+        throw new Error(message);
       }
 
-      const data = await res.json();
+      const data = result.data ?? {};
       setForm((prev) => ({
         ...prev,
         cover_image_url: data.image_url,
@@ -206,12 +225,19 @@ export default function AdminBlogEditPage() {
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Ошибка сохранения");
+      const result = await parseAdminResponse<{ post?: BlogPost; error?: string }>(res, {
+        method,
+        url,
+      });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка сохранения";
+        throw new Error(message);
       }
 
-      const responseData = await res.json();
+      const responseData = result.data ?? {};
       setSaved(true);
       setError("");
 

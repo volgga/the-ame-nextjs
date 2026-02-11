@@ -310,9 +310,7 @@ export async function getAllCatalogProducts(): Promise<Product[]> {
   try {
     return await unstable_cache(_getAllCatalogProductsUncached, ["catalog-products"], {
       revalidate: 60,
-
       tags: ["catalog-products", "categories"],
-
     })();
   } catch (e) {
     console.error("[getAllCatalogProducts]", e instanceof Error ? e.message : String(e));
@@ -323,7 +321,7 @@ export async function getAllCatalogProducts(): Promise<Product[]> {
 /**
  * Товар по slug: сначала products, затем variant_products.
  */
-async function _getCatalogProductBySlugUncached(
+async function getCatalogProductBySlugUncached(
   slug: string
 ): Promise<Product | (Product & { variants?: import("@/lib/variantProducts").ProductVariantPublic[] }) | null> {
   const fromProducts = await getProductBySlug(slug);
@@ -336,7 +334,7 @@ export async function getCatalogProductBySlug(
   slug: string
 ): Promise<Product | (Product & { variants?: import("@/lib/variantProducts").ProductVariantPublic[] }) | null> {
   const { unstable_cache } = await import("next/cache");
-  return unstable_cache(() => _getCatalogProductBySlugUncached(slug), ["catalog-product", slug], {
+  return unstable_cache(() => getCatalogProductBySlugUncached(slug), ["catalog-product", slug], {
     revalidate: 60,
     tags: ["catalog-products", "categories"],
   })();

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 export default function AdminLoginPage() {
   const [login, setLogin] = useState("");
@@ -15,14 +16,22 @@ export default function AdminLoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/login", {
+      const url = "/api/admin/login";
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ login: login.trim(), password }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Ошибка входа");
+      const result = await parseAdminResponse<{ error?: string }>(res, {
+        method: "POST",
+        url,
+      });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка входа";
+        setError(message);
         return;
       }
       router.push("/admin");
