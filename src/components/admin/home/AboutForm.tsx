@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import Image from "next/image";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 type AboutData = {
   title: string;
@@ -79,8 +80,17 @@ export const AboutForm = forwardRef<AboutFormRef, AboutFormProps>(function About
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const responseData = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(responseData.error || "Ошибка сохранения");
+    const result = await parseAdminResponse<AboutData & { error?: string }>(res, {
+      method: "PATCH",
+      url: "/api/admin/home-about",
+    });
+    if (!result.ok || !result.isJson) {
+      const errorMsg = result.data && typeof result.data === "object" && "error" in result.data
+        ? (result.data as any).error
+        : result.message ?? "Ошибка сохранения";
+      throw new Error(errorMsg);
+    }
+    const responseData = result.data ?? DEFAULT_DATA;
     const updated = {
       title: responseData.title ?? data.title,
       text: responseData.text ?? data.text,
@@ -122,14 +132,17 @@ export const AboutForm = forwardRef<AboutFormRef, AboutFormProps>(function About
     setError("");
     try {
       const res = await fetch("/api/admin/home-about");
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("[AdminAbout] Ошибка загрузки:", res.status, errData);
+      const result = await parseAdminResponse<AboutData & { _tableMissing?: boolean }>(res, {
+        method: "GET",
+        url: "/api/admin/home-about",
+      });
+      if (!result.ok || !result.isJson) {
+        console.error("[AdminAbout] Ошибка загрузки:", result.status, result.message);
         setData(DEFAULT_DATA);
         setInitialSnapshot(snapshot(DEFAULT_DATA));
         return;
       }
-      const data = await res.json();
+      const data = result.data ?? DEFAULT_DATA;
       const next = {
         title: data.title ?? DEFAULT_DATA.title,
         text: data.text ?? DEFAULT_DATA.text,
@@ -175,8 +188,17 @@ export const AboutForm = forwardRef<AboutFormRef, AboutFormProps>(function About
       method: "POST",
       body: formData,
     });
-    const responseData = await res.json();
-    if (!res.ok) throw new Error(responseData.error ?? "Ошибка загрузки");
+    const result = await parseAdminResponse<{ image_url?: string; error?: string }>(res, {
+      method: "POST",
+      url: "/api/admin/home-about/upload",
+    });
+    if (!result.ok || !result.isJson) {
+      const errorMsg = result.data && typeof result.data === "object" && "error" in result.data
+        ? (result.data as any).error
+        : result.message ?? "Ошибка загрузки";
+      throw new Error(errorMsg);
+    }
+    const responseData = result.data ?? {};
     return responseData.image_url;
   }
 

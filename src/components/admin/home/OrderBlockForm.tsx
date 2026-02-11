@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import Image from "next/image";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 type OrderBlockData = {
   title: string;
@@ -78,8 +79,17 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const responseData = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(responseData.error || "Ошибка сохранения");
+    const result = await parseAdminResponse<OrderBlockData & { error?: string }>(res, {
+      method: "PATCH",
+      url: "/api/admin/home-order-block",
+    });
+    if (!result.ok || !result.isJson) {
+      const errorMsg = result.data && typeof result.data === "object" && "error" in result.data
+        ? (result.data as any).error
+        : result.message ?? "Ошибка сохранения";
+      throw new Error(errorMsg);
+    }
+    const responseData = result.data ?? DEFAULT_DATA;
     const updated = {
       title: responseData.title ?? data.title,
       subtitle1: responseData.subtitle1 ?? data.subtitle1,
@@ -122,13 +132,16 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
     setError("");
     try {
       const res = await fetch("/api/admin/home-order-block");
-      if (!res.ok) {
-        await res.json().catch(() => ({}));
+      const result = await parseAdminResponse<OrderBlockData & { _tableMissing?: boolean }>(res, {
+        method: "GET",
+        url: "/api/admin/home-order-block",
+      });
+      if (!result.ok || !result.isJson) {
         setData(DEFAULT_DATA);
         setInitialSnapshot(snapshot(DEFAULT_DATA));
         return;
       }
-      const resData = await res.json();
+      const resData = result.data ?? DEFAULT_DATA;
       const next = {
         title: resData.title ?? DEFAULT_DATA.title,
         subtitle1: resData.subtitle1 ?? DEFAULT_DATA.subtitle1,
@@ -165,8 +178,17 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
     const formData = new FormData();
     formData.append("file", file);
     const res = await fetch("/api/admin/home-order-block/upload", { method: "POST", body: formData });
-    const responseData = await res.json();
-    if (!res.ok) throw new Error(responseData.error ?? "Ошибка загрузки");
+    const result = await parseAdminResponse<{ image_url?: string; error?: string }>(res, {
+      method: "POST",
+      url: "/api/admin/home-order-block/upload",
+    });
+    if (!result.ok || !result.isJson) {
+      const errorMsg = result.data && typeof result.data === "object" && "error" in result.data
+        ? (result.data as any).error
+        : result.message ?? "Ошибка загрузки";
+      throw new Error(errorMsg);
+    }
+    const responseData = result.data ?? {};
     return responseData.image_url;
   }
 

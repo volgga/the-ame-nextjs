@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useImperativeHandle, useState, forwardRef } from "react";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 type ReviewsData = {
   id: string | null;
@@ -66,8 +67,17 @@ export const ReviewsForm = forwardRef<ReviewsFormRef, ReviewsFormProps>(function
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const responseData = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(responseData.error || "Ошибка сохранения");
+    const result = await parseAdminResponse<ReviewsData & { error?: string }>(res, {
+      method: "PATCH",
+      url: "/api/admin/reviews",
+    });
+    if (!result.ok || !result.isJson) {
+      const errorMsg = result.data && typeof result.data === "object" && "error" in result.data
+        ? (result.data as any).error
+        : result.message ?? "Ошибка сохранения";
+      throw new Error(errorMsg);
+    }
+    const responseData = result.data ?? DEFAULT_DATA;
     const updated = {
       id: responseData.id ?? data.id,
       rating_count: responseData.rating_count ?? data.rating_count,
@@ -109,14 +119,14 @@ export const ReviewsForm = forwardRef<ReviewsFormRef, ReviewsFormProps>(function
     setError("");
     try {
       const res = await fetch("/api/admin/reviews");
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("[AdminReviews] Ошибка загрузки:", res.status, errData);
+      const result = await parseAdminResponse<ReviewsData>(res, { method: "GET", url: "/api/admin/reviews" });
+      if (!result.ok || !result.isJson) {
+        console.error("[AdminReviews] Ошибка загрузки:", result.status, result.message);
         setData(DEFAULT_DATA);
         setInitialSnapshot(snapshot(DEFAULT_DATA));
         return;
       }
-      const data = await res.json();
+      const data = result.data ?? DEFAULT_DATA;
       const next = {
         id: data.id ?? null,
         rating_count: data.rating_count ?? DEFAULT_DATA.rating_count,

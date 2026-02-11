@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useImperativeHandle, useState, forwardRef } from "react";
 import { ChevronUp, ChevronDown, Trash2, Plus, GripVertical, ChevronRight } from "lucide-react";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 type FaqItem = {
   id: string;
@@ -106,8 +107,17 @@ export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items }),
     });
-    const responseData = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(responseData.error || "Ошибка сохранения");
+    const result = await parseAdminResponse<{ items?: FaqItem[]; error?: string }>(res, {
+      method: "PATCH",
+      url: "/api/admin/home-faq",
+    });
+    if (!result.ok || !result.isJson) {
+      const errorMsg = result.data && typeof result.data === "object" && "error" in result.data
+        ? (result.data as any).error
+        : result.message ?? "Ошибка сохранения";
+      throw new Error(errorMsg);
+    }
+    const responseData = result.data ?? {};
     const updated = responseData.items ?? items;
     setItems(updated);
     setInitialSnapshot(itemsSnapshot(updated));
@@ -148,14 +158,17 @@ export const FaqForm = forwardRef<FaqFormRef, FaqFormProps>(function FaqForm(
     setError("");
     try {
       const res = await fetch("/api/admin/home-faq");
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("[AdminFaq] Ошибка загрузки:", res.status, errData);
+      const result = await parseAdminResponse<{ items?: FaqItem[]; _tableMissing?: boolean }>(res, {
+        method: "GET",
+        url: "/api/admin/home-faq",
+      });
+      if (!result.ok || !result.isJson) {
+        console.error("[AdminFaq] Ошибка загрузки:", result.status, result.message);
         setItems(DEFAULT_FAQ_ITEMS);
         setInitialSnapshot(itemsSnapshot(DEFAULT_FAQ_ITEMS));
         return;
       }
-      const data = await res.json();
+      const data = result.data ?? {};
       const loadedItems = Array.isArray(data.items) && data.items.length > 0 ? data.items : DEFAULT_FAQ_ITEMS;
       setItems(loadedItems);
       setInitialSnapshot(itemsSnapshot(loadedItems));

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { useRouter } from "next/navigation";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 type MarqueeData = {
   enabled: boolean;
@@ -68,8 +69,11 @@ export const MarqueeForm = forwardRef<MarqueeFormRef, MarqueeFormProps>(function
       body: JSON.stringify(payload),
       cache: "no-store",
     });
-    const responseData = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(responseData.error || "Ошибка сохранения");
+    const result = await parseAdminResponse(res, { method: "PATCH", url: "/api/admin/home-marquee" });
+    if (!result.ok || !result.isJson) {
+      throw new Error(result.message ?? "Ошибка сохранения");
+    }
+    const responseData = result.data as any;
     const updated = {
       enabled: responseData.enabled === true || responseData.enabled === "true",
       text: responseData.text ?? "",
@@ -111,12 +115,16 @@ export const MarqueeForm = forwardRef<MarqueeFormRef, MarqueeFormProps>(function
     setError("");
     try {
       const res = await fetch("/api/admin/home-marquee", { cache: "no-store" });
-      if (!res.ok) {
+      const result = await parseAdminResponse(res, { method: "GET", url: "/api/admin/home-marquee" });
+      if (!result.ok || !result.isJson) {
         setData(DEFAULT_DATA);
         setInitialSnapshot(snapshot(DEFAULT_DATA));
+        if (!result.ok) {
+          setError(result.message ?? "Ошибка загрузки");
+        }
         return;
       }
-      const raw = await res.json();
+      const raw = result.data as any;
       const next: MarqueeData = {
         enabled: raw.enabled === true || (typeof raw.enabled === "string" && raw.enabled.toLowerCase() === "true"),
         text: raw.text ?? "",
