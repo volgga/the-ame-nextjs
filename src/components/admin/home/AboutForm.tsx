@@ -8,6 +8,8 @@ type AboutData = {
   title: string;
   text: string;
   imageUrl: string | null;
+  /** Приходит с API когда таблица home_reviews отсутствует */
+  _tableMissing?: boolean;
 };
 
 const DEFAULT_DATA: AboutData = {
