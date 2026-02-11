@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { slugify } from "@/utils/slugify";
@@ -260,6 +261,9 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
       if (error) throw error;
+      revalidateTag("products");
+      revalidateTag("catalog-products");
+      revalidatePath("/");
       return NextResponse.json({ ...data, type: "simple" });
     }
 
@@ -354,6 +358,9 @@ export async function POST(request: NextRequest) {
 
       if (variantsError) throw variantsError;
 
+      revalidateTag("products");
+      revalidateTag("catalog-products");
+      revalidatePath("/");
       return NextResponse.json({ ...vpData, type: "variant", id: `vp-${vpData.id}` });
     }
 
