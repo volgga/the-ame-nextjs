@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { slugify } from "@/utils/slugify";
@@ -128,6 +128,8 @@ export async function POST(request: NextRequest) {
     if (error) throw error;
 
     revalidateTag("blog-posts");
+    revalidatePath("/clients/blog");
+    revalidatePath(`/clients/blog/${data.slug}`);
     return NextResponse.json({ post: data }, { status: 201 });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

@@ -264,6 +264,10 @@ export async function POST(request: NextRequest) {
       revalidateTag("products");
       revalidateTag("catalog-products");
       revalidatePath("/");
+      revalidatePath("/magazin");
+      if (data.slug) {
+        revalidatePath(`/product/${data.slug}`);
+      }
       return NextResponse.json({ ...data, type: "simple" });
     }
 
@@ -361,6 +365,10 @@ export async function POST(request: NextRequest) {
       revalidateTag("products");
       revalidateTag("catalog-products");
       revalidatePath("/");
+      revalidatePath("/magazin");
+      if (vpData.slug) {
+        revalidatePath(`/product/${vpData.slug}`);
+      }
       return NextResponse.json({ ...vpData, type: "variant", id: `vp-${vpData.id}` });
     }
 

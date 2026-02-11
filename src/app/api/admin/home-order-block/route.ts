@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -116,6 +116,7 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: `Ошибка обновления: ${error.message}` }, { status: 500 });
       }
       revalidateTag("home-order-block");
+      revalidatePath("/");
       return NextResponse.json({
         title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
         subtitle1: data.order_block_subtitle1 ?? DEFAULT_ORDER_BLOCK.subtitle1,
@@ -143,6 +144,7 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ error: `Ошибка создания: ${error.message}` }, { status: 500 });
       }
       revalidateTag("home-order-block");
+      revalidatePath("/");
       return NextResponse.json({
         title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
         subtitle1: data.order_block_subtitle1 ?? DEFAULT_ORDER_BLOCK.subtitle1,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
       .single();
     if (error) throw error;
     revalidateTag("hero-slides");
+    revalidatePath("/");
     return NextResponse.json(data);
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

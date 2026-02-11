@@ -22,6 +22,7 @@ export type AdminFetchResult<T = unknown> = {
  * - пытается JSON.parse только если content-type указывает на JSON
  * - никогда не прокидывает SyntaxError наружу
  * - на ошибке формирует человекочитаемое сообщение с HTTP статусом, URL и первыми 200 символами тела
+ * - логирует диагностику если получен HTML вместо JSON
  */
 export async function parseAdminResponse<T = unknown>(
   res: Response,
@@ -42,6 +43,17 @@ export async function parseAdminResponse<T = unknown>(
   let data: T | null = null;
   let isJson = false;
 
+  // Диагностика: если получили HTML вместо JSON
+  if (!res.ok && (contentType.includes("text/html") || rawText.trim().startsWith("<!DOCTYPE") || rawText.trim().startsWith("<html"))) {
+    console.error(
+      `[parseAdminResponse] API returned HTML instead of JSON:`,
+      `\n  URL: ${method} ${url}`,
+      `\n  Status: ${res.status}`,
+      `\n  Content-Type: ${contentType}`,
+      `\n  Response preview: ${rawText.slice(0, 500)}`
+    );
+  }
+
   if (contentType.includes("application/json")) {
     try {
       data = rawText ? (JSON.parse(rawText) as T) : null;
@@ -50,6 +62,16 @@ export async function parseAdminResponse<T = unknown>(
       // Не прокидываем SyntaxError наружу
       data = null;
       isJson = false;
+      // Дополнительная диагностика если content-type был JSON, но парсинг не удался
+      if (rawText && !rawText.trim().startsWith("{")) {
+        console.error(
+          `[parseAdminResponse] Failed to parse JSON response:`,
+          `\n  URL: ${method} ${url}`,
+          `\n  Status: ${res.status}`,
+          `\n  Content-Type: ${contentType}`,
+          `\n  Response preview: ${rawText.slice(0, 500)}`
+        );
+      }
     }
   }
 

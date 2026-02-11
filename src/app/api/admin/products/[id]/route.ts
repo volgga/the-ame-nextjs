@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { slugify } from "@/utils/slugify";
@@ -242,6 +242,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .single();
       if (error) throw error;
       revalidateTag("catalog-products");
+      revalidatePath("/");
+      revalidatePath("/magazin");
+      if (data.slug) {
+        revalidatePath(`/product/${data.slug}`);
+      }
       return NextResponse.json(data);
     }
 
@@ -295,6 +300,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .single();
     if (error) throw error;
     revalidateTag("catalog-products");
+    revalidatePath("/");
+    revalidatePath("/magazin");
+    if (data.slug) {
+      revalidatePath(`/product/${data.slug}`);
+    }
     return NextResponse.json({ ...data, id: `vp-${data.id}` });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
@@ -327,6 +337,8 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
       if (error) throw error;
     }
     revalidateTag("catalog-products");
+    revalidatePath("/");
+    revalidatePath("/magazin");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
