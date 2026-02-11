@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -167,6 +168,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-faq PATCH] Ошибка обновления:", error);
         return NextResponse.json({ error: `Ошибка обновления: ${error.message}` }, { status: 500 });
       }
+      revalidateTag("home-faq");
       return NextResponse.json({ items: data.faq_items ?? parsed.data.items });
     } else {
       // Нет записи - создаем новую
@@ -188,6 +190,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-faq PATCH] Ошибка создания:", error);
         return NextResponse.json({ error: `Ошибка создания: ${error.message}` }, { status: 500 });
       }
+      revalidateTag("home-faq");
       return NextResponse.json({ items: data.faq_items ?? parsed.data.items });
     }
   } catch (e) {

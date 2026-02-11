@@ -45,5 +45,8 @@ async function getHomeReviewsUncached(): Promise<HomeReviews> {
 }
 
 export async function getHomeReviews(): Promise<HomeReviews> {
-  return unstable_cache(getHomeReviewsUncached, ["home-reviews"], { revalidate: 300 })();
+  return unstable_cache(getHomeReviewsUncached, ["home-reviews"], {
+    revalidate: 300,
+    tags: ["home-reviews"],
+  })();
 }

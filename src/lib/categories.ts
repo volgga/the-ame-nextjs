@@ -68,7 +68,10 @@ async function getCategoriesUncached(): Promise<Category[]> {
 
 /** Кэш 5 мин — категории редко меняются */
 export async function getCategories(): Promise<Category[]> {
-  return unstable_cache(getCategoriesUncached, ["categories"], { revalidate: 300 })();
+  return unstable_cache(getCategoriesUncached, ["categories"], {
+    revalidate: 300,
+    tags: ["categories"],
+  })();
 }
 
 export function getCategoryBySlug(categories: Category[], slug: string): Category | null {

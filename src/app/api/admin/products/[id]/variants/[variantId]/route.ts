@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -99,6 +100,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (error) throw error;
     if (!data) return NextResponse.json({ error: "Вариант не найден" }, { status: 404 });
     await recalcMinPrice(supabase, productId);
+    revalidateTag("catalog-products");
     const row = data as { title?: string; size?: string; name?: string };
     return NextResponse.json({
       ...data,
@@ -142,6 +144,7 @@ export async function DELETE(
 
     if (error) throw error;
     await recalcMinPrice(supabase, productId);
+    revalidateTag("catalog-products");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

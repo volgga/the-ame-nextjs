@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAddOnCategoriesOrder } from "@/lib/addOnProducts";
@@ -92,6 +93,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const categorySlugs = await getAddOnCategoriesOrder();
+    revalidateTag("add-on-products");
     return NextResponse.json({ categorySlugs });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

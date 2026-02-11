@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { slugify } from "@/utils/slugify";
@@ -137,6 +138,9 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
     if (error) throw error;
+    revalidateTag("categories");
+    revalidateTag("catalog-products");
+    revalidateTag("add-on-products");
     return NextResponse.json(data);
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

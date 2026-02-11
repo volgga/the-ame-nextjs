@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -130,6 +131,7 @@ export async function PATCH(request: NextRequest) {
           { status: 500 }
         );
       }
+      revalidateTag("home-reviews");
       return NextResponse.json(data);
     }
 
@@ -165,6 +167,7 @@ export async function PATCH(request: NextRequest) {
           { status: 500 }
         );
       }
+      revalidateTag("home-reviews");
       return NextResponse.json(data);
     } else {
       // Нет записи - создаем новую
@@ -183,6 +186,7 @@ export async function PATCH(request: NextRequest) {
           { status: 500 }
         );
       }
+      revalidateTag("home-reviews");
       return NextResponse.json(data);
     }
   } catch (e) {

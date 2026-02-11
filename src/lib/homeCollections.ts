@@ -44,5 +44,8 @@ async function getActiveHomeCollectionsUncached(): Promise<HomeCollection[]> {
 
 /** Кэш 5 мин */
 export async function getActiveHomeCollections(): Promise<HomeCollection[]> {
-  return unstable_cache(getActiveHomeCollectionsUncached, ["home-collections"], { revalidate: 300 })();
+  return unstable_cache(getActiveHomeCollectionsUncached, ["home-collections"], {
+    revalidate: 300,
+    tags: ["home-collections"],
+  })();
 }

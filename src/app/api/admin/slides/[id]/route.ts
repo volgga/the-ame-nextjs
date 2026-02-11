@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -45,6 +46,7 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hero_slides нет в сгенерированных Supabase типах
     const { data, error } = await (supabase as any).from("hero_slides").update(payload).eq("id", id).select().single();
     if (error) throw error;
+    revalidateTag("hero-slides");
     return NextResponse.json(data);
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
@@ -89,6 +91,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hero_slides нет в сгенерированных Supabase типах
     const { error } = await (supabase as any).from("hero_slides").delete().eq("id", id);
     if (error) throw error;
+    revalidateTag("hero-slides");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

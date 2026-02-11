@@ -45,5 +45,8 @@ async function getHomeOrderBlockUncached(): Promise<HomeOrderBlock> {
 }
 
 export async function getHomeOrderBlock(): Promise<HomeOrderBlock> {
-  return unstable_cache(getHomeOrderBlockUncached, ["home-order-block"], { revalidate: 300 })();
+  return unstable_cache(getHomeOrderBlockUncached, ["home-order-block"], {
+    revalidate: 300,
+    tags: ["home-order-block"],
+  })();
 }
