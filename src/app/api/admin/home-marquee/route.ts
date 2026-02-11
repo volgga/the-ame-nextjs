@@ -106,7 +106,12 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   try {
     await requireAdmin();
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Неверный JSON в теле запроса" }, { status: 400 });
+    }
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) {
       const first = parsed.error.errors[0];

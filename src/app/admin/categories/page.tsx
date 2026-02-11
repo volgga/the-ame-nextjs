@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { Category } from "@/components/admin/categories/CategoryCard";
 import type { Subcategory } from "@/types/admin";
@@ -701,9 +700,12 @@ export default function AdminCategoriesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Ошибка сохранения");
+      const result = await parseAdminResponse(res, { method: "POST", url: "/api/admin/categories/reorder" });
+      if (!result.ok || !result.isJson) {
+        const errorMsg = result.data && typeof result.data === "object" && "error" in result.data 
+          ? (result.data as any).error 
+          : result.message ?? "Ошибка сохранения";
+        throw new Error(errorMsg);
       }
       const withOrder = categoriesDraft.map((c, i) => ({ ...c, sort_order: i }));
       setCategoriesFromServer(withOrder);

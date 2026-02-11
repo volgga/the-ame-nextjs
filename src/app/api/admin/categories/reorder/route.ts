@@ -16,7 +16,12 @@ const reorderSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Неверный JSON в теле запроса" }, { status: 400 });
+    }
     const parsed = reorderSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });

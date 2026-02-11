@@ -72,11 +72,9 @@ pnpm-debug.log*
 .DS_Store
 .vercel
 
-docs/
-scripts/
-
-DEPLOY-UBUNTU.md
-add-telegram-env.sh
-build-locally-and-deploy.sh
-deploy-commands.sh
-products_data.sql
+# ======================
+# Temporary files / patches
+# ======================
+*.patch
+*-backup-*/
+src-backup-*/
