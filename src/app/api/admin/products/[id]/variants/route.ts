@@ -87,7 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (error) throw error;
     await recalcMinPrice(supabase, productId);
-    revalidateTag("catalog-products");
+    revalidateTag("catalog-products", "max");
     const row = data as { title?: string; size?: string; name?: string };
     return NextResponse.json({
       ...data,

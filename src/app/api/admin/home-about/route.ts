@@ -121,7 +121,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-about PATCH] Ошибка обновления:", error);
         return NextResponse.json({ error: `Ошибка обновления: ${error.message}` }, { status: 500 });
       }
-      revalidateTag("home-about");
+      revalidateTag("home-about", "max");
       revalidatePath("/");
       return NextResponse.json({
         title: data.about_title ?? DEFAULT_ABOUT.title,
@@ -148,7 +148,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-about PATCH] Ошибка создания:", error);
         return NextResponse.json({ error: `Ошибка создания: ${error.message}` }, { status: 500 });
       }
-      revalidateTag("home-about");
+      revalidateTag("home-about", "max");
       revalidatePath("/");
       return NextResponse.json({
         title: data.about_title ?? DEFAULT_ABOUT.title,

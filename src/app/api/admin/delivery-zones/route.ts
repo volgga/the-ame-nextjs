@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
     if (error) throw error;
-    revalidateTag("delivery-zones");
+    revalidateTag("delivery-zones", "max");
     return NextResponse.json(data);
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

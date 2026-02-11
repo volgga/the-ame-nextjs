@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
     }
 
-    revalidateTag("home-collections");
+    revalidateTag("home-collections", "max");
     revalidatePath("/");
     return NextResponse.json({ success: true });
   } catch (e) {

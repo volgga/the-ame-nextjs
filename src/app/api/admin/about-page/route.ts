@@ -133,7 +133,7 @@ export async function PUT(request: NextRequest) {
 
     if (error) throw error;
 
-    revalidateTag("about-page");
+    revalidateTag("about-page", "max");
     revalidatePath("/about");
     return NextResponse.json({ page: data });
   } catch (e) {

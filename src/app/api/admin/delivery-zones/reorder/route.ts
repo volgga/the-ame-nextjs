@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
     }
 
-    revalidateTag("delivery-zones");
+    revalidateTag("delivery-zones", "max");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

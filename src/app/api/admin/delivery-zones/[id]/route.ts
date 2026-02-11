@@ -44,7 +44,7 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
       .select()
       .single();
     if (error) throw error;
-    revalidateTag("delivery-zones");
+    revalidateTag("delivery-zones", "max");
     return NextResponse.json(data);
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
@@ -63,7 +63,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from("delivery_zones").delete().eq("id", id);
     if (error) throw error;
-    revalidateTag("delivery-zones");
+    revalidateTag("delivery-zones", "max");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

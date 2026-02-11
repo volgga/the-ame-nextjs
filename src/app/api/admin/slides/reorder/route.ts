@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       if (error) throw error;
     }
 
-    revalidateTag("hero-slides");
+    revalidateTag("hero-slides", "max");
     revalidatePath("/");
     return NextResponse.json({ success: true });
   } catch (e) {

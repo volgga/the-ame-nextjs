@@ -42,7 +42,7 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
       .select()
       .single();
     if (error) throw error;
-    revalidateTag("home-collections");
+    revalidateTag("home-collections", "max");
     revalidatePath("/");
     return NextResponse.json(data);
   } catch (e) {
@@ -90,7 +90,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from("home_collections").delete().eq("id", id);
     if (error) throw error;
-    revalidateTag("home-collections");
+    revalidateTag("home-collections", "max");
     revalidatePath("/");
     return NextResponse.json({ success: true });
   } catch (e) {

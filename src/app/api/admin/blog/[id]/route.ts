@@ -148,7 +148,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     if (error) throw error;
 
-    revalidateTag("blog-posts");
+    revalidateTag("blog-posts", "max");
     revalidatePath("/clients/blog");
     revalidatePath(`/clients/blog/${data.slug}`);
     return NextResponse.json({ post: data });
@@ -203,7 +203,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (error) throw error;
 
-    revalidateTag("blog-posts");
+    revalidateTag("blog-posts", "max");
     revalidatePath("/clients/blog");
     return NextResponse.json({ success: true });
   } catch (e) {

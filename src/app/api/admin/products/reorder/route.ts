@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    revalidateTag("catalog-products");
+    revalidateTag("catalog-products", "max");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

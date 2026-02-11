@@ -241,7 +241,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .select()
         .single();
       if (error) throw error;
-      revalidateTag("catalog-products");
+      revalidateTag("catalog-products", "max");
       revalidatePath("/");
       revalidatePath("/magazin");
       if (data.slug) {
@@ -299,7 +299,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .select()
       .single();
     if (error) throw error;
-    revalidateTag("catalog-products");
+    revalidateTag("catalog-products", "max");
     revalidatePath("/");
     revalidatePath("/magazin");
     if (data.slug) {
@@ -336,7 +336,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
       const { error } = await (supabase as any).from("variant_products").delete().eq("id", parsed.numId);
       if (error) throw error;
     }
-    revalidateTag("catalog-products");
+    revalidateTag("catalog-products", "max");
     revalidatePath("/");
     revalidatePath("/magazin");
     return NextResponse.json({ success: true });

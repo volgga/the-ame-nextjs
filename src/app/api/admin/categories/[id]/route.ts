@@ -91,9 +91,9 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).from("categories").update(payload).eq("id", id).select().single();
     if (error) throw error;
-    revalidateTag("categories");
-    revalidateTag("catalog-products");
-    revalidateTag("add-on-products");
+    revalidateTag("categories", "max");
+    revalidateTag("catalog-products", "max");
+    revalidateTag("add-on-products", "max");
     return NextResponse.json(data);
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
@@ -112,9 +112,9 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from("categories").delete().eq("id", id);
     if (error) throw error;
-    revalidateTag("categories");
-    revalidateTag("catalog-products");
-    revalidateTag("add-on-products");
+    revalidateTag("categories", "max");
+    revalidateTag("catalog-products", "max");
+    revalidateTag("add-on-products", "max");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

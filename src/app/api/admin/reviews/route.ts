@@ -131,7 +131,7 @@ export async function PATCH(request: NextRequest) {
           { status: 500 }
         );
       }
-      revalidateTag("home-reviews");
+      revalidateTag("home-reviews", "max");
       return NextResponse.json(data);
     }
 
@@ -167,7 +167,7 @@ export async function PATCH(request: NextRequest) {
           { status: 500 }
         );
       }
-      revalidateTag("home-reviews");
+      revalidateTag("home-reviews", "max");
       return NextResponse.json(data);
     } else {
       // Нет записи - создаем новую
@@ -186,7 +186,7 @@ export async function PATCH(request: NextRequest) {
           { status: 500 }
         );
       }
-      revalidateTag("home-reviews");
+      revalidateTag("home-reviews", "max");
       return NextResponse.json(data);
     }
   } catch (e) {

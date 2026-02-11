@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    revalidateTag("blog-posts");
+    revalidateTag("blog-posts", "max");
     revalidatePath("/clients/blog");
     revalidatePath(`/clients/blog/${data.slug}`);
     return NextResponse.json({ post: data }, { status: 201 });

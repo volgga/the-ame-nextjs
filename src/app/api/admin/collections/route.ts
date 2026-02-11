@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
     if (error) throw error;
-    revalidateTag("home-collections");
+    revalidateTag("home-collections", "max");
     revalidatePath("/");
     return NextResponse.json(data);
   } catch (e) {

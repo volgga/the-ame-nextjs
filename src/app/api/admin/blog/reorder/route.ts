@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    revalidateTag("blog-posts");
+    revalidateTag("blog-posts", "max");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

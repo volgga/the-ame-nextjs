@@ -100,7 +100,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (error) throw error;
     if (!data) return NextResponse.json({ error: "Вариант не найден" }, { status: 404 });
     await recalcMinPrice(supabase, productId);
-    revalidateTag("catalog-products");
+    revalidateTag("catalog-products", "max");
     const row = data as { title?: string; size?: string; name?: string };
     return NextResponse.json({
       ...data,
@@ -144,7 +144,7 @@ export async function DELETE(
 
     if (error) throw error;
     await recalcMinPrice(supabase, productId);
-    revalidateTag("catalog-products");
+    revalidateTag("catalog-products", "max");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

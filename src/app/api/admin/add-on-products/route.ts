@@ -93,7 +93,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const categorySlugs = await getAddOnCategoriesOrder();
-    revalidateTag("add-on-products");
+    revalidateTag("add-on-products", "max");
     return NextResponse.json({ categorySlugs });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

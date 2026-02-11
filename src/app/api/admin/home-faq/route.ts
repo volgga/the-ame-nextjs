@@ -168,7 +168,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-faq PATCH] Ошибка обновления:", error);
         return NextResponse.json({ error: `Ошибка обновления: ${error.message}` }, { status: 500 });
       }
-      revalidateTag("home-faq");
+      revalidateTag("home-faq", "max");
       revalidatePath("/");
       return NextResponse.json({ items: data.faq_items ?? parsed.data.items });
     } else {
@@ -191,7 +191,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-faq PATCH] Ошибка создания:", error);
         return NextResponse.json({ error: `Ошибка создания: ${error.message}` }, { status: 500 });
       }
-      revalidateTag("home-faq");
+      revalidateTag("home-faq", "max");
       revalidatePath("/");
       return NextResponse.json({ items: data.faq_items ?? parsed.data.items });
     }

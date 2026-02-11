@@ -261,8 +261,8 @@ export async function POST(request: NextRequest) {
         .select()
         .single();
       if (error) throw error;
-      revalidateTag("products");
-      revalidateTag("catalog-products");
+      revalidateTag("products", "max");
+      revalidateTag("catalog-products", "max");
       revalidatePath("/");
       revalidatePath("/magazin");
       if (data.slug) {
@@ -362,8 +362,8 @@ export async function POST(request: NextRequest) {
 
       if (variantsError) throw variantsError;
 
-      revalidateTag("products");
-      revalidateTag("catalog-products");
+      revalidateTag("products", "max");
+      revalidateTag("catalog-products", "max");
       revalidatePath("/");
       revalidatePath("/magazin");
       if (vpData.slug) {

@@ -138,9 +138,9 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
     if (error) throw error;
-    revalidateTag("categories");
-    revalidateTag("catalog-products");
-    revalidateTag("add-on-products");
+    revalidateTag("categories", "max");
+    revalidateTag("catalog-products", "max");
+    revalidateTag("add-on-products", "max");
     return NextResponse.json(data);
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

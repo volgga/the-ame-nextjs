@@ -115,7 +115,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-order-block PATCH] Ошибка обновления:", error);
         return NextResponse.json({ error: `Ошибка обновления: ${error.message}` }, { status: 500 });
       }
-      revalidateTag("home-order-block");
+      revalidateTag("home-order-block", "max");
       revalidatePath("/");
       return NextResponse.json({
         title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
@@ -143,7 +143,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-order-block PATCH] Ошибка создания:", error);
         return NextResponse.json({ error: `Ошибка создания: ${error.message}` }, { status: 500 });
       }
-      revalidateTag("home-order-block");
+      revalidateTag("home-order-block", "max");
       revalidatePath("/");
       return NextResponse.json({
         title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
