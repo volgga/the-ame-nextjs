@@ -1045,16 +1045,21 @@ function AdminProductsPageContent() {
                 method: "POST",
                 body: formData,
               });
-              const data = await res.json();
+              const { data, rawText, isJson } = await readJsonSafe<{ error?: string; image_url?: string }>(res);
               if (!res.ok) {
-                const msg = data?.error ?? "Ошибка загрузки изображения";
-                console.error("[admin/products] upload failed:", res.status, data);
-                setCreateError(`Не удалось загрузить изображения: ${msg}`);
+                const msg =
+                  data?.error ??
+                  (isJson ? "Ошибка загрузки изображения" : `Ошибка загрузки (${res.status})${rawText ? `: ${rawText.slice(0, 150)}` : ""}`);
+                if (res.status === 413) {
+                  setCreateError("Слишком большой файл или ограничение прокси. Проверьте client_max_body_size в nginx.");
+                } else {
+                  setCreateError(`Не удалось загрузить изображения: ${msg}`);
+                }
                 setProductImagesUploading(false);
                 setCreateLoading(false);
                 return;
               }
-              imageUrls.push(data.image_url);
+              if (data?.image_url) imageUrls.push(data.image_url);
             }
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
@@ -1140,16 +1145,21 @@ function AdminProductsPageContent() {
                 method: "POST",
                 body: formData,
               });
-              const data = await res.json();
+              const { data, rawText, isJson } = await readJsonSafe<{ error?: string; image_url?: string }>(res);
               if (!res.ok) {
-                const msg = data?.error ?? "Ошибка загрузки изображения";
-                console.error("[admin/products] upload failed:", res.status, data);
-                setCreateError(`Не удалось загрузить изображения: ${msg}`);
+                const msg =
+                  data?.error ??
+                  (isJson ? "Ошибка загрузки изображения" : `Ошибка загрузки (${res.status})${rawText ? `: ${rawText.slice(0, 150)}` : ""}`);
+                if (res.status === 413) {
+                  setCreateError("Слишком большой файл или ограничение прокси. Проверьте client_max_body_size в nginx.");
+                } else {
+                  setCreateError(`Не удалось загрузить изображения: ${msg}`);
+                }
                 setProductImagesUploading(false);
                 setCreateLoading(false);
                 return;
               }
-              imageUrls.push(data.image_url);
+              if (data?.image_url) imageUrls.push(data.image_url);
             }
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);

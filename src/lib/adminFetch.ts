@@ -84,10 +84,10 @@ export async function parseAdminResponse<T = unknown>(
 
   let message: string | undefined;
   if (!ok || !isJson) {
-    // Человекочитаемое сообщение при 413 или HTML (nginx/proxy отклонил большой запрос)
+    // 413 от nginx — запрос отсечён прокси до Next.js (HTML-страница)
     if (status === 413 || (isHtml && (rawText.includes("413") || rawText.includes("Request Entity Too Large")))) {
       message =
-        "Файл слишком большой (413). Максимум 25MB. Если ошибка сохраняется, настройте client_max_body_size в nginx — см. docs/nginx-upload-413.md.";
+        "Слишком большой запрос или ограничение прокси. Проверьте client_max_body_size в nginx (рекомендуется 30m).";
     } else if (isHtml) {
       message = `Сервер вернул HTML вместо JSON (HTTP ${status}). Проверьте прокси и доступность API.`;
     } else {
