@@ -14,6 +14,7 @@ import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-ki
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Trash2 } from "lucide-react";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 /** Категория из таблицы categories (единственный источник для селекта «Добавить категорию»). */
 type CategoryOption = {
@@ -89,8 +90,36 @@ export default function AdminAddOnProductsPage() {
       ]);
       if (!catRes.ok) throw new Error("Ошибка загрузки категорий");
       if (!orderRes.ok) throw new Error("Ошибка загрузки настроек");
-      const rawCategories = (await catRes.json()) as CategoryOption[];
-      const { categorySlugs }: { categorySlugs: string[] } = await orderRes.json();
+      const catResult = await parseAdminResponse<CategoryOption[]>(catRes, {
+        method: "GET",
+        url: "/api/admin/categories",
+      });
+      const orderResult = await parseAdminResponse<{ categorySlugs: string[] }>(orderRes, {
+        method: "GET",
+        url: "/api/admin/add-on-products",
+      });
+      if (!catResult.ok || !Array.isArray(catResult.data)) {
+        const apiError =
+          catResult.data && !Array.isArray(catResult.data) && typeof (catResult.data as any).error === "string"
+            ? (catResult.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${catResult.message ? ` (${catResult.message})` : ""}`
+          : catResult.message ?? "Ошибка загрузки категорий";
+        throw new Error(message);
+      }
+      if (!orderResult.ok || !orderResult.data || !Array.isArray(orderResult.data.categorySlugs)) {
+        const apiError =
+          orderResult.data && typeof (orderResult.data as any).error === "string"
+            ? (orderResult.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${orderResult.message ? ` (${orderResult.message})` : ""}`
+          : orderResult.message ?? "Ошибка загрузки настроек";
+        throw new Error(message);
+      }
+      const rawCategories = catResult.data;
+      const { categorySlugs } = orderResult.data;
       const categories = rawCategories.filter(hasValidSlug);
       setAllCategories(categories);
       const validSlugs = new Set(categories.map((c) => c.slug));
@@ -147,13 +176,23 @@ export default function AdminAddOnProductsPage() {
     setSaveStatus("saving");
     setError("");
     try {
-      const res = await fetch("/api/admin/add-on-products", {
+      const url = "/api/admin/add-on-products";
+      const res = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ categorySlugs: items.map((i) => i.slug) }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Ошибка сохранения");
+      const result = await parseAdminResponse<{ error?: string }>(res, {
+        method: "PATCH",
+        url,
+      });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка сохранения";
+        throw new Error(message);
+      }
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
     } catch (e) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 type DeliveryZone = {
   id: string;
@@ -33,10 +34,20 @@ export default function AdminDeliveryZonesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/delivery-zones");
-      if (!res.ok) throw new Error("Ошибка загрузки");
-      const data = await res.json();
-      setZones(data);
+      const url = "/api/admin/delivery-zones";
+      const res = await fetch(url);
+      const result = await parseAdminResponse<DeliveryZone[]>(res, { method: "GET", url });
+      if (!result.ok || !Array.isArray(result.data)) {
+        const apiError =
+          result.data && !Array.isArray(result.data) && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки";
+        throw new Error(message);
+      }
+      setZones(result.data);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -77,7 +88,8 @@ export default function AdminDeliveryZonesPage() {
     setError("");
     try {
       if (creating) {
-        const res = await fetch("/api/admin/delivery-zones", {
+        const url = "/api/admin/delivery-zones";
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -88,12 +100,22 @@ export default function AdminDeliveryZonesPage() {
             subareas_text: form.subareas_text.trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<DeliveryZone & { error?: string }>(res, { method: "POST", url });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         setZones((s) => [...s, data].sort((a, b) => a.sort_order - b.sort_order));
         closeModal();
       } else if (editing) {
-        const res = await fetch(`/api/admin/delivery-zones/${editing.id}`, {
+        const url = `/api/admin/delivery-zones/${editing.id}`;
+        const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -104,8 +126,20 @@ export default function AdminDeliveryZonesPage() {
             subareas_text: form.subareas_text.trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<DeliveryZone & { error?: string }>(res, {
+          method: "PATCH",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         setZones((s) =>
           s.map((z) =>
             z.id === editing.id

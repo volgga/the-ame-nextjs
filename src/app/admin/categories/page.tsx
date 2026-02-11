@@ -7,6 +7,7 @@ import type { Category } from "@/components/admin/categories/CategoryCard";
 import type { Subcategory } from "@/types/admin";
 import { slugify } from "@/utils/slugify";
 import { FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 const CategoriesGrid = dynamic(
   () => import("@/components/admin/categories/CategoriesGrid").then((m) => ({ default: m.CategoriesGrid })),
@@ -83,9 +84,20 @@ export default function AdminCategoriesPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/categories");
-      if (!res.ok) throw new Error("Ошибка загрузки");
-      const data = await res.json();
+      const url = "/api/admin/categories";
+      const res = await fetch(url);
+      const result = await parseAdminResponse<any[]>(res, { method: "GET", url });
+      if (!result.ok || !Array.isArray(result.data)) {
+        const apiError =
+          result.data && !Array.isArray(result.data) && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки";
+        throw new Error(message);
+      }
+      const data = result.data;
       // Убеждаемся, что данные - массив и обрабатываем flower_sections
       const safeData = Array.isArray(data)
         ? data.map((cat: any) => ({
@@ -126,10 +138,20 @@ export default function AdminCategoriesPage() {
   const loadSubcategories = useCallback(async (categoryId: string) => {
     setSubcategoriesLoading(true);
     try {
-      const res = await fetch(`/api/admin/subcategories?category_id=${categoryId}`);
-      if (!res.ok) throw new Error("Ошибка загрузки подкатегорий");
-      const data = await res.json();
-      setSubcategories(data);
+      const url = `/api/admin/subcategories?category_id=${categoryId}`;
+      const res = await fetch(url);
+      const result = await parseAdminResponse<Subcategory[]>(res, { method: "GET", url });
+      if (!result.ok || !Array.isArray(result.data)) {
+        const apiError =
+          result.data && !Array.isArray(result.data) && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки подкатегорий";
+        throw new Error(message);
+      }
+      setSubcategories(result.data);
     } catch (e) {
       console.error("[admin/categories] Error loading subcategories:", e);
     } finally {
@@ -140,10 +162,20 @@ export default function AdminCategoriesPage() {
   const loadFlowers = useCallback(async () => {
     setFlowersLoading(true);
     try {
-      const res = await fetch("/api/admin/flowers");
-      if (!res.ok) throw new Error("Ошибка загрузки цветов");
-      const data = await res.json();
-      setFlowersList(Array.isArray(data) ? data : []);
+      const url = "/api/admin/flowers";
+      const res = await fetch(url);
+      const result = await parseAdminResponse<FlowerItem[]>(res, { method: "GET", url });
+      if (!result.ok || !Array.isArray(result.data)) {
+        const apiError =
+          result.data && !Array.isArray(result.data) && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки цветов";
+        throw new Error(message);
+      }
+      setFlowersList(result.data);
     } catch (e) {
       console.error("[admin/categories] Error loading flowers:", e);
     } finally {
@@ -261,7 +293,8 @@ export default function AdminCategoriesPage() {
     }
     try {
       if (creating) {
-        const res = await fetch("/api/admin/categories", {
+        const url = "/api/admin/categories";
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -272,8 +305,20 @@ export default function AdminCategoriesPage() {
             seo_title: form.seo_title.trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<Category & { error?: string }>(res, {
+          method: "POST",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         const newCat = { ...data, sort_order: categoriesDraft.length };
         setCategoriesFromServer((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
         setCategoriesDraft((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
@@ -281,7 +326,8 @@ export default function AdminCategoriesPage() {
         setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
         setIsSlugManuallyEdited(false);
       } else if (editing) {
-        const res = await fetch(`/api/admin/categories/${editing.id}`, {
+        const url = `/api/admin/categories/${editing.id}`;
+        const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -292,8 +338,22 @@ export default function AdminCategoriesPage() {
             seo_title: form.seo_title.trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<
+          Category & { error?: string; description?: string | null; seo_title?: string | null }
+        >(res, {
+          method: "PATCH",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         const updated = {
           ...editing,
           name: data.name,
@@ -317,13 +377,24 @@ export default function AdminCategoriesPage() {
     setTogglingId(cat.id);
     setError("");
     try {
-      const res = await fetch(`/api/admin/categories/${cat.id}`, {
+      const url = `/api/admin/categories/${cat.id}`;
+      const res = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: !cat.is_active }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Ошибка");
+      const result = await parseAdminResponse<{ error?: string; is_active?: boolean }>(res, {
+        method: "PATCH",
+        url,
+      });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка";
+        throw new Error(message);
+      }
+      const data = result.data ?? {};
       const updated = { ...cat, is_active: data.is_active };
       setCategoriesFromServer((s) => s.map((x) => (x.id === cat.id ? updated : x)));
       setCategoriesDraft((s) => s.map((x) => (x.id === cat.id ? updated : x)));
@@ -345,16 +416,28 @@ export default function AdminCategoriesPage() {
       setCategoriesDraft(withOrder);
       setEditing(null);
       if (withOrder.length > 0) {
-        const reorderRes = await fetch("/api/admin/categories/reorder", {
+        const reorderUrl = "/api/admin/categories/reorder";
+        const reorderRes = await fetch(reorderUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             items: withOrder.map((c, i) => ({ id: c.id, sort_order: i })),
           }),
         });
-        if (!reorderRes.ok) {
-          const err = await reorderRes.json();
-          setError(err.error ?? "Порядок не обновлён");
+        const reorderResult = await parseAdminResponse<{ error?: string }>(reorderRes, {
+          method: "POST",
+          url: reorderUrl,
+        });
+        if (!reorderResult.ok) {
+          const apiError =
+            reorderResult.data && typeof reorderResult.data.error === "string"
+              ? reorderResult.data.error
+              : null;
+          setError(
+            apiError
+              ? `${apiError}${reorderResult.message ? ` (${reorderResult.message})` : ""}`
+              : reorderResult.message ?? "Порядок не обновлён"
+          );
         }
       }
     } catch (e) {
@@ -373,7 +456,8 @@ export default function AdminCategoriesPage() {
     }
     try {
       if (creatingSubcategory) {
-        const res = await fetch("/api/admin/subcategories", {
+        const url = "/api/admin/subcategories";
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -387,13 +471,26 @@ export default function AdminCategoriesPage() {
             is_active: true,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<Subcategory & { error?: string }>(res, {
+          method: "POST",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         setSubcategories((s) => [...s, data].sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999)));
         setCreatingSubcategory(false);
         setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
       } else if (editingSubcategory) {
-        const res = await fetch(`/api/admin/subcategories/${editingSubcategory.id}`, {
+        const url = `/api/admin/subcategories/${editingSubcategory.id}`;
+        const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -404,8 +501,20 @@ export default function AdminCategoriesPage() {
             seo_description: subcategoryForm.seo_description.trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<Subcategory & { error?: string }>(res, {
+          method: "PATCH",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         setSubcategories((s) =>
           s.map((x) => (x.id === editingSubcategory.id ? data : x)).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999))
         );
@@ -478,7 +587,8 @@ export default function AdminCategoriesPage() {
     if (!editingFlower) return;
     setError("");
     try {
-      const res = await fetch(`/api/admin/flowers/${editingFlower.id}`, {
+      const url = `/api/admin/flowers/${editingFlower.id}`;
+      const res = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -490,8 +600,20 @@ export default function AdminCategoriesPage() {
           is_active: flowerForm.is_active,
         }),
       });
-      if (!res.ok) throw new Error("Ошибка сохранения");
-      const data = await res.json();
+      const result = await parseAdminResponse<FlowerItem & { error?: string }>(res, {
+        method: "PATCH",
+        url,
+      });
+      if (!result.ok || !result.data) {
+        const apiError = result.data && typeof (result.data as any).error === "string"
+          ? (result.data as any).error
+          : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка сохранения";
+        throw new Error(message);
+      }
+      const data = result.data;
       setFlowersList((prev) => prev.map((f) => (f.id === data.id ? data : f)));
       setEditingFlower(null);
       setFlowerForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", is_active: true });
@@ -503,12 +625,20 @@ export default function AdminCategoriesPage() {
   async function handleDeactivateFlower(id: string) {
     setDeleteFlowerConfirmId(null);
     try {
-      const res = await fetch(`/api/admin/flowers/${id}`, {
+      const url = `/api/admin/flowers/${id}`;
+      const res = await fetch(url, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: false }),
       });
-      if (!res.ok) throw new Error("Ошибка");
+      const result = await parseAdminResponse<{ error?: string }>(res, { method: "PATCH", url });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка";
+        throw new Error(message);
+      }
       await loadFlowers();
       setEditingFlower(null);
     } catch (e) {
@@ -519,8 +649,16 @@ export default function AdminCategoriesPage() {
   async function handleDeleteFlowerHard(id: string) {
     setDeleteFlowerHardConfirmId(null);
     try {
-      const res = await fetch(`/api/admin/flowers/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Ошибка удаления");
+      const url = `/api/admin/flowers/${id}`;
+      const res = await fetch(url, { method: "DELETE" });
+      const result = await parseAdminResponse<{ error?: string }>(res, { method: "DELETE", url });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка удаления";
+        throw new Error(message);
+      }
       await loadFlowers();
       setEditingFlower(null);
     } catch (e) {

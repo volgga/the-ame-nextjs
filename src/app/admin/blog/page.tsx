@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { parseAdminResponse } from "@/lib/adminFetch";
 import {
   DndContext,
   DragEndEvent,
@@ -36,10 +37,21 @@ export default function AdminBlogPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/blog");
-      if (!res.ok) throw new Error("Ошибка загрузки");
-      const data = await res.json();
-      setPosts(data.posts ?? []);
+      const url = "/api/admin/blog";
+      const res = await fetch(url);
+      const result = await parseAdminResponse<{ posts?: AdminBlogPost[] }>(res, { method: "GET", url });
+      if (!result.ok) {
+        const apiError =
+          result.data && Array.isArray(result.data.posts) === false && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка загрузки";
+        throw new Error(message);
+      }
+      const posts = Array.isArray(result.data?.posts) ? result.data!.posts! : [];
+      setPosts(posts);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -70,15 +82,20 @@ export default function AdminBlogPage() {
         sort_order: index,
       }));
 
-      const res = await fetch("/api/admin/blog/reorder", {
+      const url = "/api/admin/blog/reorder";
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Ошибка сохранения порядка");
+      const result = await parseAdminResponse<{ error?: string }>(res, { method: "POST", url });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка сохранения порядка";
+        throw new Error(message);
       }
 
       setPosts(newOrder);

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { Collection } from "@/components/admin/collections/CollectionCard";
 import { CollectionsGrid } from "@/components/admin/collections/CollectionsGrid";
+import { parseAdminResponse } from "@/lib/adminFetch";
 
 const RECOMMENDED_SIZE = "800×800";
 const ACCEPT = "image/jpeg,image/jpg,image/png,image/webp,image/avif";
@@ -72,21 +73,35 @@ export default function AdminHomeCollectionsPage() {
         fetch("/api/admin/collections"),
         fetch("/api/admin/categories"),
       ]);
-      if (!collectionsRes.ok) throw new Error("Ошибка загрузки коллекций");
-      const collectionsData = await collectionsRes.json();
+      const collectionsResult = await parseAdminResponse<Collection[]>(collectionsRes, {
+        method: "GET",
+        url: "/api/admin/collections",
+      });
+      if (!collectionsResult.ok || !Array.isArray(collectionsResult.data)) {
+        const message = collectionsResult.message ?? "Ошибка загрузки коллекций";
+        throw new Error(message);
+      }
+      const collectionsData = collectionsResult.data;
       setCollectionsFromServer(collectionsData);
       setCollectionsDraft(collectionsData);
-      if (categoriesRes.ok) {
-        const categoriesData = await categoriesRes.json();
+
+      const categoriesResult = await parseAdminResponse<{ id: string; name: string; slug: string }[]>(categoriesRes, {
+        method: "GET",
+        url: "/api/admin/categories",
+      });
+      if (categoriesResult.ok && Array.isArray(categoriesResult.data)) {
         setCategories(
-          Array.isArray(categoriesData)
-            ? categoriesData.map((c: { id: string; name: string; slug: string }) => ({
-                id: String(c.id),
-                name: c.name ?? "",
-                slug: c.slug ?? "",
-              }))
-            : []
+          categoriesResult.data.map((c) => ({
+            id: String(c.id),
+            name: c.name ?? "",
+            slug: c.slug ?? "",
+          }))
         );
+      } else {
+        if (!categoriesResult.ok) {
+          console.error(categoriesResult.message ?? "Ошибка загрузки категорий");
+        }
+        setCategories([]);
       }
     } catch (e) {
       setError(String(e));
@@ -201,13 +216,26 @@ export default function AdminHomeCollectionsPage() {
     formData.append("file", file);
     if (collectionId) formData.append("collectionId", collectionId);
 
-    const res = await fetch("/api/admin/collections/upload", {
+    const url = "/api/admin/collections/upload";
+    const res = await fetch(url, {
       method: "POST",
       body: formData,
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Ошибка загрузки");
-    return data.image_url;
+    const result = await parseAdminResponse<{ error?: string; image_url?: string }>(res, {
+      method: "POST",
+      url,
+    });
+    if (!result.ok) {
+      const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+      const message = apiError
+        ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+        : result.message ?? "Ошибка загрузки";
+      throw new Error(message);
+    }
+    if (!result.data?.image_url) {
+      throw new Error(result.message ?? "Ответ сервера не содержит image_url");
+    }
+    return result.data.image_url;
   }
 
   async function handleSaveForm(e: React.FormEvent) {
@@ -225,7 +253,8 @@ export default function AdminHomeCollectionsPage() {
         }
         setUploading(true);
         const image_url = await uploadFile(form.file);
-        const res = await fetch("/api/admin/collections", {
+        const url = "/api/admin/collections";
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -237,8 +266,20 @@ export default function AdminHomeCollectionsPage() {
             description: form.description.trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<Collection & { error?: string }>(res, {
+          method: "POST",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         const newCol = { ...data, sort_order: collectionsDraft.length };
         setCollectionsFromServer((s) => [...s, newCol].sort((a, b) => a.sort_order - b.sort_order));
         setCollectionsDraft((s) => [...s, newCol].sort((a, b) => a.sort_order - b.sort_order));
@@ -261,7 +302,8 @@ export default function AdminHomeCollectionsPage() {
           setUploading(true);
           image_url = await uploadFile(form.file, editing.id);
         }
-        const res = await fetch(`/api/admin/collections/${editing.id}`, {
+        const url = `/api/admin/collections/${editing.id}`;
+        const res = await fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -273,8 +315,20 @@ export default function AdminHomeCollectionsPage() {
             description: form.description.trim() || null,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Ошибка");
+        const result = await parseAdminResponse<Collection & { error?: string }>(res, {
+          method: "PATCH",
+          url,
+        });
+        if (!result.ok || !result.data) {
+          const apiError = result.data && typeof (result.data as any).error === "string"
+            ? (result.data as any).error
+            : null;
+          const message = apiError
+            ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+            : result.message ?? "Ошибка";
+          throw new Error(message);
+        }
+        const data = result.data;
         const updated = {
           ...editing,
           image_url,
@@ -324,14 +378,19 @@ export default function AdminHomeCollectionsPage() {
     setError("");
     try {
       const items = collectionsDraft.map((c, i) => ({ id: c.id, sort_order: i }));
-      const res = await fetch("/api/admin/collections/reorder", {
+      const url = "/api/admin/collections/reorder";
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
       });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error ?? "Ошибка сохранения");
+      const result = await parseAdminResponse<{ error?: string }>(res, { method: "POST", url });
+      if (!result.ok) {
+        const apiError = result.data && typeof result.data.error === "string" ? result.data.error : null;
+        const message = apiError
+          ? `${apiError}${result.message ? ` (${result.message})` : ""}`
+          : result.message ?? "Ошибка сохранения";
+        throw new Error(message);
       }
       const withOrder = collectionsDraft.map((c, i) => ({ ...c, sort_order: i }));
       setCollectionsFromServer(withOrder);
