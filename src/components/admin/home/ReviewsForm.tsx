@@ -10,6 +10,9 @@ type ReviewsData = {
   review3_text: string;
 };
 
+/** Ответ API может содержать _tableMissing, если таблица не создана */
+type ReviewsResponse = ReviewsData & { _tableMissing?: boolean };
+
 const DEFAULT_DATA: ReviewsData = {
   id: null,
   rating_count: 50,
@@ -119,14 +122,14 @@ export const ReviewsForm = forwardRef<ReviewsFormRef, ReviewsFormProps>(function
     setError("");
     try {
       const res = await fetch("/api/admin/reviews");
-      const result = await parseAdminResponse<ReviewsData>(res, { method: "GET", url: "/api/admin/reviews" });
+      const result = await parseAdminResponse<ReviewsResponse>(res, { method: "GET", url: "/api/admin/reviews" });
       if (!result.ok || !result.isJson) {
         console.error("[AdminReviews] Ошибка загрузки:", result.status, result.message);
         setData(DEFAULT_DATA);
         setInitialSnapshot(snapshot(DEFAULT_DATA));
         return;
       }
-      const data = result.data ?? DEFAULT_DATA;
+      const data = (result.data ?? DEFAULT_DATA) as ReviewsResponse;
       const next = {
         id: data.id ?? null,
         rating_count: data.rating_count ?? DEFAULT_DATA.rating_count,

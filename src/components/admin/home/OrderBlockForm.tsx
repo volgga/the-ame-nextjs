@@ -11,6 +11,9 @@ type OrderBlockData = {
   imageUrl: string | null;
 };
 
+/** Ответ API может содержать _tableMissing, если таблица не создана */
+type OrderBlockResponse = OrderBlockData & { _tableMissing?: boolean };
+
 const DEFAULT_DATA: OrderBlockData = {
   title: "Заказать букет вашей мечты",
   subtitle1: "",
@@ -132,7 +135,7 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
     setError("");
     try {
       const res = await fetch("/api/admin/home-order-block");
-      const result = await parseAdminResponse<OrderBlockData & { _tableMissing?: boolean }>(res, {
+      const result = await parseAdminResponse<OrderBlockResponse>(res, {
         method: "GET",
         url: "/api/admin/home-order-block",
       });
@@ -141,7 +144,7 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
         setInitialSnapshot(snapshot(DEFAULT_DATA));
         return;
       }
-      const resData = result.data ?? DEFAULT_DATA;
+      const resData = (result.data ?? DEFAULT_DATA) as OrderBlockResponse;
       const next = {
         title: resData.title ?? DEFAULT_DATA.title,
         subtitle1: resData.subtitle1 ?? DEFAULT_DATA.subtitle1,
