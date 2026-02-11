@@ -3,8 +3,8 @@ module.exports = {
   apps: [
     {
       name: "nextjs-project",
-      script: "npx",
-      args: "next start -p 3000",
+      script: "node_modules/.bin/next",
+      args: "start -p 3000",
       cwd: "/var/www/theame",
       instances: 1,
       exec_mode: "fork",
