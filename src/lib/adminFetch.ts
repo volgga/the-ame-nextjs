@@ -40,11 +40,15 @@ export async function parseAdminResponse<T = unknown>(
   }
 
   const contentType = res.headers.get("content-type") ?? "";
+  const isHtml =
+    contentType.includes("text/html") ||
+    rawText.trim().startsWith("<!DOCTYPE") ||
+    rawText.trim().startsWith("<html");
   let data: T | null = null;
   let isJson = false;
 
-  // Диагностика: если получили HTML вместо JSON
-  if (!res.ok && (contentType.includes("text/html") || rawText.trim().startsWith("<!DOCTYPE") || rawText.trim().startsWith("<html"))) {
+  // Диагностика: если получили HTML вместо JSON (часто 413 от nginx)
+  if (!res.ok && isHtml) {
     console.error(
       `[parseAdminResponse] API returned HTML instead of JSON:`,
       `\n  URL: ${method} ${url}`,
@@ -78,10 +82,18 @@ export async function parseAdminResponse<T = unknown>(
   const ok = res.ok;
   const status = res.status;
 
-  const message =
-    !ok || !isJson
-      ? `HTTP ${status} ${method} ${url}: ${rawText.slice(0, 200)}`
-      : undefined;
+  let message: string | undefined;
+  if (!ok || !isJson) {
+    // Человекочитаемое сообщение при 413 или HTML (nginx/proxy отклонил большой запрос)
+    if (status === 413 || (isHtml && (rawText.includes("413") || rawText.includes("Request Entity Too Large")))) {
+      message =
+        "Файл слишком большой (413). Максимум 25MB. Если ошибка сохраняется, настройте client_max_body_size в nginx — см. docs/nginx-upload-413.md.";
+    } else if (isHtml) {
+      message = `Сервер вернул HTML вместо JSON (HTTP ${status}). Проверьте прокси и доступность API.`;
+    } else {
+      message = `HTTP ${status} ${method} ${url}: ${rawText.slice(0, 200)}`;
+    }
+  }
 
   return {
     ok,

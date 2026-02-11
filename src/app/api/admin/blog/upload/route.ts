@@ -38,9 +38,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (file.size > MAX_SIZE_BYTES) {
+      const maxMB = MAX_SIZE_BYTES / 1024 / 1024;
       return NextResponse.json(
-        { error: `Файл слишком большой. Максимум ${MAX_SIZE_BYTES / 1024 / 1024}MB` },
-        { status: 400 }
+        { ok: false, error: `Файл слишком большой. Максимум ${maxMB}MB.`, maxMB },
+        { status: 413 }
       );
     }
 
