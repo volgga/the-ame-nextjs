@@ -22,7 +22,12 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
   try {
     await requireAdmin();
     const { id } = await params;
-    const body = await _request.json();
+    let body: unknown;
+    try {
+      body = await _request.json();
+    } catch {
+      return NextResponse.json({ error: "Неверный JSON в теле запроса" }, { status: 400 });
+    }
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: "Неверные данные", details: parsed.error.flatten() }, { status: 400 });

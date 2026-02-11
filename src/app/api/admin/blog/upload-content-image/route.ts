@@ -15,7 +15,13 @@ export async function POST(request: NextRequest) {
   try {
     await requireAdmin();
 
-    const formData = await request.formData();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch (e) {
+      console.error("[admin/blog/upload-content-image] Ошибка парсинга FormData:", e);
+      return NextResponse.json({ error: "Ошибка чтения данных формы" }, { status: 400 });
+    }
     const file = formData.get("file") as File | null;
     const postId = formData.get("postId") as string | null;
 
