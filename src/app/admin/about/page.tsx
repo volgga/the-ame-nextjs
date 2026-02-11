@@ -142,8 +142,8 @@ export default function AdminAboutPage() {
       const data = result.data ?? {};
       setForm((prev) => ({
         ...prev,
-        cover_image_url: data.image_url,
-        cover_image_path: data.path,
+        cover_image_url: data.image_url ?? null,
+        cover_image_path: data.path ?? null,
       }));
     } catch (e) {
       setError(String(e));
