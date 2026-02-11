@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { slugify } from "@/utils/slugify";
@@ -240,6 +241,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .select()
         .single();
       if (error) throw error;
+      revalidateTag("catalog-products");
       return NextResponse.json(data);
     }
 
@@ -292,6 +294,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .select()
       .single();
     if (error) throw error;
+    revalidateTag("catalog-products");
     return NextResponse.json({ ...data, id: `vp-${data.id}` });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
@@ -323,6 +326,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
       const { error } = await (supabase as any).from("variant_products").delete().eq("id", parsed.numId);
       if (error) throw error;
     }
+    revalidateTag("catalog-products");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

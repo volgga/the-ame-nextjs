@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (error) throw error;
     await recalcMinPrice(supabase, productId);
+    revalidateTag("catalog-products");
     const row = data as { title?: string; size?: string; name?: string };
     return NextResponse.json({
       ...data,
