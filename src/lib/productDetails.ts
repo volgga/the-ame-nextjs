@@ -3,6 +3,7 @@
  * Один набор на весь каталог — хранится в таблице product_details (singleton).
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 
 export type ProductDetails = {
@@ -13,7 +14,7 @@ const DEFAULT: ProductDetails = {
   kit: "",
 };
 
-export async function getProductDetails(): Promise<ProductDetails> {
+async function getProductDetailsUncached(): Promise<ProductDetails> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return DEFAULT;
@@ -35,4 +36,11 @@ export async function getProductDetails(): Promise<ProductDetails> {
   } catch {
     return DEFAULT;
   }
+}
+
+export async function getProductDetails(): Promise<ProductDetails> {
+  return unstable_cache(getProductDetailsUncached, ["product-details"], {
+    revalidate: 300,
+    tags: ["product-details"],
+  })();
 }

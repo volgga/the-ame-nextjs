@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -120,6 +121,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-about PATCH] Ошибка обновления:", error);
         return NextResponse.json({ error: `Ошибка обновления: ${error.message}` }, { status: 500 });
       }
+      revalidateTag("home-about");
       return NextResponse.json({
         title: data.about_title ?? DEFAULT_ABOUT.title,
         text: data.about_text ?? DEFAULT_ABOUT.text,
@@ -145,6 +147,7 @@ export async function PATCH(request: NextRequest) {
         console.error("[admin/home-about PATCH] Ошибка создания:", error);
         return NextResponse.json({ error: `Ошибка создания: ${error.message}` }, { status: 500 });
       }
+      revalidateTag("home-about");
       return NextResponse.json({
         title: data.about_title ?? DEFAULT_ABOUT.title,
         text: data.about_text ?? DEFAULT_ABOUT.text,

@@ -47,5 +47,8 @@ async function getActiveHeroSlidesUncached(): Promise<HeroSlide[]> {
 
 /** Кэш 5 мин — слайды меняются редко */
 export async function getActiveHeroSlides(): Promise<HeroSlide[]> {
-  return unstable_cache(getActiveHeroSlidesUncached, ["hero-slides"], { revalidate: 300 })();
+  return unstable_cache(getActiveHeroSlidesUncached, ["hero-slides"], {
+    revalidate: 300,
+    tags: ["hero-slides"],
+  })();
 }

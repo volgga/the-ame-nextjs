@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -36,6 +37,7 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
       .select()
       .single();
     if (error) throw error;
+    revalidateTag("home-collections");
     return NextResponse.json(data);
   } catch (e) {
     if ((e as Error).message === "unauthorized") {
@@ -82,6 +84,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any).from("home_collections").delete().eq("id", id);
     if (error) throw error;
+    revalidateTag("home-collections");
     return NextResponse.json({ success: true });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

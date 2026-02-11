@@ -4,6 +4,7 @@
  * Slug берётся только из таблицы categories (источник истины).
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 import { getCategories } from "@/lib/categories";
 import { filterProductsByCategorySlug } from "@/lib/catalogCategories";
@@ -16,7 +17,7 @@ const DEFAULT_ADD_ON_CATEGORY_NAMES = ["Сладости", "Вазы", "Шары
  * Slug только из таблицы categories. Сохранённые slug, которых нет в categories, отфильтровываются.
  * При пустой таблице возвращается порядок по умолчанию: slug категорий с именами Сладости, Вазы, Шары, Игрушки (из БД).
  */
-export async function getAddOnCategoriesOrder(): Promise<string[]> {
+async function getAddOnCategoriesOrderUncached(): Promise<string[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return [];
@@ -53,6 +54,13 @@ export async function getAddOnCategoriesOrder(): Promise<string[]> {
     if (slug) result.push(slug);
   }
   return result;
+}
+
+export async function getAddOnCategoriesOrder(): Promise<string[]> {
+  return unstable_cache(getAddOnCategoriesOrderUncached, ["add-on-products"], {
+    revalidate: 300,
+    tags: ["add-on-products", "categories"],
+  })();
 }
 
 type ProductWithCategory = {

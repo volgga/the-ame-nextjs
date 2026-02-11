@@ -92,5 +92,8 @@ async function getHomeFaqUncached(): Promise<FaqItem[]> {
 }
 
 export async function getHomeFaq(): Promise<FaqItem[]> {
-  return unstable_cache(getHomeFaqUncached, ["home-faq"], { revalidate: 300 })();
+  return unstable_cache(getHomeFaqUncached, ["home-faq"], {
+    revalidate: 300,
+    tags: ["home-faq"],
+  })();
 }

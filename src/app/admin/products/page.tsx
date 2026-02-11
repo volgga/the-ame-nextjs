@@ -71,6 +71,21 @@ const initialForm = {
   price: 0,
 };
 
+async function readJsonSafe<T = unknown>(
+  res: Response
+): Promise<{ data: T | null; rawText: string; isJson: boolean }> {
+  const rawText = await res.text();
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    try {
+      return { data: JSON.parse(rawText) as T, rawText, isJson: true };
+    } catch {
+      return { data: null, rawText, isJson: false };
+    }
+  }
+  return { data: null, rawText, isJson: false };
+}
+
 function AdminProductsPageContent() {
   const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
@@ -725,9 +740,15 @@ function AdminProductsPageContent() {
             const formData = new FormData();
             formData.append("file", item.file);
             const res = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.error ?? "Ошибка загрузки изображения");
-            uploadedUrls.push(data.image_url);
+            const { data, rawText, isJson } = await readJsonSafe<{ error?: string; image_url?: string }>(res);
+            if (!res.ok) {
+              const rawSnippet = rawText ? ` — ${rawText.slice(0, 200)}` : "";
+              throw new Error(
+                data?.error ??
+                  (isJson ? "Ошибка загрузки изображения" : `Ошибка загрузки изображения (не JSON, ${res.status})${rawSnippet}`)
+              );
+            }
+            if (data?.image_url) uploadedUrls.push(data.image_url);
           }
           setProductImagesUploading(false);
         }
@@ -758,7 +779,11 @@ function AdminProductsPageContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const data = await res.json();
+        const { data, rawText, isJson } = await readJsonSafe<{
+          error?: string;
+          fieldErrors?: Record<string, string[]>;
+          id?: string;
+        }>(res);
         if (!res.ok) {
           if (data?.fieldErrors && typeof data.fieldErrors === "object") {
             const flat: Record<string, string> = {};
@@ -767,10 +792,13 @@ function AdminProductsPageContent() {
             }
             setFieldErrors(flat);
           }
-          throw new Error(data?.error ?? "Ошибка сохранения");
+          const rawSnippet = rawText ? ` — ${rawText.slice(0, 200)}` : "";
+          throw new Error(
+            (data?.error ?? (isJson ? "Ошибка сохранения" : `Ошибка сохранения (не JSON, ${res.status})${rawSnippet}`))
+          );
         }
         // Сохраняем привязки к подкатегориям "По поводу"
-        const productId = editProductId || data.id;
+        const productId = editProductId || data?.id;
         const productIdForSubcategories = String(productId);
         const saveRes = await fetch(`/api/admin/products/${productIdForSubcategories}/subcategories`, {
           method: "PUT",
@@ -820,9 +848,15 @@ function AdminProductsPageContent() {
             const formData = new FormData();
             formData.append("file", item.file);
             const res = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data?.error ?? "Ошибка загрузки изображения");
-            uploadedUrls.push(data.image_url);
+            const { data, rawText, isJson } = await readJsonSafe<{ error?: string; image_url?: string }>(res);
+            if (!res.ok) {
+              const rawSnippet = rawText ? ` — ${rawText.slice(0, 200)}` : "";
+              throw new Error(
+                data?.error ??
+                  (isJson ? "Ошибка загрузки изображения" : `Ошибка загрузки изображения (не JSON, ${res.status})${rawSnippet}`)
+              );
+            }
+            if (data?.image_url) uploadedUrls.push(data.image_url);
           }
           setProductImagesUploading(false);
         }
@@ -848,7 +882,10 @@ function AdminProductsPageContent() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const patchData = await res.json();
+        const { data: patchData, rawText, isJson } = await readJsonSafe<{
+          error?: string;
+          fieldErrors?: Record<string, string[]>;
+        }>(res);
         if (!res.ok) {
           if (patchData?.fieldErrors && typeof patchData.fieldErrors === "object") {
             const flat: Record<string, string> = {};
@@ -857,7 +894,11 @@ function AdminProductsPageContent() {
             }
             setFieldErrors(flat);
           }
-          throw new Error(patchData?.error ?? "Ошибка сохранения товара");
+          const rawSnippet = rawText ? ` — ${rawText.slice(0, 200)}` : "";
+          throw new Error(
+            (patchData?.error ??
+              (isJson ? "Ошибка сохранения товара" : `Ошибка сохранения товара (не JSON, ${res.status})${rawSnippet}`))
+          );
         }
         const currentVariantIds = variants.filter((v) => typeof v.id === "number").map((v) => v.id as number);
         const toDeleteIds = initialVariantIds.filter((id) => !currentVariantIds.includes(id));
@@ -866,8 +907,14 @@ function AdminProductsPageContent() {
             method: "DELETE",
           });
           if (!delRes.ok) {
-            const delData = await delRes.json().catch(() => ({}));
-            throw new Error(delData?.error ?? "Ошибка удаления варианта");
+            const { data: delData, rawText: delText, isJson: delIsJson } = await readJsonSafe<{
+              error?: string;
+            }>(delRes);
+            const rawSnippet = delText ? ` — ${delText.slice(0, 200)}` : "";
+            throw new Error(
+              delData?.error ??
+                (delIsJson ? "Ошибка удаления варианта" : `Ошибка удаления варианта (не JSON, ${delRes.status})${rawSnippet}`)
+            );
           }
         }
         for (const v of variants) {
@@ -888,8 +935,12 @@ function AdminProductsPageContent() {
               }),
             });
             if (!vRes.ok) {
-              const vData = await vRes.json();
-              throw new Error(vData?.error ?? "Ошибка сохранения варианта");
+              const { data: vData, rawText: vText, isJson: vIsJson } = await readJsonSafe<{ error?: string }>(vRes);
+              const rawSnippet = vText ? ` — ${vText.slice(0, 200)}` : "";
+              throw new Error(
+                vData?.error ??
+                  (vIsJson ? "Ошибка сохранения варианта" : `Ошибка сохранения варианта (не JSON, ${vRes.status})${rawSnippet}`)
+              );
             }
           } else {
             const vRes = await fetch(`/api/admin/products/${editProductId}/variants`, {
@@ -909,8 +960,12 @@ function AdminProductsPageContent() {
               }),
             });
             if (!vRes.ok) {
-              const vData = await vRes.json();
-              throw new Error(vData?.error ?? "Ошибка добавления варианта");
+              const { data: vData, rawText: vText, isJson: vIsJson } = await readJsonSafe<{ error?: string }>(vRes);
+              const rawSnippet = vText ? ` — ${vText.slice(0, 200)}` : "";
+              throw new Error(
+                vData?.error ??
+                  (vIsJson ? "Ошибка добавления варианта" : `Ошибка добавления варианта (не JSON, ${vRes.status})${rawSnippet}`)
+              );
             }
           }
         }

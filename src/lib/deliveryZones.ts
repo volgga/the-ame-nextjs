@@ -3,6 +3,7 @@
  * Используется: страница «Доставка и оплата», API /api/delivery-zones (для корзины).
  */
 
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabaseClient";
 import type { DeliveryZone } from "@/types/delivery";
 
@@ -28,7 +29,7 @@ function mapRowToZone(row: DbRow): DeliveryZone {
   };
 }
 
-export async function getDeliveryZones(): Promise<DeliveryZone[]> {
+async function getDeliveryZonesUncached(): Promise<DeliveryZone[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return [];
@@ -67,4 +68,11 @@ export async function getDeliveryZones(): Promise<DeliveryZone[]> {
   } catch {
     return [];
   }
+}
+
+export async function getDeliveryZones(): Promise<DeliveryZone[]> {
+  return unstable_cache(getDeliveryZonesUncached, ["delivery-zones"], {
+    revalidate: 300,
+    tags: ["delivery-zones"],
+  })();
 }

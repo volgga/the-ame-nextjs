@@ -2,6 +2,7 @@
  * Блог: загрузка опубликованных постов из Supabase (таблица blog_posts).
  */
 
+import { unstable_cache } from "next/cache";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
 export type BlogPost = {
@@ -25,7 +26,7 @@ export type BlogPostNav = Pick<BlogPost, "id" | "slug" | "title">;
 /**
  * Получить все опубликованные посты (для публичной страницы)
  */
-export async function getPublishedPosts(): Promise<BlogPost[]> {
+async function getPublishedPostsUncached(): Promise<BlogPost[]> {
   try {
     const supabase = getSupabaseServer();
 
@@ -77,10 +78,17 @@ export async function getPublishedPosts(): Promise<BlogPost[]> {
   }
 }
 
+export async function getPublishedPosts(): Promise<BlogPost[]> {
+  return unstable_cache(getPublishedPostsUncached, ["blog-posts"], {
+    revalidate: 300,
+    tags: ["blog-posts"],
+  })();
+}
+
 /**
  * Получить один опубликованный пост по slug (для публичной страницы)
  */
-export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | null> {
+async function getPublishedPostBySlugUncached(slug: string): Promise<BlogPost | null> {
   try {
     const supabase = getSupabaseServer();
 
@@ -121,6 +129,14 @@ export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | n
   }
 }
 
+export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | null> {
+  const cached = unstable_cache(() => getPublishedPostBySlugUncached(slug), ["blog-post", slug], {
+    revalidate: 300,
+    tags: ["blog-posts"],
+  });
+  return cached();
+}
+
 /**
  * Получить все slugs опубликованных постов (для generateStaticParams)
  */
@@ -132,7 +148,7 @@ export async function getPublishedPostSlugs(): Promise<string[]> {
 /**
  * Получить соседние посты (prev/next) для навигации
  */
-export async function getAdjacentPosts(
+async function getAdjacentPostsUncached(
   currentSlug: string
 ): Promise<{ prev: BlogPostNav | null; next: BlogPostNav | null }> {
 
@@ -207,4 +223,14 @@ export async function getAdjacentPosts(
     }
     return { prev: null, next: null };
   }
+}
+
+export async function getAdjacentPosts(
+  currentSlug: string
+): Promise<{ prev: BlogPostNav | null; next: BlogPostNav | null }> {
+  const cached = unstable_cache(() => getAdjacentPostsUncached(currentSlug), ["blog-adjacent", currentSlug], {
+    revalidate: 300,
+    tags: ["blog-posts"],
+  });
+  return cached();
 }

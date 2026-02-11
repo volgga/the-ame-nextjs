@@ -51,5 +51,8 @@ async function getHomeAboutUncached(): Promise<HomeAbout> {
 }
 
 export async function getHomeAbout(): Promise<HomeAbout> {
-  return unstable_cache(getHomeAboutUncached, ["home-about"], { revalidate: 300 })();
+  return unstable_cache(getHomeAboutUncached, ["home-about"], {
+    revalidate: 300,
+    tags: ["home-about"],
+  })();
 }

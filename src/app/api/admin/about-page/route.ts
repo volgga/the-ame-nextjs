@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
@@ -132,6 +133,7 @@ export async function PUT(request: NextRequest) {
 
     if (error) throw error;
 
+    revalidateTag("about-page");
     return NextResponse.json({ page: data });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

@@ -2,6 +2,7 @@
  * About Page: загрузка данных страницы "О нас" из Supabase (таблица about_page).
  */
 
+import { unstable_cache } from "next/cache";
 import { getSupabaseServer } from "@/lib/supabaseServer";
 
 export type AboutPage = {
@@ -18,7 +19,7 @@ export type AboutPage = {
 /**
  * Получить данные страницы "О нас" (публичная функция)
  */
-export async function getAboutPage(): Promise<AboutPage | null> {
+async function getAboutPageUncached(): Promise<AboutPage | null> {
   try {
     const supabase = getSupabaseServer();
 
@@ -52,4 +53,11 @@ export async function getAboutPage(): Promise<AboutPage | null> {
     }
     return null;
   }
+}
+
+export async function getAboutPage(): Promise<AboutPage | null> {
+  return unstable_cache(getAboutPageUncached, ["about-page"], {
+    revalidate: 300,
+    tags: ["about-page"],
+  })();
 }
