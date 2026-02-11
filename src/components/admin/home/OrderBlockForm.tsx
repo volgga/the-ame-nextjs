@@ -189,7 +189,7 @@ export const OrderBlockForm = forwardRef<OrderBlockFormRef, OrderBlockFormProps>
       throw new Error(errorMsg);
     }
     const responseData = result.data ?? {};
-    return responseData.image_url;
+    return responseData.image_url ?? "";
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
