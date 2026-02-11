@@ -394,7 +394,7 @@ export default function AdminCategoriesPage() {
         throw new Error(message);
       }
       const data = result.data ?? {};
-      const updated = { ...cat, is_active: data.is_active };
+      const updated: Category = { ...cat, is_active: data.is_active !== undefined ? data.is_active : cat.is_active };
       setCategoriesFromServer((s) => s.map((x) => (x.id === cat.id ? updated : x)));
       setCategoriesDraft((s) => s.map((x) => (x.id === cat.id ? updated : x)));
     } catch (e) {
