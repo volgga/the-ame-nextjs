@@ -1,0 +1,1093 @@
+diff --git a/src/app/admin/products/page.tsx b/src/app/admin/products/page.tsx
+index 0fe1c61..dc018b9 100644
+--- a/src/app/admin/products/page.tsx
++++ b/src/app/admin/products/page.tsx
+@@ -71,6 +71,21 @@ const initialForm = {
+   price: 0,
+ };
+ 
++async function readJsonSafe<T = unknown>(
++  res: Response
++): Promise<{ data: T | null; rawText: string; isJson: boolean }> {
++  const rawText = await res.text();
++  const contentType = res.headers.get("content-type") ?? "";
++  if (contentType.includes("application/json")) {
++    try {
++      return { data: JSON.parse(rawText) as T, rawText, isJson: true };
++    } catch {
++      return { data: null, rawText, isJson: false };
++    }
++  }
++  return { data: null, rawText, isJson: false };
++}
++
+ function AdminProductsPageContent() {
+   const searchParams = useSearchParams();
+   const [products, setProducts] = useState<Product[]>([]);
+@@ -725,9 +740,15 @@ function AdminProductsPageContent() {
+             const formData = new FormData();
+             formData.append("file", item.file);
+             const res = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
+-            const data = await res.json();
+-            if (!res.ok) throw new Error(data?.error ?? "Ошибка загрузки изображения");
+-            uploadedUrls.push(data.image_url);
++            const { data, rawText, isJson } = await readJsonSafe<{ error?: string; image_url?: string }>(res);
++            if (!res.ok) {
++              const rawSnippet = rawText ? ` — ${rawText.slice(0, 200)}` : "";
++              throw new Error(
++                data?.error ??
++                  (isJson ? "Ошибка загрузки изображения" : `Ошибка загрузки изображения (не JSON, ${res.status})${rawSnippet}`)
++              );
++            }
++            if (data?.image_url) uploadedUrls.push(data.image_url);
+           }
+           setProductImagesUploading(false);
+         }
+@@ -758,7 +779,11 @@ function AdminProductsPageContent() {
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify(payload),
+         });
+-        const data = await res.json();
++        const { data, rawText, isJson } = await readJsonSafe<{
++          error?: string;
++          fieldErrors?: Record<string, string[]>;
++          id?: string;
++        }>(res);
+         if (!res.ok) {
+           if (data?.fieldErrors && typeof data.fieldErrors === "object") {
+             const flat: Record<string, string> = {};
+@@ -767,10 +792,13 @@ function AdminProductsPageContent() {
+             }
+             setFieldErrors(flat);
+           }
+-          throw new Error(data?.error ?? "Ошибка сохранения");
++          const rawSnippet = rawText ? ` — ${rawText.slice(0, 200)}` : "";
++          throw new Error(
++            (data?.error ?? (isJson ? "Ошибка сохранения" : `Ошибка сохранения (не JSON, ${res.status})${rawSnippet}`))
++          );
+         }
+         // Сохраняем привязки к подкатегориям "По поводу"
+-        const productId = editProductId || data.id;
++        const productId = editProductId || data?.id;
+         const productIdForSubcategories = String(productId);
+         const saveRes = await fetch(`/api/admin/products/${productIdForSubcategories}/subcategories`, {
+           method: "PUT",
+@@ -820,9 +848,15 @@ function AdminProductsPageContent() {
+             const formData = new FormData();
+             formData.append("file", item.file);
+             const res = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
+-            const data = await res.json();
+-            if (!res.ok) throw new Error(data?.error ?? "Ошибка загрузки изображения");
+-            uploadedUrls.push(data.image_url);
++            const { data, rawText, isJson } = await readJsonSafe<{ error?: string; image_url?: string }>(res);
++            if (!res.ok) {
++              const rawSnippet = rawText ? ` — ${rawText.slice(0, 200)}` : "";
++              throw new Error(
++                data?.error ??
++                  (isJson ? "Ошибка загрузки изображения" : `Ошибка загрузки изображения (не JSON, ${res.status})${rawSnippet}`)
++              );
++            }
++            if (data?.image_url) uploadedUrls.push(data.image_url);
+           }
+           setProductImagesUploading(false);
+         }
+@@ -848,7 +882,10 @@ function AdminProductsPageContent() {
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify(payload),
+         });
+-        const patchData = await res.json();
++        const { data: patchData, rawText, isJson } = await readJsonSafe<{
++          error?: string;
++          fieldErrors?: Record<string, string[]>;
++        }>(res);
+         if (!res.ok) {
+           if (patchData?.fieldErrors && typeof patchData.fieldErrors === "object") {
+             const flat: Record<string, string> = {};
+@@ -857,7 +894,11 @@ function AdminProductsPageContent() {
+             }
+             setFieldErrors(flat);
+           }
+-          throw new Error(patchData?.error ?? "Ошибка сохранения товара");
++          const rawSnippet = rawText ? ` — ${rawText.slice(0, 200)}` : "";
++          throw new Error(
++            (patchData?.error ??
++              (isJson ? "Ошибка сохранения товара" : `Ошибка сохранения товара (не JSON, ${res.status})${rawSnippet}`))
++          );
+         }
+         const currentVariantIds = variants.filter((v) => typeof v.id === "number").map((v) => v.id as number);
+         const toDeleteIds = initialVariantIds.filter((id) => !currentVariantIds.includes(id));
+@@ -866,8 +907,14 @@ function AdminProductsPageContent() {
+             method: "DELETE",
+           });
+           if (!delRes.ok) {
+-            const delData = await delRes.json().catch(() => ({}));
+-            throw new Error(delData?.error ?? "Ошибка удаления варианта");
++            const { data: delData, rawText: delText, isJson: delIsJson } = await readJsonSafe<{
++              error?: string;
++            }>(delRes);
++            const rawSnippet = delText ? ` — ${delText.slice(0, 200)}` : "";
++            throw new Error(
++              delData?.error ??
++                (delIsJson ? "Ошибка удаления варианта" : `Ошибка удаления варианта (не JSON, ${delRes.status})${rawSnippet}`)
++            );
+           }
+         }
+         for (const v of variants) {
+@@ -888,8 +935,12 @@ function AdminProductsPageContent() {
+               }),
+             });
+             if (!vRes.ok) {
+-              const vData = await vRes.json();
+-              throw new Error(vData?.error ?? "Ошибка сохранения варианта");
++              const { data: vData, rawText: vText, isJson: vIsJson } = await readJsonSafe<{ error?: string }>(vRes);
++              const rawSnippet = vText ? ` — ${vText.slice(0, 200)}` : "";
++              throw new Error(
++                vData?.error ??
++                  (vIsJson ? "Ошибка сохранения варианта" : `Ошибка сохранения варианта (не JSON, ${vRes.status})${rawSnippet}`)
++              );
+             }
+           } else {
+             const vRes = await fetch(`/api/admin/products/${editProductId}/variants`, {
+@@ -909,8 +960,12 @@ function AdminProductsPageContent() {
+               }),
+             });
+             if (!vRes.ok) {
+-              const vData = await vRes.json();
+-              throw new Error(vData?.error ?? "Ошибка добавления варианта");
++              const { data: vData, rawText: vText, isJson: vIsJson } = await readJsonSafe<{ error?: string }>(vRes);
++              const rawSnippet = vText ? ` — ${vText.slice(0, 200)}` : "";
++              throw new Error(
++                vData?.error ??
++                  (vIsJson ? "Ошибка добавления варианта" : `Ошибка добавления варианта (не JSON, ${vRes.status})${rawSnippet}`)
++              );
+             }
+           }
+         }
+diff --git a/src/app/api/admin/about-page/route.ts b/src/app/api/admin/about-page/route.ts
+index 00c1f8c..bca8ad2 100644
+--- a/src/app/api/admin/about-page/route.ts
++++ b/src/app/api/admin/about-page/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -132,6 +133,7 @@ export async function PUT(request: NextRequest) {
+ 
+     if (error) throw error;
+ 
++    revalidateTag("about-page");
+     return NextResponse.json({ page: data });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/add-on-products/route.ts b/src/app/api/admin/add-on-products/route.ts
+index 97eaa6d..0f0be0c 100644
+--- a/src/app/api/admin/add-on-products/route.ts
++++ b/src/app/api/admin/add-on-products/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { getAddOnCategoriesOrder } from "@/lib/addOnProducts";
+@@ -92,6 +93,7 @@ export async function PATCH(request: NextRequest) {
+     }
+ 
+     const categorySlugs = await getAddOnCategoriesOrder();
++    revalidateTag("add-on-products");
+     return NextResponse.json({ categorySlugs });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/blog/[id]/route.ts b/src/app/api/admin/blog/[id]/route.ts
+index 79a7526..f3c2492 100644
+--- a/src/app/api/admin/blog/[id]/route.ts
++++ b/src/app/api/admin/blog/[id]/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -147,6 +148,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
+ 
+     if (error) throw error;
+ 
++    revalidateTag("blog-posts");
+     return NextResponse.json({ post: data });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+@@ -199,6 +201,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
+ 
+     if (error) throw error;
+ 
++    revalidateTag("blog-posts");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/blog/reorder/route.ts b/src/app/api/admin/blog/reorder/route.ts
+index 095f7f5..4ed49dd 100644
+--- a/src/app/api/admin/blog/reorder/route.ts
++++ b/src/app/api/admin/blog/reorder/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -33,6 +34,7 @@ export async function POST(request: NextRequest) {
+       }
+     }
+ 
++    revalidateTag("blog-posts");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/blog/route.ts b/src/app/api/admin/blog/route.ts
+index 7f3df8a..67f0e98 100644
+--- a/src/app/api/admin/blog/route.ts
++++ b/src/app/api/admin/blog/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { slugify } from "@/utils/slugify";
+@@ -126,6 +127,7 @@ export async function POST(request: NextRequest) {
+ 
+     if (error) throw error;
+ 
++    revalidateTag("blog-posts");
+     return NextResponse.json({ post: data }, { status: 201 });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/categories/[id]/route.ts b/src/app/api/admin/categories/[id]/route.ts
+index 1ed48c6..b6c5ec0 100644
+--- a/src/app/api/admin/categories/[id]/route.ts
++++ b/src/app/api/admin/categories/[id]/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -90,6 +91,9 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     const { data, error } = await (supabase as any).from("categories").update(payload).eq("id", id).select().single();
+     if (error) throw error;
++    revalidateTag("categories");
++    revalidateTag("catalog-products");
++    revalidateTag("add-on-products");
+     return NextResponse.json(data);
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+@@ -108,6 +112,9 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     const { error } = await (supabase as any).from("categories").delete().eq("id", id);
+     if (error) throw error;
++    revalidateTag("categories");
++    revalidateTag("catalog-products");
++    revalidateTag("add-on-products");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/categories/reorder/route.ts b/src/app/api/admin/categories/reorder/route.ts
+index 8413cb9..e450f61 100644
+--- a/src/app/api/admin/categories/reorder/route.ts
++++ b/src/app/api/admin/categories/reorder/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -32,6 +33,9 @@ export async function POST(request: NextRequest) {
+       if (error) throw error;
+     }
+ 
++    revalidateTag("categories");
++    revalidateTag("catalog-products");
++    revalidateTag("add-on-products");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/categories/route.ts b/src/app/api/admin/categories/route.ts
+index c26daff..0f57577 100644
+--- a/src/app/api/admin/categories/route.ts
++++ b/src/app/api/admin/categories/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { slugify } from "@/utils/slugify";
+@@ -137,6 +138,9 @@ export async function POST(request: NextRequest) {
+       .select()
+       .single();
+     if (error) throw error;
++    revalidateTag("categories");
++    revalidateTag("catalog-products");
++    revalidateTag("add-on-products");
+     return NextResponse.json(data);
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/collections/[id]/route.ts b/src/app/api/admin/collections/[id]/route.ts
+index c68c0ab..f81b362 100644
+--- a/src/app/api/admin/collections/[id]/route.ts
++++ b/src/app/api/admin/collections/[id]/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -36,6 +37,7 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
+       .select()
+       .single();
+     if (error) throw error;
++    revalidateTag("home-collections");
+     return NextResponse.json(data);
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+@@ -82,6 +84,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     const { error } = await (supabase as any).from("home_collections").delete().eq("id", id);
+     if (error) throw error;
++    revalidateTag("home-collections");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/collections/reorder/route.ts b/src/app/api/admin/collections/reorder/route.ts
+index 216ec9c..be40609 100644
+--- a/src/app/api/admin/collections/reorder/route.ts
++++ b/src/app/api/admin/collections/reorder/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
+       if (error) throw error;
+     }
+ 
++    revalidateTag("home-collections");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/collections/route.ts b/src/app/api/admin/collections/route.ts
+index 51529c6..5ba4ac5 100644
+--- a/src/app/api/admin/collections/route.ts
++++ b/src/app/api/admin/collections/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
+       .select()
+       .single();
+     if (error) throw error;
++    revalidateTag("home-collections");
+     return NextResponse.json(data);
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/delivery-zones/[id]/route.ts b/src/app/api/admin/delivery-zones/[id]/route.ts
+index 26dad5f..97e7c4a 100644
+--- a/src/app/api/admin/delivery-zones/[id]/route.ts
++++ b/src/app/api/admin/delivery-zones/[id]/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -43,6 +44,7 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
+       .select()
+       .single();
+     if (error) throw error;
++    revalidateTag("delivery-zones");
+     return NextResponse.json(data);
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+@@ -61,6 +63,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     const { error } = await (supabase as any).from("delivery_zones").delete().eq("id", id);
+     if (error) throw error;
++    revalidateTag("delivery-zones");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/delivery-zones/reorder/route.ts b/src/app/api/admin/delivery-zones/reorder/route.ts
+index 6b10d87..70b85ec 100644
+--- a/src/app/api/admin/delivery-zones/reorder/route.ts
++++ b/src/app/api/admin/delivery-zones/reorder/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
+       if (error) throw error;
+     }
+ 
++    revalidateTag("delivery-zones");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/delivery-zones/route.ts b/src/app/api/admin/delivery-zones/route.ts
+index ca21288..650d2b7 100644
+--- a/src/app/api/admin/delivery-zones/route.ts
++++ b/src/app/api/admin/delivery-zones/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
+       .select()
+       .single();
+     if (error) throw error;
++    revalidateTag("delivery-zones");
+     return NextResponse.json(data);
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/home-about/route.ts b/src/app/api/admin/home-about/route.ts
+index f0b234c..df7bd1b 100644
+--- a/src/app/api/admin/home-about/route.ts
++++ b/src/app/api/admin/home-about/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -120,6 +121,7 @@ export async function PATCH(request: NextRequest) {
+         console.error("[admin/home-about PATCH] Ошибка обновления:", error);
+         return NextResponse.json({ error: `Ошибка обновления: ${error.message}` }, { status: 500 });
+       }
++      revalidateTag("home-about");
+       return NextResponse.json({
+         title: data.about_title ?? DEFAULT_ABOUT.title,
+         text: data.about_text ?? DEFAULT_ABOUT.text,
+@@ -145,6 +147,7 @@ export async function PATCH(request: NextRequest) {
+         console.error("[admin/home-about PATCH] Ошибка создания:", error);
+         return NextResponse.json({ error: `Ошибка создания: ${error.message}` }, { status: 500 });
+       }
++      revalidateTag("home-about");
+       return NextResponse.json({
+         title: data.about_title ?? DEFAULT_ABOUT.title,
+         text: data.about_text ?? DEFAULT_ABOUT.text,
+diff --git a/src/app/api/admin/home-faq/route.ts b/src/app/api/admin/home-faq/route.ts
+index ad3713b..53d26db 100644
+--- a/src/app/api/admin/home-faq/route.ts
++++ b/src/app/api/admin/home-faq/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -167,6 +168,7 @@ export async function PATCH(request: NextRequest) {
+         console.error("[admin/home-faq PATCH] Ошибка обновления:", error);
+         return NextResponse.json({ error: `Ошибка обновления: ${error.message}` }, { status: 500 });
+       }
++      revalidateTag("home-faq");
+       return NextResponse.json({ items: data.faq_items ?? parsed.data.items });
+     } else {
+       // Нет записи - создаем новую
+@@ -188,6 +190,7 @@ export async function PATCH(request: NextRequest) {
+         console.error("[admin/home-faq PATCH] Ошибка создания:", error);
+         return NextResponse.json({ error: `Ошибка создания: ${error.message}` }, { status: 500 });
+       }
++      revalidateTag("home-faq");
+       return NextResponse.json({ items: data.faq_items ?? parsed.data.items });
+     }
+   } catch (e) {
+diff --git a/src/app/api/admin/home-order-block/route.ts b/src/app/api/admin/home-order-block/route.ts
+index c3a994e..7b068fc 100644
+--- a/src/app/api/admin/home-order-block/route.ts
++++ b/src/app/api/admin/home-order-block/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -114,6 +115,7 @@ export async function PATCH(request: NextRequest) {
+         console.error("[admin/home-order-block PATCH] Ошибка обновления:", error);
+         return NextResponse.json({ error: `Ошибка обновления: ${error.message}` }, { status: 500 });
+       }
++      revalidateTag("home-order-block");
+       return NextResponse.json({
+         title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
+         subtitle1: data.order_block_subtitle1 ?? DEFAULT_ORDER_BLOCK.subtitle1,
+@@ -140,6 +142,7 @@ export async function PATCH(request: NextRequest) {
+         console.error("[admin/home-order-block PATCH] Ошибка создания:", error);
+         return NextResponse.json({ error: `Ошибка создания: ${error.message}` }, { status: 500 });
+       }
++      revalidateTag("home-order-block");
+       return NextResponse.json({
+         title: data.order_block_title ?? DEFAULT_ORDER_BLOCK.title,
+         subtitle1: data.order_block_subtitle1 ?? DEFAULT_ORDER_BLOCK.subtitle1,
+diff --git a/src/app/api/admin/product-details/route.ts b/src/app/api/admin/product-details/route.ts
+index da1dee4..eba0343 100644
+--- a/src/app/api/admin/product-details/route.ts
++++ b/src/app/api/admin/product-details/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -90,6 +91,7 @@ export async function PATCH(request: NextRequest) {
+       return NextResponse.json({ error: error.message }, { status: 500 });
+     }
+ 
++    revalidateTag("product-details");
+     return NextResponse.json({
+       kit: data?.kit ?? "",
+     });
+diff --git a/src/app/api/admin/products/[id]/route.ts b/src/app/api/admin/products/[id]/route.ts
+index 39df9d5..06b692f 100644
+--- a/src/app/api/admin/products/[id]/route.ts
++++ b/src/app/api/admin/products/[id]/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { slugify } from "@/utils/slugify";
+@@ -240,6 +241,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
+         .select()
+         .single();
+       if (error) throw error;
++      revalidateTag("catalog-products");
+       return NextResponse.json(data);
+     }
+ 
+@@ -292,6 +294,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
+       .select()
+       .single();
+     if (error) throw error;
++    revalidateTag("catalog-products");
+     return NextResponse.json({ ...data, id: `vp-${data.id}` });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+@@ -323,6 +326,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
+       const { error } = await (supabase as any).from("variant_products").delete().eq("id", parsed.numId);
+       if (error) throw error;
+     }
++    revalidateTag("catalog-products");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/products/[id]/variants/[variantId]/route.ts b/src/app/api/admin/products/[id]/variants/[variantId]/route.ts
+index 3ea1298..4037898 100644
+--- a/src/app/api/admin/products/[id]/variants/[variantId]/route.ts
++++ b/src/app/api/admin/products/[id]/variants/[variantId]/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -99,6 +100,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
+     if (error) throw error;
+     if (!data) return NextResponse.json({ error: "Вариант не найден" }, { status: 404 });
+     await recalcMinPrice(supabase, productId);
++    revalidateTag("catalog-products");
+     const row = data as { title?: string; size?: string; name?: string };
+     return NextResponse.json({
+       ...data,
+@@ -142,6 +144,7 @@ export async function DELETE(
+ 
+     if (error) throw error;
+     await recalcMinPrice(supabase, productId);
++    revalidateTag("catalog-products");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/products/[id]/variants/route.ts b/src/app/api/admin/products/[id]/variants/route.ts
+index cf1b904..085dde2 100644
+--- a/src/app/api/admin/products/[id]/variants/route.ts
++++ b/src/app/api/admin/products/[id]/variants/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -86,6 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
+ 
+     if (error) throw error;
+     await recalcMinPrice(supabase, productId);
++    revalidateTag("catalog-products");
+     const row = data as { title?: string; size?: string; name?: string };
+     return NextResponse.json({
+       ...data,
+diff --git a/src/app/api/admin/products/reorder/route.ts b/src/app/api/admin/products/reorder/route.ts
+index 222204e..1fe6e3c 100644
+--- a/src/app/api/admin/products/reorder/route.ts
++++ b/src/app/api/admin/products/reorder/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -37,6 +38,7 @@ export async function POST(request: NextRequest) {
+       }
+     }
+ 
++    revalidateTag("catalog-products");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/reviews/route.ts b/src/app/api/admin/reviews/route.ts
+index e6dcb93..8921a85 100644
+--- a/src/app/api/admin/reviews/route.ts
++++ b/src/app/api/admin/reviews/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -130,6 +131,7 @@ export async function PATCH(request: NextRequest) {
+           { status: 500 }
+         );
+       }
++      revalidateTag("home-reviews");
+       return NextResponse.json(data);
+     }
+ 
+@@ -165,6 +167,7 @@ export async function PATCH(request: NextRequest) {
+           { status: 500 }
+         );
+       }
++      revalidateTag("home-reviews");
+       return NextResponse.json(data);
+     } else {
+       // Нет записи - создаем новую
+@@ -183,6 +186,7 @@ export async function PATCH(request: NextRequest) {
+           { status: 500 }
+         );
+       }
++      revalidateTag("home-reviews");
+       return NextResponse.json(data);
+     }
+   } catch (e) {
+diff --git a/src/app/api/admin/slides/[id]/route.ts b/src/app/api/admin/slides/[id]/route.ts
+index 6b44f23..d8d5b05 100644
+--- a/src/app/api/admin/slides/[id]/route.ts
++++ b/src/app/api/admin/slides/[id]/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -45,6 +46,7 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hero_slides нет в сгенерированных Supabase типах
+     const { data, error } = await (supabase as any).from("hero_slides").update(payload).eq("id", id).select().single();
+     if (error) throw error;
++    revalidateTag("hero-slides");
+     return NextResponse.json(data);
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+@@ -89,6 +91,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- hero_slides нет в сгенерированных Supabase типах
+     const { error } = await (supabase as any).from("hero_slides").delete().eq("id", id);
+     if (error) throw error;
++    revalidateTag("hero-slides");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/slides/reorder/route.ts b/src/app/api/admin/slides/reorder/route.ts
+index 789ad2d..e73a963 100644
+--- a/src/app/api/admin/slides/reorder/route.ts
++++ b/src/app/api/admin/slides/reorder/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -33,6 +34,7 @@ export async function POST(request: NextRequest) {
+       if (error) throw error;
+     }
+ 
++    revalidateTag("hero-slides");
+     return NextResponse.json({ success: true });
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/app/api/admin/slides/route.ts b/src/app/api/admin/slides/route.ts
+index 9361216..600be4e 100644
+--- a/src/app/api/admin/slides/route.ts
++++ b/src/app/api/admin/slides/route.ts
+@@ -1,4 +1,5 @@
+ import { NextRequest, NextResponse } from "next/server";
++import { revalidateTag } from "next/cache";
+ import { isAdminAuthenticated } from "@/lib/adminAuth";
+ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+ import { z } from "zod";
+@@ -71,6 +72,7 @@ export async function POST(request: NextRequest) {
+       .select()
+       .single();
+     if (error) throw error;
++    revalidateTag("hero-slides");
+     return NextResponse.json(data);
+   } catch (e) {
+     if ((e as Error).message === "unauthorized") {
+diff --git a/src/lib/about.ts b/src/lib/about.ts
+index ad7f919..fa16bec 100644
+--- a/src/lib/about.ts
++++ b/src/lib/about.ts
+@@ -2,6 +2,7 @@
+  * About Page: загрузка данных страницы "О нас" из Supabase (таблица about_page).
+  */
+ 
++import { unstable_cache } from "next/cache";
+ import { getSupabaseServer } from "@/lib/supabaseServer";
+ 
+ export type AboutPage = {
+@@ -18,7 +19,7 @@ export type AboutPage = {
+ /**
+  * Получить данные страницы "О нас" (публичная функция)
+  */
+-export async function getAboutPage(): Promise<AboutPage | null> {
++async function getAboutPageUncached(): Promise<AboutPage | null> {
+   try {
+     const supabase = getSupabaseServer();
+ 
+@@ -53,3 +54,10 @@ export async function getAboutPage(): Promise<AboutPage | null> {
+     return null;
+   }
+ }
++
++export async function getAboutPage(): Promise<AboutPage | null> {
++  return unstable_cache(getAboutPageUncached, ["about-page"], {
++    revalidate: 300,
++    tags: ["about-page"],
++  })();
++}
+diff --git a/src/lib/addOnProducts.ts b/src/lib/addOnProducts.ts
+index 1a05439..0155d12 100644
+--- a/src/lib/addOnProducts.ts
++++ b/src/lib/addOnProducts.ts
+@@ -4,6 +4,7 @@
+  * Slug берётся только из таблицы categories (источник истины).
+  */
+ 
++import { unstable_cache } from "next/cache";
+ import { supabase } from "@/lib/supabaseClient";
+ import { getCategories } from "@/lib/categories";
+ import { filterProductsByCategorySlug } from "@/lib/catalogCategories";
+@@ -16,7 +17,7 @@ const DEFAULT_ADD_ON_CATEGORY_NAMES = ["Сладости", "Вазы", "Шары
+  * Slug только из таблицы categories. Сохранённые slug, которых нет в categories, отфильтровываются.
+  * При пустой таблице возвращается порядок по умолчанию: slug категорий с именами Сладости, Вазы, Шары, Игрушки (из БД).
+  */
+-export async function getAddOnCategoriesOrder(): Promise<string[]> {
++async function getAddOnCategoriesOrderUncached(): Promise<string[]> {
+   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+   if (!url || !key) return [];
+@@ -55,6 +56,13 @@ export async function getAddOnCategoriesOrder(): Promise<string[]> {
+   return result;
+ }
+ 
++export async function getAddOnCategoriesOrder(): Promise<string[]> {
++  return unstable_cache(getAddOnCategoriesOrderUncached, ["add-on-products"], {
++    revalidate: 300,
++    tags: ["add-on-products", "categories"],
++  })();
++}
++
+ type ProductWithCategory = {
+   id: string;
+   slug: string;
+diff --git a/src/lib/blog.ts b/src/lib/blog.ts
+index ae2f4de..d6facbb 100644
+--- a/src/lib/blog.ts
++++ b/src/lib/blog.ts
+@@ -2,6 +2,7 @@
+  * Блог: загрузка опубликованных постов из Supabase (таблица blog_posts).
+  */
+ 
++import { unstable_cache } from "next/cache";
+ import { getSupabaseServer } from "@/lib/supabaseServer";
+ 
+ export type BlogPost = {
+@@ -25,7 +26,7 @@ export type BlogPostNav = Pick<BlogPost, "id" | "slug" | "title">;
+ /**
+  * Получить все опубликованные посты (для публичной страницы)
+  */
+-export async function getPublishedPosts(): Promise<BlogPost[]> {
++async function getPublishedPostsUncached(): Promise<BlogPost[]> {
+   try {
+     const supabase = getSupabaseServer();
+ 
+@@ -77,10 +78,17 @@ export async function getPublishedPosts(): Promise<BlogPost[]> {
+   }
+ }
+ 
++export async function getPublishedPosts(): Promise<BlogPost[]> {
++  return unstable_cache(getPublishedPostsUncached, ["blog-posts"], {
++    revalidate: 300,
++    tags: ["blog-posts"],
++  })();
++}
++
+ /**
+  * Получить один опубликованный пост по slug (для публичной страницы)
+  */
+-export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | null> {
++async function getPublishedPostBySlugUncached(slug: string): Promise<BlogPost | null> {
+   try {
+     const supabase = getSupabaseServer();
+ 
+@@ -121,6 +129,14 @@ export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | n
+   }
+ }
+ 
++export async function getPublishedPostBySlug(slug: string): Promise<BlogPost | null> {
++  const cached = unstable_cache(() => getPublishedPostBySlugUncached(slug), ["blog-post", slug], {
++    revalidate: 300,
++    tags: ["blog-posts"],
++  });
++  return cached();
++}
++
+ /**
+  * Получить все slugs опубликованных постов (для generateStaticParams)
+  */
+@@ -132,7 +148,7 @@ export async function getPublishedPostSlugs(): Promise<string[]> {
+ /**
+  * Получить соседние посты (prev/next) для навигации
+  */
+-export async function getAdjacentPosts(
++async function getAdjacentPostsUncached(
+   currentSlug: string
+ ): Promise<{ prev: BlogPostNav | null; next: BlogPostNav | null }> {
+ 
+@@ -208,3 +224,13 @@ export async function getAdjacentPosts(
+     return { prev: null, next: null };
+   }
+ }
++
++export async function getAdjacentPosts(
++  currentSlug: string
++): Promise<{ prev: BlogPostNav | null; next: BlogPostNav | null }> {
++  const cached = unstable_cache(() => getAdjacentPostsUncached(currentSlug), ["blog-adjacent", currentSlug], {
++    revalidate: 300,
++    tags: ["blog-posts"],
++  });
++  return cached();
++}
+diff --git a/src/lib/categories.ts b/src/lib/categories.ts
+index 59d9ea1..3f6c857 100644
+--- a/src/lib/categories.ts
++++ b/src/lib/categories.ts
+@@ -68,7 +68,10 @@ async function getCategoriesUncached(): Promise<Category[]> {
+ 
+ /** Кэш 5 мин — категории редко меняются */
+ export async function getCategories(): Promise<Category[]> {
+-  return unstable_cache(getCategoriesUncached, ["categories"], { revalidate: 300 })();
++  return unstable_cache(getCategoriesUncached, ["categories"], {
++    revalidate: 300,
++    tags: ["categories"],
++  })();
+ }
+ 
+ export function getCategoryBySlug(categories: Category[], slug: string): Category | null {
+diff --git a/src/lib/deliveryZones.ts b/src/lib/deliveryZones.ts
+index 26e0b71..ddf8bce 100644
+--- a/src/lib/deliveryZones.ts
++++ b/src/lib/deliveryZones.ts
+@@ -3,6 +3,7 @@
+  * Используется: страница «Доставка и оплата», API /api/delivery-zones (для корзины).
+  */
+ 
++import { unstable_cache } from "next/cache";
+ import { supabase } from "@/lib/supabaseClient";
+ import type { DeliveryZone } from "@/types/delivery";
+ 
+@@ -28,7 +29,7 @@ function mapRowToZone(row: DbRow): DeliveryZone {
+   };
+ }
+ 
+-export async function getDeliveryZones(): Promise<DeliveryZone[]> {
++async function getDeliveryZonesUncached(): Promise<DeliveryZone[]> {
+   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+   if (!url || !key) return [];
+@@ -68,3 +69,10 @@ export async function getDeliveryZones(): Promise<DeliveryZone[]> {
+     return [];
+   }
+ }
++
++export async function getDeliveryZones(): Promise<DeliveryZone[]> {
++  return unstable_cache(getDeliveryZonesUncached, ["delivery-zones"], {
++    revalidate: 300,
++    tags: ["delivery-zones"],
++  })();
++}
+diff --git a/src/lib/heroSlides.ts b/src/lib/heroSlides.ts
+index 8de3e2a..3d4f93f 100644
+--- a/src/lib/heroSlides.ts
++++ b/src/lib/heroSlides.ts
+@@ -47,5 +47,8 @@ async function getActiveHeroSlidesUncached(): Promise<HeroSlide[]> {
+ 
+ /** Кэш 5 мин — слайды меняются редко */
+ export async function getActiveHeroSlides(): Promise<HeroSlide[]> {
+-  return unstable_cache(getActiveHeroSlidesUncached, ["hero-slides"], { revalidate: 300 })();
++  return unstable_cache(getActiveHeroSlidesUncached, ["hero-slides"], {
++    revalidate: 300,
++    tags: ["hero-slides"],
++  })();
+ }
+diff --git a/src/lib/homeAbout.ts b/src/lib/homeAbout.ts
+index 36af781..01ca145 100644
+--- a/src/lib/homeAbout.ts
++++ b/src/lib/homeAbout.ts
+@@ -51,5 +51,8 @@ async function getHomeAboutUncached(): Promise<HomeAbout> {
+ }
+ 
+ export async function getHomeAbout(): Promise<HomeAbout> {
+-  return unstable_cache(getHomeAboutUncached, ["home-about"], { revalidate: 300 })();
++  return unstable_cache(getHomeAboutUncached, ["home-about"], {
++    revalidate: 300,
++    tags: ["home-about"],
++  })();
+ }
+diff --git a/src/lib/homeCollections.ts b/src/lib/homeCollections.ts
+index be368de..cb6cd44 100644
+--- a/src/lib/homeCollections.ts
++++ b/src/lib/homeCollections.ts
+@@ -44,5 +44,8 @@ async function getActiveHomeCollectionsUncached(): Promise<HomeCollection[]> {
+ 
+ /** Кэш 5 мин */
+ export async function getActiveHomeCollections(): Promise<HomeCollection[]> {
+-  return unstable_cache(getActiveHomeCollectionsUncached, ["home-collections"], { revalidate: 300 })();
++  return unstable_cache(getActiveHomeCollectionsUncached, ["home-collections"], {
++    revalidate: 300,
++    tags: ["home-collections"],
++  })();
+ }
+diff --git a/src/lib/homeFaq.ts b/src/lib/homeFaq.ts
+index f69c340..a3df562 100644
+--- a/src/lib/homeFaq.ts
++++ b/src/lib/homeFaq.ts
+@@ -92,5 +92,8 @@ async function getHomeFaqUncached(): Promise<FaqItem[]> {
+ }
+ 
+ export async function getHomeFaq(): Promise<FaqItem[]> {
+-  return unstable_cache(getHomeFaqUncached, ["home-faq"], { revalidate: 300 })();
++  return unstable_cache(getHomeFaqUncached, ["home-faq"], {
++    revalidate: 300,
++    tags: ["home-faq"],
++  })();
+ }
+diff --git a/src/lib/homeOrderBlock.ts b/src/lib/homeOrderBlock.ts
+index 6582223..56dacfc 100644
+--- a/src/lib/homeOrderBlock.ts
++++ b/src/lib/homeOrderBlock.ts
+@@ -45,5 +45,8 @@ async function getHomeOrderBlockUncached(): Promise<HomeOrderBlock> {
+ }
+ 
+ export async function getHomeOrderBlock(): Promise<HomeOrderBlock> {
+-  return unstable_cache(getHomeOrderBlockUncached, ["home-order-block"], { revalidate: 300 })();
++  return unstable_cache(getHomeOrderBlockUncached, ["home-order-block"], {
++    revalidate: 300,
++    tags: ["home-order-block"],
++  })();
+ }
+diff --git a/src/lib/homeReviews.ts b/src/lib/homeReviews.ts
+index 279b305..4811c06 100644
+--- a/src/lib/homeReviews.ts
++++ b/src/lib/homeReviews.ts
+@@ -45,5 +45,8 @@ async function getHomeReviewsUncached(): Promise<HomeReviews> {
+ }
+ 
+ export async function getHomeReviews(): Promise<HomeReviews> {
+-  return unstable_cache(getHomeReviewsUncached, ["home-reviews"], { revalidate: 300 })();
++  return unstable_cache(getHomeReviewsUncached, ["home-reviews"], {
++    revalidate: 300,
++    tags: ["home-reviews"],
++  })();
+ }
+diff --git a/src/lib/productDetails.ts b/src/lib/productDetails.ts
+index 988e727..0b18c1b 100644
+--- a/src/lib/productDetails.ts
++++ b/src/lib/productDetails.ts
+@@ -3,6 +3,7 @@
+  * Один набор на весь каталог — хранится в таблице product_details (singleton).
+  */
+ 
++import { unstable_cache } from "next/cache";
+ import { supabase } from "@/lib/supabaseClient";
+ 
+ export type ProductDetails = {
+@@ -13,7 +14,7 @@ const DEFAULT: ProductDetails = {
+   kit: "",
+ };
+ 
+-export async function getProductDetails(): Promise<ProductDetails> {
++async function getProductDetailsUncached(): Promise<ProductDetails> {
+   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+   if (!url || !key) return DEFAULT;
+@@ -36,3 +37,10 @@ export async function getProductDetails(): Promise<ProductDetails> {
+     return DEFAULT;
+   }
+ }
++
++export async function getProductDetails(): Promise<ProductDetails> {
++  return unstable_cache(getProductDetailsUncached, ["product-details"], {
++    revalidate: 300,
++    tags: ["product-details"],
++  })();
++}
+diff --git a/src/lib/products.ts b/src/lib/products.ts
+index 736b89a..e3db9cf 100644
+--- a/src/lib/products.ts
++++ b/src/lib/products.ts
+@@ -308,7 +308,10 @@ async function _getAllCatalogProductsUncached(): Promise<Product[]> {
+ export async function getAllCatalogProducts(): Promise<Product[]> {
+   const { unstable_cache } = await import("next/cache");
+   try {
+-    return await unstable_cache(_getAllCatalogProductsUncached, ["catalog-products"], { revalidate: 60 })();
++    return await unstable_cache(_getAllCatalogProductsUncached, ["catalog-products"], {
++      revalidate: 60,
++      tags: ["catalog-products", "categories"],
++    })();
+   } catch (e) {
+     console.error("[getAllCatalogProducts]", e instanceof Error ? e.message : String(e));
+     return [];
+@@ -318,7 +321,7 @@ export async function getAllCatalogProducts(): Promise<Product[]> {
+ /**
+  * Товар по slug: сначала products, затем variant_products.
+  */
+-export async function getCatalogProductBySlug(
++async function _getCatalogProductBySlugUncached(
+   slug: string
+ ): Promise<Product | (Product & { variants?: import("@/lib/variantProducts").ProductVariantPublic[] }) | null> {
+   const fromProducts = await getProductBySlug(slug);
+@@ -326,3 +329,13 @@ export async function getCatalogProductBySlug(
+   const { getVariantProductWithVariantsBySlug } = await import("@/lib/variantProducts");
+   return getVariantProductWithVariantsBySlug(slug);
+ }
++
++export async function getCatalogProductBySlug(
++  slug: string
++): Promise<Product | (Product & { variants?: import("@/lib/variantProducts").ProductVariantPublic[] }) | null> {
++  const { unstable_cache } = await import("next/cache");
++  return unstable_cache(() => _getCatalogProductBySlugUncached(slug), ["catalog-product", slug], {
++    revalidate: 60,
++    tags: ["catalog-products", "categories"],
++  })();
++}
