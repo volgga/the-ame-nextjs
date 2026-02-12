@@ -29,7 +29,7 @@ function getAlignClass(align: HeroSlide["buttonAlign"]): string {
   return "justify-center";
 }
 
-const AUTOPLAY_MS = 5000;
+const AUTOPLAY_MS = 10000;
 const TRANSITION_MS = 800;
 const TRANSITION_SAFETY_MS = TRANSITION_MS + 100; // Fallback timeout для сброса lock
 
@@ -41,8 +41,8 @@ type HeroCarouselProps = {
  * HeroCarousel — слайды из Supabase (hero_slides) или fallback.
  * next/image обеспечивает оптимизацию (webp/avif, sizes) для быстрой загрузки.
  *
- * Высота хиро — стабильная на мобилке, без дёргания:
- * - mobile  (<768px):  clamp(420px, 60vh, 560px) — предсказуемая высота
+ * Высота хиро:
+ * - mobile  (<768px):  aspect-ratio 16/9 — под размер фото, свайп, без стрелок
  * - tablet  (768–1199): 420px
  * - laptop  (1200–1439): 500px
  * - desktop (≥1440px):  560px, max 680px
@@ -249,22 +249,49 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
   }, [slides.length, loopSlides.length, realIndexOffset]);
 
   const btnBase =
-    "absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] text-white transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+    "absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] text-white transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+
+  // Touch swipe: мобилка без стрелок — переключение свайпом
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (slides.length <= 1) return;
+      touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    },
+    [slides.length]
+  );
+
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (slides.length <= 1 || !touchStartRef.current) return;
+      const touch = e.changedTouches[0];
+      const deltaX = touch.clientX - touchStartRef.current.x;
+      const deltaY = touch.clientY - touchStartRef.current.y;
+      touchStartRef.current = null;
+      if (Math.abs(deltaX) < 50 || Math.abs(deltaX) < Math.abs(deltaY)) return;
+      if (deltaX < 0) next();
+      else prev();
+    },
+    [slides.length, next, prev]
+  );
 
   return (
     <section className="relative hero-full-width bg-[#fff8ea] overflow-hidden pb-4 md:pb-6 -mx-0.5 md:-mx-8">
-      <div className="relative w-full h-[clamp(420px,60vh,560px)] min-[768px]:h-[420px] min-[1200px]:h-[500px] min-[1440px]:h-[560px] min-[1440px]:max-h-[680px]">
+      <div className="relative w-full aspect-[16/9] md:aspect-auto md:h-[420px] min-[1200px]:h-[500px] min-[1440px]:h-[560px] min-[1440px]:max-h-[680px]">
         <div
           className={`absolute inset-0 overflow-hidden bg-[#ece9e2] hero-reveal ${isRevealActive ? "hero-reveal--active" : ""}`}
         >
           <div
             ref={slideContainerRef}
-            className="flex h-full min-h-0 transition-transform ease-in-out"
+            className="flex h-full min-h-0 transition-transform ease-in-out touch-pan-y"
             style={{
               width: `${loopSlides.length * 100}%`,
               transform: `translateX(-${index * (100 / loopSlides.length)}%)`,
               transitionDuration: isTransitioning ? `${TRANSITION_MS}ms` : "0ms",
             }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
             {loopSlides.map((slide, i) => (
               <div
@@ -272,25 +299,11 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                 className="relative flex-shrink-0 w-full h-full overflow-hidden"
                 style={{ width: `${100 / loopSlides.length}%` }}
               >
-                {/* Blur background — visible on mobile when main uses contain */}
-                <Image
-                  src={slide.imageUrl}
-                  alt=""
-                  fill
-                  className="object-cover object-center blur-md scale-110 opacity-60 select-none pointer-events-none"
-                  loading={i === realIndexOffset ? "eager" : "lazy"}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 1600px, 1920px"
-                  quality={75}
-                  priority={i === realIndexOffset}
-                  aria-hidden
-                />
-                <div className="absolute inset-0 z-[1] bg-black/10 pointer-events-none" aria-hidden />
-                {/* Main: contain on mobile (full banner visible), cover on desktop */}
                 <Image
                   src={slide.imageUrl}
                   alt="Слайд"
                   fill
-                  className="object-contain min-[768px]:object-cover object-center select-none pointer-events-none z-[2]"
+                  className="object-cover object-center select-none pointer-events-none"
                   loading={i === realIndexOffset ? "eager" : "lazy"}
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 1600px, 1920px"
                   quality={90}
