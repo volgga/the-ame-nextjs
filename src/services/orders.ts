@@ -178,3 +178,37 @@ export async function updateOrderStatus(
   const { error } = await (supabase as any).from("orders").update(payload).eq("id", orderId);
   return !error;
 }
+
+/**
+ * Проверить и атомарно отметить отправку уведомления о платеже.
+ * Возвращает true, если уведомление нужно отправить (еще не отправляли), false если уже отправляли.
+ * Обеспечивает идемпотентность: даже при параллельных вызовах уведомление уйдет только один раз.
+ */
+export async function markPaymentNotificationSent(
+  orderId: string,
+  eventType: "SUCCESS" | "FAIL"
+): Promise<boolean> {
+  const supabase = getSupabaseServer();
+  const fieldName = eventType === "SUCCESS" ? "payment_success_notified_at" : "payment_fail_notified_at";
+  const now = new Date().toISOString();
+
+  // Атомарное обновление: обновляем только если поле null
+  // Используем условие в update для атомарности
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from("orders")
+    .update({ [fieldName]: now })
+    .eq("id", orderId)
+    .is(fieldName, null)
+    .select("id");
+
+  if (error) {
+    console.error(`[markPaymentNotificationSent] error for orderId=${orderId}, eventType=${eventType}`, error);
+    // При ошибке лучше не отправлять повторно, чтобы не спамить
+    return false;
+  }
+
+  // Если data пустой массив - значит поле уже было заполнено (условие .is(fieldName, null) не сработало)
+  // Если data содержит запись - значит мы успешно обновили (было null, стало now)
+  return Array.isArray(data) && data.length > 0;
+}

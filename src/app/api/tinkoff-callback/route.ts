@@ -7,7 +7,7 @@
 
 import { NextResponse } from "next/server";
 import { verifyTinkoffNotificationToken } from "@/lib/tinkoff";
-import { getOrderById, updateOrderStatus } from "@/services/orders";
+import { getOrderById, updateOrderStatus, markPaymentNotificationSent } from "@/services/orders";
 import { sendOrderTelegramMessage } from "@/lib/telegram";
 import { formatPaymentSuccess, formatPaymentFailed } from "@/lib/telegramOrdersFormat";
 
@@ -38,29 +38,41 @@ export async function POST(request: Request) {
     if (order) {
       if (status === "CONFIRMED" || (status === "AUTHORIZED" && success)) {
         await updateOrderStatus(orderId, "paid");
-        try {
-          const paymentId = (payload.PaymentId ?? order.tinkoffPaymentId ?? order.paymentId) as string | undefined;
-          await sendOrderTelegramMessage(formatPaymentSuccess(order, paymentId));
-        } catch (err) {
-          console.error(
-            "[tinkoff-callback] payment success tg failed orderId=" + orderId,
-            err instanceof Error ? err.message : err
-          );
+        // Идемпотентность: проверяем, отправляли ли уже уведомление об успешной оплате
+        const shouldSend = await markPaymentNotificationSent(orderId, "SUCCESS");
+        if (shouldSend) {
+          try {
+            const paymentId = (payload.PaymentId ?? order.tinkoffPaymentId ?? order.paymentId) as string | undefined;
+            await sendOrderTelegramMessage(formatPaymentSuccess(order, paymentId));
+          } catch (err) {
+            console.error(
+              "[tinkoff-callback] payment success tg failed orderId=" + orderId,
+              err instanceof Error ? err.message : err
+            );
+          }
+        } else {
+          console.log(`[tinkoff-callback] payment success notification already sent, skipping orderId=${orderId}`);
         }
       } else if (status === "CANCELED" || status === "DEADLINE_EXPIRED" || status === "REJECTED" || !success) {
         const newStatus = order.status === "payment_pending" ? "failed" : "canceled";
         await updateOrderStatus(orderId, newStatus);
-        try {
-          const reason =
-            (payload.Message as string | undefined) ??
-            (payload.ErrorCode != null ? String(payload.ErrorCode) : undefined) ??
-            status;
-          await sendOrderTelegramMessage(formatPaymentFailed(order, reason));
-        } catch (err) {
-          console.error(
-            "[tinkoff-callback] payment failed tg failed orderId=" + orderId,
-            err instanceof Error ? err.message : err
-          );
+        // Идемпотентность: проверяем, отправляли ли уже уведомление о неуспешной оплате
+        const shouldSend = await markPaymentNotificationSent(orderId, "FAIL");
+        if (shouldSend) {
+          try {
+            const reason =
+              (payload.Message as string | undefined) ??
+              (payload.ErrorCode != null ? String(payload.ErrorCode) : undefined) ??
+              status;
+            await sendOrderTelegramMessage(formatPaymentFailed(order, reason));
+          } catch (err) {
+            console.error(
+              "[tinkoff-callback] payment failed tg failed orderId=" + orderId,
+              err instanceof Error ? err.message : err
+            );
+          }
+        } else {
+          console.log(`[tinkoff-callback] payment failed notification already sent, skipping orderId=${orderId}`);
         }
       }
     }
