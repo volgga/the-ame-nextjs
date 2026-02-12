@@ -178,44 +178,60 @@ export function FullscreenViewer({
 
   const content = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 transition-opacity duration-200"
+      className="fixed inset-0 z-50 flex flex-col md:flex-row items-center justify-center bg-black/90 transition-opacity duration-200 p-3 sm:p-4 md:p-6 box-border"
       role="dialog"
       aria-modal="true"
       aria-label="Просмотр фото"
       onClick={handleOverlayClick}
+      style={{ maxWidth: "100vw", maxHeight: "100vh" }}
     >
       <div
-        className="flex items-center justify-center gap-3 flex-shrink-0"
-        style={{
-          width: "calc(100vw - 48px)",
-          height: "calc(100vh - 48px)",
-          maxWidth: "1200px",
-          maxHeight: "calc(100vh - 48px)",
-          padding: 0,
-        }}
+        className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 flex-1 min-w-0 min-h-0 w-full max-w-[calc(100vw-32px)] max-h-[calc(100vh-32px)] md:max-w-[min(1200px,calc(100vw-48px))] md:max-h-[calc(100vh-48px)]"
         onClick={(e) => e.stopPropagation()}
       >
         {hasMultipleImages && (
           <button
             type="button"
             onClick={goPrev}
-            className="shrink-0 min-w-[56px] min-h-[56px] w-14 h-14 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all z-10"
+            className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all z-10"
             aria-label="Предыдущее фото"
           >
-            <ChevronLeft className="w-8 h-8" />
+            <ChevronLeft className="w-7 h-7" />
           </button>
         )}
 
-        <div className="relative flex flex-col items-center flex-1 min-w-0 h-full min-h-0">
-          <div className="flex justify-end w-full mb-2 shrink-0">
+        <div className="relative flex flex-col flex-1 min-w-0 min-h-0 w-full overflow-hidden">
+          {/* Кнопка закрытия вверху — на мобилке в одном ряду с навигацией */}
+          <div className="flex items-center justify-between shrink-0 w-full mb-2 gap-2">
+            {hasMultipleImages && (
+              <button
+                type="button"
+                onClick={goPrev}
+                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all"
+                aria-label="Предыдущее фото"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+            <div className="flex-1 min-w-0" />
             <button
               type="button"
               onClick={onClose}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-secondary hover:text-color-text-main transition-all"
+              className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-secondary hover:text-color-text-main transition-all"
               aria-label="Закрыть"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 md:w-6 md:h-6" />
             </button>
+            {hasMultipleImages && (
+              <button
+                type="button"
+                onClick={goNext}
+                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all"
+                aria-label="Следующее фото"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
           </div>
 
           <div
@@ -272,10 +288,10 @@ export function FullscreenViewer({
           <button
             type="button"
             onClick={goNext}
-            className="shrink-0 min-w-[56px] min-h-[56px] w-14 h-14 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all z-10"
+            className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all z-10"
             aria-label="Следующее фото"
           >
-            <ChevronRight className="w-8 h-8" />
+            <ChevronRight className="w-7 h-7" />
           </button>
         )}
       </div>

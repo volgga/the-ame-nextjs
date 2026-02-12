@@ -417,10 +417,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                     <button
                       key={src}
                       type="button"
-                      onClick={() => {
-                        setSelectedImageIndex(idx);
-                        setFullscreenOpen(true);
-                      }}
+                      onClick={() => setSelectedImageIndex(idx)}
                       className={`relative w-14 h-14 lg:w-16 lg:h-16 shrink-0 rounded-lg overflow-hidden transition-all duration-200 ${
                         idx === selectedImageIndex
                           ? "outline outline-2 outline-offset-2 outline-color-text-main"

@@ -131,15 +131,15 @@ export function OrderBouquetSection({ title, subtitle1, text, imageUrl }: OrderB
             </div>
           </div>
 
-          {/* Flex: изображение слева по сетке контейнера, текст и форма справа */}
-          <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-16">
-            <div className="order-2 md:order-1 w-full md:flex-[0_0_50%]">
-              <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border-block bg-white">
+          {/* Flex: изображение слева, текст и форма справа; на десктопе высота ряда = высоте формы, фото подстраивается (низ фото = низ кнопки «Отправить») */}
+          <div className="flex flex-col md:flex-row md:items-stretch gap-6 md:gap-16">
+            <div className="order-2 md:order-1 w-full md:flex-[0_0_50%] md:min-h-0">
+              <div className="relative aspect-square md:aspect-auto w-full md:h-full overflow-hidden rounded-2xl border border-border-block bg-white md:max-h-[calc(100vh-14rem)]">
                 <Image
                   src={blockImageUrl}
                   alt="Букет вашей мечты"
                   fill
-                  className="object-cover"
+                  className="object-cover h-full w-full"
                   sizes="(max-width: 768px) 100vw, 33vw"
                   priority={false}
                   unoptimized={blockImageUrl.startsWith("http")}

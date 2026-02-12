@@ -6,7 +6,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { Flower } from "@/types/flower";
 import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
-import { Heart, ShoppingCart, Search } from "lucide-react";
+import { Heart, ShoppingCart, Search, Clock } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { buildProductUrl } from "@/utils/buildProductUrl";
@@ -177,12 +177,16 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
         </h3>
       </Link>
 
-      {/* Нижний блок: цена — главный якорь (text-lg), кнопки (min-h-[44px] на мобиле). На mobile при "от" — "от" отдельной строкой над ценой. */}
-      <div className="mt-1.5 px-1 flex items-center justify-between gap-2 sm:gap-3 min-w-0">
+      {/* На мобилке "от" отдельной строкой между названием и ценой (не ломает вертикальный ритм цены) */}
+      {flower.priceFrom && (
+        <p className="mt-1 px-1 text-xs font-normal text-color-text-secondary leading-tight md:sr-only" aria-hidden>
+          от
+        </p>
+      )}
+
+      {/* Нижний блок: цена — главный якорь (text-lg), кнопки (min-h-[44px] на мобиле). */}
+      <div className={`px-1 flex items-center justify-between gap-2 sm:gap-3 min-w-0 ${flower.priceFrom ? "mt-0.5 md:mt-1.5" : "mt-1.5"}`}>
         <div className="flex flex-col justify-center shrink-0 min-w-0">
-          {flower.priceFrom && (
-            <span className="text-[10px] font-normal text-color-text-secondary leading-tight md:sr-only">от</span>
-          )}
           <span className="text-lg font-semibold text-color-text-main leading-none md:block">
             {flower.priceFrom ? (
               <>
@@ -216,9 +220,12 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
                 e.stopPropagation();
                 setPreorderOpen(true);
               }}
-              className="product-cta min-h-[36px] py-0.5 rounded-full px-4 text-xs font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
+              className="product-cta h-9 w-9 min-h-[36px] min-w-[36px] rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation md:min-h-[36px] md:min-w-0 md:py-0.5 md:px-4 md:w-auto"
+              aria-label="Предзаказ"
+              title="Предзаказ"
             >
-              Предзаказ
+              <Clock className="w-3.5 h-3.5 md:hidden" strokeWidth={1.6} aria-hidden />
+              <span className="hidden md:inline text-xs font-normal leading-none">Предзаказ</span>
             </button>
           ) : (
             <>

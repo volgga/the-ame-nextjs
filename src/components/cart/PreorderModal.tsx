@@ -136,8 +136,8 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
     <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: Z_OVERLAY }}>
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
       <div
-        className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
-        style={{ zIndex: Z_PANEL }}
+        className="relative bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col min-w-0"
+        style={{ zIndex: Z_PANEL, maxWidth: "calc(100vw - 32px)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-border-block">
@@ -221,7 +221,7 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
                 }}
                 min={getTodayISO()}
                 lang="ru"
-                className="w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 border-gray-300"
+                className="w-full min-w-0 px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 border-gray-300 box-border"
               />
               {dateError && <p className="text-sm text-red-600 mt-1">{dateError}</p>}
             </div>

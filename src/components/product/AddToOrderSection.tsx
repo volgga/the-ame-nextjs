@@ -160,7 +160,7 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
           </h2>
         </div>
 
-        <div className="flex justify-end -mx-4 px-4 md:-mx-6 md:px-6 mb-2">
+        <div className="hidden md:flex justify-end -mx-6 px-6 mb-2">
           <div className="flex items-center gap-0.5">
             <button
               type="button"
@@ -183,13 +183,25 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
           </div>
         </div>
 
+        {/* На мобилке: сетка 2 колонки как в каталоге; на md+ — горизонтальная карусель */}
+        <div className="grid grid-cols-2 gap-3 md:hidden py-2">
+          {flowers.map((flower) => (
+            <FlowerCard
+              key={flower.id}
+              flower={flower}
+              product={products.find((p) => p.id === flower.id)}
+              showNewBadge={false}
+            />
+          ))}
+        </div>
+
         <div
           ref={scrollRef}
           onPointerDown={handleInteraction}
           onWheel={handleInteraction}
           onMouseEnter={handleInteraction}
           onScroll={handleUserScroll}
-          className="flex gap-5 md:gap-6 overflow-x-auto overflow-y-hidden py-2 -mx-4 px-4 md:-mx-6 md:px-6 scrollbar-hide"
+          className="hidden md:flex gap-5 md:gap-6 overflow-x-auto overflow-y-hidden py-2 -mx-6 px-6 scrollbar-hide"
           style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}
         >
           {columns.map(([top, bottom], colIndex) => (
@@ -212,7 +224,7 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
         </div>
 
         <div
-          className="mt-6 h-0.5 w-full bg-[rgba(31,42,31,0.12)] rounded-full overflow-hidden"
+          className="mt-6 h-0.5 w-full bg-[rgba(31,42,31,0.12)] rounded-full overflow-hidden hidden md:block"
           role="progressbar"
           aria-valuenow={Math.round(scrollProgress * 100)}
           aria-valuemin={0}

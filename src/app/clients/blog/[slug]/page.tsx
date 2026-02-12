@@ -76,27 +76,19 @@ export default async function ClientsBlogPostPage({ params }: BlogPostPageProps)
   return (
     <div className="min-h-screen bg-page-bg">
       <div className="container mx-auto px-4 md:px-8 pt-2 pb-8 md:pt-4 md:pb-10">
-        {/* Шапка статьи: назад слева, заголовок по центру */}
-        <div className="grid grid-cols-3 items-center mb-4">
-          {/* Колонка 1: кнопка "Назад" */}
-          <div className="flex justify-start">
-            <Link
-              href="/clients/blog"
-              className="inline-flex items-center gap-2 text-sm text-neutral-600 hover:text-neutral-900 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden md:inline">Назад к списку</span>
-              <span className="md:hidden">Назад</span>
-            </Link>
-          </div>
-
-          {/* Колонка 2: заголовок по центру */}
-          <div className="col-span-1">
-            <h1 className="text-center text-3xl md:text-4xl font-semibold tracking-tight text-black">{post.title}</h1>
-          </div>
-
-          {/* Колонка 3: пустой spacer для симметрии */}
-          <div></div>
+        {/* Шапка статьи: слева кнопка-стрелка, заголовок по центру с переносом */}
+        <div className="flex items-center gap-3 mb-4 min-w-0">
+          <Link
+            href="/clients/blog"
+            className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full text-neutral-600 hover:text-neutral-900 hover:bg-black/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main"
+            aria-label="Назад к списку статей"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <h1 className="min-w-0 flex-1 text-center text-xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-black line-clamp-2 px-1">
+            {post.title}
+          </h1>
+          <div className="w-10 shrink-0" aria-hidden />
         </div>
 
         {/* Дата публикации — по центру */}

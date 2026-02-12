@@ -223,12 +223,12 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
         </span>
       </button>
 
-      {/* Панель Цена + Цвет букета + Поиск/Порядок: на мобильной показывается при раскрытии; на md+ всегда */}
+      {/* Панель Цена + Цвет букета + Поиск/Порядок: на мобильной показывается при раскрытии; на md+ всегда. Сброс в одном ряду с фильтрами, без space-between. */}
       <div
-        className={`flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center justify-between gap-3 ${!mobileFiltersOpen ? "hidden md:flex" : ""}`}
+        className={`flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center justify-start gap-3 ${!mobileFiltersOpen ? "hidden md:flex" : ""}`}
       >
         {/* Левая зона: Цена + Цвет букета */}
-        <div className="flex flex-col sm:flex-row items-stretch gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           {/* Цена (trigger + popover) */}
           <div className="relative" ref={popoverRef}>
             <button
@@ -384,8 +384,8 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
           </div>
         </div>
 
-        {/* Правая зона: Поиск + Порядок */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 md:flex-initial min-w-0">
+        {/* Поиск + Порядок */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 min-w-0">
           {/* Поиск: на мобильной скрыт, только Цена и Порядок */}
           <div
             className={`hidden md:flex ${controlH} w-full sm:w-[180px] md:w-[200px] rounded-full border border-[var(--color-outline-border)] bg-white overflow-hidden transition-colors focus-within:ring-2 focus-within:ring-color-bg-main focus-within:ring-offset-2`}
@@ -424,12 +424,12 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
           </select>
         </div>
 
-        {/* Сброс всех фильтров — на мобильной скрыт */}
+        {/* Сброс всех фильтров — в том же ряду, с небольшим зазором; на мобильной скрыт */}
         {hasFilters && (
           <button
             type="button"
             onClick={handleReset}
-            className={`hidden md:inline-flex ${controlH} rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
+            className={`hidden md:inline-flex ${controlH} shrink-0 rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-secondary hover:bg-[rgba(31,42,31,0.06)] hover:text-color-text-main transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
             aria-label="Сбросить фильтры"
           >
             Сброс
