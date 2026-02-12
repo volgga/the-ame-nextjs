@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -175,7 +176,7 @@ export function FullscreenViewer({
 
   if (!isOpen) return null;
 
-  return (
+  const content = (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 transition-opacity duration-200"
       role="dialog"
@@ -280,4 +281,6 @@ export function FullscreenViewer({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined" ? createPortal(content, document.body) : null;
 }
