@@ -7,13 +7,9 @@ import { FlowerCard } from "./FlowerCard";
 import { Flower } from "@/types/flower";
 import type { Product } from "@/lib/products";
 
-/** Карточек в одном блоке автоподгрузки: mobile 12 рядов × 2 колонки = 24, desktop 6 рядов × 4 колонки = 24 */
-const ROWS_MOBILE = 12;
-const ROWS_DESKTOP = 6;
-const COLS_MOBILE = 2;
-const COLS_DESKTOP = 4;
-const CARDS_PER_BLOCK_MOBILE = ROWS_MOBILE * COLS_MOBILE; // 24
-const CARDS_PER_BLOCK_DESKTOP = ROWS_DESKTOP * COLS_DESKTOP; // 24
+/** Изначально 24 карточки; при скролле до sentinel догружаем порциями (на ПК 4 колонки → +8 = 2 ряда). */
+const INITIAL_VISIBLE = 24;
+const PAGE_SIZE = 8;
 
 type SortValue = "default" | "price_asc" | "price_desc";
 
@@ -27,8 +23,8 @@ type FlowerCatalogProps = {
 };
 
 export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => {
-  /** Сколько блоков показываем: mobile — 12 рядов за блок, desktop — 6 рядов за блок; автоподгрузка добавляет один блок */
-  const [visibleBlocks, setVisibleBlocks] = useState(1);
+  /** Сколько карточек показываем; при скролле до sentinel увеличиваем на PAGE_SIZE */
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
@@ -104,42 +100,26 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     return arr;
   }, [filteredFlowers, sortParam]);
 
-  // Карточек в одном блоке: mobile 12 рядов (24 карточки), desktop 6 рядов (24 карточки). Брейкпоинт md (768px).
-  const [cardsPerBlock, setCardsPerBlock] = useState(CARDS_PER_BLOCK_MOBILE);
+  // При смене фильтров/сортировки/поиска — сбрасываем к начальным 24 карточкам
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const update = () => setCardsPerBlock(mq.matches ? CARDS_PER_BLOCK_DESKTOP : CARDS_PER_BLOCK_MOBILE);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-
-  // При смене фильтров/сортировки/поиска — сбрасываем к первому блоку (12 рядов на мобиле, 6 на desktop)
-  useEffect(() => {
-    setVisibleBlocks(1);
+    setVisibleCount(INITIAL_VISIBLE);
   }, [minPrice, maxPrice, sortParam, qParam, selectedColorKeys]);
 
-  // Показываем visibleBlocks блоков (mobile: 12 рядов за раз, desktop: 6 рядов за раз)
-  const visibleCount = visibleBlocks * cardsPerBlock;
   const visibleFlowers = sortedFlowers.slice(0, visibleCount);
   const hasMore = sortedFlowers.length > visibleCount;
 
-  // Функция для загрузки следующего блока
   const loadMore = useCallback(() => {
     if (isLoadingRef.current || !hasMore) return;
-
     isLoadingRef.current = true;
     setIsLoadingMore(true);
-
-    // Имитация небольшой задержки для плавности (данные уже есть, просто рендер)
+    setVisibleCount((n) => n + PAGE_SIZE);
     setTimeout(() => {
-      setVisibleBlocks((b) => b + 1);
       setIsLoadingMore(false);
       isLoadingRef.current = false;
     }, 150);
   }, [hasMore]);
 
-  // IntersectionObserver для автоподгрузки при скролле
+  // IntersectionObserver: при появлении sentinel в зоне видимости (или чуть раньше) догружаем
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel || !hasMore) return;
@@ -147,21 +127,14 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry.isIntersecting && !isLoadingRef.current && hasMore) {
-          loadMore();
-        }
+        if (!entry.isIntersecting || isLoadingRef.current) return;
+        loadMore();
       },
-      {
-        rootMargin: "600px", // Начинаем загрузку заранее (600px до появления sentinel)
-        threshold: 0,
-      }
+      { rootMargin: "400px 0px", threshold: 0 }
     );
 
     observer.observe(sentinel);
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [hasMore, loadMore]);
 
   return (
