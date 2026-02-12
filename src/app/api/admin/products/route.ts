@@ -168,7 +168,8 @@ const createVariantSchema = z.object({
         width_cm: z.number().int().min(0).optional().nullable(),
         price: z.number().min(0),
         is_preorder: z.boolean().default(false),
-        image_url: optionalImageUrl, // Обратная совместимость - игнорируется на клиенте
+        image_url: optionalImageUrl, // Главное изображение (обратная совместимость)
+        image_urls: z.array(z.string()).max(5).optional().nullable(), // Дополнительные изображения (до 5)
         sort_order: z.number().default(0),
         is_active: z.boolean().default(true),
         seo_title: z.string().max(300).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
@@ -346,7 +347,8 @@ export async function POST(request: NextRequest) {
         width_cm: v.width_cm ?? null,
         price: v.price,
         is_preorder: v.is_preorder,
-        image_url: v.image_url ?? null, // Обратная совместимость
+        image_url: v.image_url ?? null, // Главное изображение (обратная совместимость)
+        image_urls: v.image_urls && v.image_urls.length > 0 ? v.image_urls : null, // Дополнительные изображения
         sort_order: v.sort_order,
         is_active: v.is_active,
         seo_title: v.seo_title?.trim() || null, // Обратная совместимость

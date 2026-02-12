@@ -24,7 +24,8 @@ const variantSchema = z.object({
   is_preorder: z.boolean().default(false),
   is_active: z.boolean().default(true),
   sort_order: z.number().int().default(0),
-  image_url: optionalImageUrl, // Обратная совместимость - игнорируется на клиенте
+  image_url: optionalImageUrl, // Главное изображение (обратная совместимость)
+  image_urls: z.array(z.string()).max(5).optional().nullable(), // Дополнительные изображения (до 5)
   description: z.string().optional().nullable(),
   seo_title: z.string().max(300).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
   seo_description: z.string().max(500).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
@@ -72,7 +73,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         is_preorder: parsed.data.is_preorder,
         is_active: parsed.data.is_active,
         sort_order: parsed.data.sort_order,
-        image_url: parsed.data.image_url ?? null, // Обратная совместимость
+        image_url: parsed.data.image_url ?? null, // Главное изображение (обратная совместимость)
+        image_urls: parsed.data.image_urls && parsed.data.image_urls.length > 0 ? parsed.data.image_urls : null, // Дополнительные изображения (JSON)
         description: parsed.data.description ?? null,
         seo_title: parsed.data.seo_title?.trim() || null, // Обратная совместимость
         seo_description: parsed.data.seo_description?.trim() || null, // Обратная совместимость

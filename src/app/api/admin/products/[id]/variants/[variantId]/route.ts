@@ -39,7 +39,8 @@ const updateSchema = z.object({
   is_preorder: z.boolean().optional(),
   is_active: z.boolean().optional(),
   sort_order: z.number().int().optional(),
-  image_url: optionalImageUrl, // Обратная совместимость - игнорируется на клиенте
+  image_url: optionalImageUrl, // Главное изображение (обратная совместимость)
+  image_urls: z.array(z.string()).max(5).optional().nullable(), // Дополнительные изображения (до 5)
   description: z.string().optional().nullable(),
   seo_title: z.string().max(300).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
   seo_description: z.string().max(500).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
@@ -79,13 +80,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     // В БД колонка названия варианта — title. API принимает size; маппим в title для update.
-    const { size, bouquet_colors, ...rest } = parsed.data;
+    const { size, bouquet_colors, image_urls, ...rest } = parsed.data;
     const dbUpdate: Record<string, unknown> = size !== undefined ? { ...rest, title: size } : { ...rest };
     if (bouquet_colors !== undefined) {
       dbUpdate.bouquet_colors =
         Array.isArray(bouquet_colors) && bouquet_colors.length > 0
           ? bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
           : null;
+    }
+    if (image_urls !== undefined) {
+      dbUpdate.image_urls = Array.isArray(image_urls) && image_urls.length > 0 ? image_urls : null;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
