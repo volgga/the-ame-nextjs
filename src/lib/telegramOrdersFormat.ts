@@ -19,12 +19,16 @@ function formatAmountKopeks(kopeks: number): string {
   return rub.replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " ₽";
 }
 
-/** Полная ссылка на товар: NEXT_PUBLIC_SITE_URL + productPath */
+/** Прод-домен для ссылок в TG, если env не задан или localhost */
+const PRODUCTION_SITE_URL = "https://theame.ru";
+
+/** Полная ссылка на товар: SITE_URL или NEXT_PUBLIC_SITE_URL + productPath; иначе https://theame.ru (чтобы в TG всегда прод-ссылки). */
 function productFullUrl(productPath: string | undefined): string {
   if (!productPath?.trim()) return "";
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
+  let base = (process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "").trim().replace(/\/+$/, "");
+  if (!base || /localhost|127\.0\.0\.1/i.test(base)) base = PRODUCTION_SITE_URL;
   const path = productPath.startsWith("/") ? productPath : `/${productPath}`;
-  return base ? `${base}${path}` : "";
+  return `${base}${path}`;
 }
 
 /** Строка товара: название [вариант: X] [× N] — кликабельная ссылка (или только название, если нет path) */

@@ -3,16 +3,20 @@
  * Все сообщения форматируются в HTML с использованием эмодзи.
  */
 
+/** Прод-домен для ссылок в TG и формах, если env не задан или localhost */
+const PRODUCTION_SITE_URL = "https://theame.ru";
+
 /**
  * Собирает полный URL из базового адреса сайта и относительного пути.
- * Использует NEXT_PUBLIC_SITE_URL. Не допускает двойных слешей.
+ * SITE_URL / NEXT_PUBLIC_SITE_URL; если не заданы или localhost — используется https://theame.ru (чтобы в TG всегда были прод-ссылки).
  */
 export function buildAbsoluteUrl(pathOrEmpty: string | null | undefined): string | null {
-  const base =
+  let base =
     typeof process !== "undefined"
-      ? (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL)
-      : undefined;
-  if (!base || !pathOrEmpty) return null;
+      ? (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").trim()
+      : "";
+  if (!base || /localhost|127\.0\.0\.1/i.test(base)) base = PRODUCTION_SITE_URL;
+  if (!pathOrEmpty) return null;
   const baseClean = base.replace(/\/+$/, "");
   const path = pathOrEmpty.trim();
   if (!path) return baseClean;
