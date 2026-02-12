@@ -142,6 +142,7 @@ const createVariantSchema = z.object({
   description: z.string().optional(),
   composition_flowers: z.array(z.string()).optional().nullable(),
   image_url: optionalImageUrl,
+  images: z.array(z.string()).optional().nullable(),
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
   is_new: z.boolean().default(false),
@@ -292,8 +293,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Создать variant_product
-      // Для variant_products используем только image_url (главное изображение)
-      // Массив images хранится только в products, не в variant_products
+      // variant_products имеет image_url (главное) и images (массив до 5)
       const { data: vpData, error: vpError } = await sb
         .from("variant_products")
         .insert({
@@ -305,6 +305,7 @@ export async function POST(request: NextRequest) {
               ? parsed.data.composition_flowers
               : null,
           image_url: parsed.data.image_url ?? null,
+          images: parsed.data.images ?? null,
           min_price_cache: minPrice,
           is_active: parsed.data.is_active,
           is_hidden: parsed.data.is_hidden,
