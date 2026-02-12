@@ -41,8 +41,8 @@ type HeroCarouselProps = {
  * HeroCarousel — слайды из Supabase (hero_slides) или fallback.
  * next/image обеспечивает оптимизацию (webp/avif, sizes) для быстрой загрузки.
  *
- * Высота хиро — уменьшённая, лёгкая, премиальная (быстрее к контенту):
- * - mobile  (≤767px):  510px, object-position 50% 38% для лучшего кропа
+ * Высота хиро — стабильная на мобилке, без дёргания:
+ * - mobile  (<768px):  clamp(420px, 60vh, 560px) — предсказуемая высота
  * - tablet  (768–1199): 420px
  * - laptop  (1200–1439): 500px
  * - desktop (≥1440px):  560px, max 680px
@@ -253,13 +253,13 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
 
   return (
     <section className="relative hero-full-width bg-[#fff8ea] overflow-hidden pb-4 md:pb-6 -mx-0.5 md:-mx-8">
-      <div className="relative w-full h-[510px] min-[768px]:h-[420px] min-[1200px]:h-[500px] min-[1440px]:h-[560px] min-[1440px]:max-h-[680px]">
+      <div className="relative w-full h-[clamp(420px,60vh,560px)] min-[768px]:h-[420px] min-[1200px]:h-[500px] min-[1440px]:h-[560px] min-[1440px]:max-h-[680px]">
         <div
           className={`absolute inset-0 overflow-hidden bg-[#ece9e2] hero-reveal ${isRevealActive ? "hero-reveal--active" : ""}`}
         >
           <div
             ref={slideContainerRef}
-            className="flex h-full transition-transform ease-in-out"
+            className="flex h-full min-h-0 transition-transform ease-in-out"
             style={{
               width: `${loopSlides.length * 100}%`,
               transform: `translateX(-${index * (100 / loopSlides.length)}%)`,
@@ -276,22 +276,22 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                   src={slide.imageUrl}
                   alt="Слайд"
                   fill
-                  className="object-cover object-[50%_38%] md:object-center select-none pointer-events-none"
+                  className="object-cover object-center select-none pointer-events-none"
                   loading={i === realIndexOffset ? "eager" : "lazy"}
-                  sizes="(max-width: 640px) 1080px, (max-width: 1024px) 1600px, 1920px"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 1600px, 1920px"
                   quality={90}
                   priority={i === realIndexOffset}
                 />
                 {hasSlideButton(slide) && slide.buttonHref && slide.buttonText && (
                   <div
-                    className={`absolute inset-x-0 bottom-0 flex items-center px-6 pb-6 min-[768px]:px-8 min-[768px]:pb-8 z-10 ${getAlignClass(slide.buttonAlign)}`}
+                    className={`absolute inset-x-0 bottom-0 flex items-center px-4 pb-4 min-[768px]:px-8 min-[768px]:pb-8 z-10 ${getAlignClass(slide.buttonAlign)}`}
                   >
                     <Link
                       href={slide.buttonHref}
                       className={
                         slide.buttonVariant === "transparent"
-                          ? "rounded-lg px-6 py-3 text-base font-medium min-h-[48px] min-w-[48px] inline-flex items-center justify-center border-2 border-white text-white bg-transparent hover:bg-white/10 transition"
-                          : "rounded-lg px-6 py-3 text-base font-medium min-h-[48px] min-w-[48px] inline-flex items-center justify-center bg-accent-btn text-white border-0 hover:bg-accent-btn-hover active:bg-accent-btn-active transition"
+                          ? "rounded-lg px-5 py-2.5 min-[768px]:px-6 min-[768px]:py-3 text-[clamp(0.875rem,2.5vw,1rem)] font-medium leading-snug min-h-[44px] min-w-[44px] inline-flex items-center justify-center border-2 border-white text-white bg-transparent hover:bg-white/10 transition max-w-[min(calc(100vw-2rem),22rem)] break-words text-center"
+                          : "rounded-lg px-5 py-2.5 min-[768px]:px-6 min-[768px]:py-3 text-[clamp(0.875rem,2.5vw,1rem)] font-medium leading-snug min-h-[44px] min-w-[44px] inline-flex items-center justify-center bg-accent-btn text-white border-0 hover:bg-accent-btn-hover active:bg-accent-btn-active transition max-w-[min(calc(100vw-2rem),22rem)] break-words text-center"
                       }
                     >
                       {slide.buttonText}
