@@ -142,7 +142,6 @@ const createVariantSchema = z.object({
   description: z.string().optional(),
   composition_flowers: z.array(z.string()).optional().nullable(),
   image_url: optionalImageUrl,
-  images: z.array(z.string()).optional().nullable(),
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
   is_new: z.boolean().default(false),
@@ -169,18 +168,8 @@ const createVariantSchema = z.object({
         width_cm: z.number().int().min(0).optional().nullable(),
         price: z.number().min(0),
         is_preorder: z.boolean().default(false),
-        image_url: optionalImageUrl, // Главное изображение (обратная совместимость)
-        image_urls: z.array(z.string()).max(5).optional().nullable(), // Дополнительные изображения (до 5)
         sort_order: z.number().default(0),
         is_active: z.boolean().default(true),
-        seo_title: z.string().max(300).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
-        seo_description: z.string().max(500).optional().nullable(), // Обратная совместимость - игнорируется на клиенте
-        og_image: z
-          .string()
-          .max(2000)
-          .optional()
-          .nullable()
-          .transform((v) => (v === "" ? null : v)), // Обратная совместимость - игнорируется на клиенте
         bouquet_colors: z.array(z.string()).optional().nullable(),
       })
     )
@@ -303,6 +292,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Создать variant_product
+      // Для variant_products используем только image_url (главное изображение)
+      // Массив images хранится только в products, не в variant_products
       const { data: vpData, error: vpError } = await sb
         .from("variant_products")
         .insert({
@@ -314,7 +305,6 @@ export async function POST(request: NextRequest) {
               ? parsed.data.composition_flowers
               : null,
           image_url: parsed.data.image_url ?? null,
-          images: parsed.data.images ?? null,
           min_price_cache: minPrice,
           is_active: parsed.data.is_active,
           is_hidden: parsed.data.is_hidden,
@@ -349,13 +339,8 @@ export async function POST(request: NextRequest) {
         width_cm: v.width_cm ?? null,
         price: v.price,
         is_preorder: v.is_preorder,
-        image_url: v.image_url ?? null, // Главное изображение (обратная совместимость)
-        image_urls: v.image_urls && v.image_urls.length > 0 ? v.image_urls : null, // Дополнительные изображения
         sort_order: v.sort_order,
         is_active: v.is_active,
-        seo_title: v.seo_title?.trim() || null, // Обратная совместимость
-        seo_description: v.seo_description?.trim() || null, // Обратная совместимость
-        og_image: v.og_image?.trim() || null, // Обратная совместимость
         bouquet_colors:
           v.bouquet_colors && v.bouquet_colors.length > 0
             ? v.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)

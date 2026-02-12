@@ -89,7 +89,6 @@ const updateVariantSchema = z.object({
   height_cm: z.number().int().min(0).optional().nullable(),
   width_cm: z.number().int().min(0).optional().nullable(),
   image_url: optionalImageUrl,
-  images: z.array(z.string()).optional().nullable(),
   is_active: z.boolean().optional(),
   is_hidden: z.boolean().optional(),
   category_slug: z.string().nullable().optional(),

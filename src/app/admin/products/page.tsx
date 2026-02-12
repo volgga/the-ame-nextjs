@@ -865,12 +865,12 @@ function AdminProductsPageContent() {
         }
         const allUrls = [...existingImageUrls, ...uploadedUrls].slice(0, MAX_IMAGES);
         const mainUrl = allUrls[productImagesMainIndex] ?? allUrls[0] ?? null;
-        const otherUrls = allUrls.filter((_, i) => i !== productImagesMainIndex);
+        // Для вариантных товаров используем только image_url (главное изображение)
+        // Массив images хранится только в products, не в variant_products
         const payload = {
           name: createForm.name.trim(),
           description: createForm.description.trim() || null,
           image_url: mainUrl,
-          images: otherUrls.length > 0 ? otherUrls : null,
           is_active: true,
           is_hidden: createIsHidden,
           is_new: createIsNew,
@@ -1194,7 +1194,6 @@ function AdminProductsPageContent() {
           slug: slug || undefined,
           description: createForm.description.trim() || undefined,
           image_url: mainUrl ?? null,
-          images: otherUrls.length > 0 ? otherUrls : null,
           is_active: true,
           is_hidden: createIsHidden,
           is_new: createIsNew,
