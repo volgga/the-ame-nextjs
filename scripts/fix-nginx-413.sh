@@ -11,8 +11,12 @@ CONF="/etc/nginx/sites-available/theame.ru"
 cp "$CONF" "${CONF}.bak.$(date +%Y%m%d-%H%M%S)"
 echo "Backup created"
 
-# Удаляем старый client_max_body_size если есть
+# Удаляем все старые директивы, чтобы избежать дубликатов
 sed -i '/^[[:space:]]*client_max_body_size/d' "$CONF" 2>/dev/null || true
+sed -i '/^[[:space:]]*client_body_buffer_size/d' "$CONF" 2>/dev/null || true
+sed -i '/^[[:space:]]*proxy_read_timeout/d' "$CONF" 2>/dev/null || true
+sed -i '/^[[:space:]]*proxy_send_timeout/d' "$CONF" 2>/dev/null || true
+sed -i '/^[[:space:]]*send_timeout/d' "$CONF" 2>/dev/null || true
 
 # Вставляем директивы после первой строки "server {"
 awk '
