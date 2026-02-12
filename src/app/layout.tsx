@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/app/AppShell";
+import { YandexMetrika } from "@/components/analytics/YandexMetrika";
 import { CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
 import { getHomeMarquee } from "@/lib/homeMarquee";
-
-const YANDEX_METRIKA_ID = 103806735;
 
 // Подключаем шрифт Montserrat (как в старом проекте)
 const montserrat = Montserrat({
@@ -96,31 +94,7 @@ export default async function RootLayout({
           }}
         />
 
-        {/* Яндекс.Метрика: afterInteractive, без блокировки SSR */}
-        <Script
-          id="yandex-metrika"
-          src="https://mc.yandex.ru/metrika/tag.js"
-          strategy="afterInteractive"
-          onLoad={() => {
-            if (typeof window !== "undefined" && (window as unknown as { ym?: (id: number, action: string, opts?: object) => void }).ym) {
-              (window as unknown as { ym: (id: number, action: string, opts?: object) => void }).ym(YANDEX_METRIKA_ID, "init", {
-                clickmap: true,
-                trackLinks: true,
-                accurateTrackBounce: true,
-                webvisor: true,
-              });
-            }
-          }}
-        />
-        <noscript>
-          <div>
-            <img
-              src={`https://mc.yandex.ru/watch/${YANDEX_METRIKA_ID}`}
-              style={{ position: "absolute", left: "-9999px" }}
-              alt=""
-            />
-          </div>
-        </noscript>
+        <YandexMetrika />
 
         {/* Основная структура: AppShell с провайдерами + контент */}
         <AppShell initialMarquee={marquee}>{children}</AppShell>
