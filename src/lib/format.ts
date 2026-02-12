@@ -8,7 +8,10 @@
  * Использует NEXT_PUBLIC_SITE_URL. Не допускает двойных слешей.
  */
 export function buildAbsoluteUrl(pathOrEmpty: string | null | undefined): string | null {
-  const base = typeof process !== "undefined" ? process.env.NEXT_PUBLIC_SITE_URL : undefined;
+  const base =
+    typeof process !== "undefined"
+      ? (process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL)
+      : undefined;
   if (!base || !pathOrEmpty) return null;
   const baseClean = base.replace(/\/+$/, "");
   const path = pathOrEmpty.trim();
@@ -191,7 +194,7 @@ export function formatGiftHintMessage(data: GiftHintFormData, _leadId?: string):
  *
  * Телефон: +75454545455
  * Товар: теста
- * Товар: http://localhost:3000/product/testa
+ * Товар: https://theame.ru/product/slug
  * Дата: 2025-01-01
  */
 export function formatPreorderMessage(data: PreorderFormData, _leadId?: string): string {

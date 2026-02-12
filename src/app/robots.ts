@@ -1,6 +1,10 @@
 import type { MetadataRoute } from "next";
 import { CANONICAL_BASE } from "@/lib/seo";
 
+/**
+ * robots.txt — сайт открыт для индексации.
+ * Каталог, товары, блог разрешены. Закрыты только API, админка, служебные пути.
+ */
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
