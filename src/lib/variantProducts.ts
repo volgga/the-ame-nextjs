@@ -68,7 +68,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, composition_flowers, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors"
+        "id, slug, name, description, composition_flowers, image_url, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -83,20 +83,35 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     const vpIds = (data as VariantProductsRow[]).map((r) => r.id);
     const { data: variantsData } = await supabase
       .from("product_variants")
-      .select("product_id, bouquet_colors, is_preorder, sort_order")
+      .select("product_id, bouquet_colors, is_preorder, is_new, new_until, sort_order")
       .in("product_id", vpIds)
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
     const colorsByProductId = new Map<number, string[]>();
     const firstVariantPreorderByProductId = new Map<number, boolean>();
+    const variantIsNewByProductId = new Map<number, { isNew: boolean; newUntil: string | null }>();
     for (const v of variantsData ?? []) {
-      const row = v as { product_id: number; bouquet_colors?: string[] | null; is_preorder?: boolean | null };
+      const row = v as { product_id: number; bouquet_colors?: string[] | null; is_preorder?: boolean | null; is_new?: boolean | null; new_until?: string | null };
       const pid = row.product_id;
       const arr = row.bouquet_colors;
 
       // Фиксируем флаг предзаказа только для ПЕРВОГО активного варианта (по sort_order)
       if (!firstVariantPreorderByProductId.has(pid)) {
         firstVariantPreorderByProductId.set(pid, row.is_preorder ?? false);
+      }
+
+      // Для флага "новый" проверяем все варианты: если хотя бы один вариант имеет флаг "Новый" с валидной датой,
+      // то бейдж показывается на карточке вариантного товара
+      if (row.is_new === true) {
+        const existing = variantIsNewByProductId.get(pid);
+        const newUntil = row.new_until ?? null;
+        // Если уже есть вариант с флагом "Новый", выбираем тот, у которого более поздняя дата new_until
+        if (!existing || (newUntil && (!existing.newUntil || new Date(newUntil) > new Date(existing.newUntil)))) {
+          variantIsNewByProductId.set(pid, {
+            isNew: true,
+            newUntil: newUntil,
+          });
+        }
       }
 
       if (!Array.isArray(arr)) continue;
@@ -141,6 +156,12 @@ export async function getAllVariantProducts(): Promise<Product[]> {
         const variantColors = colorsByProductId.get(row.id) ?? [];
         const mergedColors = [...new Set([...productColors, ...variantColors])];
         const firstVariantIsPreorder = firstVariantPreorderByProductId.get(row.id) ?? false;
+        const variantIsNew = variantIsNewByProductId.get(row.id);
+
+        // Для вариантных товаров флаг "новый" определяется по варианту, если хотя бы один вариант имеет флаг "Новый",
+        // иначе по самому товару (variant_products.is_new)
+        const effectiveIsNew = variantIsNew?.isNew ?? row.is_new ?? false;
+        const effectiveNewUntil = variantIsNew?.newUntil ?? row.new_until ?? null;
 
         return {
           id: VP_ID_PREFIX + String(row.id),
@@ -170,8 +191,8 @@ export async function getAllVariantProducts(): Promise<Product[]> {
           bouquetColors: mergedColors.length > 0 ? mergedColors : null,
           // Для вариантных товаров флаг предзаказа на витрине определяется только по ПЕРВОМУ активному варианту
           isPreorder: firstVariantIsPreorder,
-          isNew: row.is_new ?? false,
-          newUntil: row.new_until ?? null,
+          isNew: effectiveIsNew,
+          newUntil: effectiveNewUntil,
         } satisfies Product;
       })
     );
