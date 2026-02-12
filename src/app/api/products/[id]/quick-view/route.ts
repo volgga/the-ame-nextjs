@@ -46,7 +46,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       // Получаем основной товар
       const { data: vp, error: vpErr } = await supabase
         .from("variant_products")
-        .select("id, name, description, image_url, min_price_cache, category_slug, category_slugs, is_preorder")
+        .select("id, name, description, image_url, images, min_price_cache, category_slug, category_slugs, is_preorder")
         .eq("id", n)
         .or("is_active.eq.true,is_active.is.null")
         .or("is_hidden.eq.false,is_hidden.is.null")
@@ -56,22 +56,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         return NextResponse.json({ error: "Product not found" }, { status: 404 });
       }
 
-      // Получаем варианты для изображений
+      // Получаем варианты только для состава
       const { data: variants } = await supabase
         .from("product_variants")
-        .select("image_url, composition")
+        .select("composition")
         .eq("product_id", n)
         .eq("is_active", true);
 
-      const images: string[] = [];
-      if (vp.image_url) images.push(vp.image_url);
-      if (variants) {
-        variants.forEach((v) => {
-          if (v.image_url && !images.includes(v.image_url)) {
-            images.push(v.image_url);
-          }
-        });
-      }
+      // Используем только изображения товара (не вариантов)
+      const imagesRaw = vp.images;
+      const images =
+        Array.isArray(imagesRaw) && imagesRaw.length > 0
+          ? imagesRaw.filter((u): u is string => typeof u === "string" && u.length > 0)
+          : [];
+      // Если есть основное изображение, добавляем его первым
+      const allImages = vp.image_url ? [vp.image_url, ...images.filter((img) => img !== vp.image_url)] : images;
 
       // Получаем категории (из category_slugs или category_slug)
       const categories: string[] = [];
@@ -101,7 +100,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         name: vp.name ?? "",
         price: Number(vp.min_price_cache) ?? 0,
         image: vp.image_url ?? "",
-        images: images.length > 0 ? images : [vp.image_url ?? ""],
+        images: allImages.length > 0 ? allImages : [vp.image_url ?? ""],
         description: vp.description ?? "",
         composition: composition?.trim() || null,
         categories,

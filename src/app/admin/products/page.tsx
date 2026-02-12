@@ -59,10 +59,6 @@ type Variant = {
   is_preorder: boolean;
   sort_order: number;
   bouquetColors?: string[];
-  imageUrls?: string[]; // Массив URL изображений (до 5) - существующие
-  variantImages?: ImageItem[]; // Новые загружаемые изображения
-  variantImagesMainIndex?: number; // Индекс главного изображения (относительно всех изображений)
-  variantImagesDraggedIndex?: number | null; // Для drag & drop
 };
 
 const initialForm = {
@@ -411,21 +407,6 @@ function AdminProductsPageContent() {
               },
               idx: number
             ) => {
-              // Обратная совместимость: если есть старое image_url, используем его как первое изображение
-              // Обратная совместимость: если есть старое image_url, используем его как первое изображение
-              const existingImages: string[] = [];
-              if (v.image_url && typeof v.image_url === "string") {
-                existingImages.push(v.image_url);
-              }
-              // Добавляем дополнительные изображения из image_urls (если есть)
-              if (Array.isArray(v.image_urls)) {
-                const additional = v.image_urls.filter(
-                  (u: unknown) => typeof u === "string" && u && !existingImages.includes(u)
-                );
-                existingImages.push(...additional);
-              }
-              // Ограничиваем до 5 изображений
-              const finalImages = existingImages.slice(0, MAX_IMAGES);
               return {
                 id: v.id,
                 name: v.name ?? v.title ?? v.size ?? `Вариант ${idx + 1}`,
@@ -436,10 +417,6 @@ function AdminProductsPageContent() {
                 is_preorder: v.is_preorder ?? false,
                 sort_order: idx,
                 bouquetColors: Array.isArray(v.bouquet_colors) ? filterValidBouquetColorKeys(v.bouquet_colors) : [],
-                imageUrls: finalImages, // Максимум 5
-                variantImages: [],
-                variantImagesMainIndex: 0,
-                variantImagesDraggedIndex: null,
               };
             }
           );
@@ -581,9 +558,11 @@ function AdminProductsPageContent() {
     if (!files?.length) return;
     const allowed = Array.from(files).filter((f) => ALLOWED_IMAGE_TYPES.split(",").some((t) => f.type === t.trim()));
     setProductImages((prev) => {
+      const currentTotal = existingImageUrls.length + prev.length;
+      const remaining = Math.max(0, MAX_IMAGES - currentTotal);
+      if (remaining <= 0) return prev;
       const next = [...prev];
-      for (const file of allowed) {
-        if (next.length >= MAX_IMAGES) break;
+      for (const file of allowed.slice(0, remaining)) {
         next.push({ file, previewUrl: URL.createObjectURL(file) });
       }
       return next;
@@ -646,10 +625,6 @@ function AdminProductsPageContent() {
       is_preorder: false,
       sort_order: variants.length,
       bouquetColors: [],
-      imageUrls: [],
-      variantImages: [],
-      variantImagesMainIndex: 0,
-      variantImagesDraggedIndex: null,
     };
     setVariants((prev) => [...prev, newVariant]);
     // Первый вариант развернут по умолчанию, остальные — свернуты
@@ -694,95 +669,6 @@ function AdminProductsPageContent() {
       next.splice(toIndex, 0, removed);
       return next.map((v, idx) => ({ ...v, sort_order: idx }));
     });
-  }
-
-  // Функции для работы с изображениями варианта
-  function addVariantImages(variantId: string | number, files: FileList | null) {
-    if (!files?.length) return;
-    const allowed = Array.from(files).filter((f) => ALLOWED_IMAGE_TYPES.split(",").some((t) => f.type === t.trim()));
-    setVariants((prev) =>
-      prev.map((v) => {
-        if (v.id !== variantId) return v;
-        const existingCount = (v.imageUrls?.length ?? 0) + (v.variantImages?.length ?? 0);
-        const remaining = Math.max(0, MAX_IMAGES - existingCount);
-        const toAdd = allowed.slice(0, remaining).map((file) => ({
-          file,
-          previewUrl: URL.createObjectURL(file),
-        }));
-        return {
-          ...v,
-          variantImages: [...(v.variantImages ?? []), ...toAdd],
-        };
-      })
-    );
-  }
-
-  function removeVariantImage(variantId: string | number, index: number, isExisting: boolean) {
-    setVariants((prev) =>
-      prev.map((v) => {
-        if (v.id !== variantId) return v;
-        if (isExisting) {
-          // Удаляем существующее изображение
-          const newImageUrls = (v.imageUrls ?? []).filter((_, i) => i !== index);
-          return {
-            ...v,
-            imageUrls: newImageUrls,
-            variantImagesMainIndex: Math.min(v.variantImagesMainIndex ?? 0, Math.max(0, newImageUrls.length - 1)),
-          };
-        } else {
-          // Удаляем новое загружаемое изображение
-          const imageToRemove = v.variantImages?.[index];
-          if (imageToRemove) {
-            URL.revokeObjectURL(imageToRemove.previewUrl);
-          }
-          const newVariantImages = (v.variantImages ?? []).filter((_, i) => i !== index);
-          const existingCount = v.imageUrls?.length ?? 0;
-          return {
-            ...v,
-            variantImages: newVariantImages,
-            variantImagesMainIndex:
-              v.variantImagesMainIndex !== undefined && v.variantImagesMainIndex >= existingCount + index
-                ? Math.max(existingCount, v.variantImagesMainIndex - 1)
-                : v.variantImagesMainIndex ?? 0,
-          };
-        }
-      })
-    );
-  }
-
-  function setVariantImageMain(variantId: string | number, index: number) {
-    setVariants((prev) =>
-      prev.map((v) => (v.id === variantId ? { ...v, variantImagesMainIndex: index } : v))
-    );
-  }
-
-  function reorderVariantImages(variantId: string | number, fromIndex: number, toIndex: number) {
-    if (fromIndex === toIndex) return;
-    setVariants((prev) =>
-      prev.map((v) => {
-        if (v.id !== variantId) return v;
-        const existingCount = v.imageUrls?.length ?? 0;
-        // Переупорядочиваем только новые изображения (variantImages)
-        if (fromIndex >= existingCount && toIndex >= existingCount) {
-          const fileFromIndex = fromIndex - existingCount;
-          const fileToIndex = toIndex - existingCount;
-          const newVariantImages = [...(v.variantImages ?? [])];
-          const [removed] = newVariantImages.splice(fileFromIndex, 1);
-          newVariantImages.splice(fileToIndex, 0, removed);
-          return {
-            ...v,
-            variantImages: newVariantImages,
-            variantImagesMainIndex:
-              v.variantImagesMainIndex === fromIndex
-                ? toIndex
-                : v.variantImagesMainIndex !== undefined && v.variantImagesMainIndex === toIndex
-                  ? fromIndex
-                  : v.variantImagesMainIndex ?? 0,
-          };
-        }
-        return v;
-      })
-    );
   }
 
   useEffect(() => {
@@ -869,7 +755,7 @@ function AdminProductsPageContent() {
           }
           setProductImagesUploading(false);
         }
-        const allUrls = [...existingImageUrls, ...uploadedUrls];
+        const allUrls = [...existingImageUrls, ...uploadedUrls].slice(0, MAX_IMAGES);
         const mainUrl = allUrls[productImagesMainIndex] ?? allUrls[0] ?? null;
         const otherUrls = allUrls.filter((_, i) => i !== productImagesMainIndex);
         const payload = {
@@ -977,7 +863,7 @@ function AdminProductsPageContent() {
           }
           setProductImagesUploading(false);
         }
-        const allUrls = [...existingImageUrls, ...uploadedUrls];
+        const allUrls = [...existingImageUrls, ...uploadedUrls].slice(0, MAX_IMAGES);
         const mainUrl = allUrls[productImagesMainIndex] ?? allUrls[0] ?? null;
         const otherUrls = allUrls.filter((_, i) => i !== productImagesMainIndex);
         const payload = {
@@ -1035,28 +921,6 @@ function AdminProductsPageContent() {
           }
         }
         for (const v of variants) {
-          // Загружаем изображения варианта, если есть новые
-          let variantImageUrls: string[] = [...(v.imageUrls ?? [])];
-          if (v.variantImages && v.variantImages.length > 0) {
-            for (const img of v.variantImages) {
-              const formData = new FormData();
-              formData.append("file", img.file);
-              const uploadRes = await fetch("/api/admin/products/upload", {
-                method: "POST",
-                body: formData,
-              });
-              const { data: uploadData } = await readJsonSafe<{ error?: string; image_url?: string }>(uploadRes);
-              if (uploadRes.ok && uploadData?.image_url) {
-                variantImageUrls.push(uploadData.image_url);
-              }
-            }
-          }
-          // Ограничиваем до 5 изображений
-          variantImageUrls = variantImageUrls.slice(0, MAX_IMAGES);
-          const mainVariantImageIndex = v.variantImagesMainIndex ?? 0;
-          const mainVariantImageUrl = variantImageUrls[mainVariantImageIndex] ?? variantImageUrls[0] ?? null;
-          const otherVariantImageUrls = variantImageUrls.filter((_, i) => i !== mainVariantImageIndex);
-
           if (typeof v.id === "number") {
             const vRes = await fetch(`/api/admin/products/${editProductId}/variants/${v.id}`, {
               method: "PATCH",
@@ -1071,8 +935,6 @@ function AdminProductsPageContent() {
                 sort_order: v.sort_order,
                 bouquet_colors:
                   v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
-                image_url: mainVariantImageUrl,
-                image_urls: otherVariantImageUrls.length > 0 ? otherVariantImageUrls : null,
               }),
             });
             if (!vRes.ok) {
@@ -1098,8 +960,6 @@ function AdminProductsPageContent() {
                 is_active: true,
                 bouquet_colors:
                   v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
-                image_url: mainVariantImageUrl,
-                image_urls: otherVariantImageUrls.length > 0 ? otherVariantImageUrls : null,
               }),
             });
             if (!vRes.ok) {
@@ -1215,10 +1075,11 @@ function AdminProductsPageContent() {
           setProductImagesUploading(false);
         }
 
-        const mainUrl = imageUrls[productImagesMainIndex] ?? imageUrls[0] ?? undefined;
+        const limitedImageUrls = imageUrls.slice(0, MAX_IMAGES);
+        const mainUrl = limitedImageUrls[productImagesMainIndex] ?? limitedImageUrls[0] ?? undefined;
         const otherUrls =
-          imageUrls.length > 0
-            ? [...imageUrls.slice(0, productImagesMainIndex), ...imageUrls.slice(productImagesMainIndex + 1)]
+          limitedImageUrls.length > 0
+            ? [...limitedImageUrls.slice(0, productImagesMainIndex), ...limitedImageUrls.slice(productImagesMainIndex + 1)]
             : [];
         const slug = slugify(createForm.name);
         const category_slugs = selectedCategorySlugs.length > 0 ? selectedCategorySlugs : null;
@@ -1315,10 +1176,11 @@ function AdminProductsPageContent() {
           setProductImagesUploading(false);
         }
 
-        const mainUrl = imageUrls[productImagesMainIndex] ?? imageUrls[0] ?? undefined;
+        const limitedImageUrls = imageUrls.slice(0, MAX_IMAGES);
+        const mainUrl = limitedImageUrls[productImagesMainIndex] ?? limitedImageUrls[0] ?? undefined;
         const otherUrls =
-          imageUrls.length > 0
-            ? [...imageUrls.slice(0, productImagesMainIndex), ...imageUrls.slice(productImagesMainIndex + 1)]
+          limitedImageUrls.length > 0
+            ? [...limitedImageUrls.slice(0, productImagesMainIndex), ...limitedImageUrls.slice(productImagesMainIndex + 1)]
             : [];
 
         // Создание вариантного товара с вариантами
@@ -1339,46 +1201,18 @@ function AdminProductsPageContent() {
           category_slugs,
           composition_flowers,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
-          variants: await Promise.all(
-            variants.map(async (v) => {
-              // Загружаем изображения варианта, если есть новые
-              let variantImageUrls: string[] = [...(v.imageUrls ?? [])];
-              if (v.variantImages && v.variantImages.length > 0) {
-                for (const img of v.variantImages) {
-                  const formData = new FormData();
-                  formData.append("file", img.file);
-                  const uploadRes = await fetch("/api/admin/products/upload", {
-                    method: "POST",
-                    body: formData,
-                  });
-                  const { data: uploadData } = await readJsonSafe<{ error?: string; image_url?: string }>(uploadRes);
-                  if (uploadRes.ok && uploadData?.image_url) {
-                    variantImageUrls.push(uploadData.image_url);
-                  }
-                }
-              }
-              // Ограничиваем до 5 изображений
-              variantImageUrls = variantImageUrls.slice(0, MAX_IMAGES);
-              const mainVariantImageIndex = v.variantImagesMainIndex ?? 0;
-              const mainVariantImageUrl = variantImageUrls[mainVariantImageIndex] ?? variantImageUrls[0] ?? null;
-              const otherVariantImageUrls = variantImageUrls.filter((_, i) => i !== mainVariantImageIndex);
-
-              return {
-                name: v.name.trim(),
-                composition: v.composition.trim() || null,
-                height_cm: v.height_cm ?? null,
-                width_cm: v.width_cm ?? null,
-                price: v.price,
-                is_preorder: v.is_preorder,
-                sort_order: v.sort_order,
-                is_active: true,
-                bouquet_colors:
-                  v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
-                image_url: mainVariantImageUrl,
-                image_urls: otherVariantImageUrls.length > 0 ? otherVariantImageUrls : null,
-              };
-            })
-          ),
+          variants: variants.map((v) => ({
+            name: v.name.trim(),
+            composition: v.composition.trim() || null,
+            height_cm: v.height_cm ?? null,
+            width_cm: v.width_cm ?? null,
+            price: v.price,
+            is_preorder: v.is_preorder,
+            sort_order: v.sort_order,
+            is_active: true,
+            bouquet_colors:
+              v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
+          })),
         };
 
         const res = await fetch("/api/admin/products", {
@@ -2371,129 +2205,6 @@ function AdminProductsPageContent() {
                                             <span className="text-xs text-color-text-main">Предзаказ</span>
                                           </label>
                                         </div>
-                                      </div>
-                                      {/* Изображения варианта */}
-                                      <div className="mt-2">
-                                        <label className="block text-xs text-color-text-main mb-1">Изображения варианта</label>
-                                        <p className="text-xs text-color-text-secondary mb-1.5">
-                                          Максимум 5 файлов. Первое изображение — главное.
-                                        </p>
-                                        {(() => {
-                                          const existingImages = variant.imageUrls ?? [];
-                                          const newImages = variant.variantImages ?? [];
-                                          const totalImages = existingImages.length + newImages.length;
-                                          return (
-                                            <>
-                                              <input
-                                                type="file"
-                                                accept={ALLOWED_IMAGE_TYPES}
-                                                multiple
-                                                onChange={(e) => addVariantImages(variant.id, e.target.files)}
-                                                disabled={totalImages >= MAX_IMAGES}
-                                                className="block w-full text-xs text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-2 file:py-1 file:text-white file:text-xs file:hover:bg-accent-btn-hover focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] disabled:opacity-50"
-                                              />
-                                              {totalImages > 0 && (
-                                                <div className="mt-2 flex flex-wrap gap-2">
-                                                  {existingImages.map((url, index) => {
-                                                    const mainIndex = variant.variantImagesMainIndex ?? 0;
-                                                    return (
-                                                      <div
-                                                        key={`existing-${index}`}
-                                                        className="relative w-20 h-20 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] border-border-block"
-                                                      >
-                                                        <img src={url} alt="" className="w-full h-full object-cover" />
-                                                        {mainIndex === index && (
-                                                          <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-[10px] text-center py-0.5">
-                                                            Главное
-                                                          </span>
-                                                        )}
-                                                        <button
-                                                          type="button"
-                                                          onClick={() => setVariantImageMain(variant.id, index)}
-                                                          title="Сделать главным"
-                                                          className="absolute top-0.5 left-0.5 w-5 h-5 rounded bg-white/90 flex items-center justify-center text-[10px] hover:bg-white"
-                                                        >
-                                                          ★
-                                                        </button>
-                                                        <button
-                                                          type="button"
-                                                          onClick={() => removeVariantImage(variant.id, index, true)}
-                                                          title="Удалить"
-                                                          className="absolute top-0.5 right-0.5 w-5 h-5 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-xs leading-none"
-                                                        >
-                                                          ×
-                                                        </button>
-                                                      </div>
-                                                    );
-                                                  })}
-                                                  {newImages.map((item, index) => {
-                                                    const combinedIndex = existingImages.length + index;
-                                                    const mainIndex = variant.variantImagesMainIndex ?? 0;
-                                                    return (
-                                                      <div
-                                                        key={`file-${index}`}
-                                                        data-index={combinedIndex}
-                                                        draggable
-                                                        onDragStart={() =>
-                                                          updateVariant(variant.id, { variantImagesDraggedIndex: combinedIndex })
-                                                        }
-                                                        onDragOver={(ev) => ev.preventDefault()}
-                                                        onDrop={(ev) => {
-                                                          ev.preventDefault();
-                                                          const toIndex = parseInt(
-                                                            ev.currentTarget.getAttribute("data-index") ?? "0",
-                                                            10
-                                                          );
-                                                          if (
-                                                            variant.variantImagesDraggedIndex !== null &&
-                                                            variant.variantImagesDraggedIndex !== undefined &&
-                                                            variant.variantImagesDraggedIndex !== toIndex
-                                                          ) {
-                                                            reorderVariantImages(
-                                                              variant.id,
-                                                              variant.variantImagesDraggedIndex,
-                                                              toIndex
-                                                            );
-                                                          }
-                                                          updateVariant(variant.id, { variantImagesDraggedIndex: null });
-                                                        }}
-                                                        onDragEnd={() => updateVariant(variant.id, { variantImagesDraggedIndex: null })}
-                                                        className={`relative w-20 h-20 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] cursor-grab active:cursor-grabbing ${
-                                                          variant.variantImagesDraggedIndex === combinedIndex
-                                                            ? "border-color-text-main opacity-80"
-                                                            : "border-border-block"
-                                                        }`}
-                                                      >
-                                                        <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
-                                                        {mainIndex === combinedIndex && (
-                                                          <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-[10px] text-center py-0.5">
-                                                            Главное
-                                                          </span>
-                                                        )}
-                                                        <button
-                                                          type="button"
-                                                          onClick={() => setVariantImageMain(variant.id, combinedIndex)}
-                                                          title="Сделать главным"
-                                                          className="absolute top-0.5 left-0.5 w-5 h-5 rounded bg-white/90 flex items-center justify-center text-[10px] hover:bg-white"
-                                                        >
-                                                          ★
-                                                        </button>
-                                                        <button
-                                                          type="button"
-                                                          onClick={() => removeVariantImage(variant.id, index, false)}
-                                                          title="Удалить"
-                                                          className="absolute top-0.5 right-0.5 w-5 h-5 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-xs leading-none"
-                                                        >
-                                                          ×
-                                                        </button>
-                                                      </div>
-                                                    );
-                                                  })}
-                                                </div>
-                                              )}
-                                            </>
-                                          );
-                                        })()}
                                       </div>
                                       {/* Кнопка удаления — только в развернутом состоянии */}
                                       <div className="pt-1 border-t border-border-block">
