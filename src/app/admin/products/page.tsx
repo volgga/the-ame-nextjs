@@ -497,8 +497,6 @@ function AdminProductsPageContent() {
     if (!description) errors.description = "Введите описание";
 
     if (createType === "simple") {
-      const composition = createForm.composition_size.trim();
-      if (!composition) errors.composition_size = "Введите состав";
       const totalImages = existingImageUrls.length + productImages.length;
       if (totalImages === 0) errors.images = "Загрузите хотя бы одно фото";
       if (selectedCategorySlugs.length === 0) errors.categories = "Выберите минимум одну категорию";
