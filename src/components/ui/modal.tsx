@@ -63,6 +63,7 @@ export function Modal({ isOpen, onClose, title, children, unsavedChanges = false
 
   // Блокировка скролла страницы при открытой модалке
   useEffect(() => {
+    if (typeof document === "undefined" || !document.body) return;
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
@@ -91,6 +92,9 @@ export function Modal({ isOpen, onClose, title, children, unsavedChanges = false
   }, [isOpen, showConfirm, requestClose]);
 
   if (!mounted || !isOpen) return null;
+
+  // Защита от SSR/гидрации: document.body доступен только в браузере
+  if (typeof document === "undefined" || !document.body) return null;
 
   const content = (
     <div className="fixed inset-0 flex items-center justify-center p-4" style={{ zIndex: Z_OVERLAY }}>

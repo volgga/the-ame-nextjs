@@ -13,24 +13,27 @@ import type { PromoFormRef } from "@/components/admin/home/PromoForm";
 
 const MarqueeForm = dynamic(
   () => import("@/components/admin/home/MarqueeForm").then((m) => ({ default: m.MarqueeForm })),
-  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
+  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" />, ssr: false }
 );
 const ReviewsForm = dynamic(
   () => import("@/components/admin/home/ReviewsForm").then((m) => ({ default: m.ReviewsForm })),
-  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
+  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" />, ssr: false }
 );
 const AboutForm = dynamic(() => import("@/components/admin/home/AboutForm").then((m) => ({ default: m.AboutForm })), {
   loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" />,
+  ssr: false,
 });
 const FaqForm = dynamic(() => import("@/components/admin/home/FaqForm").then((m) => ({ default: m.FaqForm })), {
   loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" />,
+  ssr: false,
 });
 const OrderBlockForm = dynamic(
   () => import("@/components/admin/home/OrderBlockForm").then((m) => ({ default: m.OrderBlockForm })),
-  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" /> }
+  { loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" />, ssr: false }
 );
 const PromoForm = dynamic(() => import("@/components/admin/home/PromoForm").then((m) => ({ default: m.PromoForm })), {
   loading: () => <div className="h-20 animate-pulse rounded bg-gray-200" />,
+  ssr: false,
 });
 
 /**
