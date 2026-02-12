@@ -150,6 +150,8 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryDate, setDeliveryDate] = useState("");
   const [deliveryTime, setDeliveryTime] = useState("");
+  const [timeOptions, setTimeOptions] = useState<string[]>([]);
+  const [loadingTimeOptions, setLoadingTimeOptions] = useState(false);
   const [cardText, setCardText] = useState("");
   const [notes, setNotes] = useState("");
   const [agreeNewsletter, setAgreeNewsletter] = useState(false);
@@ -323,8 +325,58 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
     setCustomerTelegram(value);
   };
 
-  // Генерация интервалов времени
+  // Загрузка опций времени из API при изменении даты
+  useEffect(() => {
+    if (!deliveryDate) {
+      setTimeOptions([]);
+      // Если дата сброшена, но было выбрано время - сбрасываем его
+      setDeliveryTime((prev) => (prev ? "" : prev));
+      return;
+    }
+
+    const loadTimeOptions = async () => {
+      setLoadingTimeOptions(true);
+      try {
+        const res = await fetch(`/api/delivery-time-options?date=${deliveryDate}`);
+        if (!res.ok) throw new Error("Failed to fetch time options");
+        const options: string[] = await res.json();
+        setTimeOptions(options);
+
+        // Если выбранное время отсутствует в новом списке - сбрасываем
+        setDeliveryTime((prev) => (prev && !options.includes(prev) ? "" : prev));
+      } catch (error) {
+        console.warn("[CheckoutFormModal] Ошибка загрузки опций времени, используем стандартные:", error);
+        // Fallback на стандартные опции
+        const fallbackOptions: string[] = ["Доставка ночью"];
+        const today = new Date();
+        const selectedDate = new Date(deliveryDate);
+        const isToday = selectedDate.toDateString() === today.toDateString();
+        const now = new Date();
+        const currentHour = now.getHours();
+
+        for (let hour = 10; hour <= 21; hour++) {
+          if (isToday && hour <= currentHour) continue;
+          fallbackOptions.push(`${hour}:00-${hour + 1}:00`);
+        }
+        setTimeOptions(fallbackOptions);
+
+        // Если выбранное время отсутствует в fallback - сбрасываем
+        setDeliveryTime((prev) => (prev && !fallbackOptions.includes(prev) ? "" : prev));
+      } finally {
+        setLoadingTimeOptions(false);
+      }
+    };
+
+    loadTimeOptions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deliveryDate]);
+
+  // Генерация интервалов времени (fallback для случая, когда дата не выбрана)
   const getTimeIntervals = () => {
+    if (timeOptions.length > 0) {
+      return timeOptions;
+    }
+    // Fallback на стандартные опции, если API еще не загрузил или дата не выбрана
     const intervals: string[] = ["Доставка ночью"];
     const today = new Date();
     const selectedDate = deliveryDate ? new Date(deliveryDate) : null;
@@ -751,9 +803,10 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
                     setDeliveryTime(e.target.value);
                     clearFieldError(FIELD_IDS.deliveryTime);
                   }}
-                  className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryTime ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
+                  disabled={loadingTimeOptions}
+                  className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryTime ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"} ${loadingTimeOptions ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  <option value="">Выберите время</option>
+                  <option value="">{loadingTimeOptions ? "Загрузка..." : "Выберите время"}</option>
                   {getTimeIntervals().map((interval) => (
                     <option key={interval} value={interval}>
                       {interval}
