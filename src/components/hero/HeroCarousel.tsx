@@ -269,14 +269,28 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
             {loopSlides.map((slide, i) => (
               <div
                 key={`${slide.id}-${i}`}
-                className="relative flex-shrink-0 w-full h-full"
+                className="relative flex-shrink-0 w-full h-full overflow-hidden"
                 style={{ width: `${100 / loopSlides.length}%` }}
               >
+                {/* Blur background — visible on mobile when main uses contain */}
+                <Image
+                  src={slide.imageUrl}
+                  alt=""
+                  fill
+                  className="object-cover object-center blur-md scale-110 opacity-60 select-none pointer-events-none"
+                  loading={i === realIndexOffset ? "eager" : "lazy"}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 1600px, 1920px"
+                  quality={75}
+                  priority={i === realIndexOffset}
+                  aria-hidden
+                />
+                <div className="absolute inset-0 z-[1] bg-black/10 pointer-events-none" aria-hidden />
+                {/* Main: contain on mobile (full banner visible), cover on desktop */}
                 <Image
                   src={slide.imageUrl}
                   alt="Слайд"
                   fill
-                  className="object-cover object-center select-none pointer-events-none"
+                  className="object-contain min-[768px]:object-cover object-center select-none pointer-events-none z-[2]"
                   loading={i === realIndexOffset ? "eager" : "lazy"}
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 1600px, 1920px"
                   quality={90}
