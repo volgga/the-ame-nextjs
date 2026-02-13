@@ -108,6 +108,20 @@ function PaymentSuccessContent() {
       .catch(() => setTinkoffStatus(null));
   }, [orderId]);
 
+  // Отправка Telegram-уведомления о успешной оплате (fallback если webhook не сработал)
+  useEffect(() => {
+    if (!orderId) return;
+    // Вызываем notify endpoint один раз при загрузке страницы
+    fetch("/api/payments/tinkoff/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId, status: "success" }),
+    }).catch((err) => {
+      // Игнорируем ошибки - страница должна показаться пользователю в любом случае
+      console.warn("[payment-success] failed to send notification", err);
+    });
+  }, [orderId]);
+
   useEffect(() => {
     if (!orderId) {
       setLoading(false);
