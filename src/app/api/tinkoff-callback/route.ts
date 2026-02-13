@@ -44,7 +44,13 @@ export async function POST(request: Request) {
   if (orderId) {
     const order = await getOrderById(orderId);
     if (order) {
-      if (status === "CONFIRMED" || (status === "AUTHORIZED" && success)) {
+      // Проверка успешной оплаты: CONFIRMED, AUTHORIZED, или success=true (fallback)
+      const isPaymentSuccess =
+        status === "CONFIRMED" ||
+        status === "AUTHORIZED" ||
+        (success === true && status !== "CANCELED" && status !== "REJECTED" && status !== "DEADLINE_EXPIRED");
+
+      if (isPaymentSuccess) {
         console.log(`[tinkoff-callback] payment success detected`, {
           orderId,
           status,
