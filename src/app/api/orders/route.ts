@@ -77,7 +77,17 @@ export async function POST(request: Request) {
       amount: result.order.amount,
       status: result.order.status,
     });
-  } catch {
-    return NextResponse.json({ error: "Ошибка создания заказа" }, { status: 500 });
+  } catch (err) {
+    console.error("[orders] unexpected error creating order", {
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    return NextResponse.json(
+      { 
+        error: "Ошибка создания заказа",
+        details: err instanceof Error ? err.message : String(err),
+      },
+      { status: 500 }
+    );
   }
 }

@@ -58,6 +58,19 @@ export async function createOrder(input: CreateOrderInput): Promise<{ order: Ord
   }
 
   const supabase = getSupabaseServer();
+  
+  // Проверяем что Supabase клиент инициализирован
+  const hasSupabaseUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const hasSupabaseKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!hasSupabaseUrl || !hasSupabaseKey) {
+    console.error("[createOrder] Supabase env variables missing", {
+      hasSupabaseUrl,
+      hasSupabaseKey,
+    });
+    return { error: "Конфигурация базы данных не настроена" };
+  }
+  
   // Таблица orders не в сгенерированных типах Supabase — используем приведение типа
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
@@ -77,7 +90,18 @@ export async function createOrder(input: CreateOrderInput): Promise<{ order: Ord
     .single();
 
   if (error) {
-    return { error: error.message };
+    console.error("[createOrder] Supabase insert error", {
+      error: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+    });
+    return { error: error.message || "Ошибка сохранения заказа в базу данных" };
+  }
+  
+  if (!data) {
+    console.error("[createOrder] No data returned from Supabase insert");
+    return { error: "Заказ не был создан" };
   }
 
   const row = data as {
