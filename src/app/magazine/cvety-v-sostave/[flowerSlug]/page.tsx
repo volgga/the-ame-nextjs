@@ -34,7 +34,7 @@ type FlowerPageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const list = await getFlowersInCompositionList();

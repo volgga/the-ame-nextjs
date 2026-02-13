@@ -47,7 +47,7 @@ export const metadata: Metadata = {
 
 type PageProps = { searchParams?: Promise<{ [key: string]: string | string[] | undefined }> };
 
-export const revalidate = 60;
+export const revalidate = 300;
 
 export default async function PoPovoduBasePage({ searchParams }: PageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : {};

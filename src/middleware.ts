@@ -80,23 +80,29 @@ export async function middleware(request: NextRequest) {
 
   // ============================================================
   // Админка: защита (исключения: /admin/login, /api/admin/login, /api/admin/logout)
+  // При любой ошибке проверки сессии — редирект на логин, чтобы не ронять процесс (VPS).
   // ============================================================
   if (pathname.startsWith("/admin")) {
-    if (pathname === LOGIN_PATH) {
+    try {
+      if (pathname === LOGIN_PATH) {
+        const token = request.cookies.get(getAdminCookieName())?.value;
+        if (await validateSessionToken(token)) {
+          return NextResponse.redirect(new URL("/admin", request.url));
+        }
+        return NextResponse.next();
+      }
+      if (pathname === "/admin") {
+        return NextResponse.redirect(new URL("/admin/slides", request.url));
+      }
       const token = request.cookies.get(getAdminCookieName())?.value;
-      if (await validateSessionToken(token)) {
-        return NextResponse.redirect(new URL("/admin", request.url));
+      if (!(await validateSessionToken(token))) {
+        return NextResponse.redirect(new URL(LOGIN_PATH, request.url));
       }
       return NextResponse.next();
-    }
-    if (pathname === "/admin") {
-      return NextResponse.redirect(new URL("/admin/slides", request.url));
-    }
-    const token = request.cookies.get(getAdminCookieName())?.value;
-    if (!(await validateSessionToken(token))) {
+    } catch (_err) {
+      // Ошибка проверки сессии (jose, env) — не ломаем весь сервер, отправляем на логин
       return NextResponse.redirect(new URL(LOGIN_PATH, request.url));
     }
-    return NextResponse.next();
   }
 
   return NextResponse.next();

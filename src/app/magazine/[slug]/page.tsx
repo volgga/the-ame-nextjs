@@ -37,8 +37,8 @@ type MagazineCategoryPageProps = {
 
 const VIRTUAL_CATEGORY_SLUGS = ["magazin", "posmotret-vse-tsvety"] as const;
 
-/** Ревалидация раз в 60 сек — чтобы после сохранения SEO title в админке страница отдавала актуальный title с сервера без мигания. */
-export const revalidate = 60;
+/** Ревалидация раз в 5 мин — баланс между актуальностью SEO title и нагрузкой (частая ревалидация могла приводить к падению под нагрузкой). */
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const categories = await getCategories();

@@ -40,11 +40,13 @@ next-env.d.ts
 # Local docs & scripts
 # ======================
 docs/
+!docs/VPS-DEPLOY.md
 scripts/
 !scripts/fix-nginx-413.sh
 !scripts/deploy.sh
 !scripts/fix-all.sh
 !scripts/fix-env-and-rebuild.sh
+!scripts/deploy-vps-remote.sh
 
 # ======================
 # Dumps / backups
@@ -53,6 +55,7 @@ dump.backup
 *.backup
 products_data.sql
 deploy.log
+logs/
 
 # ======================
 # Local deploy helpers
