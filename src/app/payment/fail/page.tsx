@@ -103,15 +103,24 @@ function PaymentFailContent() {
   // Отправка Telegram-уведомления о неуспешной оплате (fallback если webhook не сработал)
   useEffect(() => {
     if (!orderId) return;
+    console.log("[payment-fail] calling notify endpoint", { orderId });
     // Вызываем notify endpoint один раз при загрузке страницы
     fetch("/api/payments/tinkoff/notify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ orderId, status: "fail" }),
-    }).catch((err) => {
-      // Игнорируем ошибки - страница должна показаться пользователю в любом случае
-      console.warn("[payment-fail] failed to send notification", err);
-    });
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          console.log("[payment-fail] notify endpoint response", data);
+        } else {
+          console.error("[payment-fail] notify endpoint error", { status: res.status, data });
+        }
+      })
+      .catch((err) => {
+        console.error("[payment-fail] failed to send notification", err);
+      });
   }, [orderId]);
 
   if (loading) {
