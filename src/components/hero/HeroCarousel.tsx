@@ -305,7 +305,7 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                   fill
                   className="object-cover object-center select-none pointer-events-none"
                   loading={i === realIndexOffset ? "eager" : "lazy"}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 1600px, 1920px"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
                   quality={90}
                   priority={i === realIndexOffset}
                 />

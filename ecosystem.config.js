@@ -11,6 +11,8 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: "3000",
+        SITE_URL: "https://theame.ru",
+        NEXT_PUBLIC_SITE_URL: "https://theame.ru",
       },
     },
   ],

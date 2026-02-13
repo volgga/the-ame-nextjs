@@ -1,38 +1,42 @@
 import type { MetadataRoute } from "next";
 import { getCategories } from "@/lib/categories";
 import { getAllCatalogProducts } from "@/lib/products";
-import { getPublicBaseUrl } from "@/lib/base-url";
+import { getSitemapBaseUrl } from "@/lib/base-url";
 import { getPublishedPosts } from "@/lib/blog";
 
 /** Виртуальные слоги категорий — не включаем в sitemap (редиректы или отдельные страницы). */
 const VIRTUAL_CATEGORY_SLUGS = ["magazin", "posmotret-vse-tsvety"];
 
+function absoluteUrl(base: string, path: string): string {
+  return new URL(path.startsWith("/") ? path : `/${path}`, base).toString();
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const BASE_URL = getPublicBaseUrl().replace(/\/$/, "") || "https://theame.ru";
+  const BASE = getSitemapBaseUrl();
   const now = new Date().toISOString().split("T")[0];
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: BASE_URL, lastModified: now, changeFrequency: "daily", priority: 1 },
-    { url: `${BASE_URL}/catalog`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
-    { url: `${BASE_URL}/clients/blog`, lastModified: now, changeFrequency: "weekly", priority: 0.8 },
-    { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/contacts`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE_URL}/delivery-and-payments`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: absoluteUrl(BASE, "/"), lastModified: now, changeFrequency: "daily", priority: 1 },
+    { url: absoluteUrl(BASE, "/catalog"), lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    { url: absoluteUrl(BASE, "/clients/blog"), lastModified: now, changeFrequency: "weekly", priority: 0.8 },
+    { url: absoluteUrl(BASE, "/about"), lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: absoluteUrl(BASE, "/contacts"), lastModified: now, changeFrequency: "monthly", priority: 0.8 },
+    { url: absoluteUrl(BASE, "/delivery-and-payments"), lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     {
-      url: `${BASE_URL}/instrukciya-po-uhodu-za-tsvetami`,
+      url: absoluteUrl(BASE, "/instrukciya-po-uhodu-za-tsvetami"),
       lastModified: now,
       changeFrequency: "yearly",
       priority: 0.5,
     },
-    { url: `${BASE_URL}/docs/corporate`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
-    { url: `${BASE_URL}/docs/oferta`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
-    { url: `${BASE_URL}/docs/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
-    { url: `${BASE_URL}/docs/return`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
-    { url: `${BASE_URL}/favorites`, lastModified: now, changeFrequency: "weekly", priority: 0.6 },
-    { url: `${BASE_URL}/magazin`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
-    { url: `${BASE_URL}/posmotret-vse-tsvety`, lastModified: now, changeFrequency: "daily", priority: 0.9 },
-    { url: `${BASE_URL}/marketing-consent`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${BASE_URL}/payment/success`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
-    { url: `${BASE_URL}/payment/fail`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    { url: absoluteUrl(BASE, "/docs/corporate"), lastModified: now, changeFrequency: "yearly", priority: 0.5 },
+    { url: absoluteUrl(BASE, "/docs/oferta"), lastModified: now, changeFrequency: "yearly", priority: 0.5 },
+    { url: absoluteUrl(BASE, "/docs/privacy"), lastModified: now, changeFrequency: "yearly", priority: 0.5 },
+    { url: absoluteUrl(BASE, "/docs/return"), lastModified: now, changeFrequency: "yearly", priority: 0.5 },
+    { url: absoluteUrl(BASE, "/favorites"), lastModified: now, changeFrequency: "weekly", priority: 0.6 },
+    { url: absoluteUrl(BASE, "/magazin"), lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    { url: absoluteUrl(BASE, "/posmotret-vse-tsvety"), lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    { url: absoluteUrl(BASE, "/marketing-consent"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    { url: absoluteUrl(BASE, "/payment/success"), lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    { url: absoluteUrl(BASE, "/payment/fail"), lastModified: now, changeFrequency: "monthly", priority: 0.4 },
   ];
 
   let categories: Awaited<ReturnType<typeof getCategories>> = [];
@@ -47,14 +51,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const categoryEntries: MetadataRoute.Sitemap = categories
     .filter((c) => !VIRTUAL_CATEGORY_SLUGS.includes(c.slug))
     .map((c) => ({
-      url: `${BASE_URL}/magazine/${c.slug}`,
+      url: absoluteUrl(BASE, `/magazine/${c.slug}`),
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.8,
     }));
 
   const productEntries: MetadataRoute.Sitemap = products.map((p) => ({
-    url: `${BASE_URL}/product/${p.slug}`,
+    url: absoluteUrl(BASE, `/product/${p.slug}`),
     lastModified: p.createdAt ? new Date(p.createdAt).toISOString().split("T")[0] : now,
     changeFrequency: "weekly" as const,
     priority: 0.7,
@@ -64,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const posts = await getPublishedPosts();
     blogPosts = posts.map((post) => ({
-      url: `${BASE_URL}/clients/blog/${post.slug}`,
+      url: absoluteUrl(BASE, `/clients/blog/${post.slug}`),
       lastModified: post.updated_at
         ? new Date(post.updated_at).toISOString().split("T")[0]
         : post.created_at

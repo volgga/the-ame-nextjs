@@ -75,35 +75,43 @@ function PayButton({
     }
     setError(null);
     setLoading(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000);
     try {
       const orderRes = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items, customer }),
+        signal: controller.signal,
       });
       const orderData = await orderRes.json();
       if (!orderRes.ok || !orderData.orderId) {
         setError(orderData.error ?? "Ошибка создания заказа");
-        setLoading(false);
         return;
       }
       const initRes = await fetch("/api/payments/tinkoff/init", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: orderData.orderId }),
+        signal: controller.signal,
       });
       const initData = await initRes.json();
       if (!initRes.ok || !initData.paymentUrl) {
-        setError(initData.error ?? "Ошибка инициализации платежа");
-        setLoading(false);
+        setError(initData.error ?? "Ошибка инициализации платежа. Попробуйте ещё раз.");
         return;
       }
       window.location.href = initData.paymentUrl;
       return;
-    } catch {
-      setError("Ошибка сети");
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") {
+        setError("Превышено время ожидания. Проверьте интернет и попробуйте снова.");
+      } else {
+        setError("Ошибка сети. Проверьте интернет и попробуйте снова.");
+      }
+    } finally {
+      clearTimeout(timeoutId);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

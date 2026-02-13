@@ -23,6 +23,10 @@
 
 - **`DEPLOY_PORT`** — SSH порт (по умолчанию: `22`)
 
+### Переменные для прод-сборки (уже заданы в workflow)
+
+В `.github/workflows/deploy.yml` для сборки и рантайма заданы `SITE_URL` и `NEXT_PUBLIC_SITE_URL` = `https://theame.ru`. Они передаются на сервер при деплое и подхватываются при `npm run build` и в PM2 (`ecosystem.config.js`). Менять не требуется, если прод — theame.ru.
+
 ## Подготовка сервера
 
 ### 1. Установка Node.js

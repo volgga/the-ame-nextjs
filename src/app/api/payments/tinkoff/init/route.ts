@@ -23,10 +23,12 @@ export async function POST(request: Request) {
 
     const order = await getOrderById(parsed.data.orderId);
     if (!order) {
+      console.warn("[tinkoff-init] order not found", { orderId: parsed.data.orderId });
       return NextResponse.json({ error: "Заказ не найден" }, { status: 404 });
     }
 
     if (order.status === "paid") {
+      console.warn("[tinkoff-init] order already paid", { orderId: order.id });
       return NextResponse.json({ error: "Заказ уже оплачен" }, { status: 400 });
     }
 
@@ -129,11 +131,13 @@ export async function POST(request: Request) {
 
     await updateOrderStatus(order.id, "payment_pending", initResult.PaymentId);
 
+    console.log("[tinkoff-init] ok", { orderId: order.id, paymentId: initResult.PaymentId });
     return NextResponse.json({
       paymentUrl: initResult.PaymentURL,
       orderId: order.id,
     });
-  } catch {
+  } catch (e) {
+    console.error("[tinkoff-init] error", e instanceof Error ? e.message : e);
     return NextResponse.json({ error: "Ошибка инициализации платежа" }, { status: 500 });
   }
 }
