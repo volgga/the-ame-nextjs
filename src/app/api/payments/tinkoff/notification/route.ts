@@ -13,28 +13,33 @@ import { formatPaymentSuccess, formatPaymentFailed } from "@/lib/telegramOrdersF
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as Record<string, unknown>;
+    
+    const orderId = payload.OrderId as string | undefined;
+    const status = payload.Status as string | undefined;
+    const success = payload.Success === true || payload.Success === "true";
+    const paymentId = payload.PaymentId as string | undefined;
+
     console.log("[tinkoff-notification] received webhook", {
-      orderId: payload.OrderId,
-      status: payload.Status,
-      success: payload.Success,
-      paymentId: payload.PaymentId,
+      orderId,
+      status,
+      success,
+      paymentId,
       hasPassword: !!process.env.TINKOFF_PASSWORD,
+      hasTelegramToken: !!process.env.TELEGRAM_BOT_TOKEN,
+      hasTelegramChatId: !!process.env.TELEGRAM_ORDERS_CHAT_ID,
     });
+    
     const password = process.env.TINKOFF_PASSWORD;
     if (!password) {
-      console.warn("[tinkoff-notification] TINKOFF_PASSWORD not set, skipping verification");
+      console.warn("[tinkoff-notification] TINKOFF_PASSWORD not set, skipping verification", { orderId });
       return new NextResponse("OK", { status: 200 });
     }
 
     const valid = verifyTinkoffNotificationToken(payload, password);
     if (!valid) {
-      console.warn("[tinkoff-notification] invalid token, rejecting");
+      console.warn("[tinkoff-notification] invalid token, rejecting", { orderId, status });
       return new NextResponse("OK", { status: 200 });
     }
-
-    const orderId = payload.OrderId as string | undefined;
-    const status = payload.Status as string | undefined;
-    const success = payload.Success === true || payload.Success === "true";
 
     if (!orderId) {
       console.warn("[tinkoff-notification] no orderId in payload");
@@ -64,22 +69,31 @@ export async function POST(request: Request) {
       await updateOrderStatus(orderId, "paid");
       // Идемпотентность: проверяем, отправляли ли уже уведомление об успешной оплате
       const shouldSend = await markPaymentNotificationSent(orderId, "SUCCESS");
-      console.log(`[tinkoff-notification] shouldSend=${shouldSend} for orderId=${orderId}`);
+      console.log(`[tinkoff-notification] shouldSend=${shouldSend}`, { orderId });
       if (shouldSend) {
         try {
-          const paymentId = (payload.PaymentId ?? order.tinkoffPaymentId ?? order.paymentId) as string | undefined;
-          const message = formatPaymentSuccess(order, paymentId);
-          console.log(`[tinkoff-notification] sending payment success tg, orderId=${orderId}, messageLength=${message.length}`);
+          const finalPaymentId = paymentId ?? order.tinkoffPaymentId ?? order.paymentId ?? undefined;
+          const message = formatPaymentSuccess(order, finalPaymentId);
+          console.log(`[tinkoff-notification] sending payment success tg`, {
+            orderId,
+            paymentId: finalPaymentId,
+            messageLength: message.length,
+            hasTelegramToken: !!process.env.TELEGRAM_BOT_TOKEN,
+            hasTelegramChatId: !!process.env.TELEGRAM_ORDERS_CHAT_ID,
+          });
           await sendOrderTelegramMessage(message);
-          console.log(`[tinkoff-notification] payment success tg sent successfully, orderId=${orderId}`);
+          console.log(`[tinkoff-notification] payment success tg sent successfully`, { orderId });
         } catch (err) {
           console.error(
-            "[tinkoff-notification] payment success tg failed orderId=" + orderId,
-            err instanceof Error ? err.message : err
+            "[tinkoff-notification] payment success tg failed",
+            {
+              orderId,
+              error: err instanceof Error ? err.message : String(err),
+            }
           );
         }
       } else {
-        console.log(`[tinkoff-notification] payment success notification already sent, skipping orderId=${orderId}`);
+        console.log(`[tinkoff-notification] payment success notification already sent, skipping`, { orderId });
       }
     } else if (status === "CANCELED" || status === "DEADLINE_EXPIRED" || status === "REJECTED" || (!success && status)) {
       await updateOrderStatus(orderId, order.status === "payment_pending" ? "failed" : "canceled");
@@ -91,15 +105,25 @@ export async function POST(request: Request) {
             (payload.Message as string | undefined) ??
             (payload.ErrorCode != null ? String(payload.ErrorCode) : undefined) ??
             status;
+          console.log(`[tinkoff-notification] sending payment failed tg`, {
+            orderId,
+            reason,
+            hasTelegramToken: !!process.env.TELEGRAM_BOT_TOKEN,
+            hasTelegramChatId: !!process.env.TELEGRAM_ORDERS_CHAT_ID,
+          });
           await sendOrderTelegramMessage(formatPaymentFailed(order, reason));
+          console.log(`[tinkoff-notification] payment failed tg sent successfully`, { orderId });
         } catch (err) {
           console.error(
-            "[tinkoff-notification] payment failed tg failed orderId=" + orderId,
-            err instanceof Error ? err.message : err
+            "[tinkoff-notification] payment failed tg failed",
+            {
+              orderId,
+              error: err instanceof Error ? err.message : String(err),
+            }
           );
         }
       } else {
-        console.log(`[tinkoff-notification] payment failed notification already sent, skipping orderId=${orderId}`);
+        console.log(`[tinkoff-notification] payment failed notification already sent, skipping`, { orderId });
       }
     } else {
       // Логируем все остальные статусы для отладки

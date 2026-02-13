@@ -60,7 +60,12 @@ export async function POST(request: Request) {
         { status: 502 }
       );
     }
-    const notificationUrl = process.env.TINKOFF_NOTIFICATION_URL ?? "";
+    // Webhook URL: если не задан в env, используем дефолтный для прода
+    const notificationUrl = process.env.TINKOFF_NOTIFICATION_URL || `${safeBaseUrl}/api/tinkoff-callback`;
+    console.log("[tinkoff-init] notification URL", {
+      fromEnv: !!process.env.TINKOFF_NOTIFICATION_URL,
+      notificationUrl,
+    });
 
     const c = order.customer ?? {};
     const data: Record<string, string> = {};
