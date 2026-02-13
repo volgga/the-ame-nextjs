@@ -32,9 +32,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Заказ уже оплачен" }, { status: 400 });
     }
 
+    const PRODUCTION_BASE = "https://theame.ru";
     const baseUrl = getServerBaseUrl();
-    const baseSuccess = process.env.TINKOFF_SUCCESS_URL ?? `${baseUrl}/payment/success`;
-    const baseFail = process.env.TINKOFF_FAIL_URL ?? `${baseUrl}/payment/fail`;
+    // Fallback на прод, если baseUrl пустой или содержит localhost
+    const safeBaseUrl = baseUrl && !baseUrl.includes("localhost") && !baseUrl.includes("127.0.0.1")
+      ? baseUrl.replace(/\/$/, "")
+      : PRODUCTION_BASE;
+    const baseSuccess = process.env.TINKOFF_SUCCESS_URL ?? `${safeBaseUrl}/payment/success`;
+    const baseFail = process.env.TINKOFF_FAIL_URL ?? `${safeBaseUrl}/payment/fail`;
+    console.log("[tinkoff-init] URLs", {
+      baseUrl,
+      safeBaseUrl,
+      baseSuccess,
+      baseFail,
+      hasTinkoffSuccessEnv: !!process.env.TINKOFF_SUCCESS_URL,
+      hasTinkoffFailEnv: !!process.env.TINKOFF_FAIL_URL,
+    });
     const sep = (u: string) => (u.includes("?") ? "&" : "?");
     const successUrl = `${baseSuccess}${sep(baseSuccess)}orderId=${order.id}`;
     const failUrl = `${baseFail}${sep(baseFail)}orderId=${order.id}`;
