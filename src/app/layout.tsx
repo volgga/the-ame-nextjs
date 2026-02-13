@@ -2,9 +2,20 @@ import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/app/AppShell";
-import { YandexMetrika } from "@/components/analytics/YandexMetrika";
+import { YandexMetrikaHitTracker } from "@/components/analytics/YandexMetrika";
 import { CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
 import { getHomeMarquee } from "@/lib/homeMarquee";
+
+/** Код счётчика Яндекс.Метрики — как можно ближе к началу страницы (официальный сниппет). */
+const YANDEX_METRIKA_INLINE = `
+(function(m,e,t,r,i,k,a){
+  m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+  m[i].l=1*new Date();
+  for (var j = 0; j < document.scripts.length; j++) { if (document.scripts[j].src === r) { return; } }
+  k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a);
+})(window, document, "script", "https://mc.yandex.ru/metrika/tag.js?id=103806735", "ym");
+ym(103806735, "init", {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+`.trim();
 
 // Подключаем шрифт Montserrat (как в старом проекте)
 const montserrat = Montserrat({
@@ -59,6 +70,20 @@ export default async function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className={`${montserrat.variable} antialiased`} suppressHydrationWarning>
+        {/* Яндекс.Метрика — как можно ближе к началу страницы (официальный сниппет) */}
+        <script
+          type="text/javascript"
+          dangerouslySetInnerHTML={{ __html: YANDEX_METRIKA_INLINE }}
+        />
+        <noscript>
+          <div>
+            <img
+              src="https://mc.yandex.ru/watch/103806735"
+              style={{ position: "absolute", left: -9999 }}
+              alt=""
+            />
+          </div>
+        </noscript>
         {/* Структурированные данные для SEO (Organization) */}
         <script
           type="application/ld+json"
@@ -94,7 +119,7 @@ export default async function RootLayout({
           }}
         />
 
-        <YandexMetrika />
+        <YandexMetrikaHitTracker />
 
         {/* Основная структура: AppShell с провайдерами + контент */}
         <AppShell initialMarquee={marquee}>{children}</AppShell>
