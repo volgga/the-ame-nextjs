@@ -103,24 +103,41 @@ function PaymentFailContent() {
   // Отправка Telegram-уведомления о неуспешной оплате (fallback если webhook не сработал)
   useEffect(() => {
     if (!orderId) return;
-    console.log("[payment-fail] calling notify endpoint", { orderId });
-    // Вызываем notify endpoint один раз при загрузке страницы
-    fetch("/api/payments/tinkoff/notify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId, status: "fail" }),
-    })
-      .then(async (res) => {
+    
+    // Защита от повторных вызовов
+    let cancelled = false;
+    let notified = false;
+    
+    const sendNotification = async () => {
+      if (notified || cancelled) return;
+      notified = true;
+      
+      console.log("[payment-fail] calling notify endpoint", { orderId });
+      try {
+        const res = await fetch("/api/payments/tinkoff/notify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId, status: "fail" }),
+        });
+        
         const data = await res.json().catch(() => ({}));
         if (res.ok) {
           console.log("[payment-fail] notify endpoint response", data);
         } else {
           console.error("[payment-fail] notify endpoint error", { status: res.status, data });
         }
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("[payment-fail] failed to send notification", err);
-      });
+      }
+    };
+    
+    // Небольшая задержка чтобы убедиться что компонент полностью загружен
+    const timeoutId = setTimeout(sendNotification, 500);
+    
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [orderId]);
 
   if (loading) {
