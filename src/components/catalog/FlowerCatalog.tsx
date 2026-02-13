@@ -7,11 +7,11 @@ import { FlowerCard } from "./FlowerCard";
 import { Flower } from "@/types/flower";
 import type { Product } from "@/lib/products";
 
-/** Desktop: 24 карточки, step +4 (~1 ряд). Mobile: 12 карточек, step +2 (~1 ряд). */
-const INITIAL_DESKTOP = 24;
-const INITIAL_MOBILE = 12;
-const STEP_DESKTOP = 4;
-const STEP_MOBILE = 2;
+/** Desktop: 100 карточек, step +20 (~5 рядов). Mobile: 50 карточек, step +10 (~5 рядов). */
+const INITIAL_DESKTOP = 100;
+const INITIAL_MOBILE = 50;
+const STEP_DESKTOP = 20;
+const STEP_MOBILE = 10;
 const MOBILE_BREAKPOINT = "(max-width: 767px)";
 
 type SortValue = "default" | "price_asc" | "price_desc";
@@ -27,21 +27,31 @@ type FlowerCatalogProps = {
 
 export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => {
   const [isMobile, setIsMobile] = useState(false);
-  const initialCount = isMobile ? INITIAL_MOBILE : INITIAL_DESKTOP;
-  const step = isMobile ? STEP_MOBILE : STEP_DESKTOP;
   const [visibleCount, setVisibleCount] = useState(INITIAL_DESKTOP);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
+  const isInitializedRef = useRef(false);
   const pathname = usePathname();
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_BREAKPOINT);
-    const update = () => setIsMobile(mq.matches);
+    const update = () => {
+      const nowMobile = mq.matches;
+      setIsMobile(nowMobile);
+      // При первом определении устанавливаем правильный initialCount
+      if (!isInitializedRef.current) {
+        setVisibleCount(nowMobile ? INITIAL_MOBILE : INITIAL_DESKTOP);
+        isInitializedRef.current = true;
+      }
+    };
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
+
+  const initialCount = isMobile ? INITIAL_MOBILE : INITIAL_DESKTOP;
+  const step = isMobile ? STEP_MOBILE : STEP_DESKTOP;
   const searchParams = useSearchParams();
   const minPriceParam = searchParams.get("minPrice");
   const maxPriceParam = searchParams.get("maxPrice");
