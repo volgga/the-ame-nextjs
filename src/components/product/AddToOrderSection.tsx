@@ -103,7 +103,9 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
       const { scrollLeft, scrollWidth, clientWidth } = el;
       const maxScroll = Math.max(0, scrollWidth - clientWidth);
       if (maxScroll <= 0) return;
-      const step = 340;
+      // Адаптивный шаг автоскролла: меньше на мобилке
+      const isMobile = window.innerWidth < 768;
+      const step = isMobile ? 160 : 340;
       const nextScroll = Math.min(scrollLeft + step, maxScroll);
       isProgrammaticScrollRef.current = true;
       if (nextScroll >= maxScroll - 2) {
@@ -125,7 +127,9 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
       if (!el) return;
       pauseAutoScroll();
       isProgrammaticScrollRef.current = true;
-      const step = 580;
+      // Адаптивный шаг: меньше на мобилке (140-160px + gap), больше на десктопе (300-320px + gap)
+      const isMobile = window.innerWidth < 768;
+      const step = isMobile ? 160 : 580;
       const delta = direction === "left" ? -step : step;
       el.scrollBy({ left: delta, behavior: "smooth" });
       setTimeout(() => {
@@ -160,6 +164,30 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
           </h2>
         </div>
 
+        {/* Стрелки навигации: на мобилке под заголовком, на десктопе справа */}
+        <div className="flex md:hidden justify-end mb-2">
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => scrollBy("left")}
+              disabled={!canScrollLeft}
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-[var(--color-outline-border)] bg-transparent text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+              aria-label="Прокрутить влево"
+            >
+              <ChevronLeft className="w-5 h-5" strokeWidth={2} />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollBy("right")}
+              disabled={!canScrollRight}
+              className="flex items-center justify-center w-9 h-9 rounded-full border border-[var(--color-outline-border)] bg-transparent text-[var(--color-text-main)] hover:bg-[rgba(31,42,31,0.06)] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+              aria-label="Прокрутить вправо"
+            >
+              <ChevronRight className="w-5 h-5" strokeWidth={2} />
+            </button>
+          </div>
+        </div>
+
         <div className="hidden md:flex justify-end -mx-6 px-6 mb-2">
           <div className="flex items-center gap-0.5">
             <button
@@ -183,31 +211,21 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
           </div>
         </div>
 
-        {/* На мобилке: сетка 2 колонки как в каталоге; на md+ — горизонтальная карусель */}
-        <div className="grid grid-cols-2 gap-3 md:hidden py-2">
-          {flowers.map((flower) => (
-            <FlowerCard
-              key={flower.id}
-              flower={flower}
-              product={products.find((p) => p.id === flower.id)}
-              showNewBadge={false}
-            />
-          ))}
-        </div>
-
+        {/* Карусель с 2 рядами: на всех экранах */}
         <div
           ref={scrollRef}
           onPointerDown={handleInteraction}
           onWheel={handleInteraction}
           onMouseEnter={handleInteraction}
           onScroll={handleUserScroll}
-          className="hidden md:flex gap-5 md:gap-6 overflow-x-auto overflow-y-hidden py-2 -mx-6 px-6 scrollbar-hide"
-          style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}
+          className="flex gap-3 md:gap-5 lg:gap-6 overflow-x-auto overflow-y-hidden py-2 -mx-4 px-4 md:-mx-6 md:px-6 scrollbar-hide"
+          style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch", scrollSnapType: "x mandatory" }}
         >
           {columns.map(([top, bottom], colIndex) => (
             <div
               key={colIndex}
-              className="flex-shrink-0 flex flex-col gap-4 md:gap-5 w-[260px] sm:w-[280px] md:w-[300px] lg:w-[320px]"
+              className="flex-shrink-0 flex flex-col gap-3 md:gap-4 lg:gap-5 w-[140px] sm:w-[160px] md:w-[300px] lg:w-[320px]"
+              style={{ scrollSnapAlign: "start" }}
             >
               {top && (
                 <div className="flex-shrink-0">
@@ -223,8 +241,9 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
           ))}
         </div>
 
+        {/* Прогресс-бар позиции скролла: на всех экранах */}
         <div
-          className="mt-6 h-0.5 w-full bg-[rgba(31,42,31,0.12)] rounded-full overflow-hidden hidden md:block"
+          className="mt-6 h-0.5 w-full bg-[rgba(31,42,31,0.12)] rounded-full overflow-hidden"
           role="progressbar"
           aria-valuenow={Math.round(scrollProgress * 100)}
           aria-valuemin={0}
