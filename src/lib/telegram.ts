@@ -65,6 +65,7 @@ async function sendTelegramRequest(url: string, body: Record<string, unknown>, r
   let lastResponseText: string | null = null;
 
   try {
+    console.log(`[sendTelegramRequest] attempt ${retryCount + 1}/${MAX_RETRIES + 1}, url=${url.replace(/\/bot[^/]+/, "/bot***")}`);
     const response = await fetchWithTimeout(
       url,
       {
@@ -90,11 +91,19 @@ async function sendTelegramRequest(url: string, body: Record<string, unknown>, r
 
     if (!data.ok) {
       const desc = data.description ?? `код ${data.error_code ?? "unknown"}, HTTP ${response.status}`;
+      console.error(`[sendTelegramRequest] Telegram API error`, {
+        ok: data.ok,
+        description: desc,
+        errorCode: data.error_code,
+        status: response.status,
+        responseText: lastResponseText?.slice(0, 200),
+      });
       const err = new Error(desc) as Error & { status?: number; responseText?: string };
       err.status = response.status;
       err.responseText = lastResponseText ?? undefined;
       throw err;
     }
+    console.log(`[sendTelegramRequest] success, status=${response.status}`);
     return;
   } catch (error) {
     lastError = error instanceof Error ? error : new Error(String(error));
@@ -103,11 +112,18 @@ async function sendTelegramRequest(url: string, body: Record<string, unknown>, r
     }
 
     if (retryCount < MAX_RETRIES && shouldRetry(lastStatus)) {
+      console.log(`[sendTelegramRequest] retrying, retryCount=${retryCount + 1}, lastStatus=${lastStatus}`);
       return sendTelegramRequest(url, body, retryCount + 1);
     }
 
     const statusInfo = lastStatus != null ? ` (HTTP ${lastStatus})` : "";
     const responseInfo = lastResponseText ? ` Ответ: ${lastResponseText.slice(0, 200)}` : "";
+    console.error(`[sendTelegramRequest] final failure`, {
+      error: lastError.message,
+      statusInfo,
+      responseInfo,
+      retryCount,
+    });
     throw new Error(`Telegram: ${lastError.message}${statusInfo}${responseInfo}`);
   }
 }
@@ -170,6 +186,12 @@ export async function sendOrderTelegramMessage(text: string): Promise<void> {
     return;
   }
 
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) {
+    console.error("[sendOrderTelegramMessage] TELEGRAM_BOT_TOKEN not set, cannot send message");
+    throw new Error("TELEGRAM_BOT_TOKEN не задан");
+  }
+
   // Используем TELEGRAM_ORDERS_THREAD_ID если задан, иначе TELEGRAM_THREAD_ID
   const threadIdEnv = process.env.TELEGRAM_ORDERS_THREAD_ID || process.env.TELEGRAM_THREAD_ID;
   const threadId = threadIdEnv != null ? Number.parseInt(String(threadIdEnv).trim(), 10) || undefined : undefined;
@@ -179,11 +201,22 @@ export async function sendOrderTelegramMessage(text: string): Promise<void> {
     console.warn("[sendOrderTelegramMessage] using TELEGRAM_CHAT_ID as fallback for TELEGRAM_ORDERS_CHAT_ID");
   }
 
-  console.log(`[sendOrderTelegramMessage] sending to chatId=${chatId}, threadId=${threadId ?? "none"}, textLength=${text.length}, usingFallback=${usingFallback}`);
-  await sendTelegramMessage({
-    chatId: chatId.trim(),
-    threadId,
-    text,
-  });
-  console.log(`[sendOrderTelegramMessage] message sent successfully`);
+  console.log(`[sendOrderTelegramMessage] sending to chatId=${chatId}, threadId=${threadId ?? "none"}, textLength=${text.length}, usingFallback=${usingFallback}, hasToken=${!!token}`);
+  try {
+    await sendTelegramMessage({
+      chatId: chatId.trim(),
+      threadId,
+      text,
+    });
+    console.log(`[sendOrderTelegramMessage] message sent successfully`);
+  } catch (err) {
+    console.error(`[sendOrderTelegramMessage] failed to send message`, {
+      error: err instanceof Error ? err.message : String(err),
+      chatId,
+      threadId,
+      textLength: text.length,
+      hasToken: !!token,
+    });
+    throw err;
+  }
 }

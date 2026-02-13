@@ -96,9 +96,17 @@ export async function POST(request: Request) {
         console.log(`[tinkoff-notification] payment success notification already sent, skipping`, { orderId });
       }
     } else if (status === "CANCELED" || status === "DEADLINE_EXPIRED" || status === "REJECTED" || (!success && status)) {
+      console.log(`[tinkoff-notification] payment failed detected`, {
+        orderId,
+        status,
+        success,
+        paymentId: payload.PaymentId,
+        currentOrderStatus: order.status,
+      });
       await updateOrderStatus(orderId, order.status === "payment_pending" ? "failed" : "canceled");
       // Идемпотентность: проверяем, отправляли ли уже уведомление о неуспешной оплате
       const shouldSend = await markPaymentNotificationSent(orderId, "FAIL");
+      console.log(`[tinkoff-notification] shouldSend=${shouldSend} for orderId=${orderId} (FAIL)`);
       if (shouldSend) {
         try {
           const reason =

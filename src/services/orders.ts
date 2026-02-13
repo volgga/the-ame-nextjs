@@ -216,6 +216,8 @@ export async function markPaymentNotificationSent(
   const fieldName = eventType === "SUCCESS" ? "payment_success_notified_at" : "payment_fail_notified_at";
   const now = new Date().toISOString();
 
+  console.log(`[markPaymentNotificationSent] checking orderId=${orderId}, eventType=${eventType}, fieldName=${fieldName}`);
+
   // Атомарное обновление: обновляем только если поле null
   // Используем условие в update для атомарности
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -227,12 +229,18 @@ export async function markPaymentNotificationSent(
     .select("id");
 
   if (error) {
-    console.error(`[markPaymentNotificationSent] error for orderId=${orderId}, eventType=${eventType}`, error);
+    console.error(`[markPaymentNotificationSent] error for orderId=${orderId}, eventType=${eventType}`, {
+      error: error.message,
+      code: error.code,
+      details: error.details,
+    });
     // При ошибке лучше не отправлять повторно, чтобы не спамить
     return false;
   }
 
   // Если data пустой массив - значит поле уже было заполнено (условие .is(fieldName, null) не сработало)
   // Если data содержит запись - значит мы успешно обновили (было null, стало now)
-  return Array.isArray(data) && data.length > 0;
+  const shouldSend = Array.isArray(data) && data.length > 0;
+  console.log(`[markPaymentNotificationSent] result for orderId=${orderId}, eventType=${eventType}: shouldSend=${shouldSend}, dataLength=${Array.isArray(data) ? data.length : 0}`);
+  return shouldSend;
 }
