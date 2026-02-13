@@ -178,12 +178,12 @@ export function FullscreenViewer({
 
   const content = (
     <div
-      className="fixed inset-0 z-50 flex flex-col md:flex-row items-center justify-center bg-black/90 transition-opacity duration-200 p-3 sm:p-4 md:p-6 box-border"
+      className="fixed inset-0 flex flex-col md:flex-row items-center justify-center bg-black/90 transition-opacity duration-200 p-3 sm:p-4 md:p-6 box-border"
       role="dialog"
       aria-modal="true"
       aria-label="Просмотр фото"
       onClick={handleOverlayClick}
-      style={{ maxWidth: "100vw", maxHeight: "100vh" }}
+      style={{ maxWidth: "100vw", maxHeight: "100vh", zIndex: 9998 }}
     >
       <div
         className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 flex-1 min-w-0 min-h-0 w-full max-w-[calc(100vw-32px)] max-h-[calc(100vh-32px)] md:max-w-[min(1200px,calc(100vw-48px))] md:max-h-[calc(100vh-48px)]"
@@ -237,7 +237,7 @@ export function FullscreenViewer({
           <div
             ref={viewportRef}
             className="relative flex-1 min-h-0 w-full overflow-hidden"
-            style={{ width: "100%", height: "100%" }}
+            style={{ width: "100%", height: "100%", minHeight: "200px" }}
             onMouseEnter={handlePhotoBoxMouseEnter}
             onMouseLeave={handlePhotoBoxMouseLeave}
           >
@@ -273,9 +273,10 @@ export function FullscreenViewer({
                       src={src}
                       alt={`${productTitle} — фото ${idx + 1}`}
                       fill
-                      sizes="100vw"
+                      sizes="(max-width: 1200px) 100vw, 1200px"
                       className="object-contain object-center pointer-events-none"
                       draggable={false}
+                      unoptimized={src.startsWith("data:") || src.includes("blob:")}
                     />
                   </div>
                 </div>

@@ -9,7 +9,11 @@ import { OccasionFilterButtons } from "@/components/catalog/occasion-filter-butt
 import { Container } from "@/components/layout/Container";
 import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/lib/categories";
-import { ALL_CATALOG, CATALOG_PAGE, filterProductsByCategorySlug } from "@/lib/catalogCategories";
+import { ALL_CATALOG, CATALOG_PAGE } from "@/lib/catalogCategories";
+import {
+  getCatalogFlowersFromProducts,
+  productHasFlowerSlug,
+} from "@/lib/catalogFlowersFromComposition";
 import { getOccasionsSubcategories, getProductIdsBySubcategoryIds } from "@/lib/subcategories";
 import { OCCASIONS_CATEGORY_SLUG } from "@/lib/constants";
 import {
@@ -26,6 +30,8 @@ type OccasionPageProps = {
   params: Promise<{ occasionSlug: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
+
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   const subcategories = await getOccasionsSubcategories();
@@ -106,14 +112,21 @@ export default async function OccasionPage({ params, searchParams }: OccasionPag
     notFound();
   }
 
-  let products = filterProductsByCategorySlug(allProducts, OCCASIONS_CATEGORY_SLUG);
-
-  // Фильтрация по поводу
+  // База — все товары каталога. Фильтр по поводу: только товары, у которых отмечен этот повод (товар или вариант).
   const productIds = await getProductIdsBySubcategoryIds([occasion.id]);
-  products = products.filter((product) => {
+  let products = allProducts.filter((product) => {
     const productIdInDb = product.id.startsWith("vp-") ? product.id.replace("vp-", "") : product.id;
     return productIds.has(product.id) || productIds.has(productIdInDb);
   });
+
+  // Доп. фильтр «Цветы в составе» по query ?flower=slug
+  const flowerParam = resolvedSearchParams.flower;
+  const flowerFilterSlug =
+    flowerParam && typeof flowerParam === "string" ? String(flowerParam).trim() : "";
+  if (flowerFilterSlug) {
+    products = products.filter((p) => productHasFlowerSlug(p, flowerFilterSlug));
+  }
+  const catalogFlowers = getCatalogFlowersFromProducts(allProducts);
 
   // Пагинация
   const pageParam = resolvedSearchParams.page;
@@ -189,7 +202,7 @@ export default async function OccasionPage({ params, searchParams }: OccasionPag
 
         <div className={SECTION_GAP}>
           <Suspense fallback={<div className="h-10" />}>
-            <ProductToolbar priceBounds={priceBounds} />
+            <ProductToolbar priceBounds={priceBounds} catalogFlowers={catalogFlowers} />
           </Suspense>
         </div>
 

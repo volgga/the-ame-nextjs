@@ -7,6 +7,10 @@ import { Container } from "@/components/layout/Container";
 import { getAllCatalogProducts, getCatalogProductsPaginated } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE } from "@/lib/catalogCategories";
+import {
+  getCatalogFlowersFromProducts,
+  productHasFlowerSlug,
+} from "@/lib/catalogFlowersFromComposition";
 
 export type AllFlowersPageProps = {
   /** Заголовок страницы (H1) */
@@ -35,29 +39,41 @@ export async function AllFlowersPage({
   currentSlug = null,
   searchParams,
 }: AllFlowersPageProps) {
-  // Читаем параметр page из URL (по умолчанию 1)
+  // Читаем параметры из URL
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const pageParam = resolvedSearchParams.page;
+  const flowerParam = resolvedSearchParams.flower;
   const currentPage = typeof pageParam === "string" ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
   const pageSize = 24;
+  const flowerFilterSlug =
+    flowerParam && typeof flowerParam === "string" ? String(flowerParam).trim() : "";
 
   // Для /magazin используем singlePage режим (все товары, автодогрузка)
   const isSinglePage = currentSlug === "magazin";
 
-  // Для priceBounds нужны все товары (для фильтров)
   const allProducts = await getAllCatalogProducts();
 
-  // Загружаем товары: для singlePage — все, иначе — с пагинацией
+  // Фильтр «Цветы в составе» по query ?flower=slug
+  let baseProducts = allProducts;
+  if (flowerFilterSlug) {
+    baseProducts = allProducts.filter((p) => productHasFlowerSlug(p, flowerFilterSlug));
+  }
+
+  const catalogFlowers = getCatalogFlowersFromProducts(allProducts);
+
+  // Загружаем категории; для пагинации (не magazin) считаем от baseProducts
   const [categories, catalogData] = await Promise.all([
     getCategories(),
-    isSinglePage ? Promise.resolve(null) : getCatalogProductsPaginated(currentPage, pageSize),
+    isSinglePage ? Promise.resolve(null) : Promise.resolve({
+      items: baseProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+      total: baseProducts.length,
+    }),
   ]);
 
-  // Определяем products и total в зависимости от режима
-  const products = isSinglePage ? allProducts : (catalogData?.items ?? []);
-  const total = isSinglePage ? allProducts.length : (catalogData?.total ?? 0);
+  const products = isSinglePage ? baseProducts : (catalogData?.items ?? []);
+  const total = isSinglePage ? baseProducts.length : (catalogData?.total ?? 0);
   const priceBounds = (() => {
-    const prices = allProducts.map((p) => p.price).filter(Number.isFinite);
+    const prices = baseProducts.map((p) => p.price).filter(Number.isFinite);
     if (!prices.length) return [0, 10000] as [number, number];
     const min = Math.min(...prices);
     const max = Math.max(...prices);
@@ -104,7 +120,7 @@ export async function AllFlowersPage({
 
         <div className={SECTION_GAP}>
           <Suspense fallback={<div className="h-10" />}>
-            <ProductToolbar priceBounds={priceBounds} />
+            <ProductToolbar priceBounds={priceBounds} catalogFlowers={catalogFlowers} />
           </Suspense>
         </div>
 

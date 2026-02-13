@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { BOUQUET_COLORS, filterValidBouquetColorKeys } from "@/shared/catalog/bouquetColors";
 import { BouquetColorSwatch } from "@/components/catalog/BouquetColorSwatch";
+import type { CatalogFlowerOption } from "@/lib/catalogFlowersFromComposition";
 
 export type SortValue = "default" | "price_asc" | "price_desc";
 
@@ -16,10 +17,10 @@ const SORT_OPTIONS: { value: SortValue; label: string }[] = [
 
 function buildQueryString(
   params: URLSearchParams,
-  updates: { minPrice?: string; maxPrice?: string; sort?: string; q?: string; colors?: string }
+  updates: { minPrice?: string; maxPrice?: string; sort?: string; q?: string; colors?: string; flower?: string }
 ) {
   const next = new URLSearchParams(params);
-  const keys = ["minPrice", "maxPrice", "sort", "q", "colors"] as const;
+  const keys = ["minPrice", "maxPrice", "sort", "q", "colors", "flower"] as const;
   keys.forEach((k) => {
     const v = updates[k];
     if (v === undefined) return;
@@ -40,13 +41,15 @@ const rangeInputClass =
 type ProductToolbarProps = {
   /** [min, max] цены по товарам текущей категории */
   priceBounds: [number, number];
+  /** Список цветов в составе для фильтра (из состава товаров). Если пустой — фильтр не показывается. */
+  catalogFlowers?: CatalogFlowerOption[];
 };
 
 /**
  * ProductToolbar — панель фильтров: цена (popover со слайдером), поиск, сортировка.
  * Управление через URL: minPrice, maxPrice, sort, q.
  */
-export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
+export function ProductToolbar({ priceBounds, catalogFlowers = [] }: ProductToolbarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -61,6 +64,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
   const sort = (searchParams.get("sort") as SortValue) ?? "default";
   const qParam = searchParams.get("q") ?? "";
   const colorsParam = searchParams.get("colors") ?? "";
+  const flowerParam = searchParams.get("flower") ?? "";
   const selectedColorKeys = colorsParam
     ? filterValidBouquetColorKeys(colorsParam.split(",").map((s) => s.trim()).filter(Boolean))
     : [];
@@ -68,7 +72,9 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
   const [searchInput, setSearchInput] = useState(qParam);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [colorPopoverOpen, setColorPopoverOpen] = useState(false);
+  const [flowerPopoverOpen, setFlowerPopoverOpen] = useState(false);
   const colorPopoverRef = useRef<HTMLDivElement>(null);
+  const flowerPopoverRef = useRef<HTMLDivElement>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [localMin, setLocalMin] = useState(minPriceParam ? Number(minPriceParam) : priceMin);
   const [localMax, setLocalMax] = useState(maxPriceParam ? Number(maxPriceParam) : priceMax);
@@ -86,7 +92,7 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
   }, [popoverOpen, minPriceParam, maxPriceParam, priceMin, priceMax]);
 
   const applyUrl = useCallback(
-    (updates: { minPrice?: string; maxPrice?: string; sort?: string; q?: string; colors?: string }) => {
+    (updates: { minPrice?: string; maxPrice?: string; sort?: string; q?: string; colors?: string; flower?: string }) => {
       startTransition(() => {
         const qs = buildQueryString(searchParams, updates);
         router.push(`${pathname}${qs}`, { scroll: false });
@@ -137,9 +143,10 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
     setSearchInput("");
     setLocalMin(priceMin);
     setLocalMax(priceMax);
-    applyUrl({ minPrice: "", maxPrice: "", sort: "", q: "", colors: "" });
+    applyUrl({ minPrice: "", maxPrice: "", sort: "", q: "", colors: "", flower: "" });
     setPopoverOpen(false);
     setColorPopoverOpen(false);
+    setFlowerPopoverOpen(false);
   };
 
   const handleColorToggle = (key: string) => {
@@ -186,12 +193,31 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
     };
   }, [colorPopoverOpen]);
 
+  useEffect(() => {
+    if (!flowerPopoverOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (flowerPopoverRef.current && !flowerPopoverRef.current.contains(e.target as Node)) {
+        setFlowerPopoverOpen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFlowerPopoverOpen(false);
+    };
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [flowerPopoverOpen]);
+
   const hasFilters =
     (minPriceParam && Number(minPriceParam) !== priceMin) ||
     (maxPriceParam && Number(maxPriceParam) !== priceMax) ||
     (sort && sort !== "default") ||
     qParam ||
-    selectedColorKeys.length > 0;
+    selectedColorKeys.length > 0 ||
+    flowerParam.length > 0;
 
   const priceLabel =
     localMin === priceMin && localMax === priceMax ? "Цена" : `${formatPrice(localMin)} – ${formatPrice(localMax)}`;
@@ -382,6 +408,64 @@ export function ProductToolbar({ priceBounds }: ProductToolbarProps) {
               </div>
             )}
           </div>
+
+          {/* Цветы в составе (dropdown, single-select + Все) */}
+          {catalogFlowers.length > 0 && (
+            <div className="relative" ref={flowerPopoverRef}>
+              <button
+                type="button"
+                onClick={() => setFlowerPopoverOpen((o) => !o)}
+                className={`${controlH} w-full md:w-auto inline-flex items-center justify-between md:justify-start gap-2 rounded-full border border-[var(--color-outline-border)] bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2`}
+                aria-expanded={flowerPopoverOpen}
+                aria-haspopup="true"
+                aria-label="Фильтр по цветам в составе"
+              >
+                <span>
+                  {!flowerParam
+                    ? "Цветы в составе"
+                    : catalogFlowers.find((f) => f.slug === flowerParam)?.label ?? "Цветы в составе"}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-color-text-secondary transition-transform ${flowerPopoverOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+              {flowerPopoverOpen && (
+                <div
+                  className="absolute left-0 top-full z-50 mt-2 w-[min(100vw-2rem,320px)] rounded-lg border border-border-block bg-white p-2 shadow-elegant max-h-[70vh] overflow-y-auto"
+                  role="dialog"
+                  aria-label="Выбор цветка в составе"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      applyUrl({ flower: "" });
+                      setFlowerPopoverOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-[rgba(31,42,31,0.06)] text-left min-h-[40px]"
+                  >
+                    <span className="text-sm text-color-text-main flex-1">Все</span>
+                    {!flowerParam && <span className="text-accent-btn text-sm" aria-hidden>✓</span>}
+                  </button>
+                  {catalogFlowers.map((item) => (
+                    <button
+                      key={item.slug}
+                      type="button"
+                      onClick={() => {
+                        applyUrl({ flower: item.slug });
+                        setFlowerPopoverOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-[rgba(31,42,31,0.06)] text-left min-h-[40px]"
+                    >
+                      <span className="text-sm text-color-text-main flex-1">{item.label}</span>
+                      {flowerParam === item.slug && (
+                        <span className="text-accent-btn text-sm" aria-hidden>✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* RightGroup: Поиск + Порядок + Сброс — прижаты к правому краю */}

@@ -11,6 +11,10 @@ import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE, filterProductsByCategorySlug } from "@/lib/catalogCategories";
 import { normalizeFlowerKey } from "@/lib/normalizeFlowerKey";
+import {
+  getCatalogFlowersFromProducts,
+  productHasFlowerSlug,
+} from "@/lib/catalogFlowersFromComposition";
 import { getOccasionsSubcategories } from "@/lib/subcategories";
 import { OCCASIONS_CATEGORY_SLUG, FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
 import { OccasionFilterButtons } from "@/components/catalog/occasion-filter-buttons";
@@ -32,6 +36,9 @@ type MagazineCategoryPageProps = {
 };
 
 const VIRTUAL_CATEGORY_SLUGS = ["magazin", "posmotret-vse-tsvety"] as const;
+
+/** Ревалидация раз в 60 сек — чтобы после сохранения SEO title в админке страница отдавала актуальный title с сервера без мигания. */
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   const categories = await getCategories();
@@ -136,7 +143,16 @@ export default async function MagazineCategoryPage({ params, searchParams }: Mag
     notFound();
   }
 
-  const products = filterProductsByCategorySlug(allProducts, slug);
+  let products = filterProductsByCategorySlug(allProducts, slug);
+
+  // Фильтр «Цветы в составе» из query ?flower=slug (тулбар)
+  const flowerFilterSlug =
+    flowerParam && typeof flowerParam === "string" ? flowerParam.trim() : "";
+  if (flowerFilterSlug) {
+    products = products.filter((p) => productHasFlowerSlug(p, flowerFilterSlug));
+  }
+
+  const catalogFlowers = getCatalogFlowersFromProducts(allProducts);
   const seoText = category.description?.trim() || DEFAULT_CATEGORY_SEO_TEXT;
 
   // Пагинация для категорий
@@ -267,7 +283,7 @@ export default async function MagazineCategoryPage({ params, searchParams }: Mag
         {/* E) Product toolbar */}
         <div className={SECTION_GAP}>
           <Suspense fallback={<div className="h-10" />}>
-            <ProductToolbar priceBounds={priceBounds} />
+            <ProductToolbar priceBounds={priceBounds} catalogFlowers={catalogFlowers} />
           </Suspense>
         </div>
 

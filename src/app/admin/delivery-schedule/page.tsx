@@ -66,6 +66,31 @@ export default function AdminDeliverySchedulePage() {
     load();
   }, [load]);
 
+  const anyModalOpen = !!editingSlot || !!deleteConfirmSlotId || !!deleteConfirmDayId;
+  useEffect(() => {
+    if (typeof document === "undefined" || !document.body) return;
+    if (anyModalOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+      document.body.style.overflow = "hidden";
+    } else {
+      const scrollY = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+      if (scrollY) window.scrollTo(0, parseInt(scrollY || "0") * -1);
+    }
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+    };
+  }, [anyModalOpen]);
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("ru-RU", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
@@ -463,7 +488,7 @@ export default function AdminDeliverySchedulePage() {
       )}
 
       {deleteConfirmDayId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
           <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmDayId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
@@ -491,7 +516,7 @@ export default function AdminDeliverySchedulePage() {
       )}
 
       {deleteConfirmSlotId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
           <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmSlotId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"

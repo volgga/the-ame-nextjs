@@ -11,6 +11,10 @@ import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE, filterProductsByCategorySlug } from "@/lib/catalogCategories";
 import { normalizeFlowerKey } from "@/lib/normalizeFlowerKey";
+import {
+  getCatalogFlowersFromProducts,
+  productHasFlowerSlug,
+} from "@/lib/catalogFlowersFromComposition";
 import { getFlowersInCompositionList } from "@/lib/getAllFlowers";
 import { getFlowerBySlug, getProductIdsByFlowerId } from "@/lib/flowers";
 import { FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
@@ -29,6 +33,8 @@ type FlowerPageProps = {
   params: Promise<{ flowerSlug: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 };
+
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   const list = await getFlowersInCompositionList();
@@ -108,18 +114,26 @@ export default async function FlowerPage({ params, searchParams }: FlowerPagePro
 
   let products = filterProductsByCategorySlug(allProducts, FLOWERS_IN_COMPOSITION_CATEGORY_SLUG);
 
-  // Фильтрация по цветку: по связи product_flowers
-  const productIdsWithFlower = await getProductIdsByFlowerId(flower.id);
-  if (productIdsWithFlower.size > 0) {
-    products = products.filter((p) => productIdsWithFlower.has(p.id));
+  // Приоритет: query ?flower= (тулбар), иначе цветок из path
+  const flowerFilterSlug =
+    flowerParam && typeof flowerParam === "string" ? String(flowerParam).trim() : null;
+
+  if (flowerFilterSlug) {
+    products = products.filter((p) => productHasFlowerSlug(p, flowerFilterSlug));
   } else {
-    // Fallback: по compositionFlowers (если product_flowers ещё не заполнены)
-    const flowerFilterKey = normalizeFlowerKey(flower.name);
-    products = products.filter((p) => {
-      const comp = p.compositionFlowers ?? [];
-      return comp.some((f) => normalizeFlowerKey(f) === flowerFilterKey);
-    });
+    const productIdsWithFlower = await getProductIdsByFlowerId(flower.id);
+    if (productIdsWithFlower.size > 0) {
+      products = products.filter((p) => productIdsWithFlower.has(p.id));
+    } else {
+      const flowerFilterKey = normalizeFlowerKey(flower.name);
+      products = products.filter((p) => {
+        const comp = p.compositionFlowers ?? [];
+        return comp.some((f) => normalizeFlowerKey(f) === flowerFilterKey);
+      });
+    }
   }
+
+  const catalogFlowers = getCatalogFlowersFromProducts(allProducts);
 
   // Пагинация
   const pageParam = resolvedSearchParams.page;
@@ -191,7 +205,7 @@ export default async function FlowerPage({ params, searchParams }: FlowerPagePro
 
         <div className={SECTION_GAP}>
           <Suspense fallback={<div className="h-10" />}>
-            <ProductToolbar priceBounds={priceBounds} />
+            <ProductToolbar priceBounds={priceBounds} catalogFlowers={catalogFlowers} />
           </Suspense>
         </div>
 

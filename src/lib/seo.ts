@@ -111,6 +111,7 @@ const INDEXABLE_PARAMS = new Set([
   "maxPrice",
   "q",
   "colors",
+  "flower", // Фильтр «Цветы в составе»
   "page", // Пагинация
   "utm_source",
   "utm_medium",

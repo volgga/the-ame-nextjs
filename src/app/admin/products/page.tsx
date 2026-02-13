@@ -1409,7 +1409,20 @@ function AdminProductsPageContent() {
       </div>
 
       <div className="space-y-2">
-        {products.length === 0 ? (
+        {loading ? (
+          <div className="overflow-hidden rounded-xl border border-gray-200">
+            <div className="h-12 animate-pulse bg-gray-100" />
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex h-14 border-t border-gray-100">
+                <div className="w-14 shrink-0 animate-pulse bg-gray-50" />
+                <div className="flex-1 space-y-2 p-3">
+                  <div className="h-4 w-48 animate-pulse rounded bg-gray-100" />
+                  <div className="h-3 w-24 animate-pulse rounded bg-gray-50" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
           <p className="text-color-text-secondary py-8 text-center rounded-xl border border-border-block bg-white">
             Нет товаров. Нажмите «Добавить».
           </p>
