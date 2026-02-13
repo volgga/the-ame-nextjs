@@ -123,47 +123,136 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     return arr;
   }, [filteredFlowers, sortParam]);
 
-  // При смене фильтров/сортировки/поиска или брейкпоинта — сбрасываем к initialCount
+  // При смене фильтров/сортировки/поиска — сбрасываем к initialCount
+  // НЕ включаем initialCount в зависимости, чтобы не сбрасывать при изменении брейкпоинта
   useEffect(() => {
-    setVisibleCount(initialCount);
-  }, [minPrice, maxPrice, sortParam, qParam, selectedColorKeys, initialCount]);
+    const currentInitial = isMobile ? INITIAL_MOBILE : INITIAL_DESKTOP;
+    setVisibleCount(currentInitial);
+  }, [minPrice, maxPrice, sortParam, qParam, selectedColorKeys, isMobile]);
 
   const visibleFlowers = sortedFlowers.slice(0, visibleCount);
   const hasMore = sortedFlowers.length > visibleCount;
 
+  // Debug logging (только в dev режиме)
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[FlowerCatalog] State update:", {
+        totalProducts: allProducts.length,
+        totalFiltered: sortedFlowers.length,
+        visibleCount,
+        hasMore,
+        step,
+      });
+    }
+  }, [allProducts.length, sortedFlowers.length, visibleCount, hasMore, step]);
+
   const loadMore = useCallback(() => {
-    if (isLoadingRef.current || !hasMore) return;
+    if (isLoadingRef.current || !hasMore) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[FlowerCatalog] loadMore skipped:", { isLoading: isLoadingRef.current, hasMore });
+      }
+      return;
+    }
+    if (process.env.NODE_ENV === "development") {
+      console.log("[FlowerCatalog] loadMore called:", { currentCount: visibleCount, step, total: sortedFlowers.length });
+    }
     isLoadingRef.current = true;
     setIsLoadingMore(true);
-    setVisibleCount((n) => n + step);
+    setVisibleCount((n) => {
+      const newCount = n + step;
+      if (process.env.NODE_ENV === "development") {
+        console.log("[FlowerCatalog] visibleCount updated:", { from: n, to: newCount });
+      }
+      return newCount;
+    });
     setTimeout(() => {
       setIsLoadingMore(false);
       isLoadingRef.current = false;
     }, 150);
-  }, [hasMore, step]);
+  }, [hasMore, step, visibleCount, sortedFlowers.length]);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   // IntersectionObserver: отслеживаем sentinel элемент для предзагрузки
   useEffect(() => {
-    if (!hasMore || !sentinelRef.current) return;
+    if (!hasMore) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[FlowerCatalog] Observer not set up: hasMore=false");
+      }
+      return;
+    }
 
-    const sentinelElement = sentinelRef.current;
+    // Небольшая задержка для того, чтобы DOM успел обновиться
+    const timeoutId = setTimeout(() => {
+      if (!sentinelRef.current) {
+        if (process.env.NODE_ENV === "development") {
+          console.log("[FlowerCatalog] Observer not set up: sentinelRef.current is null after timeout");
+        }
+        return;
+      }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (!entry.isIntersecting || isLoadingRef.current) return;
+      const sentinelElement = sentinelRef.current;
+      
+      // Проверяем, виден ли sentinel уже сейчас
+      const rect = sentinelElement.getBoundingClientRect();
+      const isAlreadyVisible = rect.top < window.innerHeight + 800;
+      
+      if (process.env.NODE_ENV === "development") {
+        console.log("[FlowerCatalog] Sentinel check:", {
+          top: rect.top,
+          windowHeight: window.innerHeight,
+          isAlreadyVisible,
+          isLoading: isLoadingRef.current,
+        });
+      }
+
+      if (isAlreadyVisible && !isLoadingRef.current) {
+        if (process.env.NODE_ENV === "development") {
+          console.log("[FlowerCatalog] Sentinel already visible, triggering loadMore immediately");
+        }
         loadMore();
-      },
-      // Большой rootMargin для предзагрузки: начинаем загружать когда sentinel еще далеко внизу
-      // Desktop: 4 колонки, ~20 товаров = 5 строк, примерно 1000-1200px вниз
-      // Mobile: 2 колонки, ~10 товаров = 5 строк, примерно 800-1000px вниз
-      { rootMargin: "800px 0px", threshold: 0 }
-    );
+        return;
+      }
 
-    observer.observe(sentinelElement);
-    return () => observer.disconnect();
+      if (process.env.NODE_ENV === "development") {
+        console.log("[FlowerCatalog] Setting up IntersectionObserver");
+      }
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (process.env.NODE_ENV === "development") {
+            console.log("[FlowerCatalog] IntersectionObserver callback:", {
+              isIntersecting: entry.isIntersecting,
+              isLoading: isLoadingRef.current,
+              hasMore,
+            });
+          }
+          if (!entry.isIntersecting || isLoadingRef.current) return;
+          if (process.env.NODE_ENV === "development") {
+            console.log("[FlowerCatalog] Triggering loadMore from IntersectionObserver");
+          }
+          loadMore();
+        },
+        // Большой rootMargin для предзагрузки: начинаем загружать когда sentinel еще далеко внизу
+        // Desktop: 4 колонки, ~20 товаров = 5 строк, примерно 1000-1200px вниз
+        // Mobile: 2 колонки, ~10 товаров = 5 строк, примерно 800-1000px вниз
+        { rootMargin: "800px 0px", threshold: 0 }
+      );
+
+      observer.observe(sentinelElement);
+      
+      return () => {
+        if (process.env.NODE_ENV === "development") {
+          console.log("[FlowerCatalog] Cleaning up IntersectionObserver");
+        }
+        observer.disconnect();
+      };
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [hasMore, loadMore]);
 
   // Проверка при монтировании и изменении visibleCount: если все товары уже видны, загружаем больше
@@ -185,7 +274,20 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
       // Если последний элемент уже виден или близко к экрану (в пределах 800px) - загружаем
       const isLastVisible = rect.top < window.innerHeight + 800;
 
+      if (process.env.NODE_ENV === "development") {
+        console.log("[FlowerCatalog] Visibility check:", {
+          childrenCount: children.length,
+          lastElementTop: rect.top,
+          windowHeight: window.innerHeight,
+          isLastVisible,
+          isLoading: isLoadingRef.current,
+        });
+      }
+
       if (isLastVisible && !isLoadingRef.current) {
+        if (process.env.NODE_ENV === "development") {
+          console.log("[FlowerCatalog] Triggering loadMore from visibility check");
+        }
         loadMore();
       }
     };
@@ -213,7 +315,22 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
       </div>
 
       {/* Sentinel элемент для предзагрузки - размещаем после grid */}
-      {hasMore && <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />}
+      {hasMore && (
+        <div
+          ref={sentinelRef}
+          className="h-1 w-full"
+          aria-hidden="true"
+          style={{ minHeight: "1px" }}
+          data-sentinel="true"
+        />
+      )}
+      
+      {/* Debug info (только в dev режиме) */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="mt-4 text-xs text-gray-500 p-2 bg-gray-100 rounded">
+          Debug: visible={visibleCount} / total={sortedFlowers.length} / hasMore={hasMore ? "yes" : "no"}
+        </div>
+      )}
 
       {/* Индикатор загрузки */}
       {isLoadingMore && (
@@ -222,6 +339,23 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-[var(--color-text-main)] border-t-transparent" />
             <span className="text-sm">Загрузка...</span>
           </div>
+        </div>
+      )}
+
+      {/* Кнопка "Показать еще" как fallback */}
+      {hasMore && !isLoadingMore && (
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={() => {
+              if (process.env.NODE_ENV === "development") {
+                console.log("[FlowerCatalog] Manual loadMore triggered");
+              }
+              loadMore();
+            }}
+            className="rounded-full border border-[var(--color-outline-border)] bg-white px-6 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
+          >
+            Показать ещё ({sortedFlowers.length - visibleCount} товаров)
+          </button>
         </div>
       )}
 
