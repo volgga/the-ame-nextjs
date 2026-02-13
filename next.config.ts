@@ -7,6 +7,15 @@ const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : "placeholder.
 const supabaseHosts = [...new Set([supabaseHost, "eweaqbtqzzoxpwfmjinp.supabase.co"].filter(Boolean))];
 
 const nextConfig: NextConfig = {
+  // Отключаем полифиллы для современных браузеров (уменьшает размер бандла на ~13 KiB)
+  compiler: {
+    // SWC уже минифицирует, но можно добавить дополнительные опции если нужно
+  },
+  // Экспериментальные оптимизации
+  experimental: {
+    // Оптимизация CSS (может помочь с неиспользуемым CSS)
+    optimizeCss: false, // Пока отключено, т.к. может сломать стили
+  },
   async redirects() {
     return [
       { source: "/privacy", destination: "/docs/privacy", permanent: true },

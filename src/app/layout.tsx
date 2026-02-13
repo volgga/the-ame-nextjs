@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/app/AppShell";
@@ -18,10 +19,12 @@ ym(103806735, "init", {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLa
 `.trim();
 
 // Подключаем шрифт Montserrat (как в старом проекте)
+// next/font/google автоматически добавляет preload для шрифта
 const montserrat = Montserrat({
   subsets: ["latin", "cyrillic"],
   variable: "--font-montserrat",
   display: "swap",
+  preload: true, // Явно включаем preload для уменьшения критического пути
 });
 
 /**
@@ -70,9 +73,11 @@ export default async function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className={`${montserrat.variable} antialiased`} suppressHydrationWarning>
-        {/* Яндекс.Метрика — как можно ближе к началу страницы (официальный сниппет) */}
-        <script
-          type="text/javascript"
+        {/* Яндекс.Метрика — загружаем через next/script после интерактивности для уменьшения блокировки рендера.
+            ⚠️ После деплоя проверить, что аналитика работает корректно (первые события могут не учитываться). */}
+        <Script
+          id="yandex-metrika"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{ __html: YANDEX_METRIKA_INLINE }}
         />
         <noscript>
