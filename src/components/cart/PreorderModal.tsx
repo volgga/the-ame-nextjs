@@ -207,7 +207,7 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
               />
             </div>
 
-            <div>
+            <div className="w-full min-w-0 overflow-hidden">
               <label htmlFor="preorder-date" className="block text-sm font-medium text-color-text-main mb-1">
                 Дата получения
               </label>
@@ -221,7 +221,7 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
                 }}
                 min={getTodayISO()}
                 lang="ru"
-                className="w-full min-w-0 px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 border-gray-300 box-border"
+                className="w-full min-w-0 max-w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 border-gray-300 box-border"
               />
               {dateError && <p className="text-sm text-red-600 mt-1">{dateError}</p>}
             </div>

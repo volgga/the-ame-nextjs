@@ -7,9 +7,12 @@ import { FlowerCard } from "./FlowerCard";
 import { Flower } from "@/types/flower";
 import type { Product } from "@/lib/products";
 
-/** Изначально 24 карточки; при скролле до sentinel догружаем порциями (на ПК 4 колонки → +8 = 2 ряда). */
-const INITIAL_VISIBLE = 24;
-const PAGE_SIZE = 8;
+/** Desktop: 24 карточки, step +4 (~1 ряд). Mobile: 12 карточек, step +2 (~1 ряд). */
+const INITIAL_DESKTOP = 24;
+const INITIAL_MOBILE = 12;
+const STEP_DESKTOP = 4;
+const STEP_MOBILE = 2;
+const MOBILE_BREAKPOINT = "(max-width: 767px)";
 
 type SortValue = "default" | "price_asc" | "price_desc";
 
@@ -23,12 +26,22 @@ type FlowerCatalogProps = {
 };
 
 export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => {
-  /** Сколько карточек показываем; при скролле до sentinel увеличиваем на PAGE_SIZE */
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const [isMobile, setIsMobile] = useState(false);
+  const initialCount = isMobile ? INITIAL_MOBILE : INITIAL_DESKTOP;
+  const step = isMobile ? STEP_MOBILE : STEP_DESKTOP;
+  const [visibleCount, setVisibleCount] = useState(INITIAL_DESKTOP);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_BREAKPOINT);
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
   const searchParams = useSearchParams();
   const minPriceParam = searchParams.get("minPrice");
   const maxPriceParam = searchParams.get("maxPrice");
@@ -100,10 +113,10 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     return arr;
   }, [filteredFlowers, sortParam]);
 
-  // При смене фильтров/сортировки/поиска — сбрасываем к начальным 24 карточкам
+  // При смене фильтров/сортировки/поиска или брейкпоинта — сбрасываем к initialCount
   useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE);
-  }, [minPrice, maxPrice, sortParam, qParam, selectedColorKeys]);
+    setVisibleCount(initialCount);
+  }, [minPrice, maxPrice, sortParam, qParam, selectedColorKeys, initialCount]);
 
   const visibleFlowers = sortedFlowers.slice(0, visibleCount);
   const hasMore = sortedFlowers.length > visibleCount;
@@ -112,12 +125,12 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     if (isLoadingRef.current || !hasMore) return;
     isLoadingRef.current = true;
     setIsLoadingMore(true);
-    setVisibleCount((n) => n + PAGE_SIZE);
+    setVisibleCount((n) => n + step);
     setTimeout(() => {
       setIsLoadingMore(false);
       isLoadingRef.current = false;
     }, 150);
-  }, [hasMore]);
+  }, [hasMore, step]);
 
   // IntersectionObserver: при появлении sentinel в зоне видимости (или чуть раньше) догружаем
   useEffect(() => {
@@ -130,7 +143,7 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
         if (!entry.isIntersecting || isLoadingRef.current) return;
         loadMore();
       },
-      { rootMargin: "400px 0px", threshold: 0 }
+      { rootMargin: "500px 0px", threshold: 0 }
     );
 
     observer.observe(sentinel);

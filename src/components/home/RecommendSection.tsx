@@ -235,14 +235,14 @@ export function RecommendSection({ products }: RecommendSectionProps) {
           </div>
         </div>
 
-        {/* carousel: на мобильной меньше отступ сверху */}
+        {/* carousel: mobile — 2 ряда + горизонтальный скролл (рулетка); md+ — одна строка */}
         <div
           ref={scrollRef}
           onPointerDown={handleInteraction}
           onWheel={handleInteraction}
           onMouseEnter={handleInteraction}
           onScroll={handleUserScroll}
-          className="flex gap-5 md:gap-6 overflow-x-auto overflow-y-hidden py-0 md:py-2 -mx-4 px-4 md:-mx-6 md:px-6 scrollbar-hide"
+          className="grid grid-flow-col grid-rows-[auto_auto] md:flex gap-3 md:gap-6 overflow-x-auto overflow-y-hidden py-0 md:py-2 -mx-4 px-4 md:-mx-6 md:px-6 scrollbar-hide"
           style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}
         >
           {flowers.map((flower) => {
