@@ -92,6 +92,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // Receipt обязателен — терминал требует онлайн-кассу. Если нет телефона — fallback email.
+    const receiptEmail = c.email?.trim() || (!receiptPhone ? process.env.RECEIPT_FALLBACK_EMAIL || "info@theame.ru" : undefined);
+
     const initResult = await tinkoffInit({
       Amount: Math.round(order.amount),
       OrderId: order.id,
@@ -101,10 +104,10 @@ export async function POST(request: Request) {
       NotificationURL: notificationUrl || undefined,
       Data: Object.keys(data).length > 0 ? data : undefined,
       Receipt:
-        receiptItems.length > 0 && (receiptPhone || c.email)
+        receiptItems.length > 0
           ? {
-              Email: c.email?.trim() || undefined,
-              Phone: receiptPhone,
+              Email: receiptEmail || undefined,
+              Phone: receiptPhone || undefined,
               Taxation: "usn_income",
               Items: receiptItems,
             }
