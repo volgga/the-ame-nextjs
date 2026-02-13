@@ -30,6 +30,7 @@ import { AddToOrderSection } from "./AddToOrderSection";
 import { runFlyToHeader } from "@/utils/flyToHeader";
 import { PreorderModal } from "@/components/cart/PreorderModal";
 import { buildProductUrl } from "@/utils/buildProductUrl";
+import { trackProductDetail, trackAddToCart } from "@/lib/metrika/ecommerce";
 
 type ProductPageClientProps = {
   product: Product;
@@ -333,6 +334,17 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
 
   const lineId = getCartLineId(flower);
 
+  // Просмотр карточки товара (detail) — один раз при монтировании на клиенте
+  useEffect(() => {
+    trackProductDetail({
+      id: product.id,
+      name: product.title,
+      price: displayPrice,
+      category: product.categories?.[0],
+      variant: effectiveVariant ? effectiveVariant.name ?? undefined : undefined,
+    });
+  }, [product.id, product.title, displayPrice, product.categories, effectiveVariant]);
+
   const handleAddToCart = (e?: React.MouseEvent<HTMLButtonElement>) => {
     // Проверяем, есть ли эта позиция (товар + вариант) уже в корзине
     const existingItem = cartState.items.find((item) => item.id === lineId);
@@ -343,6 +355,16 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
         addToCart(flower);
       }
     }
+    trackAddToCart(
+      {
+        id: flower.id,
+        name: flower.name,
+        price: flower.price,
+        category: flower.category,
+        variant: flower.variantTitle ?? undefined,
+      },
+      quantity
+    );
     // Запускаем анимацию полёта иконки к корзине
     if (e?.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -359,6 +381,16 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
         addToCart(flower);
       }
     }
+    trackAddToCart(
+      {
+        id: flower.id,
+        name: flower.name,
+        price: flower.price,
+        category: flower.category,
+        variant: flower.variantTitle ?? undefined,
+      },
+      quantity
+    );
     // Запускаем анимацию полёта иконки к корзине
     if (e?.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -429,6 +461,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                         alt={`${product.title} — фото ${idx + 1}`}
                         fill
                         sizes="64px"
+                        quality={88}
                         className="object-cover object-center"
                       />
                     </button>
@@ -467,9 +500,11 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                             src={src}
                             alt={`${product.title} — фото ${idx + 1}`}
                             fill
-                            sizes="(max-width: 1024px) 100vw, 46vw"
+                            sizes="(max-width: 768px) 100vw, 700px"
                             className="object-contain object-center rounded-xl"
                             priority={idx === 0}
+                            fetchPriority={idx === 0 ? "high" : undefined}
+                            quality={idx === 0 ? 88 : 85}
                           />
                         </div>
                       ))

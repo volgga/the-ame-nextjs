@@ -5,6 +5,7 @@ import { Plus, Minus, X } from "lucide-react";
 import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
+import { trackRemoveFromCart } from "@/lib/metrika/ecommerce";
 
 /**
  * CartItemsList — список товаров в корзине.
@@ -35,12 +36,42 @@ function CartItemRow({
   updateQuantity,
   removeFromCart,
 }: {
-  item: { id: string; name: string; image: string; price: number; cartQuantity: number; variantTitle?: string | null };
+  item: {
+    id: string;
+    name: string;
+    image: string;
+    price: number;
+    cartQuantity: number;
+    variantTitle?: string | null;
+    category?: string;
+  };
   updateQuantity: (id: string, qty: number) => void;
   removeFromCart: (id: string) => void;
 }) {
   const [imgError, setImgError] = useState(false);
   const imageSrc = !isValidImageUrl(item.image) || imgError ? PLACEHOLDER_IMAGE : item.image!.trim();
+
+  const ecommerceProduct = {
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    category: item.category,
+    variant: item.variantTitle ?? undefined,
+  };
+
+  const handleRemove = () => {
+    trackRemoveFromCart(ecommerceProduct, item.cartQuantity);
+    removeFromCart(item.id);
+  };
+
+  const handleDecrease = () => {
+    if (item.cartQuantity <= 1) {
+      trackRemoveFromCart(ecommerceProduct, 1);
+      updateQuantity(item.id, 0);
+    } else {
+      updateQuantity(item.id, item.cartQuantity - 1);
+    }
+  };
 
   return (
     <div className="flex gap-3">
@@ -50,6 +81,7 @@ function CartItemRow({
           alt={item.name}
           fill
           sizes="80px"
+          quality={88}
           className="object-cover"
           onError={() => setImgError(true)}
         />
@@ -62,7 +94,7 @@ function CartItemRow({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => updateQuantity(item.id, item.cartQuantity - 1)}
+            onClick={handleDecrease}
             className="w-9 h-9 min-w-[44px] min-h-[44px] rounded-full border border-gray-300 hover:bg-gray-100 flex items-center justify-center transition-colors touch-manipulation"
             aria-label="Уменьшить количество"
           >
@@ -83,7 +115,7 @@ function CartItemRow({
         <div className="font-semibold text-sm">{(item.price * item.cartQuantity).toLocaleString("ru-RU")} р.</div>
         <button
           type="button"
-          onClick={() => removeFromCart(item.id)}
+          onClick={handleRemove}
           className="w-10 h-10 min-w-[44px] min-h-[44px] rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors touch-manipulation"
           aria-label="Удалить товар"
         >

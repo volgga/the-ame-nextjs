@@ -91,6 +91,33 @@ function buildProductJsonLd(slug: string, product: { title: string; image: strin
   };
 }
 
+function buildBreadcrumbJsonLd(slug: string, productTitle: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Главная",
+        item: canonicalUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Каталог",
+        item: canonicalUrl("/magazin"),
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: productTitle,
+        item: canonicalUrl(`/product/${slug}`),
+      },
+    ],
+  };
+}
+
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   const [product, productDetails, addOnCategoryOrder, allCatalogProducts] = await Promise.all([
@@ -106,11 +133,13 @@ export default async function ProductPage({ params }: Props) {
 
   const addToOrderProducts = buildAddToOrderProducts(allCatalogProducts, addOnCategoryOrder, product.id);
 
-  const jsonLd = buildProductJsonLd(slug, product);
+  const productJsonLd = buildProductJsonLd(slug, product);
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd(slug, product.title);
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ProductPageClient product={product} productDetails={productDetails} addToOrderProducts={addToOrderProducts} />
     </>
   );

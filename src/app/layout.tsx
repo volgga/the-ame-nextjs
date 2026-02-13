@@ -24,7 +24,8 @@ const montserrat = Montserrat({
   subsets: ["latin", "cyrillic"],
   variable: "--font-montserrat",
   display: "swap",
-  preload: true, // Явно включаем preload для уменьшения критического пути
+  preload: true,
+  adjustFontFallback: true, // Снижает CLS при загрузке шрифта
 });
 
 /**
@@ -73,6 +74,13 @@ export default async function RootLayout({
   return (
     <html lang="ru" suppressHydrationWarning>
       <body className={`${montserrat.variable} antialiased`} suppressHydrationWarning>
+        {/* Контейнер dataLayer для e-commerce: создаём до загрузки счётчика и любых push.
+            Доки: https://yandex.ru/support/metrica/data/e-commerce.html */}
+        <Script
+          id="yandex-metrika-datalayer"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: "window.dataLayer = window.dataLayer || [];" }}
+        />
         {/* Яндекс.Метрика — загружаем через next/script после интерактивности для уменьшения блокировки рендера.
             ⚠️ После деплоя проверить, что аналитика работает корректно (первые события могут не учитываться). */}
         <Script

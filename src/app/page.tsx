@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { HeroCarousel } from "@/components/hero/HeroCarousel";
 import { RecommendSection } from "@/components/home/RecommendSection";
 import { HomeCategoryTiles } from "@/components/home/HomeCategoryTiles";
@@ -6,8 +7,12 @@ import { AboutSection } from "@/components/home/AboutSection";
 import { OrderBouquetSection } from "@/components/home/OrderBouquetSection";
 import { ReviewsSection } from "@/components/home/ReviewsSection";
 import { FaqSection } from "@/components/home/FaqSection";
-import { MapSection } from "@/components/home/MapSection";
 import { getActiveHeroSlides } from "@/lib/heroSlides";
+
+const MapSection = dynamic(
+  () => import("@/components/home/MapSection").then((m) => ({ default: m.MapSection })),
+  { ssr: true }
+);
 import { getAllCatalogProducts } from "@/lib/products";
 import { getRecommendProducts } from "@/lib/catalogCategories";
 import { getActiveHomeCollections } from "@/lib/homeCollections";
@@ -64,8 +69,14 @@ export default async function HomePage() {
 
   const { products: recommendProducts } = getRecommendProducts(allProducts);
 
+  // LCP: прелоад первого hero-изображения (серверный вывод — браузер начинает загрузку до гидрации)
+  const firstHeroImageUrl = slides[0]?.imageUrl;
+
   return (
     <div className="min-h-screen bg-page-bg">
+      {firstHeroImageUrl ? (
+        <link rel="preload" as="image" href={firstHeroImageUrl} />
+      ) : null}
       <HeroCarousel slides={slides} />
       <RecommendSection products={recommendProducts} />
       <HomeCategoryTiles collections={homeCollections} />

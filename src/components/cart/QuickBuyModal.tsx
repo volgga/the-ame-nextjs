@@ -136,6 +136,7 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
                 alt={product.name}
                 fill
                 sizes="56px"
+                quality={88}
                 className="object-cover"
               />
             </div>

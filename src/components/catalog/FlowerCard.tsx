@@ -12,6 +12,7 @@ import { useFavorites } from "@/context/FavoritesContext";
 import { buildProductUrl } from "@/utils/buildProductUrl";
 import type { QuickViewProductData } from "@/components/catalog/QuickViewModal";
 import { runFlyToHeader } from "@/utils/flyToHeader";
+import { trackAddToCart } from "@/lib/metrika/ecommerce";
 import type { Product } from "@/lib/products";
 
 const QuickBuyModal = dynamic(
@@ -54,6 +55,12 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
     e.preventDefault();
     e.stopPropagation();
     addToCart(flower);
+    trackAddToCart({
+      id: flower.id,
+      name: flower.name,
+      price: flower.price,
+      category: flower.category,
+    });
   };
 
   const inFavorites = mounted ? isFavorite(flower.id) : false;
@@ -135,8 +142,8 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
             src={imageSrc}
             alt={flower.name}
             fill
-            sizes="(max-width: 430px) 230px, (max-width: 640px) 280px, (max-width: 1024px) 300px, 320px"
-            quality={75}
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 300px"
+            quality={88}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onError={() => setImgError(true)}

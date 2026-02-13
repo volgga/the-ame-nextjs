@@ -6,6 +6,7 @@ import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 import { PaymentContactBlock } from "@/components/payment/ContactBlock";
 import type { OrderRecord } from "@/types/order";
+import { trackPurchase } from "@/lib/metrika/ecommerce";
 
 const POLL_INTERVAL_MS = 2000;
 const POLL_MAX_ATTEMPTS = 10;
@@ -147,6 +148,22 @@ function PaymentSuccessContent() {
       clearTimeout(timeoutId);
     };
   }, [orderId]);
+
+  // E-commerce: отправка purchase один раз при успешной оплате (защита от дубля внутри trackPurchase)
+  useEffect(() => {
+    if (!order || order.status !== "paid") return;
+    trackPurchase({
+      id: order.id,
+      revenue: order.amount / 100,
+      products: order.items.map((it) => ({
+        id: it.id,
+        name: it.name,
+        price: it.price,
+        quantity: it.quantity,
+        variant: it.variantTitle,
+      })),
+    });
+  }, [order?.id, order?.status, order?.amount, order?.items]);
 
   useEffect(() => {
     if (!orderId) {

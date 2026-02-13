@@ -201,8 +201,34 @@ export default async function MagazineCategoryPage({ params, searchParams }: Mag
     }
   }
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Главная",
+        item: canonicalUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: ALL_CATALOG.title,
+        item: canonicalUrl(ALL_CATALOG.href),
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: category.name,
+        item: canonicalUrl(`/magazine/${slug}`),
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-page-bg">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <Container className="pt-2 pb-8 md:pt-4 md:pb-10">
         {/* A) Breadcrumb — на мобильной отступ A = заголовок↔описание */}
         <Breadcrumbs items={breadcrumbItems} className="mt-0 mb-2 md:mb-4" />

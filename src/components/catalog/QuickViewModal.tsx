@@ -10,6 +10,7 @@ import { useCart } from "@/context/CartContext";
 import { QuickBuyModal } from "@/components/cart/QuickBuyModal";
 import { runFlyToHeader } from "@/utils/flyToHeader";
 import { buildProductUrl } from "@/utils/buildProductUrl";
+import { trackProductDetail, trackAddToCart } from "@/lib/metrika/ecommerce";
 
 const Z_OVERLAY = 200;
 const Z_PANEL = 201;
@@ -65,6 +66,18 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
+
+  // Просмотр карточки товара (detail) при открытии модалки
+  useEffect(() => {
+    if (isOpen && product) {
+      trackProductDetail({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.categories?.[0],
+      });
+    }
+  }, [isOpen, product?.id, product?.name, product?.price, product?.categories]);
 
   if (!mounted || !isOpen || !product) return null;
 
@@ -126,6 +139,15 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
     if (quantity > 1) {
       updateQuantity(product.id, quantity);
     }
+    trackAddToCart(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.categories?.[0],
+      },
+      quantity
+    );
     runFlyToHeader("cart", rect);
     onClose();
   };
@@ -170,7 +192,9 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                       alt={`${product.name} — фото ${currentImageIndex + 1}`}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
+                      quality={88}
                       className="object-cover"
+                      priority={currentImageIndex === 0}
                     />
                     {displayImages.length > 1 && (
                       <>

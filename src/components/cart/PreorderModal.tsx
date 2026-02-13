@@ -165,6 +165,7 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
                 alt={product.name}
                 fill
                 sizes="56px"
+                quality={88}
                 className="object-cover"
               />
             </div>
