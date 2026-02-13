@@ -12,6 +12,7 @@ import { getOrderById, markPaymentNotificationSent, updateOrderStatus } from "@/
 import { sendOrderTelegramMessage } from "@/lib/telegram";
 import { formatPaymentSuccess, formatPaymentFailed } from "@/lib/telegramOrdersFormat";
 import { tinkoffGetState } from "@/lib/tinkoff";
+import { getSupabaseServer } from "@/lib/supabaseServer";
 
 const bodySchema = z.object({
   orderId: z.string().uuid(),
@@ -120,17 +121,53 @@ export async function POST(request: Request) {
 
     // Идемпотентность: проверяем, отправляли ли уже уведомление
     const eventType = status === "success" ? "SUCCESS" : "FAIL";
-    const shouldSend = await markPaymentNotificationSent(orderId, eventType);
-
+    
+    // Проверяем текущее значение флага перед попыткой установить
+    const supabase = getSupabaseServer();
+    const fieldName = eventType === "SUCCESS" ? "payment_success_notified_at" : "payment_fail_notified_at";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: currentOrder } = await (supabase as any)
+      .from("orders")
+      .select(fieldName)
+      .eq("id", orderId)
+      .single();
+    
+    const alreadyNotified = currentOrder?.[fieldName] != null;
+    
     console.info(`[tbank-notify] idempotency check`, {
       orderId,
       eventType,
-      shouldSend,
+      fieldName,
+      alreadyNotified,
+      currentValue: currentOrder?.[fieldName],
     });
 
-    if (!shouldSend) {
-      console.log(`[tbank-notify] notification already sent for ${status}, skipping`, { orderId });
+    // Пытаемся установить флаг атомарно
+    const shouldSend = await markPaymentNotificationSent(orderId, eventType);
+
+    console.info(`[tbank-notify] markPaymentNotificationSent result`, {
+      orderId,
+      eventType,
+      shouldSend,
+      alreadyNotified,
+    });
+
+    if (!shouldSend && alreadyNotified) {
+      // Флаг уже был установлен ранее - значит уведомление уже отправляли
+      console.log(`[tbank-notify] notification already sent for ${status}, skipping`, { 
+        orderId,
+        notifiedAt: currentOrder?.[fieldName],
+      });
       return NextResponse.json({ message: "Уведомление уже отправлено" }, { status: 200 });
+    }
+    
+    // Если shouldSend = false, но флаг не был установлен - возможно ошибка БД
+    // В этом случае все равно попробуем отправить уведомление
+    if (!shouldSend && !alreadyNotified) {
+      console.warn(`[tbank-notify] markPaymentNotificationSent returned false but flag was not set, proceeding anyway`, {
+        orderId,
+        eventType,
+      });
     }
 
     // Отправляем уведомление
@@ -164,9 +201,21 @@ export async function POST(request: Request) {
           messageLength: message.length,
           hasTelegramToken,
           hasTelegramChatId,
+          telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID,
+          telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID,
         });
-        await sendOrderTelegramMessage(message);
-        console.info(`[tbank-notify] payment success notification sent successfully`, { orderId });
+        try {
+          await sendOrderTelegramMessage(message);
+          console.info(`[tbank-notify] payment success notification sent successfully`, { orderId });
+        } catch (telegramErr) {
+          // Детальная ошибка от Telegram API
+          console.error(`[tbank-notify] sendOrderTelegramMessage failed`, {
+            orderId,
+            error: telegramErr instanceof Error ? telegramErr.message : String(telegramErr),
+            errorStack: telegramErr instanceof Error ? telegramErr.stack : undefined,
+          });
+          throw telegramErr; // Пробрасываем дальше для общего catch
+        }
       } else {
         const reason = actualPaymentStatus ?? "Отмена/ошибка оплаты";
         const message = formatPaymentFailed(order, reason);
@@ -176,9 +225,21 @@ export async function POST(request: Request) {
           messageLength: message.length,
           hasTelegramToken,
           hasTelegramChatId,
+          telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID,
+          telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID,
         });
-        await sendOrderTelegramMessage(message);
-        console.info(`[tbank-notify] payment failed notification sent successfully`, { orderId });
+        try {
+          await sendOrderTelegramMessage(message);
+          console.info(`[tbank-notify] payment failed notification sent successfully`, { orderId });
+        } catch (telegramErr) {
+          // Детальная ошибка от Telegram API
+          console.error(`[tbank-notify] sendOrderTelegramMessage failed`, {
+            orderId,
+            error: telegramErr instanceof Error ? telegramErr.message : String(telegramErr),
+            errorStack: telegramErr instanceof Error ? telegramErr.stack : undefined,
+          });
+          throw telegramErr; // Пробрасываем дальше для общего catch
+        }
       }
 
       return NextResponse.json({ message: "Уведомление отправлено" }, { status: 200 });
