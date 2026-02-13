@@ -58,12 +58,33 @@ function requireTinkoffEnv() {
  * Вызов Tinkoff Init. TerminalKey и Password — только из env.
  * Возвращает { PaymentId, PaymentURL } или ошибку.
  */
+/** Позиция чека ФФД для Tinkoff Init Receipt. */
+export interface TinkoffReceiptItem {
+  Name: string;
+  Price: number; // копейки
+  Quantity: number;
+  Amount: number; // копейки
+  Tax: "none" | "vat0" | "vat10" | "vat20";
+  PaymentMethod?: "full_payment" | "full_prepayment";
+  PaymentObject?: "commodity" | "service";
+}
+
+/** Чек ФФД для Tinkoff Init (обязателен, если терминал требует онлайн-кассу). */
+export interface TinkoffReceipt {
+  Email?: string;
+  Phone?: string;
+  Taxation: "usn_income" | "usn_income_outcome" | "osn" | "esn" | "patent";
+  Items: TinkoffReceiptItem[];
+}
+
 export async function tinkoffInit(
   params: Omit<TinkoffInitParams, "TerminalKey"> & {
     TerminalKey?: string;
     Password?: string;
     /** Метаданные заказа (адрес, дата, время и т.д.); в Token не входят. */
     Data?: Record<string, string>;
+    /** Чек ФФД — обязателен, если в ЛК T-Bank включена онлайн-касса. */
+    Receipt?: TinkoffReceipt;
   }
 ): Promise<{ PaymentId: string; PaymentURL: string } | { error: string; details?: unknown }> {
   const envCreds = requireTinkoffEnv();
@@ -91,6 +112,22 @@ export async function tinkoffInit(
   }
   if (params.Data && Object.keys(params.Data).length > 0) {
     body.DATA = params.Data;
+  }
+  if (params.Receipt && params.Receipt.Items?.length > 0) {
+    body.Receipt = {
+      Email: params.Receipt.Email,
+      Phone: params.Receipt.Phone,
+      Taxation: params.Receipt.Taxation ?? "usn_income",
+      Items: params.Receipt.Items.map((item) => ({
+        Name: String(item.Name).slice(0, 128),
+        Price: Math.round(item.Price),
+        Quantity: Math.round(item.Quantity * 1000) / 1000,
+        Amount: Math.round(item.Amount),
+        Tax: item.Tax ?? "none",
+        PaymentMethod: item.PaymentMethod ?? "full_payment",
+        PaymentObject: item.PaymentObject ?? "commodity",
+      })),
+    };
   }
 
   const tokenParams: Record<string, string | number> = {

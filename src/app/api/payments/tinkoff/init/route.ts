@@ -55,6 +55,43 @@ export async function POST(request: Request) {
     if (c.name) data.CustomerName = c.name;
     if (c.phone) data.Phone = c.phone;
 
+    // Чек ФФД — обязателен, если терминал требует онлайн-кассу (ошибка 309)
+    const rawPhone = (c.phone ?? "").replace(/\D/g, "");
+    const receiptPhone =
+      rawPhone.length >= 10
+        ? rawPhone.startsWith("7")
+          ? `+${rawPhone}`
+          : `+7${rawPhone.replace(/^8/, "")}`
+        : undefined;
+    const orderAmountKopeks = Math.round(order.amount);
+    const rawItems = order.items.map((item) => {
+      const priceKopeks = Math.round(item.price * 100);
+      const qty = Math.max(0.001, item.quantity);
+      const amountKopeks = Math.round(priceKopeks * qty);
+      return {
+        Name: item.name.slice(0, 128),
+        Price: priceKopeks,
+        Quantity: qty,
+        Amount: amountKopeks,
+        Tax: "none" as const,
+      };
+    });
+    const rawTotal = rawItems.reduce((s, i) => s + i.Amount, 0);
+    let receiptItems =
+      rawTotal > 0
+        ? rawItems.map((item) => ({
+            ...item,
+            Amount: Math.round((item.Amount * orderAmountKopeks) / rawTotal),
+          }))
+        : rawItems;
+    const sum = receiptItems.reduce((s, i) => s + i.Amount, 0);
+    if (receiptItems.length > 0 && sum !== orderAmountKopeks) {
+      const lastIdx = receiptItems.length - 1;
+      receiptItems = receiptItems.map((item, idx) =>
+        idx === lastIdx ? { ...item, Amount: Math.max(1, item.Amount + orderAmountKopeks - sum) } : item
+      );
+    }
+
     const initResult = await tinkoffInit({
       Amount: Math.round(order.amount),
       OrderId: order.id,
@@ -63,6 +100,15 @@ export async function POST(request: Request) {
       FailURL: failUrl,
       NotificationURL: notificationUrl || undefined,
       Data: Object.keys(data).length > 0 ? data : undefined,
+      Receipt:
+        receiptItems.length > 0 && (receiptPhone || c.email)
+          ? {
+              Email: c.email?.trim() || undefined,
+              Phone: receiptPhone,
+              Taxation: "usn_income",
+              Items: receiptItems,
+            }
+          : undefined,
     });
 
     if ("error" in initResult) {
