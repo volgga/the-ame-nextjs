@@ -182,15 +182,30 @@ export async function POST(request: Request) {
         hasTelegramChatId,
       });
 
-      if (!hasTelegramToken || !hasTelegramChatId) {
+      // Fallback: если TELEGRAM_ORDERS_CHAT_ID не задан, пробуем TELEGRAM_CHAT_ID
+      const fallbackChatId = process.env.TELEGRAM_ORDERS_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
+      const finalChatId = fallbackChatId?.trim();
+      
+      if (!hasTelegramToken || !finalChatId) {
         const missing = [];
         if (!hasTelegramToken) missing.push("TELEGRAM_BOT_TOKEN");
-        if (!hasTelegramChatId) missing.push("TELEGRAM_ORDERS_CHAT_ID");
-        console.error(`[tbank-notify] missing telegram env variables`, { orderId, missing });
+        if (!finalChatId) missing.push("TELEGRAM_ORDERS_CHAT_ID или TELEGRAM_CHAT_ID");
+        console.error(`[tbank-notify] missing telegram env variables`, { 
+          orderId, 
+          missing,
+          hasTelegramToken,
+          hasTelegramChatId,
+          hasFallbackChatId: !!process.env.TELEGRAM_CHAT_ID,
+        });
         return NextResponse.json(
           { error: "Telegram не настроен", details: `Отсутствуют переменные: ${missing.join(", ")}` },
           { status: 500 }
         );
+      }
+      
+      // Используем fallback chatId если основной не задан
+      if (!process.env.TELEGRAM_ORDERS_CHAT_ID && process.env.TELEGRAM_CHAT_ID) {
+        console.warn(`[tbank-notify] using TELEGRAM_CHAT_ID as fallback for TELEGRAM_ORDERS_CHAT_ID`, { orderId });
       }
 
       if (status === "success") {
@@ -201,8 +216,8 @@ export async function POST(request: Request) {
           messageLength: message.length,
           hasTelegramToken,
           hasTelegramChatId,
-          telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID,
-          telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID,
+          telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "not set",
+          telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID || process.env.TELEGRAM_THREAD_ID || "not set",
         });
         try {
           await sendOrderTelegramMessage(message);
@@ -225,8 +240,8 @@ export async function POST(request: Request) {
           messageLength: message.length,
           hasTelegramToken,
           hasTelegramChatId,
-          telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID,
-          telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID,
+          telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "not set",
+          telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID || process.env.TELEGRAM_THREAD_ID || "not set",
         });
         try {
           await sendOrderTelegramMessage(message);

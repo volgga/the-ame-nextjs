@@ -159,19 +159,27 @@ export async function sendToTelegram(text: string, threadId?: number): Promise<v
 
 /**
  * Отправляет сообщение в чат заказов (TELEGRAM_ORDERS_CHAT_ID, TELEGRAM_ORDERS_THREAD_ID).
+ * Fallback: если TELEGRAM_ORDERS_CHAT_ID не задан, использует TELEGRAM_CHAT_ID.
  * Best-effort: если переменные не заданы — ничего не отправляет, не бросает.
  */
 export async function sendOrderTelegramMessage(text: string): Promise<void> {
-  const chatId = process.env.TELEGRAM_ORDERS_CHAT_ID;
-  if (!chatId?.trim()) {
-    console.warn("[sendOrderTelegramMessage] TELEGRAM_ORDERS_CHAT_ID not set, skipping notification");
+  // Fallback: используем TELEGRAM_CHAT_ID если TELEGRAM_ORDERS_CHAT_ID не задан
+  const chatId = process.env.TELEGRAM_ORDERS_CHAT_ID?.trim() || process.env.TELEGRAM_CHAT_ID?.trim();
+  if (!chatId) {
+    console.warn("[sendOrderTelegramMessage] TELEGRAM_ORDERS_CHAT_ID and TELEGRAM_CHAT_ID not set, skipping notification");
     return;
   }
 
-  const envTid = process.env.TELEGRAM_ORDERS_THREAD_ID;
-  const threadId = envTid != null ? Number.parseInt(String(envTid).trim(), 10) || undefined : undefined;
+  // Используем TELEGRAM_ORDERS_THREAD_ID если задан, иначе TELEGRAM_THREAD_ID
+  const threadIdEnv = process.env.TELEGRAM_ORDERS_THREAD_ID || process.env.TELEGRAM_THREAD_ID;
+  const threadId = threadIdEnv != null ? Number.parseInt(String(threadIdEnv).trim(), 10) || undefined : undefined;
 
-  console.log(`[sendOrderTelegramMessage] sending to chatId=${chatId}, threadId=${threadId ?? "none"}, textLength=${text.length}`);
+  const usingFallback = !process.env.TELEGRAM_ORDERS_CHAT_ID && !!process.env.TELEGRAM_CHAT_ID;
+  if (usingFallback) {
+    console.warn("[sendOrderTelegramMessage] using TELEGRAM_CHAT_ID as fallback for TELEGRAM_ORDERS_CHAT_ID");
+  }
+
+  console.log(`[sendOrderTelegramMessage] sending to chatId=${chatId}, threadId=${threadId ?? "none"}, textLength=${text.length}, usingFallback=${usingFallback}`);
   await sendTelegramMessage({
     chatId: chatId.trim(),
     threadId,
