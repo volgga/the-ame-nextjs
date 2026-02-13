@@ -7,11 +7,11 @@ import { FlowerCard } from "./FlowerCard";
 import { Flower } from "@/types/flower";
 import type { Product } from "@/lib/products";
 
-/** Desktop: 100 карточек, step +20 (~5 рядов). Mobile: 50 карточек, step +10 (~5 рядов). */
-const INITIAL_DESKTOP = 100;
-const INITIAL_MOBILE = 50;
-const STEP_DESKTOP = 20;
-const STEP_MOBILE = 10;
+/** Desktop: 24 карточки (4 строки по 4 колонки), step +24. Mobile: 12 карточек (6 строк по 2 колонки), step +12. */
+const INITIAL_DESKTOP = 24;
+const INITIAL_MOBILE = 12;
+const STEP_DESKTOP = 24;
+const STEP_MOBILE = 12;
 const MOBILE_BREAKPOINT = "(max-width: 767px)";
 
 type SortValue = "default" | "price_asc" | "price_desc";
@@ -29,7 +29,7 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   const [isMobile, setIsMobile] = useState(false);
   const [visibleCount, setVisibleCount] = useState(INITIAL_DESKTOP);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const isLoadingRef = useRef(false);
   const isInitializedRef = useRef(false);
   const pathname = usePathname();
@@ -131,6 +131,17 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   const visibleFlowers = sortedFlowers.slice(0, visibleCount);
   const hasMore = sortedFlowers.length > visibleCount;
 
+  // Вычисляем индекс элемента для предзагрузки
+  // Desktop: когда видно ~20 товаров из 24 (5 строк из 6), начинаем загружать
+  // Mobile: когда видно ~10 товаров из 12 (5 строк из 6), начинаем загружать
+  const sentinelIndex = useMemo(() => {
+    if (!hasMore || visibleCount === 0) return -1;
+    // Размещаем sentinel примерно на 80% от visibleCount для предзагрузки
+    // Desktop: 24 * 0.8 = ~19-20 (5-я строка из 6)
+    // Mobile: 12 * 0.8 = ~9-10 (5-я строка из 6)
+    return Math.max(Math.floor(visibleCount * 0.8), Math.floor(visibleCount * 0.7));
+  }, [visibleCount, hasMore]);
+
   const loadMore = useCallback(() => {
     if (isLoadingRef.current || !hasMore) return;
     isLoadingRef.current = true;
@@ -142,10 +153,15 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     }, 150);
   }, [hasMore, step]);
 
-  // IntersectionObserver: при появлении sentinel в зоне видимости (или чуть раньше) догружаем
+  // IntersectionObserver: отслеживаем элемент на позиции sentinelIndex для предзагрузки
   useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || !hasMore) return;
+    if (sentinelIndex < 0 || !hasMore || !gridRef.current) return;
+
+    const gridElement = gridRef.current;
+    const children = Array.from(gridElement.children);
+    const sentinelElement = children[sentinelIndex] as HTMLElement;
+    
+    if (!sentinelElement) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -153,26 +169,23 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
         if (!entry.isIntersecting || isLoadingRef.current) return;
         loadMore();
       },
-      { rootMargin: "500px 0px", threshold: 0 }
+      { rootMargin: "300px 0px", threshold: 0 }
     );
 
-    observer.observe(sentinel);
+    observer.observe(sentinelElement);
     return () => observer.disconnect();
-  }, [hasMore, loadMore]);
+  }, [sentinelIndex, hasMore, loadMore]);
 
   return (
     <div>
       {/* Каталог: 2 колонки mobile, 4 на desktop; меньший gap — карточки крупнее */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      <div ref={gridRef} className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {visibleFlowers.map((flower) => {
           // Находим соответствующий Product для передачи дополнительных данных
           const product = allProducts.find((p) => p.id === flower.id);
           return <FlowerCard key={flower.id} flower={flower} product={product} />;
         })}
       </div>
-
-      {/* Sentinel элемент для автоподгрузки при скролле */}
-      {hasMore && <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />}
 
       {/* Индикатор загрузки */}
       {isLoadingMore && (
