@@ -5,6 +5,18 @@ export const metadata: Metadata = {
   description: "Заказ успешно оплачен. The Ame — доставка цветов по Сочи.",
   alternates: { canonical: "https://theame.ru/payment/success" },
   robots: { index: false, follow: true },
+  openGraph: {
+    title: "Оплата прошла успешно | The Ame",
+    description: "Заказ успешно оплачен. The Ame — доставка цветов по Сочи.",
+    url: "https://theame.ru/payment/success",
+    siteName: "The Ame",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Оплата прошла успешно | The Ame",
+    description: "Заказ успешно оплачен. The Ame — доставка цветов по Сочи.",
+  },
 };
 
 export default function PaymentSuccessLayout({ children }: { children: React.ReactNode }) {

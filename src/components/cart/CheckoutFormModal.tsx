@@ -44,12 +44,30 @@ const FIELD_IDS = {
   deliveryTime: "checkout-deliveryTime",
 } as const;
 
-/** Кнопка «Оплатить»: при невалидной форме — onInvalidSubmit(firstInvalidId); иначе создаёт заказ и редирект на оплату. */
+/** Сообщение для первого незаполненного поля (подсказка над кнопкой). */
+function getInvalidFieldHint(fieldId: string | null): string | null {
+  if (!fieldId) return null;
+  const hints: Record<string, string> = {
+    [FIELD_IDS.customerName]: "Заполните имя и фамилию",
+    [FIELD_IDS.customerPhone]: "Введите корректный номер телефона",
+    [FIELD_IDS.recipientName]: "Заполните имя получателя",
+    [FIELD_IDS.recipientPhone]: "Введите телефон получателя",
+    [FIELD_IDS.agreePrivacy]: "Примите согласие с политикой конфиденциальности",
+    [FIELD_IDS.deliveryZone]: "Выберите район доставки или самовывоз",
+    [FIELD_IDS.deliveryAddress]: "Укажите адрес доставки (улица, дом, квартира)",
+    [FIELD_IDS.deliveryDate]: "Выберите дату доставки",
+    [FIELD_IDS.deliveryTime]: "Выберите время доставки",
+  };
+  return hints[fieldId] ?? "Заполните обязательные поля";
+}
+
+/** Кнопка «Оплатить»: при невалидной форме — onInvalidSubmit(firstInvalidId) и подсказка; иначе создаёт заказ и редирект. */
 function PayButton({
   formValid,
   isFormValid,
   getFirstInvalidFieldId,
   onInvalidSubmit,
+  invalidHint,
   items,
   customer,
 }: {
@@ -57,6 +75,7 @@ function PayButton({
   isFormValid: () => boolean;
   getFirstInvalidFieldId: () => string | null;
   onInvalidSubmit: (fieldId: string) => void;
+  invalidHint: string | null;
   items: { id: string; quantity: number }[];
   customer: OrderCustomerPayload;
 }) {
@@ -116,6 +135,11 @@ function PayButton({
 
   return (
     <>
+      {!formValid && invalidHint && (
+        <p className="text-sm text-amber-700 mt-2" role="status">
+          {invalidHint}
+        </p>
+      )}
       {error && (
         <p className="text-sm text-red-600 mt-2" role="alert">
           {error}
@@ -124,7 +148,7 @@ function PayButton({
       <button
         type="button"
         onClick={handlePay}
-        disabled={loading || !formValid}
+        disabled={loading}
         className="w-full py-4 mt-6 rounded-full font-semibold text-white uppercase transition-colors disabled:cursor-not-allowed bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
       >
         {loading ? "Подготовка…" : "ПЕРЕЙТИ К ОПЛАТЕ"}
@@ -758,6 +782,9 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
         {/* Поле адреса: только для доставки по району, не при самовывозе и не при "Уточнить время и адрес" */}
         {!isPickup && deliveryType && !(!isRecipientSelf && askRecipientForDetails) && (
           <div className="mb-3">
+            <label className="block text-sm mb-1 text-color-text-main">
+              Адрес доставки <span className="text-red-500">*</span>
+            </label>
             <input
               id={FIELD_IDS.deliveryAddress}
               type="text"
@@ -943,6 +970,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
         isFormValid={isFormValid}
         getFirstInvalidFieldId={getFirstInvalidFieldId}
         onInvalidSubmit={handleInvalidSubmit}
+        invalidHint={!isFormValid() ? getInvalidFieldHint(getFirstInvalidFieldId()) : null}
         items={state.items.map((item) => ({ id: item.id, quantity: item.cartQuantity }))}
         customer={{
           name: customerName,
