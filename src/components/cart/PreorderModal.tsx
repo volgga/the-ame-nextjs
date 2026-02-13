@@ -152,7 +152,7 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
           </button>
         </div>
 
-        <div className="overflow-y-auto flex-1 p-4">
+        <div className="overflow-y-auto overflow-x-hidden flex-1 p-4 max-w-full">
           {/* Позиция: мини-фото, название, количество, цена */}
           <div className="flex items-center gap-3 p-3 bg-[rgba(31,42,31,0.06)] rounded-xl mb-6">
             <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-[#ece9e2]">
@@ -177,7 +177,7 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 min-w-0 max-w-full">
             <div>
               <PhoneInput
                 id="preorder-phone"
@@ -207,7 +207,7 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
               />
             </div>
 
-            <div>
+            <div className="w-full min-w-0">
               <label htmlFor="preorder-date" className="block text-sm font-medium text-color-text-main mb-1">
                 Дата получения
               </label>
@@ -221,7 +221,7 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
                 }}
                 min={getTodayISO()}
                 lang="ru"
-                className="w-full px-4 py-3 min-h-[48px] border border-border-block rounded-lg bg-white text-color-text-main focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block"
+                className="w-full min-w-0 box-border px-4 py-3 min-h-[48px] border border-border-block rounded-lg bg-white text-color-text-main focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block overflow-hidden"
               />
               {dateError && <p className="text-sm text-red-600 mt-1">{dateError}</p>}
             </div>

@@ -519,7 +519,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
   const dividerClass = "border-t my-2 border-border-block";
 
   return (
-    <div className="pt-3 border-t border-border-block">
+    <div className="pt-3 border-t border-border-block overflow-x-hidden max-w-full">
       {/* Ваши данные: сетка 2x2 на desktop */}
       <div>
         <h3 className="text-base font-semibold mb-2 text-color-text-main">Ваши данные</h3>
@@ -804,7 +804,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
 
         {/* Дата и время доставки: одна строка на десктопе/планшете, друг под другом на мобильных */}
         {(deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails)) && (
-          <div className="flex flex-col md:flex-row md:gap-4 gap-3">
+          <div className="flex flex-col md:flex-row md:gap-4 gap-3 min-w-0">
             <div className="w-full min-w-0 md:flex-1">
               <label className="block text-sm mb-1 text-color-text-main">
                 Дата доставки <span className="text-red-500">*</span>
@@ -819,7 +819,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
                 }}
                 min={getMinDate()}
                 lang="ru"
-                className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
+                className={`w-full min-w-0 box-border px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 overflow-hidden ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
               />
               {firstInvalidField === FIELD_IDS.deliveryDate && (
                 <p className="text-sm text-red-600 mt-1">Выберите дату доставки</p>
