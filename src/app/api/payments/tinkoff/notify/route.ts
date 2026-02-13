@@ -8,7 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getOrderById, markPaymentNotificationSent } from "@/services/orders";
+import { getOrderById, markPaymentNotificationSent, updateOrderStatus } from "@/services/orders";
 import { sendOrderTelegramMessage } from "@/lib/telegram";
 import { formatPaymentSuccess, formatPaymentFailed } from "@/lib/telegramOrdersFormat";
 import { tinkoffGetState } from "@/lib/tinkoff";
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Заказ не найден" }, { status: 404 });
     }
 
-    // Проверяем статус заказа в БД - это основной источник истины
+    // Проверяем статус заказа в БД
     const orderStatusMatches =
       (status === "success" && order.status === "paid") ||
       (status === "fail" && (order.status === "failed" || order.status === "canceled"));
@@ -51,10 +51,12 @@ export async function POST(request: Request) {
       matches: orderStatusMatches,
     });
 
-    // Проверяем реальный статус платежа у T-Bank для дополнительной защиты
+    // Если статус не совпадает - проверяем реальный статус у T-Bank и обновляем заказ
     let actualPaymentStatus: string | null = null;
     const paymentId = order.tinkoffPaymentId ?? order.paymentId;
-    if (paymentId) {
+    
+    if (!orderStatusMatches && paymentId) {
+      // Статус в БД не совпадает - проверяем у T-Bank и обновляем БД
       try {
         const state = await tinkoffGetState(paymentId);
         if (!("error" in state)) {
@@ -68,47 +70,52 @@ export async function POST(request: Request) {
             tbankStatus: actualPaymentStatus,
             isPaid: isActuallyPaid,
             isFailed: isActuallyFailed,
+            currentOrderStatus: order.status,
           });
 
-          // Если заказ в БД уже помечен как paid/failed - доверяем БД и отправляем уведомление
-          // Это важно для случая когда webhook уже обновил статус, но T-Bank API еще не синхронизировался
-          if (orderStatusMatches) {
-            console.log(`[tbank-notify] order status in DB matches, proceeding with notification despite T-Bank status`, {
-              orderId,
-              orderStatus: order.status,
-              tbankStatus: actualPaymentStatus,
-            });
+          // Обновляем статус заказа в БД на основе реального статуса T-Bank
+          if (status === "success" && isActuallyPaid && order.status !== "paid") {
+            console.log(`[tbank-notify] updating order status to paid based on T-Bank status`, { orderId, paymentId });
+            await updateOrderStatus(orderId, "paid");
+            order.status = "paid"; // Обновляем локальную копию
+          } else if (status === "fail" && isActuallyFailed && order.status !== "failed" && order.status !== "canceled") {
+            console.log(`[tbank-notify] updating order status to failed based on T-Bank status`, { orderId, paymentId });
+            await updateOrderStatus(orderId, "failed");
+            order.status = "failed"; // Обновляем локальную копию
           } else if (status === "success" && !isActuallyPaid) {
-            // Если заказ еще не помечен как paid в БД И T-Bank не подтвердил - блокируем
-            console.warn(`[tbank-notify] blocking success notification: order not paid in DB and T-Bank status is ${actualPaymentStatus}`, {
+            // Платеж еще не подтвержден - блокируем отправку уведомления об успехе
+            console.warn(`[tbank-notify] blocking success notification: payment not confirmed by T-Bank`, {
               orderId,
               paymentId,
               orderStatus: order.status,
+              tbankStatus: actualPaymentStatus,
             });
             return NextResponse.json({ error: "Платеж не подтвержден" }, { status: 400 });
           }
-          // Для fail более мягкая проверка - может быть pending или еще обрабатывается
         }
       } catch (err) {
-        console.warn(`[tbank-notify] failed to check payment status from T-Bank, proceeding with DB status`, {
+        console.warn(`[tbank-notify] failed to check payment status from T-Bank`, {
           orderId,
           paymentId,
           error: err instanceof Error ? err.message : String(err),
         });
-        // Продолжаем без проверки статуса - полагаемся на статус заказа в БД
+        // Если не удалось проверить статус и заказ не помечен как paid - блокируем для success
+        if (status === "success" && order.status !== "paid") {
+          console.warn(`[tbank-notify] blocking success notification: cannot verify payment status`, { orderId });
+          return NextResponse.json({ error: "Не удалось подтвердить статус платежа" }, { status: 400 });
+        }
       }
-    } else {
-      console.warn(`[tbank-notify] no paymentId found, proceeding with DB status only`, { orderId, orderStatus: order.status });
-    }
-
-    // Если статус заказа в БД не совпадает и нет paymentId для проверки T-Bank - все равно пытаемся отправить
-    // (возможно webhook еще не успел обновить статус, но пользователь уже на странице success)
-    if (!orderStatusMatches && actualPaymentStatus === null) {
-      console.warn(`[tbank-notify] order status mismatch but no T-Bank check available, proceeding anyway`, {
-        orderId,
-        requestedStatus: status,
-        orderStatus: order.status,
-      });
+    } else if (!orderStatusMatches && !paymentId) {
+      // Нет paymentId и статус не совпадает - не можем проверить, блокируем для success
+      if (status === "success") {
+        console.warn(`[tbank-notify] blocking success notification: no paymentId and order not paid`, {
+          orderId,
+          orderStatus: order.status,
+        });
+        return NextResponse.json({ error: "Платеж не подтвержден" }, { status: 400 });
+      }
+      // Для fail более мягкая проверка
+      console.warn(`[tbank-notify] no paymentId found, proceeding with fail notification`, { orderId, orderStatus: order.status });
     }
 
     // Идемпотентность: проверяем, отправляли ли уже уведомление
