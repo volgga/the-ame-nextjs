@@ -115,6 +115,15 @@ export default async function OccasionPage({ params, searchParams }: OccasionPag
     return productIds.has(product.id) || productIds.has(productIdInDb);
   });
 
+  // Пагинация
+  const pageParam = resolvedSearchParams.page;
+  const currentPage = typeof pageParam === "string" ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
+  const pageSize = 24;
+  const total = products.length;
+  const start = (currentPage - 1) * pageSize;
+  const end = start + pageSize;
+  const paginatedProducts = products.slice(start, end);
+
   const seoText = category.description?.trim() || DEFAULT_CATEGORY_SEO_TEXT;
 
   const priceBounds = (() => {
@@ -189,7 +198,7 @@ export default async function OccasionPage({ params, searchParams }: OccasionPag
             <div className="min-h-[60vh] flex items-center justify-center text-[#7e7e7e]">Загрузка каталога…</div>
           }
         >
-          <FlowerCatalog products={products} />
+          <FlowerCatalog products={paginatedProducts} total={total} currentPage={currentPage} pageSize={pageSize} />
         </Suspense>
       </Container>
     </div>

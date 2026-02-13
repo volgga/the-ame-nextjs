@@ -139,6 +139,15 @@ export default async function MagazineCategoryPage({ params, searchParams }: Mag
   const products = filterProductsByCategorySlug(allProducts, slug);
   const seoText = category.description?.trim() || DEFAULT_CATEGORY_SEO_TEXT;
 
+  // Пагинация для категорий
+  const pageParam = resolvedSearchParams.page;
+  const currentPage = typeof pageParam === "string" ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
+  const pageSize = 24;
+  const total = products.length;
+  const start = (currentPage - 1) * pageSize;
+  const end = start + pageSize;
+  const paginatedProducts = products.slice(start, end);
+
   const priceBounds = (() => {
     const prices = products.map((p) => p.price).filter(Number.isFinite);
     if (!prices.length) return [0, 10000] as [number, number];
@@ -242,7 +251,7 @@ export default async function MagazineCategoryPage({ params, searchParams }: Mag
             <div className="min-h-[60vh] flex items-center justify-center text-[#7e7e7e]">Загрузка каталога…</div>
           }
         >
-          <FlowerCatalog products={products} />
+          <FlowerCatalog products={paginatedProducts} total={total} currentPage={currentPage} pageSize={pageSize} />
         </Suspense>
       </Container>
     </div>
