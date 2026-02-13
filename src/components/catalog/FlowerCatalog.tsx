@@ -165,17 +165,6 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
 
   const loadMore = useCallback(() => {
     if (isLoadingRef.current) {
-      if (process.env.NODE_ENV === "development") {
-        console.log("[FlowerCatalog] loadMore skipped: already loading");
-      }
-      return;
-    }
-    
-    // Проверяем hasMore перед вызовом
-    if (!hasMore) {
-      if (process.env.NODE_ENV === "development") {
-        console.log("[FlowerCatalog] loadMore skipped: hasMore=false");
-      }
       return;
     }
     
@@ -185,15 +174,16 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     // Используем функциональный setState чтобы получить актуальное значение
     setVisibleCount((currentCount) => {
       const currentStep = isMobile ? STEP_MOBILE : STEP_DESKTOP;
-      const newCount = Math.min(currentCount + currentStep, sortedFlowers.length);
+      // Берем актуальное значение sortedFlowers из замыкания текущего рендера
+      const totalAvailable = sortedFlowers.length;
+      const newCount = Math.min(currentCount + currentStep, totalAvailable);
       
       if (process.env.NODE_ENV === "development") {
-        console.log("[FlowerCatalog] loadMore called:", {
+        console.log("[FlowerCatalog] loadMore:", {
           currentCount,
           step: currentStep,
           newCount,
-          total: sortedFlowers.length,
-          hasMore: sortedFlowers.length > currentCount,
+          total: totalAvailable,
         });
       }
       
@@ -203,8 +193,8 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     setTimeout(() => {
       setIsLoadingMore(false);
       isLoadingRef.current = false;
-    }, 150);
-  }, [isMobile, sortedFlowers.length, hasMore]);
+    }, 100);
+  }, [isMobile, sortedFlowers]);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -399,7 +389,7 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
             }}
             className="rounded-full border border-[var(--color-outline-border)] bg-white px-6 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
           >
-            Показать ещё ({sortedFlowers.length - visibleCount} товаров)
+            Показать ещё
           </button>
         </div>
       )}
