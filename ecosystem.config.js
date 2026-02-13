@@ -36,6 +36,8 @@ module.exports = {
       cwd: "/var/www/theame",
       instances: 1,
       exec_mode: "fork",
+      // PM2 автоматически загрузит переменные из .env.production
+      env_file: ".env.production",
       env: {
         NODE_ENV: "production",
         PORT: "3000",
