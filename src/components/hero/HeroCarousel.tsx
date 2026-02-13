@@ -50,13 +50,11 @@ type HeroCarouselProps = {
 export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
   const slides = propSlides && propSlides.length > 0 ? propSlides : FALLBACK_SLIDES;
 
-  // Дублируем слайды для бесшовного loop: [last, ...slides, first]
+  // Порядок [first, ...rest, first_dup] — первый слайд первым в DOM для LCP (PageSpeed)
   const loopSlides = useMemo(() => {
-    return slides.length > 1 ? [slides[slides.length - 1], ...slides, slides[0]] : slides;
+    return slides.length > 1 ? [...slides, slides[0]] : slides;
   }, [slides]);
-  const realIndexOffset = useMemo(() => (slides.length > 1 ? 1 : 0), [slides.length]);
-
-  const [index, setIndex] = useState(realIndexOffset);
+  const [index, setIndex] = useState(0);
   const [isRevealActive, setIsRevealActive] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(true);
 
@@ -136,7 +134,7 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
           setTimeout(() => {
             setIsTransitioning(false);
             requestAnimationFrame(() => {
-              setIndex(realIndexOffset);
+              setIndex(0);
               requestAnimationFrame(() => {
                 setIsTransitioning(true);
                 // Сбрасываем lock после перепрыгивания
@@ -154,7 +152,7 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
       });
     }, AUTOPLAY_MS);
     return () => window.clearInterval(t);
-  }, [slides.length, loopSlides.length, realIndexOffset]);
+  }, [slides.length, loopSlides.length]);
 
   const prev = useCallback(() => {
     if (slides.length <= 1) return;
@@ -178,29 +176,11 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
 
     setIndex((i) => {
       const next = i - 1;
-      // Если дошли до первого (дубликат последнего), ждём окончания анимации и перепрыгиваем на оригинал без анимации
-      if (next < realIndexOffset) {
-        // Ждём завершения transition перед перепрыгиванием
-        setTimeout(() => {
-          setIsTransitioning(false);
-          requestAnimationFrame(() => {
-            setIndex(totalSlides - 2);
-            requestAnimationFrame(() => {
-              setIsTransitioning(true);
-              // Сбрасываем lock после перепрыгивания
-              isAnimatingRef.current = false;
-              if (transitionTimeoutRef.current) {
-                clearTimeout(transitionTimeoutRef.current);
-                transitionTimeoutRef.current = null;
-              }
-            });
-          });
-        }, TRANSITION_MS);
-        return next;
-      }
+      // С первого слайда «назад» — показываем последний (без дубликата в начале)
+      if (next < 0) return totalSlides - 2;
       return next;
     });
-  }, [slides.length, loopSlides.length, realIndexOffset]);
+  }, [slides.length, loopSlides.length]);
 
   const next = useCallback(() => {
     if (slides.length <= 1) return;
@@ -226,14 +206,12 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
       const next = i + 1;
       // Если дошли до последнего (дубликат первого), ждём окончания анимации и перепрыгиваем на оригинал без анимации
       if (next >= totalSlides - 1) {
-        // Ждём завершения transition перед перепрыгиванием
         setTimeout(() => {
           setIsTransitioning(false);
           requestAnimationFrame(() => {
-            setIndex(realIndexOffset);
+            setIndex(0);
             requestAnimationFrame(() => {
               setIsTransitioning(true);
-              // Сбрасываем lock после перепрыгивания
               isAnimatingRef.current = false;
               if (transitionTimeoutRef.current) {
                 clearTimeout(transitionTimeoutRef.current);
@@ -246,7 +224,7 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
       }
       return next;
     });
-  }, [slides.length, loopSlides.length, realIndexOffset]);
+  }, [slides.length, loopSlides.length]);
 
   const btnBase =
     "absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] text-white transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
@@ -304,10 +282,11 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                   alt="Слайд"
                   fill
                   className="object-cover object-center select-none pointer-events-none"
-                  loading={i === realIndexOffset ? "eager" : "lazy"}
+                  loading={i === 0 ? "eager" : "lazy"}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
                   quality={90}
-                  priority={i === realIndexOffset}
+                  priority={i === 0}
+                  fetchPriority={i === 0 ? "high" : undefined}
                 />
                 {hasSlideButton(slide) && slide.buttonHref && slide.buttonText && (
                   <div
