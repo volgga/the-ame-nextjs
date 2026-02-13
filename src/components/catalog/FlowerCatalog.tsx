@@ -131,17 +131,6 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   const visibleFlowers = sortedFlowers.slice(0, visibleCount);
   const hasMore = sortedFlowers.length > visibleCount;
 
-  // Вычисляем индекс элемента для предзагрузки
-  // Desktop: когда видно ~20 товаров из 24 (5 строк из 6), начинаем загружать
-  // Mobile: когда видно ~10 товаров из 12 (5 строк из 6), начинаем загружать
-  const sentinelIndex = useMemo(() => {
-    if (!hasMore || visibleCount === 0) return -1;
-    // Размещаем sentinel примерно на 80% от visibleCount для предзагрузки
-    // Desktop: 24 * 0.8 = ~19-20 (5-я строка из 6)
-    // Mobile: 12 * 0.8 = ~9-10 (5-я строка из 6)
-    return Math.max(Math.floor(visibleCount * 0.8), Math.floor(visibleCount * 0.7));
-  }, [visibleCount, hasMore]);
-
   const loadMore = useCallback(() => {
     if (isLoadingRef.current || !hasMore) return;
     isLoadingRef.current = true;
@@ -153,15 +142,13 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     }, 150);
   }, [hasMore, step]);
 
-  // IntersectionObserver: отслеживаем элемент на позиции sentinelIndex для предзагрузки
-  useEffect(() => {
-    if (sentinelIndex < 0 || !hasMore || !gridRef.current) return;
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-    const gridElement = gridRef.current;
-    const children = Array.from(gridElement.children);
-    const sentinelElement = children[sentinelIndex] as HTMLElement;
-    
-    if (!sentinelElement) return;
+  // IntersectionObserver: отслеживаем sentinel элемент для предзагрузки
+  useEffect(() => {
+    if (!hasMore || !sentinelRef.current) return;
+
+    const sentinelElement = sentinelRef.current;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -169,12 +156,50 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
         if (!entry.isIntersecting || isLoadingRef.current) return;
         loadMore();
       },
-      { rootMargin: "300px 0px", threshold: 0 }
+      // Большой rootMargin для предзагрузки: начинаем загружать когда sentinel еще далеко внизу
+      // Desktop: 4 колонки, ~20 товаров = 5 строк, примерно 1000-1200px вниз
+      // Mobile: 2 колонки, ~10 товаров = 5 строк, примерно 800-1000px вниз
+      { rootMargin: "800px 0px", threshold: 0 }
     );
 
     observer.observe(sentinelElement);
     return () => observer.disconnect();
-  }, [sentinelIndex, hasMore, loadMore]);
+  }, [hasMore, loadMore]);
+
+  // Проверка при монтировании и изменении visibleCount: если все товары уже видны, загружаем больше
+  useEffect(() => {
+    if (!hasMore || !gridRef.current || isLoadingRef.current) return;
+
+    const checkVisibility = () => {
+      const gridElement = gridRef.current;
+      if (!gridElement) return;
+
+      const children = Array.from(gridElement.children);
+      if (children.length === 0) return;
+
+      // Проверяем последний видимый элемент
+      const lastElement = children[children.length - 1] as HTMLElement;
+      if (!lastElement) return;
+
+      const rect = lastElement.getBoundingClientRect();
+      // Если последний элемент уже виден или близко к экрану (в пределах 800px) - загружаем
+      const isLastVisible = rect.top < window.innerHeight + 800;
+
+      if (isLastVisible && !isLoadingRef.current) {
+        loadMore();
+      }
+    };
+
+    // Проверяем сразу и после небольшой задержки для надежности
+    checkVisibility();
+    const timeoutId = setTimeout(checkVisibility, 200);
+    const timeoutId2 = setTimeout(checkVisibility, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+      clearTimeout(timeoutId2);
+    };
+  }, [visibleCount, hasMore, loadMore]);
 
   return (
     <div>
@@ -186,6 +211,9 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
           return <FlowerCard key={flower.id} flower={flower} product={product} />;
         })}
       </div>
+
+      {/* Sentinel элемент для предзагрузки - размещаем после grid */}
+      {hasMore && <div ref={sentinelRef} className="h-1 w-full" aria-hidden="true" />}
 
       {/* Индикатор загрузки */}
       {isLoadingMore && (
