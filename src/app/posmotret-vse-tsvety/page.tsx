@@ -58,7 +58,7 @@ export async function generateMetadata({ searchParams }: PosmotretVseTsvetyPageP
   };
 }
 
-export default async function PosmotretVseTsvetyPage() {
+export default async function PosmotretVseTsvetyPage({ searchParams }: PosmotretVseTsvetyPageProps) {
   const categories = await getCategories();
   const cat = getCategoryBySlug(categories, "posmotret-vse-tsvety");
   const title = cat?.name ?? ALL_CATALOG.title;
@@ -70,6 +70,7 @@ export default async function PosmotretVseTsvetyPage() {
       breadcrumbLabel={title}
       showBreadcrumbs={false}
       currentSlug={null}
+      searchParams={searchParams}
     />
   );
 }

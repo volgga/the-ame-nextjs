@@ -319,6 +319,27 @@ export async function getAllCatalogProducts(): Promise<Product[]> {
 }
 
 /**
+ * Пагинация каталога товаров (серверная).
+ * Использует кэшированный список всех товаров и возвращает нужную страницу.
+ * @param page - номер страницы (начинается с 1)
+ * @param pageSize - размер страницы (по умолчанию 24)
+ * @returns объект с items (товары для текущей страницы) и total (общее количество)
+ */
+export async function getCatalogProductsPaginated(
+  page: number = 1,
+  pageSize: number = 24
+): Promise<{ items: Product[]; total: number }> {
+  const allProducts = await getAllCatalogProducts();
+  const total = allProducts.length;
+  const pageNum = Math.max(1, Math.floor(page));
+  const size = Math.max(1, Math.floor(pageSize));
+  const start = (pageNum - 1) * size;
+  const end = start + size;
+  const items = allProducts.slice(start, end);
+  return { items, total };
+}
+
+/**
  * Товар по slug: сначала products, затем variant_products.
  */
 async function getCatalogProductBySlugUncached(

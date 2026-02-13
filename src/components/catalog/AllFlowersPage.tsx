@@ -4,7 +4,7 @@ import { CategoryChips } from "@/components/catalog/category-chips";
 import { ProductToolbar } from "@/components/catalog/product-toolbar";
 import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
 import { Container } from "@/components/layout/Container";
-import { getAllCatalogProducts } from "@/lib/products";
+import { getAllCatalogProducts, getCatalogProductsPaginated } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE } from "@/lib/catalogCategories";
 
@@ -19,6 +19,8 @@ export type AllFlowersPageProps = {
   showBreadcrumbs?: boolean;
   /** Текущий роут для подсветки чипа: null = активен "Все цветы", "magazin" = ни один не активен, иначе slug категории */
   currentSlug?: string | null;
+  /** Параметры поиска из URL (для пагинации) */
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 };
 
 /**
@@ -31,11 +33,27 @@ export async function AllFlowersPage({
   breadcrumbLabel,
   showBreadcrumbs = true,
   currentSlug = null,
+  searchParams,
 }: AllFlowersPageProps) {
-  const [categories, products] = await Promise.all([getCategories(), getAllCatalogProducts()]);
+  // Читаем параметр page из URL (по умолчанию 1)
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const pageParam = resolvedSearchParams.page;
+  const currentPage = typeof pageParam === "string" ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
+  const pageSize = 24;
 
+  // Загружаем товары с пагинацией
+  const [categories, paginatedResult] = await Promise.all([
+    getCategories(),
+    getCatalogProductsPaginated(currentPage, pageSize),
+  ]);
+
+  const { items: products, total } = paginatedResult;
+
+  // Для priceBounds нужны все товары (для фильтров), но это можно оптимизировать позже
+  // Пока используем все товары для расчета границ цен
+  const allProducts = await getAllCatalogProducts();
   const priceBounds = (() => {
-    const prices = products.map((p) => p.price).filter(Number.isFinite);
+    const prices = allProducts.map((p) => p.price).filter(Number.isFinite);
     if (!prices.length) return [0, 10000] as [number, number];
     const min = Math.min(...prices);
     const max = Math.max(...prices);
@@ -93,7 +111,7 @@ export async function AllFlowersPage({
             </div>
           }
         >
-          <FlowerCatalog products={products} />
+          <FlowerCatalog products={products} total={total} currentPage={currentPage} pageSize={pageSize} />
         </Suspense>
       </Container>
     </div>

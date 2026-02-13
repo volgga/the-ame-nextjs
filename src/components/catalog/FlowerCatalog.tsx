@@ -1,52 +1,29 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FlowerCard } from "./FlowerCard";
 import { Flower } from "@/types/flower";
 import type { Product } from "@/lib/products";
 
-/** Desktop: 24 карточки (4 строки по 4 колонки), step +24. Mobile: 12 карточек (6 строк по 2 колонки), step +12. */
-const INITIAL_DESKTOP = 24;
-const INITIAL_MOBILE = 12;
-const STEP_DESKTOP = 24;
-const STEP_MOBILE = 12;
-const MOBILE_BREAKPOINT = "(max-width: 767px)";
-
 type SortValue = "default" | "price_asc" | "price_desc";
 
 /**
- * FlowerCatalog — каталог товаров. Данные приходят с сервера.
- * Фильтрация и сортировка через URL: minPrice, maxPrice, sort, q.
- * Заголовок и панель фильтров рендерятся страницей.
+ * FlowerCatalog — каталог товаров с серверной пагинацией.
+ * Данные приходят с сервера уже отфильтрованные по странице.
+ * Клиентская фильтрация и сортировка применяются только к текущей странице.
  */
 type FlowerCatalogProps = {
   products: Product[];
+  total: number;
+  currentPage: number;
+  pageSize: number;
 };
 
-export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => {
-  const [isMobile, setIsMobile] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(INITIAL_DESKTOP);
+export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageSize }: FlowerCatalogProps) => {
   const pathname = usePathname();
 
-  // Определяем мобильное устройство при первом рендере
-  useEffect(() => {
-    const mq = window.matchMedia(MOBILE_BREAKPOINT);
-    const update = () => {
-      const nowMobile = mq.matches;
-      setIsMobile(nowMobile);
-      // При первом определении устанавливаем правильный initialCount
-      if (visibleCount === INITIAL_DESKTOP && nowMobile) {
-        setVisibleCount(INITIAL_MOBILE);
-      }
-    };
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-
-  const STEP = isMobile ? STEP_MOBILE : STEP_DESKTOP;
   const searchParams = useSearchParams();
   const minPriceParam = searchParams.get("minPrice");
   const maxPriceParam = searchParams.get("maxPrice");
@@ -89,7 +66,7 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     [allProducts]
   );
 
-  // Фильтрация по цене, поиску и цвету букета
+  // Фильтрация по цене, поиску и цвету букета (применяется к текущей странице)
   const filteredFlowers = useMemo(() => {
     return flowers.filter((flower) => {
       const price = flower.price ?? 0;
@@ -118,26 +95,20 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
     return arr;
   }, [filteredFlowers, sortParam]);
 
-  // При смене фильтров/сортировки/поиска — сбрасываем к начальному значению
-  useEffect(() => {
-    const initial = isMobile ? INITIAL_MOBILE : INITIAL_DESKTOP;
-    setVisibleCount(initial);
-  }, [minPrice, maxPrice, sortParam, qParam, selectedColorKeys, isMobile]);
+  // Используем отфильтрованные и отсортированные товары напрямую (без slice)
+  const visibleFlowers = sortedFlowers;
 
-  // Clamp visibleCount если количество товаров уменьшилось
-  useEffect(() => {
-    if (visibleCount > sortedFlowers.length) {
-      setVisibleCount(sortedFlowers.length);
-    }
-  }, [sortedFlowers.length, visibleCount]);
+  // Вычисляем есть ли следующая страница
+  const totalPages = Math.ceil(total / pageSize);
+  const hasMore = currentPage < totalPages;
+  const nextPage = currentPage + 1;
 
-  // Вычисляем видимые товары
-  const visibleFlowers = useMemo(() => {
-    return sortedFlowers.slice(0, visibleCount);
-  }, [sortedFlowers, visibleCount]);
-
-  const remaining = sortedFlowers.length - visibleFlowers.length;
-  const hasMore = remaining > 0;
+  // Формируем URL для следующей страницы с сохранением всех query параметров
+  const buildNextPageUrl = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(nextPage));
+    return `${pathname}?${params.toString()}`;
+  };
 
   return (
     <div>
@@ -153,24 +124,19 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
       {/* Debug info (только в dev режиме) */}
       {process.env.NODE_ENV === "development" && (
         <div className="mt-4 text-xs text-gray-500 p-2 bg-gray-100 rounded">
-          total: {sortedFlowers.length} | visibleCount: {visibleCount} | rendered: {visibleFlowers.length} | remaining: {remaining}
+          total: {total} | currentPage: {currentPage} | pageSize: {pageSize} | totalPages: {totalPages} | rendered: {visibleFlowers.length} | filtered: {sortedFlowers.length}
         </div>
       )}
 
       {/* Кнопка "Показать ещё" */}
       {hasMore && (
         <div className="mt-6 flex justify-center">
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setVisibleCount((prev) => Math.min(prev + STEP, sortedFlowers.length));
-            }}
+          <Link
+            href={buildNextPageUrl()}
             className="rounded-full border border-[var(--color-outline-border)] bg-white px-6 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
           >
-            Показать ещё
-          </button>
+            Показать ещё {total - currentPage * pageSize > 0 ? `(${total - currentPage * pageSize} товаров)` : ""}
+          </Link>
         </div>
       )}
 

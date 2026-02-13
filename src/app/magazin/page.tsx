@@ -52,10 +52,18 @@ export async function generateMetadata({ searchParams }: MagazinPageProps): Prom
   };
 }
 
-export default async function MagazinPage() {
+export default async function MagazinPage({ searchParams }: MagazinPageProps) {
   const categories = await getCategories();
   const cat = getCategoryBySlug(categories, "magazin");
   const title = cat?.name ?? FALLBACK_TITLE;
   const description = cat?.description?.trim() ?? FALLBACK_DESCRIPTION;
-  return <AllFlowersPage title={title} description={description} breadcrumbLabel={title} currentSlug="magazin" />;
+  return (
+    <AllFlowersPage
+      title={title}
+      description={description}
+      breadcrumbLabel={title}
+      currentSlug="magazin"
+      searchParams={searchParams}
+    />
+  );
 }
