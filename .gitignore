@@ -43,6 +43,7 @@ docs/
 scripts/
 !scripts/fix-nginx-413.sh
 !scripts/deploy.sh
+!scripts/fix-all.sh
 !scripts/fix-env-and-rebuild.sh
 
 # ======================
