@@ -124,13 +124,30 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   }, [filteredFlowers, sortParam]);
 
   // При смене фильтров/сортировки/поиска — сбрасываем к initialCount
-  // НЕ включаем initialCount в зависимости, чтобы не сбрасывать при изменении брейкпоинта
+  // НЕ сбрасываем при изменении isMobile, чтобы не откатывать пользовательский выбор
   useEffect(() => {
     const currentInitial = isMobile ? INITIAL_MOBILE : INITIAL_DESKTOP;
+    if (process.env.NODE_ENV === "development") {
+      console.log("[FlowerCatalog] RESET visibleCount reason=filter/sort change", { currentInitial });
+    }
     setVisibleCount(currentInitial);
-  }, [minPrice, maxPrice, sortParam, qParam, selectedColorKeys, isMobile]);
+  }, [minPrice, maxPrice, sortParam, qParam, selectedColorKeys]);
 
-  const visibleFlowers = sortedFlowers.slice(0, visibleCount);
+  // Вычисляем видимые товары - используем Math.min чтобы не выйти за границы массива
+  const visibleFlowers = useMemo(() => {
+    const count = Math.min(visibleCount, sortedFlowers.length);
+    const result = sortedFlowers.slice(0, count);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[FlowerCatalog] visibleFlowers computed:", {
+        visibleCount,
+        sortedFlowersLength: sortedFlowers.length,
+        count,
+        resultLength: result.length,
+      });
+    }
+    return result;
+  }, [sortedFlowers, visibleCount]);
+  
   const hasMore = sortedFlowers.length > visibleCount;
 
   // Debug logging (только в dev режиме)
@@ -147,29 +164,47 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
   }, [allProducts.length, sortedFlowers.length, visibleCount, hasMore, step]);
 
   const loadMore = useCallback(() => {
-    if (isLoadingRef.current || !hasMore) {
+    if (isLoadingRef.current) {
       if (process.env.NODE_ENV === "development") {
-        console.log("[FlowerCatalog] loadMore skipped:", { isLoading: isLoadingRef.current, hasMore });
+        console.log("[FlowerCatalog] loadMore skipped: already loading");
       }
       return;
     }
-    if (process.env.NODE_ENV === "development") {
-      console.log("[FlowerCatalog] loadMore called:", { currentCount: visibleCount, step, total: sortedFlowers.length });
+    
+    // Проверяем hasMore перед вызовом
+    if (!hasMore) {
+      if (process.env.NODE_ENV === "development") {
+        console.log("[FlowerCatalog] loadMore skipped: hasMore=false");
+      }
+      return;
     }
+    
     isLoadingRef.current = true;
     setIsLoadingMore(true);
-    setVisibleCount((n) => {
-      const newCount = n + step;
+    
+    // Используем функциональный setState чтобы получить актуальное значение
+    setVisibleCount((currentCount) => {
+      const currentStep = isMobile ? STEP_MOBILE : STEP_DESKTOP;
+      const newCount = Math.min(currentCount + currentStep, sortedFlowers.length);
+      
       if (process.env.NODE_ENV === "development") {
-        console.log("[FlowerCatalog] visibleCount updated:", { from: n, to: newCount });
+        console.log("[FlowerCatalog] loadMore called:", {
+          currentCount,
+          step: currentStep,
+          newCount,
+          total: sortedFlowers.length,
+          hasMore: sortedFlowers.length > currentCount,
+        });
       }
+      
       return newCount;
     });
+    
     setTimeout(() => {
       setIsLoadingMore(false);
       isLoadingRef.current = false;
     }, 150);
-  }, [hasMore, step, visibleCount, sortedFlowers.length]);
+  }, [isMobile, sortedFlowers.length, hasMore]);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -327,8 +362,15 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
       
       {/* Debug info (только в dev режиме) */}
       {process.env.NODE_ENV === "development" && (
-        <div className="mt-4 text-xs text-gray-500 p-2 bg-gray-100 rounded">
-          Debug: visible={visibleCount} / total={sortedFlowers.length} / hasMore={hasMore ? "yes" : "no"}
+        <div className="mt-4 text-xs text-gray-500 p-2 bg-gray-100 rounded space-y-1">
+          <div><strong>Debug Info:</strong></div>
+          <div>total products = {allProducts.length}</div>
+          <div>total filtered = {sortedFlowers.length}</div>
+          <div>visibleCount = {visibleCount}</div>
+          <div>rendered = {visibleFlowers.length}</div>
+          <div>step = {step}</div>
+          <div>hasMore = {hasMore ? "yes" : "no"}</div>
+          <div>isMobile = {isMobile ? "yes" : "no"}</div>
         </div>
       )}
 
@@ -346,9 +388,12 @@ export const FlowerCatalog = ({ products: allProducts }: FlowerCatalogProps) => 
       {hasMore && !isLoadingMore && (
         <div className="mt-6 flex justify-center">
           <button
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (process.env.NODE_ENV === "development") {
-                console.log("[FlowerCatalog] Manual loadMore triggered");
+                console.log("[FlowerCatalog] Manual loadMore triggered from button click");
               }
               loadMore();
             }}

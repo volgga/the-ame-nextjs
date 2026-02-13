@@ -163,14 +163,19 @@ export async function sendToTelegram(text: string, threadId?: number): Promise<v
  */
 export async function sendOrderTelegramMessage(text: string): Promise<void> {
   const chatId = process.env.TELEGRAM_ORDERS_CHAT_ID;
-  if (!chatId?.trim()) return;
+  if (!chatId?.trim()) {
+    console.warn("[sendOrderTelegramMessage] TELEGRAM_ORDERS_CHAT_ID not set, skipping notification");
+    return;
+  }
 
   const envTid = process.env.TELEGRAM_ORDERS_THREAD_ID;
   const threadId = envTid != null ? Number.parseInt(String(envTid).trim(), 10) || undefined : undefined;
 
+  console.log(`[sendOrderTelegramMessage] sending to chatId=${chatId}, threadId=${threadId ?? "none"}, textLength=${text.length}`);
   await sendTelegramMessage({
     chatId: chatId.trim(),
     threadId,
     text,
   });
+  console.log(`[sendOrderTelegramMessage] message sent successfully`);
 }

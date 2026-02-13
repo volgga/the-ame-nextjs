@@ -13,13 +13,22 @@ import { formatPaymentSuccess, formatPaymentFailed } from "@/lib/telegramOrdersF
 export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as Record<string, unknown>;
+    console.log("[tinkoff-notification] received webhook", {
+      orderId: payload.OrderId,
+      status: payload.Status,
+      success: payload.Success,
+      paymentId: payload.PaymentId,
+      hasPassword: !!process.env.TINKOFF_PASSWORD,
+    });
     const password = process.env.TINKOFF_PASSWORD;
     if (!password) {
+      console.warn("[tinkoff-notification] TINKOFF_PASSWORD not set, skipping verification");
       return new NextResponse("OK", { status: 200 });
     }
 
     const valid = verifyTinkoffNotificationToken(payload, password);
     if (!valid) {
+      console.warn("[tinkoff-notification] invalid token, rejecting");
       return new NextResponse("OK", { status: 200 });
     }
 
@@ -37,13 +46,23 @@ export async function POST(request: Request) {
     }
 
     if (status === "CONFIRMED" || (status === "AUTHORIZED" && success)) {
+      console.log(`[tinkoff-notification] payment success detected`, {
+        orderId,
+        status,
+        success,
+        paymentId: payload.PaymentId,
+      });
       await updateOrderStatus(orderId, "paid");
       // Идемпотентность: проверяем, отправляли ли уже уведомление об успешной оплате
       const shouldSend = await markPaymentNotificationSent(orderId, "SUCCESS");
+      console.log(`[tinkoff-notification] shouldSend=${shouldSend} for orderId=${orderId}`);
       if (shouldSend) {
         try {
           const paymentId = (payload.PaymentId ?? order.tinkoffPaymentId ?? order.paymentId) as string | undefined;
-          await sendOrderTelegramMessage(formatPaymentSuccess(order, paymentId));
+          const message = formatPaymentSuccess(order, paymentId);
+          console.log(`[tinkoff-notification] sending payment success tg, orderId=${orderId}, messageLength=${message.length}`);
+          await sendOrderTelegramMessage(message);
+          console.log(`[tinkoff-notification] payment success tg sent successfully, orderId=${orderId}`);
         } catch (err) {
           console.error(
             "[tinkoff-notification] payment success tg failed orderId=" + orderId,

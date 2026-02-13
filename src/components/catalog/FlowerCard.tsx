@@ -133,7 +133,8 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
             src={imageSrc}
             alt={flower.name}
             fill
-            sizes="(max-width: 430px) 230px, (max-width: 640px) 280px, (max-width: 1024px) 33vw, 25vw"
+            sizes="(max-width: 430px) 230px, (max-width: 640px) 280px, (max-width: 1024px) 300px, 320px"
+            quality={75}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onError={() => setImgError(true)}

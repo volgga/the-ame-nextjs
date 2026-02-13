@@ -20,6 +20,14 @@ export async function POST(request: Request) {
     return new NextResponse("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
   }
 
+  console.log("[tinkoff-callback] received webhook", {
+    orderId: payload.OrderId,
+    status: payload.Status,
+    success: payload.Success,
+    paymentId: payload.PaymentId,
+    hasPassword: !!process.env.TINKOFF_PASSWORD,
+  });
+
   const password = process.env.TINKOFF_PASSWORD;
   if (password) {
     const valid = verifyTinkoffNotificationToken(payload, password);
@@ -37,13 +45,23 @@ export async function POST(request: Request) {
     const order = await getOrderById(orderId);
     if (order) {
       if (status === "CONFIRMED" || (status === "AUTHORIZED" && success)) {
+        console.log(`[tinkoff-callback] payment success detected`, {
+          orderId,
+          status,
+          success,
+          paymentId: payload.PaymentId,
+        });
         await updateOrderStatus(orderId, "paid");
         // Идемпотентность: проверяем, отправляли ли уже уведомление об успешной оплате
         const shouldSend = await markPaymentNotificationSent(orderId, "SUCCESS");
+        console.log(`[tinkoff-callback] shouldSend=${shouldSend} for orderId=${orderId}`);
         if (shouldSend) {
           try {
             const paymentId = (payload.PaymentId ?? order.tinkoffPaymentId ?? order.paymentId) as string | undefined;
-            await sendOrderTelegramMessage(formatPaymentSuccess(order, paymentId));
+            const message = formatPaymentSuccess(order, paymentId);
+            console.log(`[tinkoff-callback] sending payment success tg, orderId=${orderId}, messageLength=${message.length}`);
+            await sendOrderTelegramMessage(message);
+            console.log(`[tinkoff-callback] payment success tg sent successfully, orderId=${orderId}`);
           } catch (err) {
             console.error(
               "[tinkoff-callback] payment success tg failed orderId=" + orderId,
