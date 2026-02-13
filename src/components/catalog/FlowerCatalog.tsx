@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { FlowerCard } from "./FlowerCard";
@@ -10,18 +10,19 @@ import type { Product } from "@/lib/products";
 type SortValue = "default" | "price_asc" | "price_desc";
 
 /**
- * FlowerCatalog — каталог товаров с серверной пагинацией.
- * Данные приходят с сервера уже отфильтрованные по странице.
- * Клиентская фильтрация и сортировка применяются только к текущей странице.
+ * FlowerCatalog — каталог товаров с серверной пагинацией или автодогрузкой.
+ * Если singlePage=true: показывает все товары с автодогрузкой при скролле.
+ * Иначе: серверная пагинация с кнопкой "Показать ещё".
  */
 type FlowerCatalogProps = {
   products: Product[];
   total: number;
   currentPage: number;
   pageSize: number;
+  singlePage?: boolean; // Если true — автодогрузка вместо пагинации
 };
 
-export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageSize }: FlowerCatalogProps) => {
+export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageSize, singlePage = false }: FlowerCatalogProps) => {
   const pathname = usePathname();
 
   const searchParams = useSearchParams();
@@ -36,6 +37,18 @@ export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageS
 
   const minPrice = minPriceParam ? Number(minPriceParam) : 0;
   const maxPrice = maxPriceParam ? Number(maxPriceParam) : Infinity;
+
+  // Для singlePage режима: управление видимыми товарами
+  const [visibleCount, setVisibleCount] = useState(() => {
+    // Определяем STEP на основе размера экрана (12 на мобиле, 24 на десктопе)
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768 ? 12 : 24;
+    }
+    return 24;
+  });
+  const tickingRef = useRef(false);
+  const stepRef = useRef(24);
+  const sortedFlowersLengthRef = useRef(0);
 
   // Преобразуем Product[] в Flower[]
   const flowers: Flower[] = useMemo(
@@ -95,12 +108,76 @@ export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageS
     return arr;
   }, [filteredFlowers, sortParam]);
 
-  // Используем отфильтрованные и отсортированные товары напрямую (без slice)
-  const visibleFlowers = sortedFlowers;
+  // Обновляем ref с длиной отфильтрованного массива и ограничиваем visibleCount сверху
+  useEffect(() => {
+    if (singlePage) {
+      sortedFlowersLengthRef.current = sortedFlowers.length;
+      // Если visibleCount больше чем доступно товаров после фильтрации - ограничиваем
+      setVisibleCount((prev) => Math.min(prev, sortedFlowers.length));
+    }
+  }, [singlePage, sortedFlowers.length]);
 
-  // Вычисляем есть ли следующая страница
+  // Обновляем STEP при изменении размера экрана (без сброса visibleCount)
+  useEffect(() => {
+    if (!singlePage) return;
+    
+    const updateStep = () => {
+      const isMobile = window.innerWidth < 768;
+      stepRef.current = isMobile ? 12 : 24;
+      // Clamp visibleCount вверх если нужно, но не сбрасываем вниз
+      setVisibleCount((prev) => {
+        const newStep = stepRef.current;
+        const maxCount = sortedFlowersLengthRef.current;
+        if (prev < newStep) {
+          return Math.min(newStep, maxCount);
+        }
+        return prev;
+      });
+    };
+
+    updateStep();
+    window.addEventListener("resize", updateStep);
+    return () => window.removeEventListener("resize", updateStep);
+  }, [singlePage]);
+
+  // Scroll listener для автодогрузки (только для singlePage)
+  useEffect(() => {
+    if (!singlePage) return;
+
+    const handleScroll = () => {
+      if (tickingRef.current) return;
+      tickingRef.current = true;
+
+      requestAnimationFrame(() => {
+        tickingRef.current = false;
+
+        const scrollHeight = document.documentElement.scrollHeight;
+        const scrollTop = window.scrollY;
+        const clientHeight = window.innerHeight;
+        const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
+
+        // Порог: 1200px до низа
+        const maxCount = sortedFlowersLengthRef.current;
+        setVisibleCount((prev) => {
+          if (distanceToBottom < 1200 && prev < maxCount) {
+            return Math.min(prev + stepRef.current, maxCount);
+          }
+          return prev;
+        });
+      });
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [singlePage]);
+
+  // Для singlePage: показываем только первые visibleCount товаров
+  // Для обычного режима: показываем все товары текущей страницы
+  const visibleFlowers = singlePage ? sortedFlowers.slice(0, visibleCount) : sortedFlowers;
+
+  // Вычисляем есть ли следующая страница (только для обычного режима)
   const totalPages = Math.ceil(total / pageSize);
-  const hasMore = currentPage < totalPages;
+  const hasMore = !singlePage && currentPage < totalPages;
   const nextPage = currentPage + 1;
 
   // Формируем URL для следующей страницы с сохранением всех query параметров

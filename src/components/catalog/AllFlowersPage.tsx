@@ -41,17 +41,21 @@ export async function AllFlowersPage({
   const currentPage = typeof pageParam === "string" ? Math.max(1, parseInt(pageParam, 10) || 1) : 1;
   const pageSize = 24;
 
-  // Загружаем товары с пагинацией
-  const [categories, paginatedResult] = await Promise.all([
+  // Для /magazin используем singlePage режим (все товары, автодогрузка)
+  const isSinglePage = currentSlug === "magazin";
+
+  // Для priceBounds нужны все товары (для фильтров)
+  const allProducts = await getAllCatalogProducts();
+
+  // Загружаем товары: для singlePage — все, иначе — с пагинацией
+  const [categories, catalogData] = await Promise.all([
     getCategories(),
-    getCatalogProductsPaginated(currentPage, pageSize),
+    isSinglePage ? Promise.resolve(null) : getCatalogProductsPaginated(currentPage, pageSize),
   ]);
 
-  const { items: products, total } = paginatedResult;
-
-  // Для priceBounds нужны все товары (для фильтров), но это можно оптимизировать позже
-  // Пока используем все товары для расчета границ цен
-  const allProducts = await getAllCatalogProducts();
+  // Определяем products и total в зависимости от режима
+  const products = isSinglePage ? allProducts : (catalogData?.items ?? []);
+  const total = isSinglePage ? allProducts.length : (catalogData?.total ?? 0);
   const priceBounds = (() => {
     const prices = allProducts.map((p) => p.price).filter(Number.isFinite);
     if (!prices.length) return [0, 10000] as [number, number];
@@ -111,7 +115,13 @@ export async function AllFlowersPage({
             </div>
           }
         >
-          <FlowerCatalog products={products} total={total} currentPage={currentPage} pageSize={pageSize} />
+          <FlowerCatalog 
+            products={products} 
+            total={total} 
+            currentPage={currentPage} 
+            pageSize={pageSize}
+            singlePage={isSinglePage}
+          />
         </Suspense>
       </Container>
     </div>
