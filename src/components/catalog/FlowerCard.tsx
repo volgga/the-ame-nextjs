@@ -33,9 +33,11 @@ interface FlowerCardProps {
   flower: Flower;
   product?: Product; // Опциональный Product для передачи дополнительных данных (images, composition)
   showNewBadge?: boolean; // Показывать ли бейдж "новый" (по умолчанию true)
+  hideFavoriteOnMobile?: boolean; // Скрывать ли кнопку избранного на мобилке (по умолчанию false)
+  showPriceFromOnMobile?: boolean; // Показывать ли "от" перед ценой на мобилке (по умолчанию false)
 }
 
-export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardProps) => {
+export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteOnMobile = false, showPriceFromOnMobile = false }: FlowerCardProps) => {
   const { addToCart } = useCart();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
   const [quickBuyOpen, setQuickBuyOpen] = useState(false);
@@ -178,21 +180,25 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
         </h3>
       </Link>
 
-      {/* На мобилке "от" отдельной строкой между названием и ценой (не ломает вертикальный ритм цены) */}
-      {flower.priceFrom && (
+      {/* На мобилке "от" отдельной строкой между названием и ценой (не ломает вертикальный ритм цены) - только если НЕ showPriceFromOnMobile */}
+      {flower.priceFrom && !showPriceFromOnMobile && (
         <p className="mt-1 px-1 text-xs font-normal text-color-text-secondary leading-tight md:sr-only" aria-hidden>
           от
         </p>
       )}
 
       {/* Нижний блок: цена — главный якорь (text-lg), кнопки (min-h-[44px] на мобиле). */}
-      <div className={`px-1 flex items-center justify-between gap-2 sm:gap-3 min-w-0 ${flower.priceFrom ? "mt-0.5 md:mt-1.5" : "mt-1.5"}`}>
+      <div className={`px-1 flex items-center justify-between gap-2 sm:gap-3 min-w-0 ${flower.priceFrom && !showPriceFromOnMobile ? "mt-0.5 md:mt-1.5" : "mt-1.5"}`}>
         <div className="flex flex-col justify-center shrink-0 min-w-0">
           <span className="text-lg font-semibold text-color-text-main leading-none md:block">
             {flower.priceFrom ? (
               <>
                 <span className="hidden md:inline">{priceLabel}</span>
-                <span className="md:hidden">{`${flower.price.toLocaleString("ru-RU")} ₽`}</span>
+                {showPriceFromOnMobile ? (
+                  <span className="md:hidden">{`от ${flower.price.toLocaleString("ru-RU")} ₽`}</span>
+                ) : (
+                  <span className="md:hidden">{`${flower.price.toLocaleString("ru-RU")} ₽`}</span>
+                )}
               </>
             ) : (
               priceLabel
@@ -201,18 +207,20 @@ export const FlowerCard = ({ flower, product, showNewBadge = true }: FlowerCardP
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {/* На мобильной: иконка избранного вместо скрытой кнопки «Купить в 1 клик» */}
-          <button
-            type="button"
-            onClick={handleToggleFavorite}
-            className={`product-cta h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation md:hidden ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
-            title={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-            aria-label={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-          >
-            <Heart
-              className={`w-3.5 h-3.5 ${mounted && inFavorites ? "fill-[var(--color-accent-btn)] text-[var(--color-accent-btn)]" : ""}`}
-              strokeWidth={1.5}
-            />
-          </button>
+          {!hideFavoriteOnMobile && (
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              className={`product-cta h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation md:hidden ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
+              title={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
+              aria-label={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
+            >
+              <Heart
+                className={`w-3.5 h-3.5 ${mounted && inFavorites ? "fill-[var(--color-accent-btn)] text-[var(--color-accent-btn)]" : ""}`}
+                strokeWidth={1.5}
+              />
+            </button>
+          )}
           {isPreorder ? (
             <button
               type="button"

@@ -805,7 +805,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
         {/* Дата и время доставки: одна строка на десктопе/планшете, друг под другом на мобильных */}
         {(deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails)) && (
           <div className="flex flex-col md:flex-row md:gap-4 gap-3">
-            <div className="w-full min-w-0 overflow-hidden md:flex-1">
+            <div className="w-full min-w-0 md:flex-1">
               <label className="block text-sm mb-1 text-color-text-main">
                 Дата доставки <span className="text-red-500">*</span>
               </label>
@@ -819,7 +819,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
                 }}
                 min={getMinDate()}
                 lang="ru"
-                className={`w-full min-w-0 max-w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
+                className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
               />
               {firstInvalidField === FIELD_IDS.deliveryDate && (
                 <p className="text-sm text-red-600 mt-1">Выберите дату доставки</p>
