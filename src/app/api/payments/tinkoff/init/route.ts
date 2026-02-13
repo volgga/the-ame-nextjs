@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     if (c.phone) data.Phone = c.phone;
 
     const initResult = await tinkoffInit({
-      Amount: order.amount,
+      Amount: Math.round(order.amount),
       OrderId: order.id,
       Description: `Оплата заказа #${order.id.slice(0, 8)}`,
       SuccessURL: successUrl,
@@ -66,7 +66,16 @@ export async function POST(request: Request) {
     });
 
     if ("error" in initResult) {
-      return NextResponse.json({ error: initResult.error }, { status: 502 });
+      const details = initResult.details as { ErrorCode?: string; Details?: string } | undefined;
+      console.warn("[tinkoff-init] Init failed", {
+        orderId: order.id,
+        errorCode: details?.ErrorCode,
+        details: details?.Details,
+      });
+      return NextResponse.json(
+        { error: initResult.error ?? "Неверные параметры" },
+        { status: 502 }
+      );
     }
 
     await updateOrderStatus(order.id, "payment_pending", initResult.PaymentId);

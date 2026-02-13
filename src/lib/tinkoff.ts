@@ -70,31 +70,41 @@ export async function tinkoffInit(
   const terminalKey = params.TerminalKey ?? envCreds.terminalKey;
   const password = params.Password ?? envCreds.password;
 
-  const body: TinkoffInitParams & { Token: string; Data?: Record<string, string> } = {
+  const successUrl = params.SuccessURL ?? process.env.TINKOFF_SUCCESS_URL ?? "";
+  const failUrl = params.FailURL ?? process.env.TINKOFF_FAIL_URL ?? "";
+  const notificationUrl = params.NotificationURL ?? process.env.TINKOFF_NOTIFICATION_URL ?? "";
+  const language = params.Language ?? "ru";
+
+  const amount = Math.round(Number(params.Amount));
+  const body: Record<string, unknown> = {
     TerminalKey: terminalKey,
-    Amount: params.Amount,
-    OrderId: params.OrderId,
+    Amount: amount,
+    OrderId: String(params.OrderId),
     Description: params.Description ?? `Оплата заказа #${params.OrderId}`,
-    SuccessURL: params.SuccessURL ?? process.env.TINKOFF_SUCCESS_URL ?? "",
-    FailURL: params.FailURL ?? process.env.TINKOFF_FAIL_URL ?? "",
-    NotificationURL: params.NotificationURL ?? process.env.TINKOFF_NOTIFICATION_URL ?? "",
-    Language: params.Language ?? "ru",
+    SuccessURL: successUrl,
+    FailURL: failUrl,
+    Language: language,
     Token: "",
   };
+  if (notificationUrl) {
+    body.NotificationURL = notificationUrl;
+  }
   if (params.Data && Object.keys(params.Data).length > 0) {
-    body.Data = params.Data;
+    body.DATA = params.Data;
   }
 
   const tokenParams: Record<string, string | number> = {
-    TerminalKey: body.TerminalKey,
-    Amount: body.Amount,
-    OrderId: body.OrderId,
-    Description: body.Description ?? "",
-    SuccessURL: body.SuccessURL ?? "",
-    FailURL: body.FailURL ?? "",
-    NotificationURL: body.NotificationURL ?? "",
-    Language: body.Language ?? "ru",
+    TerminalKey: body.TerminalKey as string,
+    Amount: amount,
+    OrderId: String(params.OrderId),
+    Description: (body.Description as string) ?? "",
+    SuccessURL: successUrl,
+    FailURL: failUrl,
+    Language: language,
   };
+  if (notificationUrl) {
+    tokenParams.NotificationURL = notificationUrl;
+  }
   body.Token = buildTinkoffToken(tokenParams, password);
 
   const res = await fetch(TINKOFF_INIT_URL, {
@@ -107,15 +117,26 @@ export async function tinkoffInit(
     Success?: boolean;
     ErrorCode?: string;
     Message?: string;
+    Details?: string;
     PaymentId?: string;
     PaymentURL?: string;
     [key: string]: unknown;
   };
 
+  const logCtx = {
+    orderId: params.OrderId,
+    amount: amount,
+    terminalKeyMask: terminalKey ? `${terminalKey.slice(0, 4)}***` : "???",
+    errorCode: data.ErrorCode,
+    message: data.Message,
+    details: data.Details,
+  };
+
   if (!res.ok) {
+    console.warn("[tinkoff-init] Tinkoff API HTTP error", logCtx);
     return {
       error: data.Message ?? "Tinkoff Init request failed",
-      details: { status: res.status, ErrorCode: data.ErrorCode },
+      details: { status: res.status, ErrorCode: data.ErrorCode, Details: data.Details },
     };
   }
 
@@ -126,9 +147,10 @@ export async function tinkoffInit(
     };
   }
 
+  console.warn("[tinkoff-init] Tinkoff Init failed (Success=false)", logCtx);
   return {
     error: data.Message ?? "Tinkoff Init failed",
-    details: { ErrorCode: data.ErrorCode },
+    details: { ErrorCode: data.ErrorCode, Details: data.Details },
   };
 }
 
@@ -167,7 +189,7 @@ export function verifyTinkoffNotificationToken(payload: Record<string, unknown>,
   const forToken: Record<string, string> = {};
   for (const [key, value] of Object.entries(payload)) {
     if (key === "Token") continue;
-    if (key === "Data" || key === "Receipt") continue;
+    if (key === "Data" || key === "DATA" || key === "Receipt") continue;
     if (value === null || value === undefined) continue;
     if (typeof value === "object" && !Array.isArray(value)) continue;
     forToken[key] = String(value);
