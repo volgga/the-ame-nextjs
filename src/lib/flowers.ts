@@ -9,6 +9,7 @@ import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAllCatalogProducts } from "@/lib/products";
 import { extractUniqueFlowers } from "@/lib/extractFlowersFromProduct";
 import { normalizeFlowerKey } from "@/lib/normalizeFlowerKey";
+import { slugify } from "@/utils/slugify";
 
 export type Flower = {
   id: string;
@@ -62,16 +63,32 @@ export async function getFlowers(activeOnly = false): Promise<Flower[]> {
 
 /**
  * Один цветок по slug.
+ * Поддерживает поиск как по кириллице, так и по транслитерированному slug.
  */
 export async function getFlowerBySlug(slug: string): Promise<Flower | null> {
   try {
-    const normalized = normalizeFlowerKey(slug);
+    const hasCyrillic = /[а-яё]/i.test(slug);
+    const normalizedSlug = hasCyrillic ? slugify(slug) : normalizeFlowerKey(slug);
+    
+    // Сначала ищем по транслитерированному slug (если slug содержит кириллицу)
+    if (hasCyrillic) {
+      const { data, error } = await supabase
+        .from("flowers")
+        .select("id, slug, name, title, description, seo_title, seo_description, is_active, sort_order, created_at, updated_at")
+        .eq("slug", normalizedSlug)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (data && !error) return data as Flower;
+    }
+    
+    // Также ищем по оригинальному slug (на случай, если в БД slug содержит кириллицу)
     const { data, error } = await supabase
       .from("flowers")
       .select("id, slug, name, title, description, seo_title, seo_description, is_active, sort_order, created_at, updated_at")
-      .eq("slug", normalized)
+      .eq("slug", normalizeFlowerKey(slug))
       .eq("is_active", true)
       .maybeSingle();
+    
     if (error || !data) return null;
     return data as Flower;
   } catch (e) {

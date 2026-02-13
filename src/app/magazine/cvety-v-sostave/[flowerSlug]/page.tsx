@@ -14,6 +14,7 @@ import { normalizeFlowerKey } from "@/lib/normalizeFlowerKey";
 import { getFlowersInCompositionList } from "@/lib/getAllFlowers";
 import { getFlowerBySlug, getProductIdsByFlowerId } from "@/lib/flowers";
 import { FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
+import { slugify } from "@/utils/slugify";
 import {
   canonicalUrl,
   truncateDescription,
@@ -31,7 +32,11 @@ type FlowerPageProps = {
 
 export async function generateStaticParams() {
   const list = await getFlowersInCompositionList();
-  return list.map((flower) => ({ flowerSlug: flower.slug }));
+  return list.map((flower) => {
+    // Транслитерируем slug в латиницу для статических путей, если содержит кириллицу
+    const slug = /[а-яё]/i.test(flower.slug) ? slugify(flower.slug) : flower.slug;
+    return { flowerSlug: slug };
+  });
 }
 
 export async function generateMetadata({ params }: FlowerPageProps): Promise<Metadata> {

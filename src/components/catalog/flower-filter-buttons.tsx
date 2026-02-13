@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
+import { slugify } from "@/utils/slugify";
 
 /** Элемент списка цветов (из справочника flowers) */
 export type FlowerFilterItem = {
@@ -28,9 +29,11 @@ export function FlowerFilterButtons({ flowers }: FlowerFilterButtonsProps) {
   }
 
   // Активный цветок по slug в URL; на /magazine/cvety-v-sostave без сегмента — ни один не активен
-  const activeSlug = pathname.includes(`/${FLOWERS_IN_COMPOSITION_CATEGORY_SLUG}/`)
+  const rawActiveSlug = pathname.includes(`/${FLOWERS_IN_COMPOSITION_CATEGORY_SLUG}/`)
     ? pathname.split(`/${FLOWERS_IN_COMPOSITION_CATEGORY_SLUG}/`)[1]?.split("/")[0] || null
     : null;
+  // Транслитерируем activeSlug для сравнения с транслитерированными slug цветов
+  const activeSlug = rawActiveSlug && /[а-яё]/i.test(rawActiveSlug) ? slugify(rawActiveSlug) : rawActiveSlug;
 
   return (
     <div
@@ -41,7 +44,9 @@ export function FlowerFilterButtons({ flowers }: FlowerFilterButtonsProps) {
       {flowers
         .filter((flower) => flower.slug && flower.is_active !== false)
         .map((flower) => {
-          const slug = flower.slug!;
+          // Транслитерируем slug в латиницу, если содержит кириллицу (для корректных URL)
+          const rawSlug = flower.slug!;
+          const slug = /[а-яё]/i.test(rawSlug) ? slugify(rawSlug) : rawSlug;
           const isActive = activeSlug === slug;
           const href = isActive
             ? `/magazine/${FLOWERS_IN_COMPOSITION_CATEGORY_SLUG}`
