@@ -30,6 +30,8 @@ const variantSchema = z.object({
     .nullable()
     .transform((v) => (v === "" ? null : v)), // Обратная совместимость - игнорируется на клиенте
   bouquet_colors: z.array(z.string()).optional().nullable(),
+  discount_percent: z.number().min(0).max(100).nullable().optional(),
+  discount_price: z.number().min(0).nullable().optional(),
 });
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -75,6 +77,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           parsed.data.bouquet_colors && parsed.data.bouquet_colors.length > 0
             ? parsed.data.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
             : null,
+        discount_percent: parsed.data.discount_percent ?? null,
+        discount_price: parsed.data.discount_price ?? null,
       })
       .select()
       .single();

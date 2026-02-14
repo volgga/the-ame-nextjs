@@ -10,6 +10,7 @@ import { OCCASIONS_CATEGORY_SLUG } from "@/lib/constants";
 import { useAutoSyncCompositionFlowers } from "@/hooks/useAutoSyncCompositionFlowers";
 import { BOUQUET_COLORS, filterValidBouquetColorKeys } from "@/shared/catalog/bouquetColors";
 import { BouquetColorSwatch } from "@/components/catalog/BouquetColorSwatch";
+import { calcPriceFromPercent } from "@/lib/priceUtils";
 
 const FlowersWhitelistModal = dynamic(
   () =>
@@ -65,6 +66,8 @@ type Variant = {
   is_preorder: boolean;
   sort_order: number;
   bouquetColors?: string[];
+  discountPercent?: number | null;
+  discountPrice?: number | null;
 };
 
 const initialForm = {
@@ -74,6 +77,8 @@ const initialForm = {
   height_cm: null as number | null,
   width_cm: null as number | null,
   price: 0,
+  discount_percent: null as number | null,
+  discount_price: null as number | null,
 };
 
 async function readJsonSafe<T = unknown>(
@@ -330,6 +335,8 @@ function AdminProductsPageContent() {
           height_cm: isVariantProduct ? null : data.height_cm != null ? Number(data.height_cm) : null,
           width_cm: isVariantProduct ? null : data.width_cm != null ? Number(data.width_cm) : null,
           price: Number(data.price ?? data.min_price_cache ?? 0),
+          discount_percent: isVariantProduct ? null : (data.discount_percent != null ? Number(data.discount_percent) : null),
+          discount_price: isVariantProduct ? null : (data.discount_price != null ? Number(data.discount_price) : null),
         });
         setCreateIsHidden(data.is_hidden ?? false);
         setCreateIsPreorder(data.is_preorder ?? false);
@@ -418,6 +425,8 @@ function AdminProductsPageContent() {
                 bouquet_colors?: string[] | null;
                 image_url?: string | null;
                 image_urls?: string[] | null;
+                discount_percent?: number | null;
+                discount_price?: number | null;
               },
               idx: number
             ) => {
@@ -431,6 +440,8 @@ function AdminProductsPageContent() {
                 is_preorder: v.is_preorder ?? false,
                 sort_order: idx,
                 bouquetColors: Array.isArray(v.bouquet_colors) ? filterValidBouquetColorKeys(v.bouquet_colors) : [],
+                discountPercent: v.discount_percent != null ? Number(v.discount_percent) : null,
+                discountPrice: v.discount_price != null ? Number(v.discount_price) : null,
               };
             }
           );
@@ -519,6 +530,10 @@ function AdminProductsPageContent() {
       if (selectedCategorySlugs.length === 0) errors.categories = "Выберите минимум одну категорию";
       const price = createForm.price;
       if (typeof price !== "number" || price <= 0) errors.price = "Цена должна быть больше 0";
+      const discountOn = (createForm.discount_percent != null && createForm.discount_percent > 0) || (createForm.discount_price != null && createForm.discount_price > 0);
+      if (discountOn && (createForm.discount_price == null || createForm.discount_price <= 0)) {
+        errors.discount_price = "Укажите цену со скидкой";
+      }
     }
 
     if (createType === "variant") {
@@ -532,6 +547,10 @@ function AdminProductsPageContent() {
         if (!v.name.trim()) errors[`variant_${idx}_name`] = "Введите название варианта";
         if (typeof v.price !== "number" || v.price <= 0) {
           errors[`variant_${idx}_price`] = "Цена должна быть больше 0";
+        }
+        const variantDiscountOn = (v.discountPercent != null && v.discountPercent > 0) || (v.discountPrice != null && v.discountPrice > 0);
+        if (variantDiscountOn && (v.discountPrice == null || v.discountPrice <= 0)) {
+          errors[`variant_${idx}_discount_price`] = "Укажите цену со скидкой";
         }
       });
     }
@@ -802,6 +821,8 @@ function AdminProductsPageContent() {
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
+          discount_percent: createForm.discount_percent ?? null,
+          discount_price: createForm.discount_price ?? null,
         };
         const url = `/api/admin/products/${editProductId}`;
         const res = await fetch(url, {
@@ -939,6 +960,8 @@ function AdminProductsPageContent() {
                 sort_order: v.sort_order,
                 bouquet_colors:
                   v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
+                discount_percent: v.discountPercent ?? null,
+                discount_price: v.discountPrice ?? null,
               }),
             });
             if (!vRes.ok) {
@@ -964,6 +987,8 @@ function AdminProductsPageContent() {
                 is_active: true,
                 bouquet_colors:
                   v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
+                discount_percent: v.discountPercent ?? null,
+                discount_price: v.discountPrice ?? null,
               }),
             });
             if (!vRes.ok) {
@@ -1085,6 +1110,8 @@ function AdminProductsPageContent() {
           is_new: createIsNew,
           category_slugs,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
+          discount_percent: createForm.discount_percent ?? null,
+          discount_price: createForm.discount_price ?? null,
         };
 
         const res = await fetch("/api/admin/products", {
@@ -1191,6 +1218,8 @@ function AdminProductsPageContent() {
             is_active: true,
             bouquet_colors:
               v.bouquetColors && v.bouquetColors.length > 0 ? v.bouquetColors : null,
+            discount_percent: v.discountPercent ?? null,
+            discount_price: v.discountPrice ?? null,
           })),
         };
 
@@ -1864,6 +1893,86 @@ function AdminProductsPageContent() {
                         />
                         {fieldErrors.price && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.price}</p>}
                       </div>
+                      {/* Скидка (скрываемый блок) — только для простого товара */}
+                      {createType === "simple" && (
+                        <div className="border border-border-block rounded-lg p-3 space-y-2">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={
+                                (createForm.discount_percent != null && createForm.discount_percent > 0) ||
+                                (createForm.discount_price != null && createForm.discount_price > 0)
+                              }
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  const pct = 10;
+                                  const base = createForm.price || 0;
+                                  setCreateForm((f) => ({
+                                    ...f,
+                                    discount_percent: pct,
+                                    discount_price: base > 0 ? calcPriceFromPercent(base, pct) : null,
+                                  }));
+                                } else {
+                                  setCreateForm((f) => ({ ...f, discount_percent: null, discount_price: null }));
+                                }
+                              }}
+                              className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                            />
+                            <span className="text-sm font-medium text-color-text-main">Скидка</span>
+                          </label>
+                          {((createForm.discount_percent != null && createForm.discount_percent > 0) ||
+                            (createForm.discount_price != null && createForm.discount_price > 0)) && (
+                            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border-block">
+                              <div>
+                                <label className="block text-xs text-color-text-main mb-0.5">Скидка, %</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  value={createForm.discount_percent ?? ""}
+                                  onChange={(e) => {
+                                    const v = e.target.value === "" ? null : parseFloat(e.target.value);
+                                    const base = createForm.price || 0;
+                                    setCreateForm((f) => ({
+                                      ...f,
+                                      discount_percent: v,
+                                      discount_price:
+                                        v != null && v > 0 && base > 0 ? calcPriceFromPercent(base, v) : f.discount_price,
+                                    }));
+                                  }}
+                                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                  className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-xs text-color-text-main mb-0.5">Цена со скидкой (₽)</label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step={0.01}
+                                  value={createForm.discount_price ?? ""}
+                                  onChange={(e) =>
+                                    setCreateForm((f) => ({
+                                      ...f,
+                                      discount_price: e.target.value === "" ? null : parseFloat(e.target.value) || null,
+                                    }))
+                                  }
+                                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                  className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                />
+                                {createForm.price > 0 && createForm.discount_percent != null && createForm.discount_percent > 0 && (
+                                  <p className="mt-0.5 text-[10px] text-color-text-secondary">
+                                    Рассчитанная цена: {calcPriceFromPercent(createForm.price, createForm.discount_percent).toLocaleString("ru-RU")} ₽
+                                  </p>
+                                )}
+                                {fieldErrors.discount_price && (
+                                  <p className="mt-0.5 text-xs text-red-600">{fieldErrors.discount_price}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {/* Категории (аккордеон) */}
                       <div className="border border-border-block rounded-lg overflow-hidden">
                         <button
@@ -2153,6 +2262,80 @@ function AdminProductsPageContent() {
                                             <span className="text-xs text-color-text-main">Предзаказ</span>
                                           </label>
                                         </div>
+                                      </div>
+                                      {/* Скидка для варианта */}
+                                      <div className="border border-border-block rounded p-2 space-y-1.5">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                          <input
+                                            type="checkbox"
+                                            checked={
+                                              (variant.discountPercent != null && variant.discountPercent > 0) ||
+                                              (variant.discountPrice != null && variant.discountPrice > 0)
+                                            }
+                                            onChange={(e) => {
+                                              if (e.target.checked) {
+                                                const pct = 10;
+                                                const base = variant.price || 0;
+                                                updateVariant(variant.id, {
+                                                  discountPercent: pct,
+                                                  discountPrice: base > 0 ? calcPriceFromPercent(base, pct) : null,
+                                                });
+                                              } else {
+                                                updateVariant(variant.id, { discountPercent: null, discountPrice: null });
+                                              }
+                                            }}
+                                            className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                          />
+                                          <span className="text-xs font-medium text-color-text-main">Скидка</span>
+                                        </label>
+                                        {((variant.discountPercent != null && variant.discountPercent > 0) ||
+                                          (variant.discountPrice != null && variant.discountPrice > 0)) && (
+                                          <div className="grid grid-cols-2 gap-2 pt-1 border-t border-border-block">
+                                            <div>
+                                              <label className="block text-[10px] text-color-text-main mb-0.5">Скидка, %</label>
+                                              <input
+                                                type="number"
+                                                min={0}
+                                                max={100}
+                                                value={variant.discountPercent ?? ""}
+                                                onChange={(e) => {
+                                                  const v = e.target.value === "" ? null : parseFloat(e.target.value);
+                                                  const base = variant.price || 0;
+                                                  updateVariant(variant.id, {
+                                                    discountPercent: v,
+                                                    discountPrice: v != null && v > 0 && base > 0 ? calcPriceFromPercent(base, v) : variant.discountPrice ?? null,
+                                                  });
+                                                }}
+                                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                                className="w-full rounded border border-border-block bg-white px-1.5 py-0.5 text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                              />
+                                            </div>
+                                            <div>
+                                              <label className="block text-[10px] text-color-text-main mb-0.5">Цена со скидкой (₽)</label>
+                                              <input
+                                                type="number"
+                                                min={0}
+                                                step={0.01}
+                                                value={variant.discountPrice ?? ""}
+                                                onChange={(e) =>
+                                                  updateVariant(variant.id, {
+                                                    discountPrice: e.target.value === "" ? null : parseFloat(e.target.value) || null,
+                                                  })
+                                                }
+                                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                                                className="w-full rounded border border-border-block bg-white px-1.5 py-0.5 text-xs [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                              />
+                                              {variant.price > 0 && variant.discountPercent != null && variant.discountPercent > 0 && (
+                                                <p className="mt-0.5 text-[10px] text-color-text-secondary">
+                                                  Рассчитанная: {calcPriceFromPercent(variant.price, variant.discountPercent).toLocaleString("ru-RU")} ₽
+                                                </p>
+                                              )}
+                                              {fieldErrors[`variant_${idx}_discount_price`] && (
+                                                <p className="mt-0.5 text-xs text-red-600">{fieldErrors[`variant_${idx}_discount_price`]}</p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                       {/* Кнопка удаления — только в развернутом состоянии */}
                                       <div className="pt-1 border-t border-border-block">

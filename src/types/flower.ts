@@ -24,6 +24,10 @@ export interface Flower {
   isPreorder?: boolean;
   /** Для вариантных товаров: показывать "от {price} ₽" */
   priceFrom?: boolean;
+  /** Базовая цена до скидки (для отображения зачёркнутой); задаётся только при активной скидке */
+  originalPrice?: number | null;
+  /** Процент скидки для бейджа (например -10%); задаётся только при активной скидке */
+  discountPercent?: number | null;
 }
 
 export interface CartItem extends Flower {

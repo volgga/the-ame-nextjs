@@ -45,6 +45,8 @@ const updateSchema = z.object({
     .nullable()
     .transform((v) => (v === "" ? null : v)), // Обратная совместимость - игнорируется на клиенте
   bouquet_colors: z.array(z.string()).optional().nullable(),
+  discount_percent: z.number().min(0).max(100).nullable().optional(),
+  discount_price: z.number().min(0).nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; variantId: string }> }) {

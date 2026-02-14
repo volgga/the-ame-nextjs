@@ -112,18 +112,20 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         style={{ zIndex: Z_CART_PANEL }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Шапка: закреплена сверху, не скроллится */}
+        <div className="shrink-0 sticky top-0 z-10 flex items-center justify-center px-4 sm:px-6 pt-4 pb-3 border-b border-border-block bg-white">
+          <h2 className="text-xl md:text-2xl font-bold uppercase tracking-wide text-color-text-main">Корзина</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Закрыть"
+            className="absolute right-4 md:right-6 top-4 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors hover:opacity-80 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-color-text-main/30 focus-visible:ring-offset-2 text-color-text-main touch-manipulation"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        {/* Контент с прокруткой */}
         <div className="overflow-y-auto flex-1 min-h-0">
-          <div className="relative flex items-center justify-center px-4 sm:px-6 pt-4 pb-3 border-b border-border-block">
-            <h2 className="text-xl md:text-2xl font-bold uppercase tracking-wide text-color-text-main">Корзина</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Закрыть"
-              className="absolute right-4 md:right-6 top-4 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center transition-colors hover:opacity-80 outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-color-text-main/30 focus-visible:ring-offset-2 text-color-text-main touch-manipulation"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
           <div className="p-4 sm:p-6 pt-4 space-y-4">
             <div>
               <h2 className="text-lg font-bold mb-4">Ваш заказ:</h2>

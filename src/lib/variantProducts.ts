@@ -55,6 +55,10 @@ export type ProductVariantPublic = {
   bouquetColors?: string[] | null;
   /** Флаг предзаказа для конкретного варианта */
   isPreorder?: boolean;
+  /** Процент скидки 0–100 */
+  discountPercent?: number | null;
+  /** Цена со скидкой (финальная) */
+  discountPrice?: number | null;
 };
 
 /**
@@ -84,13 +88,39 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     const vpIds = (data as VariantProductsRow[]).map((r) => r.id);
     const { data: variantsData } = await supabase
       .from("product_variants")
-      .select("product_id, bouquet_colors, is_preorder, is_new, new_until, sort_order")
+      .select("id, product_id, title, bouquet_colors, is_preorder, is_new, new_until, sort_order, price, discount_percent, discount_price")
       .in("product_id", vpIds)
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
     const colorsByProductId = new Map<number, string[]>();
     const firstVariantPreorderByProductId = new Map<number, boolean>();
     const variantIsNewByProductId = new Map<number, { isNew: boolean; newUntil: string | null }>();
+    type VariantRow = {
+      id: number;
+      product_id: number;
+      title?: string | null;
+      bouquet_colors?: string[] | null;
+      is_preorder?: boolean | null;
+      is_new?: boolean | null;
+      new_until?: string | null;
+      price?: number | null;
+      discount_percent?: number | null;
+      discount_price?: number | null;
+    };
+    const variantsByProductId = new Map<number, import("@/lib/products").ProductVariantOption[]>();
+    for (const v of variantsData ?? []) {
+      const row = v as VariantRow;
+      const pid = row.product_id;
+      const list = variantsByProductId.get(pid) ?? [];
+      list.push({
+        id: row.id,
+        name: row.title ?? "",
+        price: Number(row.price ?? 0),
+        discountPercent: row.discount_percent != null ? Number(row.discount_percent) : null,
+        discountPrice: row.discount_price != null ? Number(row.discount_price) : null,
+      });
+      variantsByProductId.set(pid, list);
+    }
     for (const v of variantsData ?? []) {
       const row = v as { product_id: number; bouquet_colors?: string[] | null; is_preorder?: boolean | null; is_new?: boolean | null; new_until?: string | null };
       const pid = row.product_id;
@@ -201,6 +231,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
           isPreorder: firstVariantIsPreorder,
           isNew: effectiveIsNew,
           newUntil: effectiveNewUntil,
+          variants: variantsByProductId.get(row.id) ?? undefined,
         } satisfies Product;
       })
     );
@@ -363,7 +394,7 @@ export async function getVariantProductWithVariantsBySlug(
     const { data: vars, error: vErr } = await supabase
       .from("product_variants")
       .select(
-        "id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image, bouquet_colors, is_preorder, is_new, new_until"
+        "id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image, bouquet_colors, is_preorder, is_new, new_until, discount_percent, discount_price"
       )
       .eq("product_id", (vp as { id: number }).id)
       .eq("is_active", true)
@@ -386,6 +417,8 @@ export async function getVariantProductWithVariantsBySlug(
         is_preorder?: boolean | null;
         is_new?: boolean | null;
         new_until?: string | null;
+        discount_percent?: number | null;
+        discount_price?: number | null;
       }) => ({
         id: v.id,
         name: v.title ?? "",
@@ -402,7 +435,8 @@ export async function getVariantProductWithVariantsBySlug(
             ? v.bouquet_colors.filter((k): k is string => typeof k === "string" && k.length > 0)
             : null,
         isPreorder: v.is_preorder ?? false,
-        isNew: v.is_new ?? false,
+        discountPercent: v.discount_percent != null ? Number(v.discount_percent) : null,
+        discountPrice: v.discount_price != null ? Number(v.discount_price) : null,
       })
     );
     return { ...product, variants };

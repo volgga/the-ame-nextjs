@@ -133,6 +133,8 @@ const createSimpleSchema = z.object({
     .nullable()
     .transform((v) => (v === "" ? null : v)),
   bouquet_colors: z.array(z.string()).optional().nullable(),
+  discount_percent: z.number().min(0).max(100).nullable().optional(),
+  discount_price: z.number().min(0).nullable().optional(),
 });
 
 const createVariantSchema = z.object({
@@ -172,6 +174,8 @@ const createVariantSchema = z.object({
         sort_order: z.number().default(0),
         is_active: z.boolean().default(true),
         bouquet_colors: z.array(z.string()).optional().nullable(),
+        discount_percent: z.number().min(0).max(100).nullable().optional(),
+        discount_price: z.number().min(0).nullable().optional(),
       })
     )
     .min(1),
@@ -249,6 +253,8 @@ export async function POST(request: NextRequest) {
             parsed.data.bouquet_colors && parsed.data.bouquet_colors.length > 0
               ? parsed.data.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
               : null,
+          discount_percent: parsed.data.discount_percent ?? null,
+          discount_price: parsed.data.discount_price ?? null,
         })
         .select()
         .single();
@@ -346,6 +352,8 @@ export async function POST(request: NextRequest) {
           v.bouquet_colors && v.bouquet_colors.length > 0
             ? v.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
             : null,
+        discount_percent: v.discount_percent ?? null,
+        discount_price: v.discount_price ?? null,
       }));
 
       const { error: variantsError } = await sb.from("product_variants").insert(variantsToInsert);

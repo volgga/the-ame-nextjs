@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { FlowerCard } from "./FlowerCard";
 import { Flower } from "@/types/flower";
 import type { Product } from "@/lib/products";
+import { getEffectivePrice, isDiscountActive } from "@/lib/priceUtils";
 
 type SortValue = "default" | "price_asc" | "price_desc";
 
@@ -57,18 +58,36 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
 
   const productsBase = allProductsForInfiniteScroll ?? products;
 
-  // Преобразуем Product[] в Flower[]
+  // Преобразуем Product[] в Flower[] (price = эффективная цена; originalPrice = базовая при скидке)
   const flowers: Flower[] = useMemo(
     () =>
       productsBase.map((p) => {
         const hasVariants = p.variants && p.variants.length > 0;
-        const variantPrices = hasVariants ? p.variants!.map((v) => v.price).filter(Number.isFinite) : [];
-        const minPrice = variantPrices.length > 0 ? Math.min(...variantPrices, p.price) : p.price;
+        let price: number;
+        let originalPrice: number | null = null;
+        let discountPercent: number | null = null;
+        if (hasVariants) {
+          const effectivePrices = p.variants!.map((v) => getEffectivePrice(v));
+          const basePrices = p.variants!.map((v) => v.price);
+          price = Math.min(...effectivePrices);
+          const minBase = Math.min(...basePrices);
+          if (price < minBase) {
+            originalPrice = minBase;
+            const withDiscount = p.variants!.filter((v) => isDiscountActive(v));
+            if (withDiscount.length > 0) discountPercent = withDiscount[0].discountPercent ?? null;
+          }
+        } else {
+          price = getEffectivePrice(p);
+          if (isDiscountActive(p)) {
+            originalPrice = p.price;
+            discountPercent = p.discountPercent ?? null;
+          }
+        }
         const priceFrom = hasVariants || p.id.startsWith("vp-");
         return {
           id: p.id,
           name: p.title,
-          price: minPrice,
+          price,
           image: p.image,
           description: p.shortDescription,
           category: "Разное",
@@ -81,6 +100,8 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
           categorySlug: p.categorySlug ?? null,
           isPreorder: p.isPreorder,
           priceFrom,
+          originalPrice: originalPrice ?? undefined,
+          discountPercent: discountPercent ?? undefined,
         };
       }),
     [productsBase]

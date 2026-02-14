@@ -21,6 +21,10 @@ export type ProductVariantOption = {
   bouquetColors?: string[] | null;
   /** Флаг предзаказа для конкретного варианта */
   isPreorder?: boolean;
+  /** Процент скидки 0–100 */
+  discountPercent?: number | null;
+  /** Цена со скидкой (финальная для оплаты и витрины) */
+  discountPrice?: number | null;
 };
 
 export type Product = {
@@ -64,6 +68,10 @@ export type Product = {
   newUntil?: string | null;
   /** Ключи цветов букета для фильтра «Цвет букета» */
   bouquetColors?: string[] | null;
+  /** Процент скидки 0–100 (для простого товара) */
+  discountPercent?: number | null;
+  /** Цена со скидкой (финальная для оплаты и витрины) */
+  discountPrice?: number | null;
 };
 
 /** Сырая строка таблицы products в Supabase */
@@ -95,6 +103,8 @@ type ProductsRow = {
   og_description?: string | null;
   og_image?: string | null;
   bouquet_colors?: string[] | null;
+  discount_percent?: number | null;
+  discount_price?: number | null;
 };
 
 /**
@@ -172,6 +182,8 @@ async function rowToProduct(row: ProductsRow, getCategoryNames?: (slugs: string[
       Array.isArray(row.bouquet_colors) && row.bouquet_colors.length > 0
         ? row.bouquet_colors.filter((k): k is string => typeof k === "string" && k.length > 0)
         : null,
+    discountPercent: row.discount_percent != null ? Number(row.discount_percent) : null,
+    discountPrice: row.discount_price != null ? Number(row.discount_price) : null,
   };
 }
 
@@ -194,7 +206,7 @@ export async function getAllProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors"
+        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, discount_percent, discount_price"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")

@@ -19,6 +19,7 @@ import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import type { Product } from "@/lib/products";
 import type { ProductDetails } from "@/lib/productDetails";
+import { getEffectivePrice, isDiscountActive } from "@/lib/priceUtils";
 import { Flower, getCartLineId } from "@/types/flower";
 import { Breadcrumbs, BREADCRUMB_SPACING } from "@/components/ui/breadcrumbs";
 import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
@@ -53,17 +54,17 @@ function AccordionItem({
   onToggle: () => void;
 }) {
   return (
-    <div className="border-b border-border-block">
-      <button type="button" onClick={onToggle} className="w-full flex items-center justify-between py-3 text-left">
+    <div className="border-b border-border-block last:border-b-0">
+      <button type="button" onClick={onToggle} className="w-full flex items-center justify-between py-3 md:py-3.5 text-left">
         <span className="text-sm font-medium text-color-text-secondary uppercase tracking-wide">{title}</span>
         <ChevronDown
           className={`w-4 h-4 text-color-text-main transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-96 pb-3" : "max-h-0"}`}
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-[3000px] pb-4" : "max-h-0"}`}
       >
-        <div className="text-sm text-color-text-secondary leading-relaxed">{children}</div>
+        <div className="text-sm text-color-text-secondary leading-relaxed pr-1">{children}</div>
       </div>
     </div>
   );
@@ -227,7 +228,13 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     hasVariants && selectedVariantId != null
       ? (product.variants!.find((v) => v.id === selectedVariantId) ?? product.variants![0])
       : null;
-  const displayPrice = selectedVariant ? selectedVariant.price : product.price;
+  const displayPrice = selectedVariant ? getEffectivePrice(selectedVariant) : getEffectivePrice(product);
+  const displayOriginalPrice =
+    selectedVariant && isDiscountActive(selectedVariant)
+      ? selectedVariant.price
+      : !selectedVariant && isDiscountActive(product)
+        ? product.price
+        : null;
   const displayComposition = selectedVariant ? (selectedVariant.composition ?? null) : (product.composition ?? null);
   const displaySizeHeight = selectedVariant ? (selectedVariant.height_cm ?? null) : (product.sizeHeightCm ?? null);
   const displaySizeWidth = selectedVariant ? (selectedVariant.width_cm ?? null) : (product.sizeWidthCm ?? null);
@@ -590,7 +597,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                             : "bg-white text-color-text-main hover:bg-[rgba(31,42,31,0.06)]"
                         }`}
                       >
-                        {v.name} — {v.price.toLocaleString("ru-RU")} ₽
+                        {v.name} — {getEffectivePrice(v).toLocaleString("ru-RU")} ₽
                       </button>
                     ))}
                   </div>
@@ -599,9 +606,14 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
 
               {/* Цена и блок действий в едином контейнере */}
               <div className="mb-4">
-                {/* Цена */}
-                <div className="text-lg md:text-xl font-medium text-color-text-main mb-4">
-                  {displayPrice.toLocaleString("ru-RU")} ₽
+                {/* Цена (при скидке — старая зачёркнута, новая рядом) */}
+                <div className="text-lg md:text-xl font-medium text-color-text-main mb-4 flex items-baseline gap-2 flex-wrap">
+                  {displayOriginalPrice != null && (
+                    <span className="text-base text-color-text-secondary line-through">
+                      {displayOriginalPrice.toLocaleString("ru-RU")} ₽
+                    </span>
+                  )}
+                  <span>{displayPrice.toLocaleString("ru-RU")} ₽</span>
                 </div>
 
                 {/* Блок действий */}
@@ -698,8 +710,8 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                 </div>
               </div>
 
-              {/* Аккордеон-секции (single-open) */}
-              <div className="mt-4">
+              {/* Аккордеон-секции (single-open): без ограничения высоты описания */}
+              <div className="mt-4 space-y-0">
                 {product.shortDescription && (
                   <AccordionItem
                     id="Описание"
@@ -811,7 +823,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
       <AddToOrderSection products={addToOrderProducts} />
 
       {/* Модалка быстрого заказа */}
-      <QuickOrderModal isOpen={quickOrderOpen} onClose={() => setQuickOrderOpen(false)} product={product} />
+      <QuickOrderModal isOpen={quickOrderOpen} onClose={() => setQuickOrderOpen(false)} product={{ ...product, price: displayPrice }} />
 
       {/* Модалка "Намекнуть о подарке" */}
       <GiftHintModal isOpen={giftHintOpen} onClose={() => setGiftHintOpen(false)} product={product} />

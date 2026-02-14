@@ -78,6 +78,8 @@ const updateSimpleSchema = z.object({
     .nullable()
     .transform((v) => (v === "" ? null : v)),
   bouquet_colors: z.array(z.string()).optional().nullable(),
+  discount_percent: z.number().min(0).max(100).nullable().optional(),
+  discount_price: z.number().min(0).nullable().optional(),
 });
 
 const updateVariantSchema = z.object({
