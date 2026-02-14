@@ -29,10 +29,15 @@ export function BlogSlider({ posts, className = "" }: BlogSliderProps) {
         <div className={MAIN_PAGE_BLOCK_GAP_MARGIN}>
           <h2
             id="blog-feed-heading"
-            className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)] uppercase tracking-tight"
+            className="text-2xl md:text-3xl font-bold text-[var(--color-text-main)] tracking-tight"
           >
-            Из блога
+            Блог и новости цветочного магазина The Ame
           </h2>
+          <p className="mt-3 md:mt-4 text-base md:text-lg text-[var(--color-text-secondary)] leading-relaxed max-w-3xl">
+            В нашем блоге мы делимся полезными материалами о цветах, букетах и флористике, а также публикуем новости
+            цветочного магазина The Ame. Здесь вы найдёте идеи для подарков, советы по уходу за цветами и актуальные
+            обновления сервиса доставки цветов в Сочи.
+          </p>
         </div>
 
         <div

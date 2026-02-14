@@ -124,7 +124,7 @@ export async function PUT(request: NextRequest) {
     if (error) throw error;
 
     revalidateTag("corporate-page", "max");
-    revalidatePath("/docs/corporate");
+    revalidatePath("/corporate");
     return NextResponse.json({ settings: data });
   } catch (e) {
     if ((e as Error).message === "unauthorized") {

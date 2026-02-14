@@ -138,22 +138,19 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
   return (
     <div className="relative flex flex-col h-full">
       <Link href={productUrl} aria-label={flower.name} className="block flex-1 relative">
-        {/* 📸 Image wrapper: relative + overflow-hidden + rounded-2xl — бейджи внутри, клип по радиусу */}
-        <div className="group relative overflow-hidden rounded-2xl aspect-square bg-[#ece9e2]">
-          {/* Бейджи внутри image wrapper, чтобы не выходить за скруглённые края */}
+        {/* 📸 Image wrapper: clips badges to rounded image (productCardImageWrap = 24px radius + overflow hidden) */}
+        <div className="productCardImageWrap group aspect-square bg-[#ece9e2]">
           {(isNewEffective || hasDiscount) && (
-            <div className="absolute top-1.5 left-1.5 z-10 flex flex-col gap-1 md:top-2 md:left-2 md:gap-1.5">
+            <div className="productCardBadges">
               {isNewEffective && (
-                <div className="new-badge w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-[10px] md:text-xs font-medium leading-none">
-                  НОВЫЙ
-                </div>
+                <span className="productCardBadge productCardBadgeNew">НОВЫЙ</span>
               )}
               {hasDiscount && (
-                <div className="w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--header-bg)] text-[var(--header-foreground)] text-[10px] md:text-xs font-medium leading-none">
+                <span className="productCardBadge productCardBadgeDiscount">
                   {flower.discountPercent != null && flower.discountPercent > 0
                     ? `-${Math.round(flower.discountPercent)}%`
                     : "СКИДКА"}
-                </div>
+                </span>
               )}
             </div>
           )}

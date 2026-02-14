@@ -31,8 +31,8 @@ export function CorporateCtaButtons({ maxLink }: CorporateCtaButtonsProps) {
   const buttons: { label: string; href: string }[] = [];
   if (telegram?.url) buttons.push({ label: BUTTON_LABELS.telegram, href: telegram.url });
   if (whatsapp?.url) buttons.push({ label: BUTTON_LABELS.whatsapp, href: whatsapp.url });
-  if (phone?.url) buttons.push({ label: BUTTON_LABELS.phone, href: phone.url });
   if (maxUrl) buttons.push({ label: BUTTON_LABELS.max, href: maxUrl });
+  if (phone?.url) buttons.push({ label: BUTTON_LABELS.phone, href: phone.url });
 
   const btnClass =
     "inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg text-sm font-medium uppercase tracking-wide border-2 border-[var(--color-text-main)] text-[var(--color-text-main)] bg-transparent hover:bg-[var(--color-text-main)] hover:text-white transition-colors";

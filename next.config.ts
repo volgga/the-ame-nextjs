@@ -29,6 +29,7 @@ const nextConfig: NextConfig = {
         destination: "/instrukciya-po-uhodu-za-tsvetami",
         permanent: true,
       },
+      { source: "/docs/corporate", destination: "/corporate", permanent: true },
     ];
   },
   async headers() {

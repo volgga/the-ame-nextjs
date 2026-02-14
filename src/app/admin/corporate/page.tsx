@@ -180,7 +180,7 @@ export default function AdminCorporatePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Корпоративы</h1>
         <Link
-          href="/docs/corporate"
+          href="/corporate"
           target="_blank"
           className="text-sm text-color-text-main hover:underline"
         >
@@ -365,7 +365,7 @@ export default function AdminCorporatePage() {
             {saving ? "Сохранение..." : "Сохранить"}
           </button>
           <Link
-            href="/docs/corporate"
+            href="/corporate"
             target="_blank"
             className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
