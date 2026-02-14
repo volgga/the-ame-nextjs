@@ -47,7 +47,7 @@ export default function AdminCorporatePage() {
       if (!result.ok || !result.data?.settings) {
         const apiError =
           result.data && typeof (result.data as { error?: string }).error === "string"
-            ? (result.data as { error: string }).error
+            ? (result.data as { error?: string }).error
             : null;
         throw new Error(apiError ?? result.message ?? "Ошибка загрузки");
       }
@@ -94,7 +94,7 @@ export default function AdminCorporatePage() {
       });
       if (!result.ok) {
         const err = result.data && typeof (result.data as { error?: string }).error === "string"
-          ? (result.data as { error: string }).error
+          ? (result.data as { error?: string }).error
           : result.message ?? "Ошибка загрузки";
         throw new Error(err);
       }
@@ -149,7 +149,7 @@ export default function AdminCorporatePage() {
       });
       if (!result.ok) {
         const err = result.data && typeof (result.data as { error?: string }).error === "string"
-          ? (result.data as { error: string }).error
+          ? (result.data as { error?: string }).error
           : result.message ?? "Ошибка сохранения";
         throw new Error(err);
       }
