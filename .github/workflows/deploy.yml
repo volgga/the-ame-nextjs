@@ -75,16 +75,19 @@ jobs:
               exit 1
             }
             
-            # Перезапускаем PM2 процесс
-            echo "🔄 Restarting PM2 process..."
+            # Перезапускаем или запускаем PM2 процесс
+            echo "🔄 Restarting/Starting PM2 process..."
             if command -v pm2 >/dev/null 2>&1; then
-              pm2 restart "$PM2_APP_NAME" || {
-                echo "❌ Error: Failed to restart PM2 process '$PM2_APP_NAME'"
-                echo "💡 Hint: Make sure PM2 process '$PM2_APP_NAME' exists. Check with: pm2 list"
-                exit 1
-              }
+              if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
+                pm2 restart "$PM2_APP_NAME" && echo "✅ PM2 process '$PM2_APP_NAME' restarted"
+              else
+                echo "Process '$PM2_APP_NAME' not found, cleaning and starting..."
+                pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
+                pm2 delete "theame-next" 2>/dev/null || true
+                pm2 start ecosystem.config.js
+                echo "✅ PM2 process started"
+              fi
               pm2 save || true
-              echo "✅ PM2 process '$PM2_APP_NAME' restarted successfully"
             else
               echo "❌ Error: PM2 is not installed or not in PATH"
               echo "💡 Hint: Install PM2 with: npm install -g pm2"
