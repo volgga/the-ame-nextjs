@@ -789,15 +789,18 @@ export default function AdminCategoriesPage() {
       </div>
 
       {(creating || editing) && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
           <div
-            className="relative w-full max-w-[480px] max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white hover:border-border-block-hover shadow-xl"
+            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <form onSubmit={handleSaveForm} className="flex flex-col min-h-0">
-              <div className="flex-1 min-h-0 overflow-y-auto p-6">
-                <h3 className="mb-4 font-medium text-[#111]">{creating ? "Новая категория" : "Редактирование"}</h3>
+            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
+              <h3 className="text-lg font-semibold text-[#111] truncate pr-2">{creating ? "Новая категория" : "Редактирование"}</h3>
+              <button type="button" onClick={closeModal} className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 flex-shrink-0" aria-label="Закрыть">×</button>
+            </div>
+            <form onSubmit={handleSaveForm} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6" style={{ overscrollBehavior: "contain" }}>
                 {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
                 <div className="space-y-3">
                   <div>
@@ -1060,7 +1063,7 @@ export default function AdminCategoriesPage() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-2 p-6 pt-4 border-t border-gray-100">
+              <div className="flex gap-2 p-4 sm:p-6 pt-4 border-t border-border-block flex-shrink-0 bg-white">
                 <button
                   type="submit"
                   className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
@@ -1096,21 +1099,35 @@ export default function AdminCategoriesPage() {
 
       {/* Модалка создания/редактирования подкатегории */}
       {(creatingSubcategory || editingSubcategory) && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => {
             setCreatingSubcategory(false);
             setEditingSubcategory(null);
             setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
           }} aria-hidden />
           <div
-            className="relative w-full max-w-[600px] max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white hover:border-border-block-hover shadow-xl"
+            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <form onSubmit={handleSaveSubcategory} className="flex flex-col min-h-0">
-              <div className="flex-1 min-h-0 overflow-y-auto p-6">
-                <h3 className="mb-4 font-medium text-[#111]">
-                  {creatingSubcategory ? "Новая подкатегория" : "Редактирование подкатегории"}
-                </h3>
+            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
+              <h3 className="text-lg font-semibold text-[#111] truncate pr-2">
+                {creatingSubcategory ? "Новая подкатегория" : "Редактирование подкатегории"}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setCreatingSubcategory(false);
+                  setEditingSubcategory(null);
+                  setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+                }}
+                className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 flex-shrink-0"
+                aria-label="Закрыть"
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSaveSubcategory} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6" style={{ overscrollBehavior: "contain" }}>
                 {error && (creatingSubcategory || editingSubcategory) && (
                   <p className="mb-3 text-sm text-red-600">{error}</p>
                 )}
@@ -1175,7 +1192,7 @@ export default function AdminCategoriesPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 p-6 pt-4 border-t border-gray-100">
+              <div className="flex gap-2 p-4 sm:p-6 pt-4 border-t border-border-block flex-shrink-0 bg-white">
                 <button
                   type="submit"
                   className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"

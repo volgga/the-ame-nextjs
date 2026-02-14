@@ -292,23 +292,24 @@ export default function AdminDeliveryZonesPage() {
 
       {/* Модалка: Условия доставки и зоны */}
       {openModal === "zones" && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpenModal(null)} aria-hidden />
           <div
-            className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl"
+            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-[#111]">Условия доставки и зоны</h3>
+            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
+              <h3 className="text-lg font-semibold text-[#111] truncate pr-2">Условия доставки и зоны</h3>
               <button
                 type="button"
                 onClick={() => setOpenModal(null)}
-                className="rounded border border-gray-300 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
+                className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 transition-colors flex-shrink-0"
+                aria-label="Закрыть"
               >
-                Закрыть
+                ×
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4" style={{ overscrollBehavior: "contain" }}>
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -325,15 +326,18 @@ export default function AdminDeliveryZonesPage() {
               {error && !creating && !editing && <p className="text-sm text-red-600">{error}</p>}
 
       {(creating || editing) && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
           <div
-            className="relative w-full max-w-[480px] max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl"
+            className="relative w-[calc(100vw-32px)] max-w-[480px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <form onSubmit={handleSaveForm} className="flex flex-col min-h-0 overflow-y-auto">
-              <div className="flex-1 p-6">
-                <h3 className="mb-4 font-medium text-[#111]">{creating ? "Новая зона" : "Редактирование"}</h3>
+            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 border-b border-border-block flex-shrink-0 bg-white">
+              <h3 className="text-lg font-semibold text-[#111] truncate pr-2">{creating ? "Новая зона" : "Редактирование"}</h3>
+              <button type="button" onClick={closeModal} className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 flex-shrink-0" aria-label="Закрыть">×</button>
+            </div>
+            <form onSubmit={handleSaveForm} className="flex flex-col flex-1 min-h-0">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6" style={{ overscrollBehavior: "contain" }}>
                 {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
                 <div className="space-y-3">
                   <div>
@@ -406,7 +410,7 @@ export default function AdminDeliveryZonesPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 p-6 pt-4 border-t border-gray-100">
+              <div className="flex gap-2 p-4 sm:p-6 pt-4 border-t border-border-block flex-shrink-0 bg-white">
                 <button
                   type="submit"
                   className="rounded px-4 py-2 text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
@@ -550,22 +554,23 @@ export default function AdminDeliveryZonesPage() {
 
       {/* Модалка: Время доставки */}
       {openModal === "schedule" && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpenModal(null)} aria-hidden />
           <div
-            className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl overflow-hidden"
+            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-end p-4 border-b border-gray-200">
+            <div className="sticky top-0 z-[2] flex items-center justify-end py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
               <button
                 type="button"
                 onClick={() => setOpenModal(null)}
-                className="rounded border border-gray-300 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
+                className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 transition-colors flex-shrink-0"
+                aria-label="Закрыть"
               >
-                Закрыть
+                ×
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4" style={{ overscrollBehavior: "contain" }}>
               <DeliveryScheduleContent />
             </div>
           </div>
@@ -574,22 +579,23 @@ export default function AdminDeliveryZonesPage() {
 
       {/* Модалка: Минимальный заказ */}
       {openModal === "minimum" && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpenModal(null)} aria-hidden />
           <div
-            className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl overflow-hidden"
+            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-end p-4 border-b border-gray-200">
+            <div className="sticky top-0 z-[2] flex items-center justify-end py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
               <button
                 type="button"
                 onClick={() => setOpenModal(null)}
-                className="rounded border border-gray-300 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
+                className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 transition-colors flex-shrink-0"
+                aria-label="Закрыть"
               >
-                Закрыть
+                ×
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 min-h-0 overflow-y-auto p-4" style={{ overscrollBehavior: "contain" }}>
               <MinimumOrderModalContent />
             </div>
           </div>

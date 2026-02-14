@@ -20,7 +20,9 @@ import { getHomeReviews } from "@/lib/homeReviews";
 import { getHomeAbout } from "@/lib/homeAbout";
 import { getHomeFaq } from "@/lib/homeFaq";
 import { getHomeOrderBlock } from "@/lib/homeOrderBlock";
+import { getPublishedPosts } from "@/lib/blog";
 import { CANONICAL_BASE, SITE_NAME, LOCALE, ROBOTS_INDEX_FOLLOW, canonicalUrl } from "@/lib/seo";
+import { BlogSlider } from "@/components/home/BlogSlider";
 
 const HOME_TITLE = "Доставка цветов в Сочи — купить цветы в цветочном магазине The Ame";
 const HOME_DESCRIPTION =
@@ -57,15 +59,17 @@ export const metadata: Metadata = {
  * Главная страница: hero → «Рекомендуем» → «КОЛЛЕКЦИИ THE ÁME» → «О нас» → «Заказать букет» → «Часто задаваемые вопросы» → «Отзывы клиентов» → «Карта».
  */
 export default async function HomePage() {
-  const [slides, allProducts, homeCollections, homeReviews, homeAbout, homeFaq, homeOrderBlock] = await Promise.all([
-    getActiveHeroSlides(),
-    getAllCatalogProducts(),
-    getActiveHomeCollections(),
-    getHomeReviews(),
-    getHomeAbout(),
-    getHomeFaq(),
-    getHomeOrderBlock(),
-  ]);
+  const [slides, allProducts, homeCollections, homeReviews, homeAbout, homeFaq, homeOrderBlock, blogPosts] =
+    await Promise.all([
+      getActiveHeroSlides(),
+      getAllCatalogProducts(),
+      getActiveHomeCollections(),
+      getHomeReviews(),
+      getHomeAbout(),
+      getHomeFaq(),
+      getHomeOrderBlock(),
+      getPublishedPosts(),
+    ]);
 
   const { products: recommendProducts } = getRecommendProducts(allProducts);
 
@@ -90,6 +94,7 @@ export default async function HomePage() {
       <FaqSection faqItems={homeFaq} />
       <ReviewsSection reviews={homeReviews} />
       <MapSection />
+      <BlogSlider posts={blogPosts.slice(0, 6)} />
     </div>
   );
 }

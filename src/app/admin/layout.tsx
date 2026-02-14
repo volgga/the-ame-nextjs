@@ -27,6 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/delivery-zones", label: "Условия доставки" },
     { href: "/admin/blog", label: "Блог" },
     { href: "/admin/about", label: "О нас" },
+    { href: "/admin/corporate", label: "Корпоративы" },
   ];
 
   return (

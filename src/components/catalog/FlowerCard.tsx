@@ -6,7 +6,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { Flower } from "@/types/flower";
 import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
-import { Heart, ShoppingCart, Search, Clock } from "lucide-react";
+import { Heart, ShoppingCart, Search, Clock, MousePointerClick } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { buildProductUrl } from "@/utils/buildProductUrl";
@@ -138,25 +138,25 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
   return (
     <div className="relative flex flex-col h-full">
       <Link href={productUrl} aria-label={flower.name} className="block flex-1 relative">
-        {/* BadgesWrapper вне overflow-hidden, чтобы не было артефакта у НОВЫЙ */}
-        {(isNewEffective || hasDiscount) && (
-          <div className="absolute top-1.5 left-0 z-10 flex flex-col gap-1 md:top-2 md:gap-1.5">
-            {isNewEffective && (
-              <div className="new-badge w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-[10px] md:text-xs font-medium leading-none">
-                НОВЫЙ
-              </div>
-            )}
-            {hasDiscount && (
-              <div className="w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--header-bg)] text-[var(--header-foreground)] text-[10px] md:text-xs font-medium leading-none">
-                {flower.discountPercent != null && flower.discountPercent > 0
-                  ? `-${Math.round(flower.discountPercent)}%`
-                  : "СКИДКА"}
-              </div>
-            )}
-          </div>
-        )}
-        {/* 📸 Фото + hover-иконки (лупа, сердечко) — group на контейнере фото */}
+        {/* 📸 Image wrapper: relative + overflow-hidden + rounded-2xl — бейджи внутри, клип по радиусу */}
         <div className="group relative overflow-hidden rounded-2xl aspect-square bg-[#ece9e2]">
+          {/* Бейджи внутри image wrapper, чтобы не выходить за скруглённые края */}
+          {(isNewEffective || hasDiscount) && (
+            <div className="absolute top-1.5 left-1.5 z-10 flex flex-col gap-1 md:top-2 md:left-2 md:gap-1.5">
+              {isNewEffective && (
+                <div className="new-badge w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-[10px] md:text-xs font-medium leading-none">
+                  НОВЫЙ
+                </div>
+              )}
+              {hasDiscount && (
+                <div className="w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--header-bg)] text-[var(--header-foreground)] text-[10px] md:text-xs font-medium leading-none">
+                  {flower.discountPercent != null && flower.discountPercent > 0
+                    ? `-${Math.round(flower.discountPercent)}%`
+                    : "СКИДКА"}
+                </div>
+              )}
+            </div>
+          )}
           <Image
             src={imageSrc}
             alt={flower.name}
@@ -215,14 +215,14 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
           </div>
         </div>
 
-        {/* Название: 1 строка с ellipsis */}
-        <h3 className="mt-3 px-1 min-w-0 text-base font-normal text-color-text-main text-left overflow-hidden text-ellipsis whitespace-nowrap">
+        {/* Название: 1 строка с ellipsis. Mobile: меньше отступ сверху для компактности */}
+        <h3 className="mt-2 px-1 min-w-0 text-base font-normal text-color-text-main text-left overflow-hidden text-ellipsis whitespace-nowrap md:mt-3">
           {flower.name}
         </h3>
       </Link>
 
-      {/* Mobile: один stack с единым gap (title-price == price-button). PC: price слева, cart + "в 1 клик" справа, одно сердечко только в hover на фото */}
-      <div className="px-1 flex flex-col gap-2 min-w-0 mt-2 md:mt-2 md:flex-row md:items-center md:justify-between">
+      {/* Mobile: компактный gap title–price–button. PC: price слева, справа [1 клик] [корзина] */}
+      <div className="px-1 flex flex-col gap-1.5 min-w-0 mt-1.5 md:gap-2 md:mt-2 md:flex-row md:items-center md:justify-between">
         {/* Price block */}
         <div
           className="flex items-baseline min-w-0 flex-shrink overflow-hidden flex-nowrap"
@@ -244,8 +244,8 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
           )}
         </div>
 
-        {/* Actions: Mobile — full-width кнопка. PC — корзина/часы + "в 1 клик" текст прижаты вправо, без дубля сердца */}
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:shrink-0 md:flex-nowrap md:ml-auto">
+        {/* Actions: Mobile — full-width кнопка. PC — справа [кнопка 1 клик (иконка)] [корзина] */}
+        <div className="flex flex-col gap-1.5 md:gap-2 md:flex-row md:items-center md:justify-end md:shrink-0 md:flex-nowrap md:ml-auto">
           {isPreorder ? (
             <button
               type="button"
@@ -265,6 +265,15 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
             <>
               <button
                 type="button"
+                onClick={openQuickBuyModal}
+                className="hidden md:flex md:w-9 md:h-9 md:min-w-[36px] md:min-h-[36px] items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main hover:text-color-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
+                title="Купить в 1 клик"
+                aria-label="Купить в 1 клик"
+              >
+                <MousePointerClick className="w-4 h-4 shrink-0" strokeWidth={1.6} />
+              </button>
+              <button
+                type="button"
                 onClick={handleCartClick}
                 className="product-cta w-full md:w-9 md:min-w-[36px] md:h-9 min-h-[40px] md:min-h-[36px] rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation text-sm font-medium md:px-0 order-first md:order-none"
                 title={flower.inStock ? "В корзину" : "Предзаказ"}
@@ -272,13 +281,6 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
               >
                 <ShoppingCart className="w-3.5 h-3.5 md:block hidden shrink-0" strokeWidth={1.6} />
                 <span className="md:hidden">{flower.inStock ? "В корзину" : "Предзаказ"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={openQuickBuyModal}
-                className="hidden md:inline text-xs font-normal text-color-text-secondary hover:text-color-text-main hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 rounded"
-              >
-                в 1 клик
               </button>
             </>
           )}

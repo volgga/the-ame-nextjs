@@ -476,14 +476,25 @@ export default function AdminHomeCollectionsPage() {
       </div>
 
       {(creating || editing) && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
           <div className="absolute inset-0 bg-black/40" onClick={requestClose} aria-hidden />
           <div
-            className="relative w-full max-w-[720px] rounded-xl border border-border-block bg-white hover:border-border-block-hover p-6 shadow-xl"
+            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <form id="collections-modal-form" onSubmit={handleSaveForm}>
-              <h3 className="mb-4 font-medium text-[#111]">{creating ? "Новая коллекция" : "Редактирование"}</h3>
+            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
+              <h3 className="text-lg font-semibold text-[#111] truncate pr-2">{creating ? "Новая коллекция" : "Редактирование"}</h3>
+              <button
+                type="button"
+                onClick={requestClose}
+                className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 transition-colors flex-shrink-0"
+                aria-label="Закрыть"
+              >
+                ×
+              </button>
+            </div>
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6" style={{ overscrollBehavior: "contain" }}>
+            <form id="collections-modal-form" onSubmit={handleSaveForm} className="space-y-3">
               {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
               <div className="space-y-3">
                 <div>
@@ -613,6 +624,7 @@ export default function AdminHomeCollectionsPage() {
                 </div>
               </div>
             </form>
+            </div>
             {showCloseConfirm && (
               <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/30 z-10">
                 <div className="bg-white rounded-xl border border-border-block p-4 shadow-xl max-w-sm w-full mx-4">

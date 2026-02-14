@@ -132,7 +132,7 @@ export function Modal({
 
   const content = (
     <div
-      className="fixed inset-0 flex items-center justify-center p-2 sm:p-4 overflow-hidden"
+      className="fixed inset-0 flex items-center justify-center p-4 overflow-hidden"
       style={{ zIndex: Z_OVERLAY }}
     >
       <div
@@ -141,12 +141,12 @@ export function Modal({
         aria-hidden="true"
       />
       <div
-        className="relative bg-white rounded-xl shadow-xl w-full max-w-[720px] sm:max-w-[960px] max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col border border-border-block"
+        className="relative bg-white rounded-xl shadow-xl w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] overflow-hidden flex flex-col border border-border-block"
         style={{ zIndex: Z_PANEL }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Компактная шапка */}
-        <div className="flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0">
+        {/* Sticky шапка: заголовок слева, закрыть справа */}
+        <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
           <h2 className="text-lg font-semibold text-[#111] truncate pr-2">{title}</h2>
           <button
             type="button"
@@ -158,14 +158,14 @@ export function Modal({
           </button>
         </div>
 
-        {/* Скроллируемый контент */}
+        {/* Скролл только внутри body */}
         <div className="overflow-y-auto flex-1 min-h-0 p-4 sm:p-6" style={{ overscrollBehavior: "contain" }}>
           {children}
         </div>
 
-        {/* Footer (если передан) */}
+        {/* Footer (если передан) — sticky снизу */}
         {footer && (
-          <div className="flex-shrink-0 border-t border-border-block p-4 sm:p-6">{footer}</div>
+          <div className="flex-shrink-0 border-t border-border-block p-4 sm:p-6 bg-white">{footer}</div>
         )}
       </div>
 
