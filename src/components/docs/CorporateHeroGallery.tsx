@@ -81,7 +81,7 @@ export function CorporateHeroGallery({ images, className = "" }: CorporateHeroGa
   }
 
   const btnBase =
-    "absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] text-white/90 hover:text-white transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded-full bg-black/20";
+    "absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 min-w-[32px] min-h-[32px] text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)] hover:text-white/95 transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60";
 
   return (
     <div className={`relative overflow-hidden bg-[#ece9e2] h-full min-h-0 ${className}`}>
@@ -123,7 +123,7 @@ export function CorporateHeroGallery({ images, className = "" }: CorporateHeroGa
             aria-label="Предыдущее фото"
             className={`left-3 sm:left-4 ${btnBase}`}
           >
-            <ChevronArrow direction="left" />
+            <ChevronArrow direction="left" className="w-5 h-6 shrink-0" />
           </button>
           <button
             type="button"
@@ -131,7 +131,7 @@ export function CorporateHeroGallery({ images, className = "" }: CorporateHeroGa
             aria-label="Следующее фото"
             className={`right-3 sm:right-4 ${btnBase}`}
           >
-            <ChevronArrow direction="right" />
+            <ChevronArrow direction="right" className="w-5 h-6 shrink-0" />
           </button>
           <div
             className="absolute left-0 right-0 flex justify-center gap-1.5 z-20"

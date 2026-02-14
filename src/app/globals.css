@@ -479,13 +479,13 @@ All colors MUST be HSL.
     }
   }
 
-  /* Страница /corporate: высота галереи как на референсе */
+  /* Страница /corporate: высота галереи (увеличена) */
   .corporate-gallery-wrap {
-    height: clamp(320px, 45vh, 460px);
+    height: clamp(380px, 52vh, 540px);
   }
   @media (min-width: 1024px) {
     .corporate-gallery-wrap {
-      height: clamp(520px, 60vh, 720px);
+      height: clamp(600px, 68vh, 820px);
     }
   }
 

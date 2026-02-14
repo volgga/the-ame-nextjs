@@ -38,8 +38,8 @@ export default async function CorporatePage() {
     <div className="min-h-screen bg-page-bg">
       <section className={`container mx-auto px-4 md:px-6 ${MAIN_PAGE_BLOCK_GAP} pb-8 md:pb-12`}>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
-          {/* Текст слева */}
-          <div className="order-2 lg:order-1 flex flex-col justify-center">
+          {/* Текст и кнопки: на mobile первыми (сверху), на desktop слева */}
+          <div className="order-1 flex flex-col justify-center">
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-[#111] mb-4 md:mb-6 tracking-tight">
               {title}
             </h1>
@@ -49,8 +49,8 @@ export default async function CorporatePage() {
             <CorporateCtaButtons maxLink={maxLink} />
           </div>
 
-          {/* Галерея справа: высота как на референсе (clamp), точки снизу внутри блока */}
-          <div className="order-1 lg:order-2 w-full rounded-xl overflow-hidden corporate-gallery-wrap">
+          {/* Галерея: на mobile под кнопками, на desktop справа */}
+          <div className="order-2 w-full rounded-xl overflow-hidden corporate-gallery-wrap">
             <CorporateHeroGallery images={images} className="rounded-xl h-full w-full" />
           </div>
         </div>
