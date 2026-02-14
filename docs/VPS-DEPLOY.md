@@ -51,6 +51,27 @@ npm run build && npm run start 2>&1 | tee -a logs/server.log
 ```
 При падении процесса сайт снова будет недоступен, пока не перезапустите команду.
 
+## 502 Bad Gateway — что делать
+
+Nginx отдаёт 502, когда приложение (Node/Next) не отвечает на порту 3000. Выполни **на VPS по SSH**:
+
+```bash
+# Найти папку проекта (где package.json и ecosystem.config.cjs)
+cd $(find /var/www /root -maxdepth 4 -name "ecosystem.config.cjs" 2>/dev/null | head -1 | xargs dirname)
+
+# Подтянуть код (если нужно)
+git pull
+
+# Перезапустить приложение через PM2
+pm2 delete all 2>/dev/null; mkdir -p logs; pm2 start "$(pwd)/ecosystem.config.cjs"; pm2 save
+
+# Проверка
+pm2 status
+curl -s -o /dev/null -w "localhost:3000 → HTTP %{http_code}\n" http://localhost:3000
+```
+
+Если `curl` даёт 200 — обнови страницу theame.ru. Если PM2 не установлен: `npm install -g pm2` и снова команды выше. Полный деплой (build + PM2): `bash scripts/deploy-vps-remote.sh` из корня проекта.
+
 ## Проверка памяти на VPS
 
 ```bash

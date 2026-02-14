@@ -7,10 +7,8 @@ import { Container } from "@/components/layout/Container";
 import { getAllCatalogProducts, getCatalogProductsPaginated } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE } from "@/lib/catalogCategories";
-import {
-  getCatalogFlowersFromProducts,
-  productHasFlowerSlug,
-} from "@/lib/catalogFlowersFromComposition";
+import { productHasFlowerSlug } from "@/lib/catalogFlowersFromComposition";
+import { getFlowersInCompositionList } from "@/lib/getAllFlowers";
 
 export type AllFlowersPageProps = {
   /** Заголовок страницы (H1) */
@@ -51,7 +49,10 @@ export async function AllFlowersPage({
   // Для /magazin используем singlePage режим (все товары, автодогрузка)
   const isSinglePage = currentSlug === "magazin";
 
-  const allProducts = await getAllCatalogProducts();
+  const [allProducts, flowersList] = await Promise.all([
+    getAllCatalogProducts(),
+    getFlowersInCompositionList(),
+  ]);
 
   // Фильтр «Цветы в составе» по query ?flower=slug
   let baseProducts = allProducts;
@@ -59,7 +60,7 @@ export async function AllFlowersPage({
     baseProducts = allProducts.filter((p) => productHasFlowerSlug(p, flowerFilterSlug));
   }
 
-  const catalogFlowers = getCatalogFlowersFromProducts(allProducts);
+  const catalogFlowers = flowersList.map((f) => ({ slug: f.slug, label: f.name }));
 
   // Загружаем категории; для пагинации (не magazin) считаем от baseProducts
   const [categories, catalogData] = await Promise.all([
@@ -137,6 +138,7 @@ export async function AllFlowersPage({
             currentPage={currentPage} 
             pageSize={pageSize}
             singlePage={isSinglePage}
+            allProductsForInfiniteScroll={!isSinglePage ? baseProducts : undefined}
           />
         </Suspense>
       </Container>

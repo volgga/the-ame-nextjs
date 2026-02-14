@@ -11,10 +11,7 @@ import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE, filterProductsByCategorySlug } from "@/lib/catalogCategories";
 import { normalizeFlowerKey } from "@/lib/normalizeFlowerKey";
-import {
-  getCatalogFlowersFromProducts,
-  productHasFlowerSlug,
-} from "@/lib/catalogFlowersFromComposition";
+import { productHasFlowerSlug } from "@/lib/catalogFlowersFromComposition";
 import { getFlowersInCompositionList } from "@/lib/getAllFlowers";
 import { getFlowerBySlug, getProductIdsByFlowerId } from "@/lib/flowers";
 import { FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
@@ -133,7 +130,7 @@ export default async function FlowerPage({ params, searchParams }: FlowerPagePro
     }
   }
 
-  const catalogFlowers = getCatalogFlowersFromProducts(allProducts);
+  const catalogFlowers = flowersList.map((f) => ({ slug: f.slug, label: f.name }));
 
   // Пагинация
   const pageParam = resolvedSearchParams.page;
@@ -214,7 +211,7 @@ export default async function FlowerPage({ params, searchParams }: FlowerPagePro
             <div className="min-h-[60vh] flex items-center justify-center text-[#7e7e7e]">Загрузка каталога…</div>
           }
         >
-          <FlowerCatalog products={paginatedProducts} total={total} currentPage={currentPage} pageSize={pageSize} />
+          <FlowerCatalog products={paginatedProducts} total={total} currentPage={currentPage} pageSize={pageSize} allProductsForInfiniteScroll={products} />
         </Suspense>
       </Container>
     </div>

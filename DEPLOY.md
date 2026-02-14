@@ -135,10 +135,10 @@ pm2 list
 
 ```bash
 cd /var/www/theame
-./scripts/deploy.sh
+bash scripts/deploy.sh
 ```
 
-Или выполните команды из скрипта вручную.
+Для VPS с автоматическим поиском проекта: `bash scripts/deploy-vps-remote.sh` (из корня проекта на сервере).
 
 ## Проверка работы автодеплоя
 

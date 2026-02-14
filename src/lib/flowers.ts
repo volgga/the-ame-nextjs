@@ -238,6 +238,32 @@ export async function reorderFlowers(orderedIds: string[]): Promise<boolean> {
 }
 
 /**
+ * Вернуть только те цветы из справочника, которые уже есть (по slug/name). Не создаёт новые записи.
+ * Используется при сохранении товара: привязываем только к существующему whitelist.
+ */
+export async function getFlowersByNames(names: string[]): Promise<Flower[]> {
+  if (names.length === 0) return [];
+  const sb = getSupabaseAdmin();
+  const result: Flower[] = [];
+  const seen = new Set<string>();
+
+  for (const rawName of names) {
+    const name = toTitleCase(rawName.trim());
+    const slug = normalizeFlowerKey(name);
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+
+    const { data: existing } = await (sb as any)
+      .from("flowers")
+      .select("id, slug, name, title, description, seo_title, seo_description, is_active, sort_order")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (existing) result.push(existing as Flower);
+  }
+  return result;
+}
+
+/**
  * Убедиться, что цветы с указанными именами есть в справочнике; вернуть их (для получения id при сохранении товара).
  */
 export async function ensureFlowers(names: string[]): Promise<Flower[]> {

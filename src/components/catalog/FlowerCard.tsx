@@ -181,35 +181,17 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
           </div>
         </div>
 
-        {/* Название под фото: по левому краю, одна строка, ellipsis — text-base */}
-        <h3 className="mt-3 px-1 min-w-0 text-base font-normal text-color-text-main text-left overflow-hidden text-ellipsis whitespace-nowrap">
+        {/* Название: line-clamp 2, компактные отступы */}
+        <h3 className="mt-3 px-1 min-w-0 text-base font-normal text-color-text-main text-left line-clamp-2">
           {flower.name}
         </h3>
       </Link>
 
-      {/* На мобилке "от" отдельной строкой между названием и ценой (не ломает вертикальный ритм цены) - только если НЕ showPriceFromOnMobile */}
-      {flower.priceFrom && !showPriceFromOnMobile && (
-        <p className="mt-1 px-1 text-xs font-normal text-color-text-secondary leading-tight md:sr-only" aria-hidden>
-          от
-        </p>
-      )}
-
-      {/* Нижний блок: цена — главный якорь (text-lg), кнопки (min-h-[44px] на мобиле). */}
-      <div className={`px-1 flex items-center justify-between gap-2 sm:gap-3 min-w-0 ${flower.priceFrom && !showPriceFromOnMobile ? "mt-0.5 md:mt-1.5" : "mt-1.5"}`}>
+      {/* Цена: «от» в одной строке с суммой (от 7 000 ₽), компактный отступ от названия */}
+      <div className="px-1 flex items-center justify-between gap-2 sm:gap-3 min-w-0 mt-2">
         <div className="flex flex-col justify-center shrink-0 min-w-0">
-          <span className="text-lg font-semibold text-color-text-main leading-none md:block">
-            {flower.priceFrom ? (
-              <>
-                <span className="hidden md:inline">{priceLabel}</span>
-                {showPriceFromOnMobile ? (
-                  <span className="md:hidden">{`от ${flower.price.toLocaleString("ru-RU")} ₽`}</span>
-                ) : (
-                  <span className="md:hidden">{`${flower.price.toLocaleString("ru-RU")} ₽`}</span>
-                )}
-              </>
-            ) : (
-              priceLabel
-            )}
+          <span className="text-lg font-semibold text-color-text-main leading-tight whitespace-nowrap">
+            {priceLabel}
           </span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">

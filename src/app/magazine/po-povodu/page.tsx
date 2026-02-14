@@ -10,10 +10,8 @@ import { Container } from "@/components/layout/Container";
 import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/lib/categories";
 import { ALL_CATALOG, CATALOG_PAGE } from "@/lib/catalogCategories";
-import {
-  getCatalogFlowersFromProducts,
-  productHasFlowerSlug,
-} from "@/lib/catalogFlowersFromComposition";
+import { productHasFlowerSlug } from "@/lib/catalogFlowersFromComposition";
+import { getFlowersInCompositionList } from "@/lib/getAllFlowers";
 import { getOccasionsSubcategories } from "@/lib/subcategories";
 import { OCCASIONS_CATEGORY_SLUG } from "@/lib/constants";
 import {
@@ -58,10 +56,11 @@ export default async function PoPovoduBasePage({ searchParams }: PageProps) {
   const flowerFilterSlug =
     flowerParam && typeof flowerParam === "string" ? String(flowerParam).trim() : "";
 
-  const [categories, allProducts, occasionsSubcategories] = await Promise.all([
+  const [categories, allProducts, occasionsSubcategories, flowersList] = await Promise.all([
     getCategories(),
     getAllCatalogProducts(),
     getOccasionsSubcategories(),
+    getFlowersInCompositionList(),
   ]);
 
   const category = getCategoryBySlug(categories, OCCASIONS_CATEGORY_SLUG);
@@ -74,7 +73,7 @@ export default async function PoPovoduBasePage({ searchParams }: PageProps) {
   if (flowerFilterSlug) {
     products = products.filter((p) => productHasFlowerSlug(p, flowerFilterSlug));
   }
-  const catalogFlowers = getCatalogFlowersFromProducts(allProducts);
+  const catalogFlowers = flowersList.map((f) => ({ slug: f.slug, label: f.name }));
   const total = products.length;
   const start = (currentPage - 1) * pageSize;
   const end = start + pageSize;
@@ -150,7 +149,7 @@ export default async function PoPovoduBasePage({ searchParams }: PageProps) {
             <div className="min-h-[60vh] flex items-center justify-center text-[#7e7e7e]">Загрузка каталога…</div>
           }
         >
-          <FlowerCatalog products={paginatedProducts} total={total} currentPage={currentPage} pageSize={pageSize} />
+          <FlowerCatalog products={paginatedProducts} total={total} currentPage={currentPage} pageSize={pageSize} allProductsForInfiniteScroll={products} />
         </Suspense>
       </Container>
     </div>

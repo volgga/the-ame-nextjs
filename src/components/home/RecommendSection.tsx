@@ -235,20 +235,20 @@ export function RecommendSection({ products }: RecommendSectionProps) {
           </div>
         </div>
 
-        {/* carousel: mobile — 2 ряда + горизонтальный скролл (рулетка); md+ — одна строка */}
+        {/* carousel: mobile — одна горизонтальная лента (swipe); md+ — одна строка */}
         <div
           ref={scrollRef}
           onPointerDown={handleInteraction}
           onWheel={handleInteraction}
           onMouseEnter={handleInteraction}
           onScroll={handleUserScroll}
-          className="grid grid-flow-col grid-rows-[auto_auto] md:flex gap-3 md:gap-6 overflow-x-auto overflow-y-hidden py-0 md:py-2 -mx-4 px-4 md:-mx-6 md:px-6 scrollbar-hide"
+          className="flex flex-nowrap gap-3 md:gap-6 overflow-x-auto overflow-y-hidden py-0 md:py-2 -mx-4 px-4 md:-mx-6 md:px-6 scrollbar-hide snap-x"
           style={{ scrollBehavior: "smooth", WebkitOverflowScrolling: "touch" }}
         >
           {flowers.map((flower) => {
             const product = products.find((p) => p.id === flower.id);
             return (
-              <div key={flower.id} className="flex-shrink-0 w-[230px] sm:w-[280px] md:w-[300px] lg:w-[320px]">
+              <div key={flower.id} className="flex-shrink-0 w-[80vw] max-w-[260px] sm:w-[280px] md:w-[300px] lg:w-[320px] snap-start">
                 <FlowerCard flower={flower} product={product} />
               </div>
             );

@@ -18,7 +18,7 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: "600M",
-      env: { NODE_ENV: "production" },
+      env: { NODE_ENV: "production", PORT: "3000" },
       error_file: path.join(root, "logs/err.log"),
       out_file: path.join(root, "logs/out.log"),
       merge_logs: true,

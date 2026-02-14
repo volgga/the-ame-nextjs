@@ -12,17 +12,19 @@ type SortValue = "default" | "price_asc" | "price_desc";
 /**
  * FlowerCatalog — каталог товаров с серверной пагинацией или автодогрузкой.
  * Если singlePage=true: показывает все товары с автодогрузкой при скролле.
- * Иначе: серверная пагинация с кнопкой "Показать ещё".
+ * Иначе: серверная пагинация с кнопкой "Показать ещё" (на desktop); на mobile — infinite scroll, если передан allProductsForInfiniteScroll.
  */
 type FlowerCatalogProps = {
   products: Product[];
   total: number;
   currentPage: number;
   pageSize: number;
-  singlePage?: boolean; // Если true — автодогрузка вместо пагинации
+  singlePage?: boolean;
+  /** Полный список товаров для infinite scroll на мобиле (вместо кнопки "Показать ещё") */
+  allProductsForInfiniteScroll?: Product[];
 };
 
-export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageSize, singlePage = false }: FlowerCatalogProps) => {
+export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePage = false, allProductsForInfiniteScroll }: FlowerCatalogProps) => {
   const pathname = usePathname();
 
   const searchParams = useSearchParams();
@@ -38,9 +40,8 @@ export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageS
   const minPrice = minPriceParam ? Number(minPriceParam) : 0;
   const maxPrice = maxPriceParam ? Number(maxPriceParam) : Infinity;
 
-  // Для singlePage режима: управление видимыми товарами
+  const [isMobile, setIsMobile] = useState(false);
   const [visibleCount, setVisibleCount] = useState(() => {
-    // Определяем STEP на основе размера экрана (12 на мобиле, 24 на десктопе)
     if (typeof window !== "undefined") {
       return window.innerWidth < 768 ? 12 : 24;
     }
@@ -49,11 +50,17 @@ export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageS
   const tickingRef = useRef(false);
   const stepRef = useRef(24);
   const sortedFlowersLengthRef = useRef(0);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const loadingRef = useRef(false);
+
+  const useMobileInfiniteScroll = isMobile && !!allProductsForInfiniteScroll?.length;
+
+  const productsBase = allProductsForInfiniteScroll ?? products;
 
   // Преобразуем Product[] в Flower[]
   const flowers: Flower[] = useMemo(
     () =>
-      allProducts.map((p) => {
+      productsBase.map((p) => {
         const hasVariants = p.variants && p.variants.length > 0;
         const variantPrices = hasVariants ? p.variants!.map((v) => v.price).filter(Number.isFinite) : [];
         const minPrice = variantPrices.length > 0 ? Math.min(...variantPrices, p.price) : p.price;
@@ -76,24 +83,24 @@ export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageS
           priceFrom,
         };
       }),
-    [allProducts]
+    [productsBase]
   );
 
-  // Фильтрация по цене, поиску и цвету букета (применяется к текущей странице)
+  // Фильтрация по цене, поиску и цвету букета
   const filteredFlowers = useMemo(() => {
     return flowers.filter((flower) => {
       const price = flower.price ?? 0;
       if (!(price >= minPrice && price <= maxPrice)) return false;
       if (qParam && !(flower.name ?? "").toLowerCase().includes(qParam)) return false;
       if (selectedColorKeys.length > 0) {
-        const product = allProducts.find((p) => p.id === flower.id);
+        const product = productsBase.find((p) => p.id === flower.id);
         const productColors = product?.bouquetColors ?? [];
         const hasMatch = productColors.some((k) => selectedColorKeys.includes(k));
         if (!hasMatch) return false;
       }
       return true;
     });
-  }, [flowers, allProducts, minPrice, maxPrice, qParam, selectedColorKeys]);
+  }, [flowers, productsBase, minPrice, maxPrice, qParam, selectedColorKeys]);
 
   // Сортировка (не мутируем исходный массив)
   const sortedFlowers = useMemo(() => {
@@ -108,55 +115,51 @@ export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageS
     return arr;
   }, [filteredFlowers, sortParam]);
 
-  // Обновляем ref с длиной отфильтрованного массива и ограничиваем visibleCount сверху
+  // isMobile
   useEffect(() => {
-    if (singlePage) {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const useInfiniteScroll = singlePage || useMobileInfiniteScroll;
+
+  // Обновляем ref с длиной и ограничиваем visibleCount
+  useEffect(() => {
+    if (useInfiniteScroll) {
       sortedFlowersLengthRef.current = sortedFlowers.length;
-      // Если visibleCount больше чем доступно товаров после фильтрации - ограничиваем
       setVisibleCount((prev) => Math.min(prev, sortedFlowers.length));
     }
-  }, [singlePage, sortedFlowers.length]);
+  }, [useInfiniteScroll, sortedFlowers.length]);
 
-  // Обновляем STEP при изменении размера экрана (без сброса visibleCount)
+  // STEP при изменении размера
   useEffect(() => {
-    if (!singlePage) return;
-    
+    if (!useInfiniteScroll) return;
     const updateStep = () => {
-      const isMobile = window.innerWidth < 768;
-      stepRef.current = isMobile ? 12 : 24;
-      // Clamp visibleCount вверх если нужно, но не сбрасываем вниз
+      const mobile = window.innerWidth < 768;
+      stepRef.current = mobile ? 12 : 24;
       setVisibleCount((prev) => {
         const newStep = stepRef.current;
         const maxCount = sortedFlowersLengthRef.current;
-        if (prev < newStep) {
-          return Math.min(newStep, maxCount);
-        }
+        if (prev < newStep) return Math.min(newStep, maxCount);
         return prev;
       });
     };
-
     updateStep();
     window.addEventListener("resize", updateStep);
     return () => window.removeEventListener("resize", updateStep);
-  }, [singlePage]);
+  }, [useInfiniteScroll]);
 
-  // Scroll listener для автодогрузки (только для singlePage)
+  // Scroll listener для singlePage (без sentinel)
   useEffect(() => {
-    if (!singlePage) return;
-
+    if (!singlePage || useMobileInfiniteScroll) return;
     const handleScroll = () => {
       if (tickingRef.current) return;
       tickingRef.current = true;
-
       requestAnimationFrame(() => {
         tickingRef.current = false;
-
-        const scrollHeight = document.documentElement.scrollHeight;
-        const scrollTop = window.scrollY;
-        const clientHeight = window.innerHeight;
-        const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
-
-        // Порог: 1200px до низа
+        const distanceToBottom = document.documentElement.scrollHeight - (window.scrollY + window.innerHeight);
         const maxCount = sortedFlowersLengthRef.current;
         setVisibleCount((prev) => {
           if (distanceToBottom < 1200 && prev < maxCount) {
@@ -166,14 +169,44 @@ export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageS
         });
       });
     };
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [singlePage]);
+  }, [singlePage, useMobileInfiniteScroll]);
 
-  // Для singlePage: показываем только первые visibleCount товаров
-  // Для обычного режима: показываем все товары текущей страницы
-  const visibleFlowers = singlePage ? sortedFlowers.slice(0, visibleCount) : sortedFlowers;
+  // IntersectionObserver для mobile infinite scroll (sentinel)
+  useEffect(() => {
+    if (!useMobileInfiniteScroll) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (loadingRef.current) return;
+        const entry = entries[0];
+        if (!entry?.isIntersecting) return;
+        const maxCount = sortedFlowersLengthRef.current;
+        loadingRef.current = true;
+        setVisibleCount((prev) => {
+          const next = Math.min(prev + stepRef.current, maxCount);
+          if (next === prev) loadingRef.current = false;
+          return next;
+        });
+        setTimeout(() => { loadingRef.current = false; }, 100);
+      },
+      { rootMargin: "400px", threshold: 0 }
+    );
+    obs.observe(sentinel);
+    return () => obs.disconnect();
+  }, [useMobileInfiniteScroll]);
+
+  // visibleFlowers
+  const visibleFlowers =
+    singlePage
+      ? sortedFlowers.slice(0, visibleCount)
+      : useMobileInfiniteScroll
+        ? sortedFlowers.slice(0, visibleCount)
+        : allProductsForInfiniteScroll
+          ? sortedFlowers.slice(0, currentPage * pageSize)
+          : sortedFlowers;
 
   // Вычисляем есть ли следующая страница (только для обычного режима)
   const totalPages = Math.ceil(total / pageSize);
@@ -192,8 +225,7 @@ export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageS
       {/* Каталог: 2 колонки mobile, 4 на desktop; меньший gap — карточки крупнее */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {visibleFlowers.map((flower) => {
-          // Находим соответствующий Product для передачи дополнительных данных
-          const product = allProducts.find((p) => p.id === flower.id);
+          const product = productsBase.find((p) => p.id === flower.id);
           return <FlowerCard key={flower.id} flower={flower} product={product} />;
         })}
       </div>
@@ -205,8 +237,15 @@ export const FlowerCatalog = ({ products: allProducts, total, currentPage, pageS
         </div>
       )}
 
-      {/* Кнопка "Показать ещё" */}
-      {hasMore && (
+      {/* Sentinel для infinite scroll на mobile */}
+      {useMobileInfiniteScroll && visibleCount < sortedFlowers.length && (
+        <div ref={sentinelRef} className="h-4 flex items-center justify-center py-4" aria-hidden>
+          <div className="w-5 h-5 border-2 border-[var(--color-outline-border)] border-t-[var(--color-text-main)] rounded-full animate-spin" />
+        </div>
+      )}
+
+      {/* Кнопка "Показать ещё" — скрыта на mobile при infinite scroll */}
+      {hasMore && !useMobileInfiniteScroll && (
         <div className="mt-6 flex justify-center">
           <Link
             href={buildNextPageUrl()}

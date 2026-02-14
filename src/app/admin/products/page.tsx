@@ -11,6 +11,12 @@ import { useAutoSyncCompositionFlowers } from "@/hooks/useAutoSyncCompositionFlo
 import { BOUQUET_COLORS, filterValidBouquetColorKeys } from "@/shared/catalog/bouquetColors";
 import { BouquetColorSwatch } from "@/components/catalog/BouquetColorSwatch";
 
+const FlowersWhitelistModal = dynamic(
+  () =>
+    import("@/components/admin/products/FlowersWhitelistModal").then((m) => ({ default: m.FlowersWhitelistModal })),
+  { ssr: false }
+);
+
 const ProductsList = dynamic(
   () => import("@/components/admin/products/ProductsList").then((m) => ({ default: m.ProductsList })),
   {
@@ -143,6 +149,14 @@ function AdminProductsPageContent() {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsSaving, setDetailsSaving] = useState(false);
   const [detailsError, setDetailsError] = useState("");
+
+  // Модалка управления списком «Цветы в составе» (whitelist для фильтров)
+  const [flowersWhitelistModalOpen, setFlowersWhitelistModalOpen] = useState(false);
+
+  // Аккордеоны в форме товара (по умолчанию свернуты)
+  const [openOccasions, setOpenOccasions] = useState(false);
+  const [openCategories, setOpenCategories] = useState(false);
+  const [openBouquetColors, setOpenBouquetColors] = useState(false);
 
   const isEditMode = editProductId != null;
 
@@ -421,7 +435,7 @@ function AdminProductsPageContent() {
             }
           );
           setVariants(vars);
-          setExpandedVariants(new Set(vars.map((v: Variant) => String(v.id))));
+          setExpandedVariants(new Set());
         } else {
           setInitialVariantIds([]);
           setExistingMainImageUrl(null);
@@ -531,6 +545,20 @@ function AdminProductsPageContent() {
 
   function toggleFlower(flower: string) {
     setSelectedFlowers((prev) => (prev.includes(flower) ? prev.filter((f) => f !== flower) : [...prev, flower]));
+  }
+
+  /** Имена цветов из состава (для сохранения — только существующие в whitelist попадут в привязки). */
+  function getFlowerNamesFromComposition(): string[] {
+    if (createType === "simple") {
+      return parseCompositionFlowers(createForm.composition_size);
+    }
+    const set = new Set<string>();
+    for (const v of variants) {
+      for (const name of parseCompositionFlowers(v.composition)) {
+        if (name.trim()) set.add(name.trim());
+      }
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "ru"));
   }
 
   // Автосинхронизация цветов из состава для обычного товара (только когда модалка открыта и тип "simple")
@@ -773,7 +801,6 @@ function AdminProductsPageContent() {
           is_new: createIsNew,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
-          composition_flowers: selectedFlowers.length > 0 ? selectedFlowers : null,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
         };
         const url = `/api/admin/products/${editProductId}`;
@@ -800,7 +827,6 @@ function AdminProductsPageContent() {
             (data?.error ?? (isJson ? "Ошибка сохранения" : `Ошибка сохранения (не JSON, ${res.status})${rawSnippet}`))
           );
         }
-        // Сохраняем привязки к подкатегориям "По поводу"
         const productId = editProductId || data?.id;
         const productIdForSubcategories = String(productId);
         const saveRes = await fetch(`/api/admin/products/${productIdForSubcategories}/subcategories`, {
@@ -814,33 +840,12 @@ function AdminProductsPageContent() {
           const errorData = await saveRes.json().catch(() => ({}));
           console.error("[admin/products] Error saving subcategories:", errorData);
         }
-        // Справочник "Цветы в составе": ensure по именам, затем сохраняем привязки product_flowers
-        if (selectedFlowers.length > 0) {
-          try {
-            const ensureRes = await fetch("/api/admin/flowers/ensure", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ names: selectedFlowers }),
-            });
-            const flowers = ensureRes.ok ? await ensureRes.json() : [];
-            const flowerIds = Array.isArray(flowers) ? flowers.map((f: { id: string }) => f.id) : [];
-            if (flowerIds.length > 0) {
-              await fetch(`/api/admin/products/${productIdForSubcategories}/flowers`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ flower_ids: flowerIds }),
-              });
-            }
-          } catch (e) {
-            console.error("[admin/products] Error saving flowers:", e);
-          }
-        } else {
-          await fetch(`/api/admin/products/${productIdForSubcategories}/flowers`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ flower_ids: [] }),
-          }).catch(() => {});
-        }
+        const flowerNamesFromComposition = getFlowerNamesFromComposition();
+        await fetch(`/api/admin/products/${productIdForSubcategories}/flowers`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flower_names: flowerNamesFromComposition }),
+        }).catch((e) => console.error("[admin/products] Error saving flowers:", e));
         closeCreateModal();
         load();
       } else {
@@ -876,7 +881,6 @@ function AdminProductsPageContent() {
           is_new: createIsNew,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
-          composition_flowers: selectedFlowers.length > 0 ? selectedFlowers : null,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
         };
         const url = `/api/admin/products/${editProductId}`;
@@ -984,32 +988,12 @@ function AdminProductsPageContent() {
           const err = await subcatRes.json().catch(() => ({}));
           console.error("[admin/products] Error saving subcategories (variant):", err);
         }
-        if (selectedFlowers.length > 0) {
-          try {
-            const ensureRes = await fetch("/api/admin/flowers/ensure", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ names: selectedFlowers }),
-            });
-            const flowers = ensureRes.ok ? await ensureRes.json() : [];
-            const flowerIds = Array.isArray(flowers) ? flowers.map((f: { id: string }) => f.id) : [];
-            if (flowerIds.length > 0) {
-              await fetch(`/api/admin/products/${productIdForVariant}/flowers`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ flower_ids: flowerIds }),
-              });
-            }
-          } catch (err) {
-            console.error("[admin/products] Error saving flowers (variant):", err);
-          }
-        } else {
-          await fetch(`/api/admin/products/${productIdForVariant}/flowers`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ flower_ids: [] }),
-          }).catch(() => {});
-        }
+        const flowerNamesFromCompositionVariant = getFlowerNamesFromComposition();
+        await fetch(`/api/admin/products/${productIdForVariant}/flowers`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flower_names: flowerNamesFromCompositionVariant }),
+        }).catch((err) => console.error("[admin/products] Error saving flowers (variant):", err));
         closeCreateModal();
         load();
       }
@@ -1083,7 +1067,6 @@ function AdminProductsPageContent() {
             : [];
         const slug = slugify(createForm.name);
         const category_slugs = selectedCategorySlugs.length > 0 ? selectedCategorySlugs : null;
-        const composition_flowers = selectedFlowers.length > 0 ? selectedFlowers : null;
 
         const payload = {
           type: "simple",
@@ -1101,7 +1084,6 @@ function AdminProductsPageContent() {
           is_preorder: createIsPreorder,
           is_new: createIsNew,
           category_slugs,
-          composition_flowers,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
         };
 
@@ -1183,10 +1165,8 @@ function AdminProductsPageContent() {
             ? [...limitedImageUrls.slice(0, productImagesMainIndex), ...limitedImageUrls.slice(productImagesMainIndex + 1)]
             : [];
 
-        // Создание вариантного товара с вариантами
         const slug = slugify(createForm.name);
         const category_slugs = selectedCategorySlugs.length > 0 ? selectedCategorySlugs : null;
-        const composition_flowers = selectedFlowers.length > 0 ? selectedFlowers : null;
 
         const payload = {
           type: "variant",
@@ -1199,7 +1179,6 @@ function AdminProductsPageContent() {
           is_hidden: createIsHidden,
           is_new: createIsNew,
           category_slugs,
-          composition_flowers,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
           variants: variants.map((v) => ({
             name: v.name.trim(),
@@ -1246,7 +1225,6 @@ function AdminProductsPageContent() {
           setCreateLoading(false);
           return;
         }
-        // Сохраняем привязки к подкатегориям "По поводу" и к справочнику цветов для созданного товара
         const createdProductId = data?.id;
         if (createdProductId) {
           const pid = String(createdProductId);
@@ -1261,26 +1239,12 @@ function AdminProductsPageContent() {
             const errorData = await saveRes.json().catch(() => ({}));
             console.error("[admin/products] Error saving subcategories:", errorData);
           }
-          if (selectedFlowers.length > 0) {
-            try {
-              const ensureRes = await fetch("/api/admin/flowers/ensure", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ names: selectedFlowers }),
-              });
-              const flowers = ensureRes.ok ? await ensureRes.json() : [];
-              const flowerIds = Array.isArray(flowers) ? flowers.map((f: { id: string }) => f.id) : [];
-              if (flowerIds.length > 0) {
-                await fetch(`/api/admin/products/${pid}/flowers`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ flower_ids: flowerIds }),
-                });
-              }
-            } catch (err) {
-              console.error("[admin/products] Error saving flowers (create):", err);
-            }
-          }
+          const flowerNamesCreate = parseCompositionFlowers(createForm.composition_size);
+          await fetch(`/api/admin/products/${pid}/flowers`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ flower_names: flowerNamesCreate }),
+          }).catch((err) => console.error("[admin/products] Error saving flowers (create):", err));
         }
       } else if (createType === "variant") {
         const variantData = data as { id?: number };
@@ -1297,26 +1261,13 @@ function AdminProductsPageContent() {
             const errorData = await saveRes.json().catch(() => ({}));
             console.error("[admin/products] Error saving subcategories:", errorData);
           }
-          if (selectedFlowers.length > 0) {
-            try {
-              const ensureRes = await fetch("/api/admin/flowers/ensure", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ names: selectedFlowers }),
-              });
-              const flowers = ensureRes.ok ? await ensureRes.json() : [];
-              const flowerIds = Array.isArray(flowers) ? flowers.map((f: { id: string }) => f.id) : [];
-              if (flowerIds.length > 0) {
-                await fetch(`/api/admin/products/${createdVariantProductId}/flowers`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ flower_ids: flowerIds }),
-                });
-              }
-            } catch (err) {
-              console.error("[admin/products] Error saving flowers (create variant):", err);
-            }
-          }
+          const flowerNamesVariantCreate = variants.flatMap((v) => parseCompositionFlowers(v.composition));
+          const uniqueFlowerNames = Array.from(new Set(flowerNamesVariantCreate.filter((n) => n.trim())));
+          await fetch(`/api/admin/products/${createdVariantProductId}/flowers`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ flower_names: uniqueFlowerNames }),
+          }).catch((err) => console.error("[admin/products] Error saving flowers (create variant):", err));
         }
       }
 
@@ -1370,6 +1321,13 @@ function AdminProductsPageContent() {
             className="rounded border border-border-block bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)]"
           >
             Детали
+          </button>
+          <button
+            type="button"
+            onClick={() => setFlowersWhitelistModalOpen(true)}
+            className="rounded border border-border-block bg-white px-3 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)]"
+          >
+            Цветы в составе
           </button>
         </div>
         <div className="flex gap-2">
@@ -1575,6 +1533,20 @@ function AdminProductsPageContent() {
                   {createType === "simple" && (
                     <>
                       <div>
+                        <label className="block text-sm font-medium text-color-text-main mb-1">Состав</label>
+                        <textarea
+                          value={createForm.composition_size}
+                          onChange={(e) => setCreateForm((f) => ({ ...f, composition_size: e.target.value }))}
+                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+                          rows={3}
+                          placeholder="Розы 7 шт, Тюльпаны 8 шт, Гипсофила…"
+                        />
+                        <p className="mt-0.5 text-xs text-color-text-secondary">Укажите состав букета вручную</p>
+                        {fieldErrors.composition_size && (
+                          <p className="mt-0.5 text-xs text-red-600">{fieldErrors.composition_size}</p>
+                        )}
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium text-color-text-main mb-1">Изображения</label>
                         <p className="text-xs text-color-text-secondary mb-1.5">
                           Максимум 5 файлов. Первое изображение — главное, используется на витрине. Перетаскивайте для
@@ -1672,80 +1644,18 @@ function AdminProductsPageContent() {
                           </div>
                         )}
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-color-text-main mb-1">Состав</label>
-                        <textarea
-                          value={createForm.composition_size}
-                          onChange={(e) => setCreateForm((f) => ({ ...f, composition_size: e.target.value }))}
-                          className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
-                          rows={3}
-                          placeholder="Розы 7 шт, Тюльпаны 8 шт, Гипсофила…"
-                        />
-                        <p className="mt-0.5 text-xs text-color-text-secondary">Укажите состав букета вручную</p>
-                        {fieldErrors.composition_size && (
-                          <p className="mt-0.5 text-xs text-red-600">{fieldErrors.composition_size}</p>
-                        )}
-                      </div>
-                      {/* Блок выбора цветов (фильтр) — под полем "Состав" */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="block text-sm font-medium text-color-text-main">
-                            Цветы в составе (фильтр)
-                          </label>
-                          {createForm.composition_size && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const parsed = parseCompositionFlowers(createForm.composition_size);
-                                setSelectedFlowers(parsed);
-                              }}
-                              className="text-xs text-color-text-secondary hover:text-color-text-main underline"
-                            >
-                              Заполнить из состава
-                            </button>
-                          )}
-                        </div>
-                        <p className="text-xs text-color-text-secondary mb-2">
-                          Выберите цветы для фильтрации. Список формируется автоматически из всех товаров.
-                        </p>
-                        {availableFlowers.length === 0 ? (
-                          <p className="text-sm text-color-text-secondary">Загрузка списка цветов...</p>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
-                            {[0, 1].map((col) => {
-                              const mid = Math.ceil(availableFlowers.length / 2);
-                              const list = col === 0 ? availableFlowers.slice(0, mid) : availableFlowers.slice(mid);
-                              return (
-                                <ul key={col} className="divide-y divide-border-block">
-                                  {list.map((flower) => (
-                                    <li
-                                      key={flower}
-                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        id={`flower-${flower}`}
-                                        checked={selectedFlowers.includes(flower)}
-                                        onChange={(e) => handleFlowerToggleSimple(flower, e.target.checked)}
-                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                                      />
-                                      <label
-                                        htmlFor={`flower-${flower}`}
-                                        className="text-sm text-color-text-main cursor-pointer flex-1"
-                                      >
-                                        {flower}
-                                      </label>
-                                    </li>
-                                  ))}
-                                </ul>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                      {/* Блок выбора "По поводу" (подкатегории категории "По поводу") */}
-                      <div>
-                        <label className="block text-sm font-medium text-color-text-main mb-1">По поводу</label>
+                      {/* По поводу (аккордеон, свернут по умолчанию) */}
+                      <div className="border border-border-block rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setOpenOccasions((v) => !v)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-medium text-color-text-main bg-[rgba(31,42,31,0.04)] hover:bg-[rgba(31,42,31,0.08)]"
+                        >
+                          <span className="text-color-text-secondary text-xs w-4">{openOccasions ? "▼" : "▶"}</span>
+                          По поводу
+                        </button>
+                        {openOccasions && (
+                        <div className="px-3 pb-3 pt-1 border-t border-border-block">
                         <p className="text-xs text-color-text-secondary mb-2">
                           Выберите подкатегории &quot;По поводу&quot; для этого товара.
                         </p>
@@ -1838,10 +1748,21 @@ function AdminProductsPageContent() {
                             })}
                           </div>
                         )}
+                        </div>
+                        )}
                       </div>
-                      {/* Цвет букета (товар) */}
-                      <div>
-                        <label className="block text-sm font-medium text-color-text-main mb-1">Цвет букета</label>
+                      {/* Цвет букета (аккордеон) */}
+                      <div className="border border-border-block rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setOpenBouquetColors((v) => !v)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-medium text-color-text-main bg-[rgba(31,42,31,0.04)] hover:bg-[rgba(31,42,31,0.08)]"
+                        >
+                          <span className="text-color-text-secondary text-xs w-4">{openBouquetColors ? "▼" : "▶"}</span>
+                          Цвет букета
+                        </button>
+                        {openBouquetColors && (
+                        <div className="px-3 pb-3 pt-1 border-t border-border-block">
                         <p className="text-xs text-color-text-secondary mb-2">
                           Отметьте цвета для фильтрации в каталоге.
                         </p>
@@ -1882,6 +1803,8 @@ function AdminProductsPageContent() {
                             );
                           })}
                         </div>
+                        </div>
+                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-color-text-main mb-1">Размер</label>
@@ -1941,8 +1864,18 @@ function AdminProductsPageContent() {
                         />
                         {fieldErrors.price && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.price}</p>}
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-color-text-main mb-1">Категории</label>
+                      {/* Категории (аккордеон) */}
+                      <div className="border border-border-block rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setOpenCategories((v) => !v)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-medium text-color-text-main bg-[rgba(31,42,31,0.04)] hover:bg-[rgba(31,42,31,0.08)]"
+                        >
+                          <span className="text-color-text-secondary text-xs w-4">{openCategories ? "▼" : "▶"}</span>
+                          Категории
+                        </button>
+                        {openCategories && (
+                        <div className="px-3 pb-3 pt-1 border-t border-border-block">
                         {categories.length === 0 ? (
                           <p className="text-sm text-color-text-secondary">Нет активных категорий.</p>
                         ) : (
@@ -1979,6 +1912,8 @@ function AdminProductsPageContent() {
                         )}
                         {fieldErrors.categories && (
                           <p className="mt-0.5 text-xs text-red-600">{fieldErrors.categories}</p>
+                        )}
+                        </div>
                         )}
                       </div>
                       <div className="flex flex-wrap gap-6">
@@ -2238,194 +2173,7 @@ function AdminProductsPageContent() {
                         )}
                       </div>
 
-                      {/* Блок выбора цветов (фильтр) — для товара с вариантами */}
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <label className="block text-sm font-medium text-color-text-main">
-                            Цветы в составе (фильтр)
-                          </label>
-                        </div>
-                        <p className="text-xs text-color-text-secondary mb-2">
-                          Выберите цветы для фильтрации. Список формируется автоматически из всех товаров.
-                        </p>
-                        {availableFlowers.length === 0 ? (
-                          <p className="text-sm text-color-text-secondary">Загрузка списка цветов...</p>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
-                            {[0, 1].map((col) => {
-                              const mid = Math.ceil(availableFlowers.length / 2);
-                              const list = col === 0 ? availableFlowers.slice(0, mid) : availableFlowers.slice(mid);
-                              return (
-                                <ul key={col} className="divide-y divide-border-block">
-                                  {list.map((flower) => (
-                                    <li
-                                      key={flower}
-                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        id={`variant-flower-${flower}`}
-                                        checked={selectedFlowers.includes(flower)}
-                                        onChange={(e) => handleFlowerToggleVariant(flower, e.target.checked)}
-                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                                      />
-                                      <label
-                                        htmlFor={`variant-flower-${flower}`}
-                                        className="text-sm text-color-text-main cursor-pointer flex-1"
-                                      >
-                                        {flower}
-                                      </label>
-                                    </li>
-                                  ))}
-                                </ul>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Блок выбора "По поводу" (подкатегории категории "По поводу") — для товара с вариантами */}
-                      <div>
-                        <label className="block text-sm font-medium text-color-text-main mb-1">По поводу</label>
-                        <p className="text-xs text-color-text-secondary mb-2">
-                          Выберите подкатегории &quot;По поводу&quot; для этого товара.
-                        </p>
-                        {loadingOccasions ? (
-                          <p className="text-sm text-color-text-secondary">Загрузка списка...</p>
-                        ) : errorOccasions ? (
-                          <div className="text-sm text-red-600">
-                            <p>{errorOccasions}</p>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const loadOccasions = async () => {
-                                  try {
-                                    setLoadingOccasions(true);
-                                    setErrorOccasions("");
-                                    const categoriesRes = await fetch("/api/admin/categories");
-                                    if (!categoriesRes.ok) throw new Error("Ошибка загрузки категорий");
-                                    const categories = await categoriesRes.json();
-                                    const occasionsCategory = categories.find(
-                                      (c: { slug: string }) => c.slug === OCCASIONS_CATEGORY_SLUG
-                                    );
-                                    if (!occasionsCategory) {
-                                      setErrorOccasions(
-                                        'Категория "По поводу" не найдена. Примените миграцию categories-add-occasions-category.sql'
-                                      );
-                                      return;
-                                    }
-                                    setOccasionsCategoryId(occasionsCategory.id);
-                                    const subcategoriesRes = await fetch(
-                                      `/api/admin/subcategories?category_id=${occasionsCategory.id}`
-                                    );
-                                    if (!subcategoriesRes.ok) throw new Error("Ошибка загрузки подкатегорий");
-                                    const occasionsSubcategories = await subcategoriesRes.json();
-                                    setAvailableOccasionsSubcategories(occasionsSubcategories);
-                                  } catch (e) {
-                                    setErrorOccasions(e instanceof Error ? e.message : "Ошибка загрузки");
-                                  } finally {
-                                    setLoadingOccasions(false);
-                                  }
-                                };
-                                loadOccasions();
-                              }}
-                              className="mt-2 text-xs underline text-blue-600 hover:text-blue-800"
-                            >
-                              Повторить загрузку
-                            </button>
-                          </div>
-                        ) : availableOccasionsSubcategories.length === 0 ? (
-                          <p className="text-sm text-color-text-secondary">
-                            Нет подкатегорий. Добавьте в админке → По поводу.
-                          </p>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
-                            {[0, 1].map((col) => {
-                              const mid = Math.ceil(availableOccasionsSubcategories.length / 2);
-                              const list =
-                                col === 0
-                                  ? availableOccasionsSubcategories.slice(0, mid)
-                                  : availableOccasionsSubcategories.slice(mid);
-                              return (
-                                <ul key={col} className="divide-y divide-border-block">
-                                  {list.map((subcategory) => (
-                                    <li
-                                      key={subcategory.id}
-                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        id={`variant-occasion-subcat-${subcategory.id}`}
-                                        checked={selectedOccasionSubcategoryIds.includes(subcategory.id)}
-                                        onChange={() => {
-                                          setSelectedOccasionSubcategoryIds((prev) =>
-                                            prev.includes(subcategory.id)
-                                              ? prev.filter((id) => id !== subcategory.id)
-                                              : [...prev, subcategory.id]
-                                          );
-                                        }}
-                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                                      />
-                                      <label
-                                        htmlFor={`variant-occasion-subcat-${subcategory.id}`}
-                                        className="text-sm text-color-text-main cursor-pointer flex-1"
-                                      >
-                                        {subcategory.name}
-                                      </label>
-                                    </li>
-                                  ))}
-                                </ul>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                      {/* Цвет букета (товар с вариантами) */}
-                      <div>
-                        <label className="block text-sm font-medium text-color-text-main mb-1">Цвет букета</label>
-                        <p className="text-xs text-color-text-secondary mb-2">
-                          Отметьте цвета для фильтрации в каталоге.
-                        </p>
-                        <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
-                          {[0, 1].map((col) => {
-                            const mid = Math.ceil(BOUQUET_COLORS.length / 2);
-                            const list = col === 0 ? BOUQUET_COLORS.slice(0, mid) : BOUQUET_COLORS.slice(mid);
-                            return (
-                              <ul key={col} className="divide-y divide-border-block">
-                                {list.map((item) => (
-                                  <li
-                                    key={item.key}
-                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
-                                  >
-                                    <BouquetColorSwatch item={item} />
-                                    <input
-                                      type="checkbox"
-                                      id={`variant-bouquet-color-${item.key}`}
-                                      checked={selectedBouquetColorKeys.includes(item.key)}
-                                      onChange={() => {
-                                        setSelectedBouquetColorKeys((prev) =>
-                                          prev.includes(item.key)
-                                            ? prev.filter((k) => k !== item.key)
-                                            : [...prev, item.key]
-                                        );
-                                      }}
-                                      className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
-                                    />
-                                    <label
-                                      htmlFor={`variant-bouquet-color-${item.key}`}
-                                      className="text-sm text-color-text-main cursor-pointer flex-1"
-                                    >
-                                      {item.label}
-                                    </label>
-                                  </li>
-                                ))}
-                              </ul>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Изображения товара */}
+                      {/* Изображения товара (под блоком Варианты/Состав) */}
                       <div>
                         <label className="block text-sm font-medium text-color-text-main mb-1">Изображения</label>
                         <p className="text-xs text-color-text-secondary mb-1.5">
@@ -2525,9 +2273,181 @@ function AdminProductsPageContent() {
                         )}
                       </div>
 
-                      {/* Категории */}
-                      <div>
-                        <label className="block text-sm font-medium text-color-text-main mb-1">Категории</label>
+                      {/* По поводу (вариантный товар, аккордеон) */}
+                      <div className="border border-border-block rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setOpenOccasions((v) => !v)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-medium text-color-text-main bg-[rgba(31,42,31,0.04)] hover:bg-[rgba(31,42,31,0.08)]"
+                        >
+                          <span className="text-color-text-secondary text-xs w-4">{openOccasions ? "▼" : "▶"}</span>
+                          По поводу
+                        </button>
+                        {openOccasions && (
+                        <div className="px-3 pb-3 pt-1 border-t border-border-block">
+                        <p className="text-xs text-color-text-secondary mb-2">
+                          Выберите подкатегории &quot;По поводу&quot; для этого товара.
+                        </p>
+                        {loadingOccasions ? (
+                          <p className="text-sm text-color-text-secondary">Загрузка списка...</p>
+                        ) : errorOccasions ? (
+                          <div className="text-sm text-red-600">
+                            <p>{errorOccasions}</p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const loadOccasions = async () => {
+                                  try {
+                                    setLoadingOccasions(true);
+                                    setErrorOccasions("");
+                                    const categoriesRes = await fetch("/api/admin/categories");
+                                    if (!categoriesRes.ok) throw new Error("Ошибка загрузки категорий");
+                                    const categories = await categoriesRes.json();
+                                    const occasionsCategory = categories.find(
+                                      (c: { slug: string }) => c.slug === OCCASIONS_CATEGORY_SLUG
+                                    );
+                                    if (!occasionsCategory) {
+                                      setErrorOccasions(
+                                        'Категория "По поводу" не найдена. Примените миграцию categories-add-occasions-category.sql'
+                                      );
+                                      return;
+                                    }
+                                    setOccasionsCategoryId(occasionsCategory.id);
+                                    const subcategoriesRes = await fetch(
+                                      `/api/admin/subcategories?category_id=${occasionsCategory.id}`
+                                    );
+                                    if (!subcategoriesRes.ok) throw new Error("Ошибка загрузки подкатегорий");
+                                    const occasionsSubcategories = await subcategoriesRes.json();
+                                    setAvailableOccasionsSubcategories(occasionsSubcategories);
+                                  } catch (e) {
+                                    setErrorOccasions(e instanceof Error ? e.message : "Ошибка загрузки");
+                                  } finally {
+                                    setLoadingOccasions(false);
+                                  }
+                                };
+                                loadOccasions();
+                              }}
+                              className="mt-2 text-xs underline text-blue-600 hover:text-blue-800"
+                            >
+                              Повторить загрузку
+                            </button>
+                          </div>
+                        ) : availableOccasionsSubcategories.length === 0 ? (
+                          <p className="text-sm text-color-text-secondary">
+                            Нет подкатегорий. Добавьте в админке → По поводу.
+                          </p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
+                            {[0, 1].map((col) => {
+                              const mid = Math.ceil(availableOccasionsSubcategories.length / 2);
+                              const list =
+                                col === 0
+                                  ? availableOccasionsSubcategories.slice(0, mid)
+                                  : availableOccasionsSubcategories.slice(mid);
+                              return (
+                                <ul key={col} className="divide-y divide-border-block">
+                                  {list.map((subcategory) => (
+                                    <li
+                                      key={subcategory.id}
+                                      className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        id={`variant-occasion-subcat-${subcategory.id}`}
+                                        checked={selectedOccasionSubcategoryIds.includes(subcategory.id)}
+                                        onChange={() => {
+                                          setSelectedOccasionSubcategoryIds((prev) =>
+                                            prev.includes(subcategory.id)
+                                              ? prev.filter((id) => id !== subcategory.id)
+                                              : [...prev, subcategory.id]
+                                          );
+                                        }}
+                                        className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                      />
+                                      <label
+                                        htmlFor={`variant-occasion-subcat-${subcategory.id}`}
+                                        className="text-sm text-color-text-main cursor-pointer flex-1"
+                                      >
+                                        {subcategory.name}
+                                      </label>
+                                    </li>
+                                  ))}
+                                </ul>
+                              );
+                            })}
+                          </div>
+                        )}
+                        </div>
+                        )}
+                      </div>
+                      {/* Цвет букета (вариантный товар, аккордеон) */}
+                      <div className="border border-border-block rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setOpenBouquetColors((v) => !v)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-medium text-color-text-main bg-[rgba(31,42,31,0.04)] hover:bg-[rgba(31,42,31,0.08)]"
+                        >
+                          <span className="text-color-text-secondary text-xs w-4">{openBouquetColors ? "▼" : "▶"}</span>
+                          Цвет букета
+                        </button>
+                        {openBouquetColors && (
+                        <div className="px-3 pb-3 pt-1 border-t border-border-block">
+                        <p className="text-xs text-color-text-secondary mb-2">
+                          Отметьте цвета для фильтрации в каталоге.
+                        </p>
+                        <div className="grid grid-cols-2 gap-x-4 border border-border-block rounded-lg divide-x divide-border-block max-h-60 overflow-y-auto">
+                          {[0, 1].map((col) => {
+                            const mid = Math.ceil(BOUQUET_COLORS.length / 2);
+                            const list = col === 0 ? BOUQUET_COLORS.slice(0, mid) : BOUQUET_COLORS.slice(mid);
+                            return (
+                              <ul key={col} className="divide-y divide-border-block">
+                                {list.map((item) => (
+                                  <li
+                                    key={item.key}
+                                    className="flex items-center gap-2 px-3 py-1.5 hover:bg-[rgba(31,42,31,0.06)]"
+                                  >
+                                    <BouquetColorSwatch item={item} />
+                                    <input
+                                      type="checkbox"
+                                      id={`variant-bouquet-color-${item.key}`}
+                                      checked={selectedBouquetColorKeys.includes(item.key)}
+                                      onChange={() => {
+                                        setSelectedBouquetColorKeys((prev) =>
+                                          prev.includes(item.key)
+                                            ? prev.filter((k) => k !== item.key)
+                                            : [...prev, item.key]
+                                        );
+                                      }}
+                                      className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                                    />
+                                    <label
+                                      htmlFor={`variant-bouquet-color-${item.key}`}
+                                      className="text-sm text-color-text-main cursor-pointer flex-1"
+                                    >
+                                      {item.label}
+                                    </label>
+                                  </li>
+                                ))}
+                              </ul>
+                            );
+                          })}
+                        </div>
+                        </div>
+                        )}
+                      </div>
+
+                      {/* Категории (вариантный товар, аккордеон) */}
+                      <div className="border border-border-block rounded-lg overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => setOpenCategories((v) => !v)}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-left text-sm font-medium text-color-text-main bg-[rgba(31,42,31,0.04)] hover:bg-[rgba(31,42,31,0.08)]"
+                        >
+                          <span className="text-color-text-secondary text-xs w-4">{openCategories ? "▼" : "▶"}</span>
+                          Категории
+                        </button>
+                        {openCategories && (
+                        <div className="px-3 pb-3 pt-1 border-t border-border-block">
                         {categories.length === 0 ? (
                           <p className="text-sm text-color-text-secondary">Нет активных категорий.</p>
                         ) : (
@@ -2544,13 +2464,13 @@ function AdminProductsPageContent() {
                                     >
                                       <input
                                         type="checkbox"
-                                        id={`cat-${cat.slug}`}
+                                        id={`variant-cat-${cat.slug}`}
                                         checked={selectedCategorySlugs.includes(cat.slug)}
                                         onChange={() => toggleCategorySlug(cat.slug)}
                                         className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                                       />
                                       <label
-                                        htmlFor={`cat-${cat.slug}`}
+                                        htmlFor={`variant-cat-${cat.slug}`}
                                         className="text-sm text-color-text-main cursor-pointer flex-1"
                                       >
                                         {cat.name}
@@ -2564,6 +2484,8 @@ function AdminProductsPageContent() {
                         )}
                         {fieldErrors.categories && (
                           <p className="mt-0.5 text-xs text-red-600">{fieldErrors.categories}</p>
+                        )}
+                        </div>
                         )}
                       </div>
 
@@ -2604,6 +2526,11 @@ function AdminProductsPageContent() {
           </div>
         </form>
       </Modal>
+
+      <FlowersWhitelistModal
+        isOpen={flowersWhitelistModalOpen}
+        onClose={() => setFlowersWhitelistModalOpen(false)}
+      />
 
       <Modal isOpen={detailsModalOpen} onClose={() => setDetailsModalOpen(false)} title="Детали товаров">
         <div className="space-y-4">
