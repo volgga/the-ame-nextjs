@@ -15,6 +15,8 @@ type ModalProps = {
   onSaveAndClose?: () => Promise<void>;
   /** Опциональный footer (кнопки) - фиксируется внизу модалки */
   footer?: ReactNode;
+  /** 'default' — компактная (max-w 1000px), 'full' — на весь экран с отступами (для длинных форм) */
+  size?: "default" | "full";
 };
 
 // Z-index для админских модалок (выше всего админского UI)
@@ -36,6 +38,7 @@ export function Modal({
   unsavedChanges = false,
   onSaveAndClose,
   footer,
+  size = "default",
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -141,7 +144,11 @@ export function Modal({
         aria-hidden="true"
       />
       <div
-        className="relative bg-white rounded-xl shadow-xl w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] overflow-hidden flex flex-col border border-border-block"
+        className={`relative bg-white rounded-xl shadow-xl flex flex-col border border-border-block overflow-hidden ${
+          size === "full"
+            ? "w-[min(1200px,calc(100vw-32px))] max-w-[95vw] max-h-[calc(100vh-48px)] min-h-[min(400px,80vh)]"
+            : "w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)]"
+        }`}
         style={{ zIndex: Z_PANEL }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -158,8 +165,11 @@ export function Modal({
           </button>
         </div>
 
-        {/* Скролл только внутри body */}
-        <div className="overflow-y-auto flex-1 min-h-0 p-4 sm:p-6" style={{ overscrollBehavior: "contain" }}>
+        {/* Скролл только внутри body — min-h-0 критичен для flex + overflow */}
+        <div
+          className="overflow-y-auto overflow-x-hidden flex-1 min-h-0 p-4 sm:p-6"
+          style={{ overscrollBehavior: "contain", WebkitOverflowScrolling: "touch" }}
+        >
           {children}
         </div>
 

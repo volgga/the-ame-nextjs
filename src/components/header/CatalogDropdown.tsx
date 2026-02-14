@@ -32,14 +32,15 @@ function categoryHref(slug: string): string {
   return `/magazine/${slug}`;
 }
 
-/** Раскладка по 4 колонкам: col0=[0..3], col1=[4..7], col2=[8..11], col3=[12..15]. */
-function splitIntoFourColumns<T>(items: T[]): T[][] {
-  const columns: T[][] = [];
-  for (let c = 0; c < COLUMNS_COUNT; c++) {
-    const start = c * MAX_ROWS_PER_COLUMN;
-    columns.push(items.slice(start, start + MAX_ROWS_PER_COLUMN));
+/** Раскладка по строкам: строка 1 = [1,2,3,4], строка 2 = [5,6,7,8], … */
+function splitIntoRows<T>(items: T[]): T[][] {
+  const rows: T[][] = [];
+  for (let r = 0; r < MAX_ROWS_PER_COLUMN; r++) {
+    const start = r * COLUMNS_COUNT;
+    const row = items.slice(start, start + COLUMNS_COUNT);
+    if (row.length > 0) rows.push(row);
   }
-  return columns;
+  return rows;
 }
 
 /** Список для выпадающего меню: первым "Все цветы", далее категории. Исключаем magazin, posmotret-vse-tsvety, "Каталог" и дубли "Все цветы". */
@@ -77,7 +78,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const menuItems = useMemo(() => buildMenuItems(categories), [categories]);
-  const columns = useMemo(() => splitIntoFourColumns(menuItems), [menuItems]);
+  const rows = useMemo(() => splitIntoRows(menuItems), [menuItems]);
 
   useEffect(() => {
     fetchCategories().then(setCategories);
@@ -192,15 +193,15 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
               transition: "opacity 200ms ease-out, transform 200ms ease-out",
             }}
           >
-            <div className="flex items-start" style={{ gap: COLUMN_GAP }}>
-              {columns.map((col, colIdx) => (
+            <div className="flex flex-col" style={{ gap: ROW_GAP }}>
+              {rows.map((row, rowIdx) => (
                 <div
-                  key={colIdx}
-                  className="flex shrink-0 flex-col"
-                  style={{ gap: ROW_GAP, minWidth: COLUMN_MIN_WIDTH }}
+                  key={rowIdx}
+                  className="flex flex-wrap gap-x-8 gap-y-1"
+                  style={{ minWidth: COLUMN_MIN_WIDTH }}
                 >
-                  {col.map((item, itemIdx) => {
-                    const isFirst = colIdx === 0 && itemIdx === 0;
+                  {row.map((item, itemIdx) => {
+                    const isFirst = rowIdx === 0 && itemIdx === 0;
                     return (
                       <Link
                         key={item.href}
@@ -208,9 +209,10 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
                         role="menuitem"
                         className={
                           isFirst
-                            ? "block py-0.5 text-sm font-semibold text-color-text-main hover:opacity-80 hover:underline decoration-2 underline-offset-2 transition-colors leading-tight"
-                            : "block py-0.5 text-sm text-color-text-secondary hover:text-color-text-main hover:underline decoration-2 underline-offset-2 transition-colors leading-tight"
+                            ? "block py-0.5 text-sm font-semibold text-color-text-main hover:opacity-80 hover:underline decoration-2 underline-offset-2 transition-colors leading-tight shrink-0"
+                            : "block py-0.5 text-sm text-color-text-secondary hover:text-color-text-main hover:underline decoration-2 underline-offset-2 transition-colors leading-tight shrink-0"
                         }
+                        style={{ minWidth: COLUMN_MIN_WIDTH }}
                         onClick={close}
                       >
                         {item.label}

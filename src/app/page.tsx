@@ -45,13 +45,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: HOME_TITLE,
     description: HOME_DESCRIPTION,
-    images: [{ url: `${CANONICAL_BASE}/IMG_1543.PNG`, width: 900, height: 1200, alt: HOME_TITLE }],
+    images: [{ url: `${CANONICAL_BASE}/IMG_4256.JPG`, width: 1200, height: 630, alt: HOME_TITLE }],
   },
   twitter: {
     card: "summary_large_image",
     title: HOME_TITLE,
     description: HOME_DESCRIPTION,
-    images: [`${CANONICAL_BASE}/IMG_1543.PNG`],
+    images: [`${CANONICAL_BASE}/IMG_4256.JPG`],
   },
 };
 

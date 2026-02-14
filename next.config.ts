@@ -13,8 +13,9 @@ const nextConfig: NextConfig = {
   },
   // Экспериментальные оптимизации
   experimental: {
-    // Оптимизация CSS (может помочь с неиспользуемым CSS)
-    optimizeCss: false, // Пока отключено, т.к. может сломать стили
+    optimizeCss: false,
+    // Tree-shaking для lucide-react и др. — меньше размер бандла
+    optimizePackageImports: ["lucide-react"],
   },
   async redirects() {
     return [
@@ -44,7 +45,11 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/_next/image",
-        headers: [{ key: "Cache-Control", value: "public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400" }],
+        headers: [{ key: "Cache-Control", value: "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400" }],
+      },
+      {
+        source: "/IMG_4256.JPG",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
       {
         source: "/sitemap.xml",

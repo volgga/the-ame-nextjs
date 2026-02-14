@@ -56,6 +56,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: LOCALE,
     siteName: SITE_NAME,
+    images: [{ url: "/IMG_4256.JPG", width: 1200, height: 630, alt: SITE_NAME }],
   },
 };
 
