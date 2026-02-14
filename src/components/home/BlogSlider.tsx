@@ -33,7 +33,7 @@ export function BlogSlider({ posts, className = "" }: BlogSliderProps) {
           >
             Блог и новости цветочного магазина The Ame
           </h2>
-          <p className="mt-3 md:mt-4 text-base md:text-lg text-[var(--color-text-secondary)] leading-relaxed max-w-3xl">
+          <p className="mt-3 md:mt-4 text-base md:text-lg text-[var(--color-text-secondary)] leading-relaxed w-full">
             В нашем блоге мы делимся полезными материалами о цветах, букетах и флористике, а также публикуем новости
             цветочного магазина The Ame. Здесь вы найдёте идеи для подарков, советы по уходу за цветами и актуальные
             обновления сервиса доставки цветов в Сочи.

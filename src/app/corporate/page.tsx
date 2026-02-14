@@ -49,8 +49,8 @@ export default async function CorporatePage() {
             <CorporateCtaButtons maxLink={maxLink} />
           </div>
 
-          {/* Галерея справа */}
-          <div className="order-1 lg:order-2 w-full min-h-[280px] sm:min-h-[320px] md:min-h-[380px] lg:min-h-0 lg:h-[420px] rounded-xl overflow-hidden">
+          {/* Галерея справа: высота как на референсе (clamp), точки снизу внутри блока */}
+          <div className="order-1 lg:order-2 w-full rounded-xl overflow-hidden corporate-gallery-wrap">
             <CorporateHeroGallery images={images} className="rounded-xl h-full w-full" />
           </div>
         </div>

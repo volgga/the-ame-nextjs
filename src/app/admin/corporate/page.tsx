@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { parseAdminResponse } from "@/lib/adminFetch";
+import { AdminSortableImages, type SortableImageItem } from "@/components/admin/AdminSortableImages";
 
 type CorporateSettings = {
   id: number;
@@ -117,13 +117,22 @@ export default function AdminCorporatePage() {
     }));
   }
 
-  function moveImage(from: number, delta: number) {
-    const to = from + delta;
-    if (to < 0 || to >= form.images.length) return;
-    const next = [...form.images];
-    const [item] = next.splice(from, 1);
-    next.splice(to, 0, item);
-    setForm((prev) => ({ ...prev, images: next }));
+  const galleryItems: SortableImageItem[] = form.images.map((url, i) => ({
+    id: `gallery-${i}-${url.slice(-20)}`,
+    url,
+  }));
+
+  function handleGalleryReorder(newItems: SortableImageItem[]) {
+    setForm((prev) => ({ ...prev, images: newItems.map((it) => it.url) }));
+  }
+
+  function handleGalleryRemove(id: string) {
+    const idx = galleryItems.findIndex((it) => it.id === id);
+    if (idx === -1) return;
+    setForm((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== idx),
+    }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -227,101 +236,44 @@ export default function AdminCorporatePage() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Фото галереи</label>
           <p className="text-xs text-gray-500 mb-2">
-            Порядок отображения: сверху вниз. Можно добавлять несколько фото, менять порядок кнопками ↑/↓.
+            Перетаскивайте фото для изменения порядка. Удаление — крестик на превью.
           </p>
-          <div className="space-y-3">
-            {form.images.map((url, i) => (
-              <div
-                key={`${url}-${i}`}
-                className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg bg-gray-50"
-              >
-                <div className="relative w-20 h-20 shrink-0 overflow-hidden rounded bg-gray-200">
-                  <Image
-                    src={url}
-                    alt=""
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm text-gray-600 truncate block">{url}</span>
-                  <span className="text-xs text-gray-400">Порядок: {i + 1}</span>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => moveImage(i, -1)}
-                    disabled={i === 0}
-                    className="p-2 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                    aria-label="Вверх"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => moveImage(i, 1)}
-                    disabled={i === form.images.length - 1}
-                    className="p-2 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
-                    aria-label="Вниз"
-                  >
-                    ↓
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => removeImage(i)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded"
-                    aria-label="Удалить"
-                  >
-                    Удалить
-                  </button>
-                </div>
-              </div>
-            ))}
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={ACCEPT}
-                onChange={handleImageUpload}
-                className="hidden"
-                id="corporate-gallery-file"
-                disabled={uploading}
+          {galleryItems.length > 0 && (
+            <div className="mb-3">
+              <AdminSortableImages
+                items={galleryItems}
+                onReorder={handleGalleryReorder}
+                onRemove={handleGalleryRemove}
+                thumbSize={88}
               />
-              <label
-                htmlFor="corporate-gallery-file"
-                className={`inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                  uploading ? "opacity-50 cursor-not-allowed" : ""
-                }`}
-              >
-                {uploading ? (
-                  <>
-                    <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                    Загрузка...
-                  </>
-                ) : (
-                  "Добавить фото"
-                )}
-              </label>
             </div>
+          )}
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={ACCEPT}
+              onChange={handleImageUpload}
+              className="hidden"
+              id="corporate-gallery-file"
+              disabled={uploading}
+            />
+            <label
+              htmlFor="corporate-gallery-file"
+              className={`inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
+                uploading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+            >
+              {uploading ? (
+                <>
+                  <span className="inline-block w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  Загрузка...
+                </>
+              ) : (
+                "Добавить фото"
+              )}
+            </label>
           </div>
-        </div>
-
-        <div>
-          <label htmlFor="max_link" className="block text-sm font-medium text-gray-700 mb-2">
-            Ссылка для кнопки MAX (опционально)
-          </label>
-          <input
-            id="max_link"
-            type="url"
-            value={form.max_link ?? ""}
-            onChange={(e) => setForm((prev) => ({ ...prev, max_link: e.target.value || null }))}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-color-bg-main focus:border-transparent"
-            placeholder="https://max.ru/u/..."
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            Если не указано, используется общая ссылка на MAX с сайта.
-          </p>
         </div>
 
         <div className="border-t pt-6">

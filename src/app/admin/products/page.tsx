@@ -11,6 +11,7 @@ import { useAutoSyncCompositionFlowers } from "@/hooks/useAutoSyncCompositionFlo
 import { BOUQUET_COLORS, filterValidBouquetColorKeys } from "@/shared/catalog/bouquetColors";
 import { BouquetColorSwatch } from "@/components/catalog/BouquetColorSwatch";
 import { calcPriceFromPercent } from "@/lib/priceUtils";
+import { AdminSortableImages, type SortableImageItem } from "@/components/admin/AdminSortableImages";
 
 const FlowersWhitelistModal = dynamic(
   () =>
@@ -109,7 +110,6 @@ function AdminProductsPageContent() {
   const [createLoading, setCreateLoading] = useState(false);
   const [productImages, setProductImages] = useState<ImageItem[]>([]);
   const [productImagesMainIndex, setProductImagesMainIndex] = useState(0);
-  const [productImagesDraggedIndex, setProductImagesDraggedIndex] = useState<number | null>(null);
   const [productImagesUploading, setProductImagesUploading] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string; is_active: boolean }[]>([]);
   const [selectedCategorySlugs, setSelectedCategorySlugs] = useState<string[]>([]);
@@ -644,20 +644,23 @@ function AdminProductsPageContent() {
     setProductImagesMainIndex(index);
   }
 
-  function reorderProductImages(fromIndex: number, toIndex: number) {
-    if (fromIndex === toIndex) return;
-    setProductImages((prev) => {
-      const next = [...prev];
-      const [removed] = next.splice(fromIndex, 1);
-      next.splice(toIndex, 0, removed);
-      return next;
-    });
-    setProductImagesMainIndex((prev) => {
-      if (fromIndex === prev) return toIndex;
-      if (fromIndex < prev && toIndex >= prev) return prev - 1;
-      if (fromIndex > prev && toIndex <= prev) return prev + 1;
-      return prev;
-    });
+  const productImageItems: SortableImageItem[] = [
+    ...existingImageUrls.map((url, i) => ({ id: `existing-${i}`, url })),
+    ...productImages.map((p, i) => ({ id: `file-${i}`, url: p.previewUrl, file: p.file })),
+  ];
+
+  function handleProductImageReorder(newItems: SortableImageItem[]) {
+    setExistingImageUrls(newItems.filter((x) => !x.file).map((x) => x.url));
+    setProductImages(newItems.filter((x) => x.file).map((x) => ({ file: x.file!, previewUrl: x.url })));
+    setProductImagesMainIndex(0);
+  }
+
+  function handleProductImageRemove(id: string) {
+    const idx = productImageItems.findIndex((x) => x.id === id);
+    if (idx === -1) return;
+    const existingCount = productImageItems.filter((x) => !x.file).length;
+    if (idx < existingCount) removeExistingImage(idx);
+    else removeProductImage(idx - existingCount);
   }
 
   // Функции для работы с вариантами
@@ -1578,8 +1581,7 @@ function AdminProductsPageContent() {
                       <div>
                         <label className="block text-sm font-medium text-color-text-main mb-1">Изображения</label>
                         <p className="text-xs text-color-text-secondary mb-1.5">
-                          Максимум 5 файлов. Первое изображение — главное, используется на витрине. Перетаскивайте для
-                          изменения порядка.
+                          Максимум 5 файлов. Первое изображение — главное. Перетаскивайте для изменения порядка.
                         </p>
                         <input
                           type="file"
@@ -1590,86 +1592,15 @@ function AdminProductsPageContent() {
                           className="block w-full text-sm text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-3 file:py-1.5 file:text-white file:hover:bg-accent-btn-hover focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                         />
                         {fieldErrors.images && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.images}</p>}
-                        {(existingImageUrls.length > 0 || productImages.length > 0) && (
-                          <div className="mt-3 flex flex-wrap gap-3">
-                            {existingImageUrls.map((url, index) => (
-                              <div
-                                key={`existing-${index}`}
-                                className="relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] border-border-block"
-                              >
-                                <img src={url} alt="" className="w-full h-full object-cover" />
-                                {productImagesMainIndex === index && (
-                                  <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
-                                    Главное
-                                  </span>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => setProductImageMain(index)}
-                                  title="Сделать главным"
-                                  className="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 flex items-center justify-center text-xs hover:bg-white"
-                                >
-                                  ★
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeExistingImage(index)}
-                                  title="Удалить"
-                                  className="absolute top-1 right-1 w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-sm leading-none"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            ))}
-                            {productImages.map((item, index) => {
-                              const combinedIndex = existingImageUrls.length + index;
-                              return (
-                                <div
-                                  key={`file-${index}`}
-                                  data-index={index}
-                                  draggable
-                                  onDragStart={() => setProductImagesDraggedIndex(index)}
-                                  onDragOver={(ev) => ev.preventDefault()}
-                                  onDrop={(ev) => {
-                                    ev.preventDefault();
-                                    const toIndex = parseInt(ev.currentTarget.getAttribute("data-index") ?? "0", 10);
-                                    if (productImagesDraggedIndex !== null && productImagesDraggedIndex !== toIndex) {
-                                      reorderProductImages(productImagesDraggedIndex, toIndex);
-                                    }
-                                    setProductImagesDraggedIndex(null);
-                                  }}
-                                  onDragEnd={() => setProductImagesDraggedIndex(null)}
-                                  className={`relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] cursor-grab active:cursor-grabbing ${
-                                    productImagesDraggedIndex === index
-                                      ? "border-color-text-main opacity-80"
-                                      : "border-border-block"
-                                  }`}
-                                >
-                                  <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
-                                  {productImagesMainIndex === combinedIndex && (
-                                    <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
-                                      Главное
-                                    </span>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => setProductImageMain(combinedIndex)}
-                                    title="Сделать главным"
-                                    className="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 flex items-center justify-center text-xs hover:bg-white"
-                                  >
-                                    ★
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeProductImage(index)}
-                                    title="Удалить"
-                                    className="absolute top-1 right-1 w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-sm leading-none"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              );
-                            })}
+                        {productImageItems.length > 0 && (
+                          <div className="mt-3">
+                            <AdminSortableImages
+                              items={productImageItems}
+                              onReorder={handleProductImageReorder}
+                              onRemove={handleProductImageRemove}
+                              firstIsMain
+                              thumbSize={88}
+                            />
                           </div>
                         )}
                       </div>
@@ -2360,8 +2291,7 @@ function AdminProductsPageContent() {
                       <div>
                         <label className="block text-sm font-medium text-color-text-main mb-1">Изображения</label>
                         <p className="text-xs text-color-text-secondary mb-1.5">
-                          Максимум 5 файлов. Первое изображение — главное, используется на витрине. Перетаскивайте для
-                          изменения порядка.
+                          Максимум 5 файлов. Первое изображение — главное. Перетаскивайте для изменения порядка.
                         </p>
                         <input
                           type="file"
@@ -2372,86 +2302,15 @@ function AdminProductsPageContent() {
                           className="block w-full text-sm text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-3 file:py-1.5 file:text-white file:hover:bg-accent-btn-hover focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                         />
                         {fieldErrors.images && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.images}</p>}
-                        {(existingImageUrls.length > 0 || productImages.length > 0) && (
-                          <div className="mt-3 flex flex-wrap gap-3">
-                            {existingImageUrls.map((url, index) => (
-                              <div
-                                key={`existing-${index}`}
-                                className="relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] border-border-block"
-                              >
-                                <img src={url} alt="" className="w-full h-full object-cover" />
-                                {productImagesMainIndex === index && (
-                                  <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
-                                    Главное
-                                  </span>
-                                )}
-                                <button
-                                  type="button"
-                                  onClick={() => setProductImageMain(index)}
-                                  title="Сделать главным"
-                                  className="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 flex items-center justify-center text-xs hover:bg-white"
-                                >
-                                  ★
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => removeExistingImage(index)}
-                                  title="Удалить"
-                                  className="absolute top-1 right-1 w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-sm leading-none"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            ))}
-                            {productImages.map((item, index) => {
-                              const combinedIndex = existingImageUrls.length + index;
-                              return (
-                                <div
-                                  key={`file-${index}`}
-                                  data-index={index}
-                                  draggable
-                                  onDragStart={() => setProductImagesDraggedIndex(index)}
-                                  onDragOver={(ev) => ev.preventDefault()}
-                                  onDrop={(ev) => {
-                                    ev.preventDefault();
-                                    const toIndex = parseInt(ev.currentTarget.getAttribute("data-index") ?? "0", 10);
-                                    if (productImagesDraggedIndex !== null && productImagesDraggedIndex !== toIndex) {
-                                      reorderProductImages(productImagesDraggedIndex, toIndex);
-                                    }
-                                    setProductImagesDraggedIndex(null);
-                                  }}
-                                  onDragEnd={() => setProductImagesDraggedIndex(null)}
-                                  className={`relative w-24 h-24 flex-shrink-0 rounded-lg border-2 overflow-hidden bg-[rgba(31,42,31,0.04)] cursor-grab active:cursor-grabbing ${
-                                    productImagesDraggedIndex === index
-                                      ? "border-color-text-main opacity-80"
-                                      : "border-border-block"
-                                  }`}
-                                >
-                                  <img src={item.previewUrl} alt="" className="w-full h-full object-cover" />
-                                  {productImagesMainIndex === combinedIndex && (
-                                    <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
-                                      Главное
-                                    </span>
-                                  )}
-                                  <button
-                                    type="button"
-                                    onClick={() => setProductImageMain(combinedIndex)}
-                                    title="Сделать главным"
-                                    className="absolute top-1 left-1 w-6 h-6 rounded bg-white/90 flex items-center justify-center text-xs hover:bg-white"
-                                  >
-                                    ★
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeProductImage(index)}
-                                    title="Удалить"
-                                    className="absolute top-1 right-1 w-6 h-6 rounded bg-red-500 text-white flex items-center justify-center hover:bg-red-600 text-sm leading-none"
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              );
-                            })}
+                        {productImageItems.length > 0 && (
+                          <div className="mt-3">
+                            <AdminSortableImages
+                              items={productImageItems}
+                              onReorder={handleProductImageReorder}
+                              onRemove={handleProductImageRemove}
+                              firstIsMain
+                              thumbSize={88}
+                            />
                           </div>
                         )}
                       </div>

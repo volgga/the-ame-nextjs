@@ -68,13 +68,12 @@ export function CorporateHeroGallery({ images, className = "" }: CorporateHeroGa
     [count, next, prev]
   );
 
-  const containerHeightClass =
-    "min-h-[280px] sm:min-h-[320px] md:h-[380px] min-[900px]:h-[420px] min-[1200px]:h-[480px]";
+  const emptyMinHeight = "min-h-[280px]";
 
   if (images.length === 0) {
     return (
       <div
-        className={`flex items-center justify-center bg-[#ece9e2] text-gray-500 ${containerHeightClass} ${className}`}
+        className={`flex items-center justify-center bg-[#ece9e2] text-gray-500 h-full ${emptyMinHeight} ${className}`}
       >
         <span className="text-sm">Фото пока нет</span>
       </div>
@@ -85,7 +84,7 @@ export function CorporateHeroGallery({ images, className = "" }: CorporateHeroGa
     "absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] text-white/90 hover:text-white transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 rounded-full bg-black/20";
 
   return (
-    <div className={`relative overflow-hidden bg-[#ece9e2] h-full ${containerHeightClass} ${className}`}>
+    <div className={`relative overflow-hidden bg-[#ece9e2] h-full min-h-0 ${className}`}>
       <div
         className="flex h-full min-h-0 transition-transform ease-in-out touch-pan-y"
         style={{
@@ -134,7 +133,10 @@ export function CorporateHeroGallery({ images, className = "" }: CorporateHeroGa
           >
             <ChevronArrow direction="right" />
           </button>
-          <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20">
+          <div
+            className="absolute left-0 right-0 flex justify-center gap-1.5 z-20"
+            style={{ bottom: "14px" }}
+          >
             {images.map((_, i) => (
               <button
                 key={i}
