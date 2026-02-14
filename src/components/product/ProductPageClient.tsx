@@ -606,14 +606,14 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
 
               {/* Цена и блок действий в едином контейнере */}
               <div className="mb-4">
-                {/* Цена: при скидке — слева старая (мельче, прозрачнее, зачёркнута), справа новая */}
+                {/* Цена: основная слева, старая зачёркнута справа (если скидка) */}
                 <div className="text-lg md:text-xl font-medium text-color-text-main mb-4 flex items-baseline gap-2 flex-wrap">
+                  <span>{displayPrice.toLocaleString("ru-RU")} ₽</span>
                   {displayOriginalPrice != null && (
                     <span className="text-sm md:text-base text-color-text-secondary/80 line-through">
                       {displayOriginalPrice.toLocaleString("ru-RU")} ₽
                     </span>
                   )}
-                  <span>{displayPrice.toLocaleString("ru-RU")} ₽</span>
                 </div>
 
                 {/* Блок действий */}

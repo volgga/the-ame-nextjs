@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Phone } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { CartIcon } from "./CartIcon";
 import { CatalogDropdown } from "./CatalogDropdown";
@@ -226,6 +226,13 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
             style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}
           >
             <SearchDropdown isHeaderBarVisible={mainBarVisible} />
+            <a
+              href="tel:+79939326095"
+              aria-label="Позвонить"
+              className={`${iconLinkClass} md:hidden`}
+            >
+              <Phone className="w-6 h-6 shrink-0" strokeWidth={1.6} />
+            </a>
             <Link
               id="header-favorites"
               href="/favorites"

@@ -137,26 +137,26 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
 
   return (
     <div className="relative flex flex-col h-full">
-      <Link href={productUrl} aria-label={flower.name} className="block flex-1">
+      <Link href={productUrl} aria-label={flower.name} className="block flex-1 relative">
+        {/* BadgesWrapper вне overflow-hidden, чтобы не было артефакта у НОВЫЙ */}
+        {(isNewEffective || hasDiscount) && (
+          <div className="absolute top-1.5 left-0 z-10 flex flex-col gap-1 md:top-2 md:gap-1.5">
+            {isNewEffective && (
+              <div className="new-badge w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-[10px] md:text-xs font-medium leading-none">
+                НОВЫЙ
+              </div>
+            )}
+            {hasDiscount && (
+              <div className="w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--header-bg)] text-[var(--header-foreground)] text-[10px] md:text-xs font-medium leading-none">
+                {flower.discountPercent != null && flower.discountPercent > 0
+                  ? `-${Math.round(flower.discountPercent)}%`
+                  : "СКИДКА"}
+              </div>
+            )}
+          </div>
+        )}
         {/* 📸 Фото + hover-иконки (лупа, сердечко) — group на контейнере фото */}
         <div className="group relative overflow-hidden rounded-2xl aspect-square bg-[#ece9e2]">
-          {/* BadgesWrapper: один контейнер, NEW сверху, Скидка под ним (или вместо) */}
-          {(isNewEffective || hasDiscount) && (
-            <div className="absolute top-1.5 left-0 z-10 flex flex-col gap-1 md:top-2 md:gap-1.5">
-              {isNewEffective && (
-                <div className="new-badge w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-[10px] md:text-xs font-medium leading-none">
-                  НОВЫЙ
-                </div>
-              )}
-              {hasDiscount && (
-                <div className="w-fit px-2.5 py-1 md:px-3 md:py-1.5 rounded-tr-lg rounded-br-lg bg-[var(--header-bg)] text-[var(--header-foreground)] text-[10px] md:text-xs font-medium leading-none">
-                  {flower.discountPercent != null && flower.discountPercent > 0
-                    ? `-${Math.round(flower.discountPercent)}%`
-                    : "СКИДКА"}
-                </div>
-              )}
-            </div>
-          )}
           <Image
             src={imageSrc}
             alt={flower.name}
@@ -221,9 +221,9 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
         </h3>
       </Link>
 
-      {/* actionsRow: price (left) | actions (right). Desktop: heart + cart/preorder рядом */}
-      <div className="px-1 mt-2 flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between md:gap-2 min-w-0">
-        {/* Price block: PC — одна effective; Mobile — новая + старая при скидке, clamp font */}
+      {/* Mobile: один stack с единым gap (title-price == price-button). PC: price слева, cart + "в 1 клик" справа, одно сердечко только в hover на фото */}
+      <div className="px-1 flex flex-col gap-2 min-w-0 mt-2 md:mt-2 md:flex-row md:items-center md:justify-between">
+        {/* Price block */}
         <div
           className="flex items-baseline min-w-0 flex-shrink overflow-hidden flex-nowrap"
           style={{ gap: "8px" }}
@@ -244,81 +244,43 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
           )}
         </div>
 
-        {/* Actions: Mobile — full-width кнопка. Desktop — "Купить в 1 клик" + heart + cart/preorder рядом */}
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:shrink-0 md:flex-nowrap">
+        {/* Actions: Mobile — full-width кнопка. PC — корзина/часы + "в 1 клик" текст прижаты вправо, без дубля сердца */}
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:shrink-0 md:flex-nowrap md:ml-auto">
           {isPreorder ? (
-            <>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setPreorderOpen(true);
-                }}
-                className="product-cta w-full md:w-9 md:min-w-[36px] md:h-9 min-h-[36px] md:py-0 rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation text-sm font-medium md:px-0"
-                aria-label="Предзаказ"
-                title="Предзаказ"
-              >
-                <Clock className="w-3.5 h-3.5 shrink-0" strokeWidth={1.6} aria-hidden />
-                <span className="md:hidden">Предзаказ</span>
-              </button>
-              {!hideFavoriteOnMobile && (
-                <button
-                  type="button"
-                  onClick={handleToggleFavorite}
-                  className={`product-cta h-9 w-9 min-h-[36px] min-w-[36px] hidden md:flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
-                  title={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-                  aria-label={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-                >
-                  <Heart className={`w-3.5 h-3.5 ${mounted && inFavorites ? "fill-[var(--color-accent-btn)] text-[var(--color-accent-btn)]" : ""}`} strokeWidth={1.5} />
-                </button>
-              )}
-            </>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setPreorderOpen(true);
+              }}
+              className="product-cta w-full md:w-9 md:min-w-[36px] md:h-9 min-h-[36px] md:py-0 rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation text-sm font-medium md:px-0"
+              aria-label="Предзаказ"
+              title="Предзаказ"
+            >
+              <Clock className="w-3.5 h-3.5 shrink-0" strokeWidth={1.6} aria-hidden />
+              <span className="md:hidden">Предзаказ</span>
+            </button>
           ) : (
             <>
               <button
                 type="button"
-                onClick={openQuickBuyModal}
-                className="product-cta min-h-[36px] py-0.5 rounded-full pl-2 pr-1.5 text-xs font-normal leading-none bg-page-bg border border-[var(--color-outline-border)] text-color-text-main hidden md:inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
-              >
-                Купить в 1 клик
-              </button>
-              {!hideFavoriteOnMobile && (
-                <button
-                  type="button"
-                  onClick={handleToggleFavorite}
-                  className={`product-cta h-9 w-9 min-h-[36px] min-w-[36px] hidden md:flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
-                  title={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-                  aria-label={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-                >
-                  <Heart className={`w-3.5 h-3.5 ${mounted && inFavorites ? "fill-[var(--color-accent-btn)] text-[var(--color-accent-btn)]" : ""}`} strokeWidth={1.5} />
-                </button>
-              )}
-              <button
-                type="button"
                 onClick={handleCartClick}
-                className="product-cta w-full md:w-9 md:min-w-[36px] md:h-9 min-h-[40px] md:min-h-[36px] rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation text-sm font-medium md:px-0"
+                className="product-cta w-full md:w-9 md:min-w-[36px] md:h-9 min-h-[40px] md:min-h-[36px] rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation text-sm font-medium md:px-0 order-first md:order-none"
                 title={flower.inStock ? "В корзину" : "Предзаказ"}
                 aria-label={flower.inStock ? "В корзину" : "Предзаказ"}
               >
                 <ShoppingCart className="w-3.5 h-3.5 md:block hidden shrink-0" strokeWidth={1.6} />
                 <span className="md:hidden">{flower.inStock ? "В корзину" : "Предзаказ"}</span>
               </button>
+              <button
+                type="button"
+                onClick={openQuickBuyModal}
+                className="hidden md:inline text-xs font-normal text-color-text-secondary hover:text-color-text-main hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 rounded"
+              >
+                в 1 клик
+              </button>
             </>
-          )}
-          {!hideFavoriteOnMobile && (
-            <button
-              type="button"
-              onClick={handleToggleFavorite}
-              className={`product-cta h-9 w-9 min-h-[36px] min-w-[36px] hidden md:flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
-              title={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-              aria-label={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-            >
-              <Heart
-                className={`w-3.5 h-3.5 ${mounted && inFavorites ? "fill-[var(--color-accent-btn)] text-[var(--color-accent-btn)]" : ""}`}
-                strokeWidth={1.5}
-              />
-            </button>
           )}
         </div>
       </div>
