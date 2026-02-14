@@ -35,7 +35,6 @@ export async function POST(request: Request) {
   }
 
   const reason = body.reason?.trim() ?? "REJECTED (dev test)";
-  console.log("[dev/payment-failed] sending payment failed tg, orderId:", orderId);
   try {
     const text = formatPaymentFailed(order, reason);
     await sendOrderTelegramMessage(text);

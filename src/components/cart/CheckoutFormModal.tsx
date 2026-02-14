@@ -148,7 +148,7 @@ function PayButton({
       <button
         type="button"
         onClick={handlePay}
-        disabled={loading}
+        disabled={loading || !formValid}
         className="w-full py-4 mt-6 rounded-full font-semibold text-white uppercase transition-colors disabled:cursor-not-allowed bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
       >
         {loading ? "Подготовка…" : "ПЕРЕЙТИ К ОПЛАТЕ"}
@@ -194,6 +194,8 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
   const [deliverAnonymously, setDeliverAnonymously] = useState(false);
   /** Id первого незаполненного обязательного поля (для scroll+focus+red после клика «Оплатить»). */
   const [firstInvalidField, setFirstInvalidField] = useState<string | null>(null);
+  /** Минимальная сумма заказа на выбранную дату доставки (из API), руб. */
+  const [minimumOrderAmount, setMinimumOrderAmount] = useState<number | null>(null);
 
   const saveSenderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const saveExtraTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -348,6 +350,13 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
   const subtotalWithPromo = totals.total;
   const finalTotal = subtotalWithPromo + deliveryPrice;
 
+  // Минимальный заказ на выбранную дату: если сумма ниже — кнопку блокируем и показываем сообщение
+  const belowMinimumOrder =
+    !!deliveryDate &&
+    minimumOrderAmount != null &&
+    typeof minimumOrderAmount === "number" &&
+    finalTotal < minimumOrderAmount;
+
   // Авто-подстановка @ для Telegram
   const handleTelegramChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value;
@@ -401,6 +410,30 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
 
     loadTimeOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deliveryDate]);
+
+  // Загрузка правила минимального заказа на выбранную дату
+  useEffect(() => {
+    if (!deliveryDate || !/^\d{4}-\d{2}-\d{2}$/.test(deliveryDate)) {
+      setMinimumOrderAmount(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/minimum-order?date=${deliveryDate}`)
+      .then((r) => r.json())
+      .then((data: { minimumAmount?: number | null }) => {
+        if (!cancelled && typeof data.minimumAmount === "number") {
+          setMinimumOrderAmount(data.minimumAmount);
+        } else if (!cancelled) {
+          setMinimumOrderAmount(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setMinimumOrderAmount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [deliveryDate]);
 
   // Генерация интервалов времени (fallback для случая, когда дата не выбрана)
@@ -964,13 +997,19 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
         </div>
       </div>
 
-      {/* Кнопка оплаты: при невалидной форме — scroll+focus+highlight первого поля; иначе создаём заказ и редирект на оплату */}
+      {/* Кнопка оплаты: при невалидной форме — scroll+focus+highlight первого поля; при сумме ниже минимальной — disabled и красное сообщение под кнопкой */}
       <PayButton
-        formValid={isFormValid()}
+        formValid={isFormValid() && !belowMinimumOrder}
         isFormValid={isFormValid}
         getFirstInvalidFieldId={getFirstInvalidFieldId}
         onInvalidSubmit={handleInvalidSubmit}
-        invalidHint={!isFormValid() ? getInvalidFieldHint(getFirstInvalidFieldId()) : null}
+        invalidHint={
+          belowMinimumOrder
+            ? null
+            : !isFormValid()
+              ? getInvalidFieldHint(getFirstInvalidFieldId())
+              : null
+        }
         items={state.items.map((item) => ({ id: item.id, quantity: item.cartQuantity }))}
         customer={{
           name: customerName,
@@ -994,6 +1033,11 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
           receiveMailings: agreeNewsletter,
         }}
       />
+      {belowMinimumOrder && minimumOrderAmount != null && (
+        <p className="text-sm text-red-600 mt-2" role="alert">
+          Минимальный заказ на эту дату — от {minimumOrderAmount.toLocaleString("ru-RU")} ₽
+        </p>
+      )}
     </div>
   );
 }

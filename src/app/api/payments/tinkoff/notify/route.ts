@@ -76,11 +76,9 @@ export async function POST(request: Request) {
 
           // Обновляем статус заказа в БД на основе реального статуса T-Bank
           if (status === "success" && isActuallyPaid && order.status !== "paid") {
-            console.log(`[tbank-notify] updating order status to paid based on T-Bank status`, { orderId, paymentId });
             await updateOrderStatus(orderId, "paid");
             order.status = "paid"; // Обновляем локальную копию
           } else if (status === "fail" && isActuallyFailed && order.status !== "failed" && order.status !== "canceled") {
-            console.log(`[tbank-notify] updating order status to failed based on T-Bank status`, { orderId, paymentId });
             await updateOrderStatus(orderId, "failed");
             order.status = "failed"; // Обновляем локальную копию
           } else if (status === "success" && !isActuallyPaid) {
@@ -153,11 +151,6 @@ export async function POST(request: Request) {
     });
 
     if (!shouldSend && alreadyNotified) {
-      // Флаг уже был установлен ранее - значит уведомление уже отправляли
-      console.log(`[tbank-notify] notification already sent for ${status}, skipping`, { 
-        orderId,
-        notifiedAt: currentOrder?.[fieldName],
-      });
       return NextResponse.json({ message: "Уведомление уже отправлено" }, { status: 200 });
     }
     

@@ -121,7 +121,6 @@ function PaymentSuccessContent() {
       if (notified || cancelled) return;
       notified = true;
       
-      console.log("[payment-success] calling notify endpoint", { orderId });
       try {
         const res = await fetch("/api/payments/tinkoff/notify", {
           method: "POST",
@@ -130,9 +129,7 @@ function PaymentSuccessContent() {
         });
         
         const data = await res.json().catch(() => ({}));
-        if (res.ok) {
-          console.log("[payment-success] notify endpoint response", data);
-        } else {
+        if (!res.ok) {
           console.error("[payment-success] notify endpoint error", { status: res.status, data });
         }
       } catch (err) {

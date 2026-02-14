@@ -1,7 +1,5 @@
 #!/bin/bash
-# Исправление 413 при загрузке файлов в админке theame.ru
-# Запуск на сервере: ssh root@94.103.84.28 'bash -s' < scripts/fix-nginx-413.sh
-
+# Nginx: client_max_body_size 30m (исправляет 413 при загрузке в админке). Запуск: ssh root@HOST 'bash -s' < scripts/fix-nginx-413.sh
 set -e
 
 CONF="/etc/nginx/sites-available/theame.ru"

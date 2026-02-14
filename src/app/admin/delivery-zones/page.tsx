@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { parseAdminResponse } from "@/lib/adminFetch";
+import { DeliveryScheduleContent } from "@/components/admin/DeliveryScheduleContent";
+import { MinimumOrderModalContent } from "@/components/admin/MinimumOrderModalContent";
 
 type DeliveryZone = {
   id: string;
@@ -21,7 +23,10 @@ const emptyForm = () => ({
   subareas_text: "",
 });
 
+type OpenModal = null | "zones" | "schedule" | "minimum";
+
 export default function AdminDeliveryZonesPage() {
+  const [openModal, setOpenModal] = useState<OpenModal>(null);
   const [zones, setZones] = useState<DeliveryZone[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -65,7 +70,7 @@ export default function AdminDeliveryZonesPage() {
     setForm(emptyForm());
   }
 
-  const anyModalOpen = creating || !!editing || !!deleteConfirmId;
+  const anyModalOpen = openModal !== null || creating || !!editing || !!deleteConfirmId;
   useEffect(() => {
     if (typeof document === "undefined" || !document.body) return;
     if (anyModalOpen) {
@@ -260,22 +265,64 @@ export default function AdminDeliveryZonesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-[#111]">Условия доставки</h2>
+      <h2 className="text-xl font-semibold text-[#111]">Условия доставки</h2>
+      <div className="flex flex-wrap gap-3">
         <button
           type="button"
-          onClick={() => {
-            setCreating(true);
-            setEditing(null);
-            setForm(emptyForm());
-          }}
+          onClick={() => setOpenModal("zones")}
           className="rounded px-4 py-2 text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
         >
-          Добавить зону
+          Условия доставки и зоны
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpenModal("schedule")}
+          className="rounded px-4 py-2 text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+        >
+          Время доставки
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpenModal("minimum")}
+          className="rounded px-4 py-2 text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+        >
+          Минимальный заказ
         </button>
       </div>
 
-      {error && !creating && !editing && <p className="text-sm text-red-600">{error}</p>}
+      {/* Модалка: Условия доставки и зоны */}
+      {openModal === "zones" && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setOpenModal(null)} aria-hidden />
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-[#111]">Условия доставки и зоны</h3>
+              <button
+                type="button"
+                onClick={() => setOpenModal(null)}
+                className="rounded border border-gray-300 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
+              >
+                Закрыть
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreating(true);
+                    setEditing(null);
+                    setForm(emptyForm());
+                  }}
+                  className="rounded px-4 py-2 text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+                >
+                  Добавить зону
+                </button>
+              </div>
+              {error && !creating && !editing && <p className="text-sm text-red-600">{error}</p>}
 
       {(creating || editing) && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
@@ -470,7 +517,7 @@ export default function AdminDeliveryZonesPage() {
       )}
 
       {deleteConfirmId && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
           <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
@@ -492,6 +539,58 @@ export default function AdminDeliveryZonesPage() {
               >
                 Да
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка: Время доставки */}
+      {openModal === "schedule" && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setOpenModal(null)} aria-hidden />
+          <div
+            className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-end p-4 border-b border-gray-200">
+              <button
+                type="button"
+                onClick={() => setOpenModal(null)}
+                className="rounded border border-gray-300 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
+              >
+                Закрыть
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <DeliveryScheduleContent />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка: Минимальный заказ */}
+      {openModal === "minimum" && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setOpenModal(null)} aria-hidden />
+          <div
+            className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-end p-4 border-b border-gray-200">
+              <button
+                type="button"
+                onClick={() => setOpenModal(null)}
+                className="rounded border border-gray-300 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
+              >
+                Закрыть
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <MinimumOrderModalContent />
             </div>
           </div>
         </div>

@@ -65,7 +65,6 @@ async function sendTelegramRequest(url: string, body: Record<string, unknown>, r
   let lastResponseText: string | null = null;
 
   try {
-    console.log(`[sendTelegramRequest] attempt ${retryCount + 1}/${MAX_RETRIES + 1}, url=${url.replace(/\/bot[^/]+/, "/bot***")}`);
     const response = await fetchWithTimeout(
       url,
       {
@@ -103,7 +102,6 @@ async function sendTelegramRequest(url: string, body: Record<string, unknown>, r
       err.responseText = lastResponseText ?? undefined;
       throw err;
     }
-    console.log(`[sendTelegramRequest] success, status=${response.status}`);
     return;
   } catch (error) {
     lastError = error instanceof Error ? error : new Error(String(error));
@@ -112,7 +110,6 @@ async function sendTelegramRequest(url: string, body: Record<string, unknown>, r
     }
 
     if (retryCount < MAX_RETRIES && shouldRetry(lastStatus)) {
-      console.log(`[sendTelegramRequest] retrying, retryCount=${retryCount + 1}, lastStatus=${lastStatus}`);
       return sendTelegramRequest(url, body, retryCount + 1);
     }
 
@@ -201,14 +198,12 @@ export async function sendOrderTelegramMessage(text: string): Promise<void> {
     console.warn("[sendOrderTelegramMessage] using TELEGRAM_CHAT_ID as fallback for TELEGRAM_ORDERS_CHAT_ID");
   }
 
-  console.log(`[sendOrderTelegramMessage] sending to chatId=${chatId}, threadId=${threadId ?? "none"}, textLength=${text.length}, usingFallback=${usingFallback}, hasToken=${!!token}`);
   try {
     await sendTelegramMessage({
       chatId: chatId.trim(),
       threadId,
       text,
     });
-    console.log(`[sendOrderTelegramMessage] message sent successfully`);
   } catch (err) {
     console.error(`[sendOrderTelegramMessage] failed to send message`, {
       error: err instanceof Error ? err.message : String(err),

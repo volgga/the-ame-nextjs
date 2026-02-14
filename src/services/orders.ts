@@ -58,11 +58,11 @@ export async function createOrder(input: CreateOrderInput): Promise<{ order: Ord
   }
 
   const supabase = getSupabaseServer();
-  
+
   // Проверяем что Supabase клиент инициализирован
   const hasSupabaseUrl = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
   const hasSupabaseKey = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  
+
   if (!hasSupabaseUrl || !hasSupabaseKey) {
     console.error("[createOrder] Supabase env variables missing", {
       hasSupabaseUrl,
@@ -70,7 +70,26 @@ export async function createOrder(input: CreateOrderInput): Promise<{ order: Ord
     });
     return { error: "Конфигурация базы данных не настроена" };
   }
-  
+
+  // Проверка минимального заказа по дате доставки
+  const deliveryDate = input.customer?.deliveryDate;
+  if (deliveryDate && /^\d{4}-\d{2}-\d{2}$/.test(deliveryDate)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rule } = await (supabase as any)
+      .from("minimum_order_rules")
+      .select("minimum_amount")
+      .eq("date", deliveryDate)
+      .maybeSingle();
+    if (rule && typeof rule.minimum_amount === "number") {
+      const finalRubles = finalAmountKopeks / 100;
+      if (finalRubles < rule.minimum_amount) {
+        return {
+          error: `Минимальный заказ на эту дату — от ${rule.minimum_amount.toLocaleString("ru-RU")} ₽`,
+        };
+      }
+    }
+  }
+
   // Таблица orders не в сгенерированных типах Supabase — используем приведение типа
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabase as any)
@@ -216,8 +235,6 @@ export async function markPaymentNotificationSent(
   const fieldName = eventType === "SUCCESS" ? "payment_success_notified_at" : "payment_fail_notified_at";
   const now = new Date().toISOString();
 
-  console.log(`[markPaymentNotificationSent] checking orderId=${orderId}, eventType=${eventType}, fieldName=${fieldName}`);
-
   // Атомарное обновление: обновляем только если поле null
   // Используем условие в update для атомарности
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -240,7 +257,5 @@ export async function markPaymentNotificationSent(
 
   // Если data пустой массив - значит поле уже было заполнено (условие .is(fieldName, null) не сработало)
   // Если data содержит запись - значит мы успешно обновили (было null, стало now)
-  const shouldSend = Array.isArray(data) && data.length > 0;
-  console.log(`[markPaymentNotificationSent] result for orderId=${orderId}, eventType=${eventType}: shouldSend=${shouldSend}, dataLength=${Array.isArray(data) ? data.length : 0}`);
-  return shouldSend;
+  return Array.isArray(data) && data.length > 0;
 }

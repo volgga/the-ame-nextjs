@@ -112,18 +112,14 @@ function PaymentFailContent() {
       if (notified || cancelled) return;
       notified = true;
       
-      console.log("[payment-fail] calling notify endpoint", { orderId });
       try {
         const res = await fetch("/api/payments/tinkoff/notify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ orderId, status: "fail" }),
         });
-        
         const data = await res.json().catch(() => ({}));
-        if (res.ok) {
-          console.log("[payment-fail] notify endpoint response", data);
-        } else {
+        if (!res.ok) {
           console.error("[payment-fail] notify endpoint error", { status: res.status, data });
         }
       } catch (err) {

@@ -34,7 +34,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Заказ не найден" }, { status: 404 });
   }
 
-  console.log("[dev/payment-success] sending payment success tg, orderId:", orderId);
   try {
     const paymentId = order.tinkoffPaymentId ?? order.paymentId ?? undefined;
     const text = formatPaymentSuccess(order, paymentId);

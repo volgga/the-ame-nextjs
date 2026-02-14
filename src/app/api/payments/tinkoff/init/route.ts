@@ -40,14 +40,6 @@ export async function POST(request: Request) {
       : PRODUCTION_BASE;
     const baseSuccess = process.env.TINKOFF_SUCCESS_URL ?? `${safeBaseUrl}/payment/success`;
     const baseFail = process.env.TINKOFF_FAIL_URL ?? `${safeBaseUrl}/payment/fail`;
-    console.log("[tinkoff-init] URLs", {
-      baseUrl,
-      safeBaseUrl,
-      baseSuccess,
-      baseFail,
-      hasTinkoffSuccessEnv: !!process.env.TINKOFF_SUCCESS_URL,
-      hasTinkoffFailEnv: !!process.env.TINKOFF_FAIL_URL,
-    });
     const sep = (u: string) => (u.includes("?") ? "&" : "?");
     const successUrl = `${baseSuccess}${sep(baseSuccess)}orderId=${order.id}`;
     const failUrl = `${baseFail}${sep(baseFail)}orderId=${order.id}`;
@@ -62,11 +54,6 @@ export async function POST(request: Request) {
     }
     // Webhook URL: если не задан в env, используем дефолтный для прода
     const notificationUrl = process.env.TINKOFF_NOTIFICATION_URL || `${safeBaseUrl}/api/tinkoff-callback`;
-    console.log("[tinkoff-init] notification URL", {
-      fromEnv: !!process.env.TINKOFF_NOTIFICATION_URL,
-      notificationUrl,
-    });
-
     const c = order.customer ?? {};
     const data: Record<string, string> = {};
     if (c.deliveryAddress) data.Address = c.deliveryAddress;
@@ -149,7 +136,6 @@ export async function POST(request: Request) {
 
     await updateOrderStatus(order.id, "payment_pending", initResult.PaymentId);
 
-    console.log("[tinkoff-init] ok", { orderId: order.id, paymentId: initResult.PaymentId });
     return NextResponse.json({
       paymentUrl: initResult.PaymentURL,
       orderId: order.id,
