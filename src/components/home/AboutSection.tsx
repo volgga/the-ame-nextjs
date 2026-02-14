@@ -117,6 +117,7 @@ export function AboutSection({ about }: AboutSectionProps) {
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
+                  quality={75}
                 />
               </div>
             ) : (

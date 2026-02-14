@@ -165,6 +165,7 @@ function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClos
                   alt={product.title}
                   fill
                   sizes="64px"
+                  quality={75}
                   className="object-cover"
                 />
               </div>
@@ -468,7 +469,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                         alt={`${product.title} — фото ${idx + 1}`}
                         fill
                         sizes="64px"
-                        quality={88}
+                        quality={75}
                         className="object-cover object-center"
                       />
                     </button>
@@ -511,7 +512,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                             className="object-contain object-center rounded-xl"
                             priority={idx === 0}
                             fetchPriority={idx === 0 ? "high" : undefined}
-                            quality={idx === 0 ? 88 : 85}
+                            quality={idx === 0 ? 75 : 80}
                           />
                         </div>
                       ))

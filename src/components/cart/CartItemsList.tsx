@@ -81,7 +81,7 @@ function CartItemRow({
           alt={item.name}
           fill
           sizes="80px"
-          quality={88}
+          quality={75}
           className="object-cover"
           onError={() => setImgError(true)}
         />

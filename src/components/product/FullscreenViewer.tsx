@@ -274,6 +274,7 @@ export function FullscreenViewer({
                       alt={`${productTitle} — фото ${idx + 1}`}
                       fill
                       sizes="(max-width: 1200px) 100vw, 1200px"
+                      quality={80}
                       className="object-contain object-center pointer-events-none"
                       draggable={false}
                       unoptimized={src.startsWith("data:") || src.includes("blob:")}

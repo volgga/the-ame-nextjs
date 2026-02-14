@@ -383,14 +383,16 @@ All colors MUST be HSL.
     pointer-events: none;
   }
 
-  /* ---------- Product card: shared badge style (peeking effect) ---------- */
+  /* ---------- Product card: shared badge style (peeking effect) — единый цвет, width fit-content ---------- */
   .productCardBadge {
     position: relative;
     display: inline-flex;
     align-items: center;
-    height: 28px;
-    padding: 6px 14px 6px 18px;
-    font-size: 12px;
+    width: fit-content;
+    max-width: 100%;
+    height: 26px;
+    padding: 5px 12px 5px 14px;
+    font-size: 11px;
     font-weight: 500;
     line-height: 1;
     border-radius: 0 12px 12px 0;
@@ -408,12 +410,12 @@ All colors MUST be HSL.
   }
 
   .productCardBadgeNew {
-    background: #f5f1e8;
+    background: var(--page-bg);
     color: #1f2a1f;
   }
 
   .productCardBadgeDiscount {
-    background: #f5f1e8;
+    background: var(--page-bg);
     color: #1f2a1f;
   }
 
@@ -423,9 +425,9 @@ All colors MUST be HSL.
       gap: 4px;
     }
     .productCardBadge {
-      height: 25px;
+      height: 23px;
       font-size: 10px;
-      padding: 4px 10px 4px 14px;
+      padding: 4px 10px 4px 12px;
       margin-left: -6px;
     }
     .productCardBadge::before {

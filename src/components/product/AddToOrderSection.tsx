@@ -229,12 +229,12 @@ export function AddToOrderSection({ products }: AddToOrderSectionProps) {
             >
               {top && (
                 <div className="flex-shrink-0">
-                  <FlowerCard flower={top} product={products.find((p) => p.id === top.id)} showNewBadge={false} hideFavoriteOnMobile={true} showPriceFromOnMobile={true} />
+                  <FlowerCard flower={top} product={products.find((p) => p.id === top.id)} showNewBadge={false} hideFavoriteOnMobile={true} showPriceFromOnMobile={true} compactCard />
                 </div>
               )}
               {bottom && (
                 <div className="flex-shrink-0">
-                  <FlowerCard flower={bottom} product={products.find((p) => p.id === bottom.id)} showNewBadge={false} hideFavoriteOnMobile={true} showPriceFromOnMobile={true} />
+                  <FlowerCard flower={bottom} product={products.find((p) => p.id === bottom.id)} showNewBadge={false} hideFavoriteOnMobile={true} showPriceFromOnMobile={true} compactCard />
                 </div>
               )}
             </div>

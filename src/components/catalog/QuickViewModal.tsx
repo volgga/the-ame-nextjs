@@ -192,7 +192,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                       alt={`${product.name} — фото ${currentImageIndex + 1}`}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      quality={88}
+                      quality={75}
                       className="object-cover"
                       priority={currentImageIndex === 0}
                     />

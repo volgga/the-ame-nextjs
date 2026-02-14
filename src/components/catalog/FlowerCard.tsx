@@ -36,9 +36,11 @@ interface FlowerCardProps {
   showNewBadge?: boolean; // Показывать ли бейдж "новый" (по умолчанию true)
   hideFavoriteOnMobile?: boolean; // Скрывать ли кнопку избранного на мобилке (по умолчанию false)
   showPriceFromOnMobile?: boolean; // Показывать ли "от" перед ценой на мобилке (по умолчанию false)
+  /** Компактный режим для блока «Хотите добавить к заказу?»: единая высота блока с ценой/кнопками */
+  compactCard?: boolean;
 }
 
-export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteOnMobile = false, showPriceFromOnMobile = false }: FlowerCardProps) => {
+export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteOnMobile = false, showPriceFromOnMobile = false, compactCard = false }: FlowerCardProps) => {
   const { addToCart } = useCart();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
   const [quickBuyOpen, setQuickBuyOpen] = useState(false);
@@ -158,8 +160,8 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
             src={imageSrc}
             alt={flower.name}
             fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 300px"
-            quality={88}
+            sizes="(max-width: 640px) 50vw, (max-width: 768px) 45vw, (max-width: 1200px) 33vw, 300px"
+            quality={75}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onError={() => setImgError(true)}
@@ -219,10 +221,12 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
       </Link>
 
       {/* Mobile: компактный gap title–price–button. PC: price слева, справа [1 клик] [корзина] */}
-      <div className="px-1 flex flex-col gap-1.5 min-w-0 mt-1.5 md:gap-2 md:mt-2 md:flex-row md:items-center md:justify-between">
-        {/* Price block */}
+      <div
+        className={`px-1 flex flex-col gap-1.5 min-w-0 mt-1.5 md:gap-2 md:mt-2 md:flex-row md:items-center md:justify-between ${compactCard ? "min-h-[3rem] md:min-h-0" : ""}`}
+      >
+        {/* Price block — compactCard: фиксированная высота, чтобы карточки были ровными */}
         <div
-          className="flex items-baseline min-w-0 flex-shrink overflow-hidden flex-nowrap"
+          className={`flex items-baseline min-w-0 flex-shrink overflow-hidden flex-nowrap ${compactCard ? "min-h-[1.5em]" : ""}`}
           style={{ gap: "8px" }}
         >
           <span

@@ -113,7 +113,7 @@ export default async function ClientsBlogPostPage({ params }: BlogPostPageProps)
                 priority
                 className="object-cover"
                 sizes="100vw"
-                quality={90}
+                quality={80}
               />
             </div>
             {post.cover_caption && <p className="mt-4 text-center text-sm text-neutral-500">{post.cover_caption}</p>}

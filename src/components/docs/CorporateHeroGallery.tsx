@@ -108,7 +108,7 @@ export function CorporateHeroGallery({ images, className = "" }: CorporateHeroGa
               className="object-cover object-center select-none pointer-events-none"
               loading={i === 0 ? "eager" : "lazy"}
               sizes="(max-width: 768px) 100vw, 50vw"
-              quality={i === 0 ? 80 : 85}
+              quality={i === 0 ? 70 : 75}
               priority={i === 0}
             />
           </div>

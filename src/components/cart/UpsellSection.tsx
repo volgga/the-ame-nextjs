@@ -145,7 +145,7 @@ export function UpsellSection() {
                       alt={addon.title}
                       fill
                       sizes="160px"
-                      quality={88}
+                      quality={75}
                       className="object-cover"
                     />
                   </div>
