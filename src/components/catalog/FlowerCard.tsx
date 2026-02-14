@@ -141,15 +141,15 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
         <div className="group relative overflow-hidden rounded-2xl aspect-square bg-[#ece9e2]">
           {/* Бейдж "НОВЫЙ" — левый верхний угол */}
           {isNewEffective && (
-            <div className="new-badge absolute top-4 left-0 z-10 px-2.5 py-1.5 md:px-3 md:py-2 rounded-tr-lg rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-[10px] md:text-xs font-medium leading-none">
+            <div className="new-badge absolute top-2 left-0 z-10 px-2.5 py-1.5 md:px-3 md:py-2 rounded-tr-lg rounded-br-lg bg-[var(--page-bg)] text-[var(--color-text-main)] text-[10px] md:text-xs font-medium leading-none">
               НОВЫЙ
             </div>
           )}
-          {/* Бейдж "Скидка" — темно-зелёный, тот же стиль что и НОВЫЙ; справа от НОВЫЙ или сверху если оба */}
+          {/* Бейдж "Скидка" — цвет как header, тот же стиль что и НОВЫЙ */}
           {hasDiscount && (
             <div
-              className="absolute top-4 left-0 z-10 px-2.5 py-1.5 md:px-3 md:py-2 rounded-tr-lg rounded-br-lg bg-[var(--color-accent-dark)] text-white text-[10px] md:text-xs font-medium leading-none"
-              style={isNewEffective ? { top: "2.75rem" } : undefined}
+              className="absolute top-2 left-0 z-10 px-2.5 py-1.5 md:px-3 md:py-2 rounded-tr-lg rounded-br-lg bg-[var(--header-bg)] text-[var(--header-foreground)] text-[10px] md:text-xs font-medium leading-none"
+              style={isNewEffective ? { top: "1.75rem" } : undefined}
             >
               {flower.discountPercent != null && flower.discountPercent > 0
                 ? `-${Math.round(flower.discountPercent)}%`
@@ -166,6 +166,21 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
             loading="lazy"
             onError={() => setImgError(true)}
           />
+          {/* Mobile: сердечко в правом нижнем углу фото */}
+          {!hideFavoriteOnMobile && (
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              className={`absolute bottom-2 right-2 z-10 h-7 w-7 min-h-[28px] min-w-[28px] flex items-center justify-center rounded-full bg-white/80 backdrop-blur-sm border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-1 touch-manipulation md:hidden ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
+              title={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
+              aria-label={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
+            >
+              <Heart
+                className={`w-3 h-3 ${mounted && inFavorites ? "fill-[var(--color-accent-btn)] text-[var(--color-accent-btn)]" : ""}`}
+                strokeWidth={1.5}
+              />
+            </button>
+          )}
           {/* ❤️ Избранное и 🔍 Быстрый просмотр — показываются только при hover на фото (slide-in + fade), на touch скрыты */}
           <div className="absolute top-3 right-3 z-10 flex flex-col gap-1.5 opacity-0 translate-x-2 pointer-events-none transition-[opacity,transform] duration-200 ease-out [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-hover:translate-x-0 [@media(hover:hover)]:group-hover:pointer-events-auto">
             <button
@@ -205,33 +220,13 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
         </h3>
       </Link>
 
-      {/* Mobile: строка 2 — цена слева + сердечко справа; строка 3 — кнопка «В корзину» на всю ширину */}
-      <div className="px-1 mt-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-2 md:gap-3 min-w-0">
-        <div className="flex items-center justify-between gap-2 min-w-0 md:flex-initial flex-wrap">
-          <span className="inline-flex items-baseline gap-1.5 flex-shrink-0">
-            {oldPriceLabel != null && (
-              <span className="text-sm text-color-text-secondary line-through">
-                {oldPriceLabel}
-              </span>
-            )}
-            <span className="text-lg font-semibold text-color-text-main leading-tight whitespace-nowrap">
-              {priceLabel}
-            </span>
-          </span>
-          {/* Сердечко справа от цены (mobile + desktop) */}
-          {!hideFavoriteOnMobile && (
-            <button
-              type="button"
-              onClick={handleToggleFavorite}
-              className={`product-cta h-9 w-9 min-h-[36px] min-w-[36px] flex items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation md:hidden ${mounted && inFavorites ? "border-[var(--color-accent-btn)]" : ""}`}
-              title={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-              aria-label={mounted && inFavorites ? "Убрать из избранного" : "Добавить в избранное"}
-            >
-              <Heart
-                className={`w-3.5 h-3.5 ${mounted && inFavorites ? "fill-[var(--color-accent-btn)] text-[var(--color-accent-btn)]" : ""}`}
-                strokeWidth={1.5}
-              />
-            </button>
+      {/* PC: одна цена (effective), без зачёркнутой. Mobile: новая + старая зачёркнутая если скидка */}
+      <div className="px-1 mt-2 flex flex-col gap-1.5 md:flex-row md:items-center md:justify-between md:gap-2 md:gap-3 min-w-0">
+        <div className="flex items-baseline gap-1.5 min-w-0 flex-shrink-0">
+          {/* PC: только effective. Mobile: новая + старая зачёркнутая */}
+          <span className="text-lg font-semibold text-color-text-main leading-tight whitespace-nowrap">{priceLabel}</span>
+          {oldPriceLabel != null && (
+            <span className="md:hidden text-sm text-color-text-secondary/80 line-through">{oldPriceLabel}</span>
           )}
         </div>
 
@@ -245,13 +240,12 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
                 e.stopPropagation();
                 setPreorderOpen(true);
               }}
-              className="product-cta w-full md:w-auto min-h-[36px] md:min-h-[36px] md:min-w-0 md:py-0.5 md:px-4 rounded-full md:rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation text-sm font-medium"
+              className="product-cta w-full md:w-auto min-h-[36px] md:min-h-[36px] md:min-w-0 md:py-0.5 md:px-4 rounded-full md:rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation text-sm font-medium"
               aria-label="Предзаказ"
               title="Предзаказ"
             >
-              <Clock className="w-3.5 h-3.5 md:hidden" strokeWidth={1.6} aria-hidden />
-              <span className="md:hidden">Предзаказ</span>
-              <span className="hidden md:inline text-xs font-normal leading-none">Предзаказ</span>
+              <Clock className="w-3.5 h-3.5 shrink-0" strokeWidth={1.6} aria-hidden />
+              <span>Предзаказ</span>
             </button>
           ) : (
             <>

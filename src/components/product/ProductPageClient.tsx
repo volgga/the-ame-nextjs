@@ -606,10 +606,10 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
 
               {/* Цена и блок действий в едином контейнере */}
               <div className="mb-4">
-                {/* Цена (при скидке — старая зачёркнута, новая рядом) */}
+                {/* Цена: при скидке — слева старая (мельче, прозрачнее, зачёркнута), справа новая */}
                 <div className="text-lg md:text-xl font-medium text-color-text-main mb-4 flex items-baseline gap-2 flex-wrap">
                   {displayOriginalPrice != null && (
-                    <span className="text-base text-color-text-secondary line-through">
+                    <span className="text-sm md:text-base text-color-text-secondary/80 line-through">
                       {displayOriginalPrice.toLocaleString("ru-RU")} ₽
                     </span>
                   )}
