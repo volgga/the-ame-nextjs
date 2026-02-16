@@ -17,7 +17,7 @@ export function ContactMessengersRow() {
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-2">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-1.5">
       <span className="text-xs font-medium text-color-text-secondary uppercase tracking-wide shrink-0">
         СВЯЗАТЬСЯ С НАМИ:
       </span>

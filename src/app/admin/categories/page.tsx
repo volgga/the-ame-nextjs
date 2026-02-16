@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Category } from "@/components/admin/categories/CategoryCard";
 import type { Subcategory } from "@/types/admin";
 import { slugify } from "@/utils/slugify";
+import { Modal } from "@/components/ui/modal";
 import { FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
 import { parseAdminResponse } from "@/lib/adminFetch";
 
@@ -34,8 +35,16 @@ export default function AdminCategoriesPage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [editing, setEditing] = useState<Category | null>(null);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
-  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    is_active: true,
+    description: "",
+    seo_title: "",
+    info_subtitle: "",
+    info_description: "",
+    info_content: "",
+    info_image_url: "",
+  });
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   // Состояние для подкатегорий
@@ -49,6 +58,10 @@ export default function AdminCategoriesPage() {
     description: "",
     seo_title: "",
     seo_description: "",
+    info_subtitle: "",
+    info_description: "",
+    info_content: "",
+    info_image_url: "",
   });
   const [deleteSubcategoryConfirmId, setDeleteSubcategoryConfirmId] = useState<string | null>(null);
   // Справочник "Цветы в составе" (таблица flowers) — только при редактировании категории "Цветы в составе"
@@ -120,12 +133,11 @@ export default function AdminCategoriesPage() {
   function closeModal() {
     setCreating(false);
     setEditing(null);
-    setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
-    setIsSlugManuallyEdited(false);
+    setForm({ name: "", is_active: true, description: "", seo_title: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
     setSubcategories([]);
     setEditingSubcategory(null);
     setCreatingSubcategory(false);
-    setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+    setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
     setDeleteSubcategoryConfirmId(null);
     setFlowersList([]);
     setEditingFlower(null);
@@ -257,7 +269,7 @@ export default function AdminCategoriesPage() {
       if (e.key === "Escape") {
         setCreatingSubcategory(false);
         setEditingSubcategory(null);
-        setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+        setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
       }
     };
     window.addEventListener("keydown", onEsc);
@@ -316,13 +328,8 @@ export default function AdminCategoriesPage() {
     e.preventDefault();
     setError("");
     const nameTrimmed = form.name.trim();
-    const slugTrimmed = form.slug.trim();
     if (!nameTrimmed) {
       setError("Название категории обязательно.");
-      return;
-    }
-    if (!slugTrimmed) {
-      setError("Slug обязателен. Заполните slug или измените название.");
       return;
     }
     try {
@@ -333,10 +340,13 @@ export default function AdminCategoriesPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: form.name.trim(),
-            slug: slugTrimmed,
             is_active: form.is_active,
             description: form.description.trim() || null,
             seo_title: form.seo_title.trim() || null,
+            info_subtitle: form.info_subtitle.trim() || null,
+            info_description: form.info_description.trim() || null,
+            info_content: form.info_content.trim() || null,
+            info_image_url: form.info_image_url.trim() || null,
           }),
         });
         const result = await parseAdminResponse<Category & { error?: string }>(res, {
@@ -357,8 +367,7 @@ export default function AdminCategoriesPage() {
         setCategoriesFromServer((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
         setCategoriesDraft((s) => [...s, newCat].sort((a, b) => a.sort_order - b.sort_order));
         setCreating(false);
-        setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
-        setIsSlugManuallyEdited(false);
+        setForm({ name: "", is_active: true, description: "", seo_title: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
       } else if (editing) {
         const url = `/api/admin/categories/${editing.id}`;
         const res = await fetch(url, {
@@ -366,10 +375,13 @@ export default function AdminCategoriesPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             name: form.name.trim(),
-            slug: slugTrimmed,
             is_active: form.is_active,
             description: form.description.trim() || null,
             seo_title: form.seo_title.trim() || null,
+            info_subtitle: form.info_subtitle.trim() || null,
+            info_description: form.info_description.trim() || null,
+            info_content: form.info_content.trim() || null,
+            info_image_url: form.info_image_url.trim() || null,
           }),
         });
         const result = await parseAdminResponse<
@@ -399,8 +411,7 @@ export default function AdminCategoriesPage() {
         setCategoriesFromServer((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setCategoriesDraft((s) => s.map((x) => (x.id === editing.id ? updated : x)));
         setEditing(null);
-        setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
-        setIsSlugManuallyEdited(false);
+        setForm({ name: "", is_active: true, description: "", seo_title: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
       }
     } catch (e) {
       setError(String(e));
@@ -503,6 +514,10 @@ export default function AdminCategoriesPage() {
             seo_description: subcategoryForm.seo_description.trim() || null,
             sort_order: subcategories.length,
             is_active: true,
+            info_subtitle: subcategoryForm.info_subtitle.trim() || null,
+            info_description: subcategoryForm.info_description.trim() || null,
+            info_content: subcategoryForm.info_content.trim() || null,
+            info_image_url: subcategoryForm.info_image_url.trim() || null,
           }),
         });
         const result = await parseAdminResponse<Subcategory & { error?: string }>(res, {
@@ -521,7 +536,7 @@ export default function AdminCategoriesPage() {
         const data = result.data;
         setSubcategories((s) => [...s, data].sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999)));
         setCreatingSubcategory(false);
-        setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+        setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
       } else if (editingSubcategory) {
         const url = `/api/admin/subcategories/${editingSubcategory.id}`;
         const res = await fetch(url, {
@@ -533,6 +548,10 @@ export default function AdminCategoriesPage() {
             description: subcategoryForm.description.trim() || null,
             seo_title: subcategoryForm.seo_title.trim() || null,
             seo_description: subcategoryForm.seo_description.trim() || null,
+            info_subtitle: subcategoryForm.info_subtitle.trim() || null,
+            info_description: subcategoryForm.info_description.trim() || null,
+            info_content: subcategoryForm.info_content.trim() || null,
+            info_image_url: subcategoryForm.info_image_url.trim() || null,
           }),
         });
         const result = await parseAdminResponse<Subcategory & { error?: string }>(res, {
@@ -553,7 +572,7 @@ export default function AdminCategoriesPage() {
           s.map((x) => (x.id === editingSubcategory.id ? data : x)).sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999))
         );
         setEditingSubcategory(null);
-        setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+        setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
       }
     } catch (e) {
       setError(String(e));
@@ -779,8 +798,7 @@ export default function AdminCategoriesPage() {
           onClick={() => {
             setCreating(true);
             setEditing(null);
-            setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
-            setIsSlugManuallyEdited(false);
+            setForm({ name: "", is_active: true, description: "", seo_title: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
           }}
           className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
         >
@@ -788,56 +806,55 @@ export default function AdminCategoriesPage() {
         </button>
       </div>
 
-      {(creating || editing) && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
-          <div
-            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
-              <h3 className="text-lg font-semibold text-[#111] truncate pr-2">{creating ? "Новая категория" : "Редактирование"}</h3>
-              <button type="button" onClick={closeModal} className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 flex-shrink-0" aria-label="Закрыть">×</button>
-            </div>
-            <form onSubmit={handleSaveForm} className="flex flex-col flex-1 min-h-0">
-              <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6" style={{ overscrollBehavior: "contain" }}>
-                {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
-                <div className="space-y-3">
+      <Modal
+        isOpen={!!(creating || editing)}
+        onClose={closeModal}
+        title={creating ? "Новая категория" : "Редактирование"}
+        footer={
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              form="category-form"
+              className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+            >
+              Сохранить
+            </button>
+            <button
+              type="button"
+              onClick={closeModal}
+              className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
+            >
+              Отмена
+            </button>
+            {editing && (
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteConfirmId(editing.id);
+                  closeModal();
+                }}
+                className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              >
+                Удалить
+              </button>
+            )}
+          </div>
+        }
+      >
+        <form id="category-form" onSubmit={handleSaveForm} className="space-y-3">
+          {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
                   <div>
                     <label className="block text-sm font-medium text-[#111]">Название категории</label>
                     <input
                       type="text"
                       value={form.name}
-                      onChange={(e) => {
-                        const name = e.target.value;
-                        setForm((f) => ({
-                          ...f,
-                          name,
-                          ...(isSlugManuallyEdited ? {} : { slug: slugify(name) }),
-                        }));
-                      }}
+                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                       className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
                       required
                       autoFocus
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#111]">Slug</label>
-                    <input
-                      type="text"
-                      value={form.slug}
-                      onChange={(e) => {
-                        setForm((f) => ({ ...f, slug: e.target.value }));
-                        setIsSlugManuallyEdited(true);
-                      }}
-                      className="mt-2 w-full rounded border border-gray-300 px-3 py-2 text-[#111] font-mono text-sm"
-                      placeholder="vazy"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      Автоматически из названия. Если измените вручную — дальнейшее изменение названия не перезапишет
-                      slug.
-                    </p>
-                  </div>
+                  <p className="text-xs text-gray-500">Slug генерируется автоматически из названия.</p>
                   <div>
                     <label className="block text-sm font-medium text-[#111]">Текст</label>
                     <textarea
@@ -864,6 +881,53 @@ export default function AdminCategoriesPage() {
                     <p className="mt-1 text-xs text-gray-500">
                       Если заполнено — используется в &lt;title&gt; страницы категории вместо автогенерации.
                     </p>
+                  </div>
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="text-sm font-medium text-[#111] mb-3">Информационный блок (внизу страницы)</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs text-[#111] mb-0.5">Подзаголовок</label>
+                        <input
+                          type="text"
+                          value={form.info_subtitle}
+                          onChange={(e) => setForm((f) => ({ ...f, info_subtitle: e.target.value }))}
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
+                          placeholder="Раскрытое название категории"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[#111] mb-0.5">Описание подзаголовка</label>
+                        <textarea
+                          value={form.info_description}
+                          onChange={(e) => setForm((f) => ({ ...f, info_description: e.target.value }))}
+                          rows={2}
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
+                          placeholder="Короткий текст под подзаголовком"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[#111] mb-0.5">Контентный блок (HTML)</label>
+                        <textarea
+                          value={form.info_content}
+                          onChange={(e) => setForm((f) => ({ ...f, info_content: e.target.value }))}
+                          rows={8}
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm font-mono text-[#111]"
+                          placeholder="Подзаголовки, списки, жирный текст и т.д. (HTML)"
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Можно использовать &lt;h3&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt; и др.</p>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[#111] mb-0.5">Картинка 1:1 (URL)</label>
+                        <input
+                          type="url"
+                          value={form.info_image_url}
+                          onChange={(e) => setForm((f) => ({ ...f, info_image_url: e.target.value }))}
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
+                          placeholder="https://..."
+                        />
+                        <p className="mt-1 text-xs text-gray-500">Квадратная картинка, отображается справа от текста (desktop)</p>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="flex items-center gap-2">
@@ -983,7 +1047,7 @@ export default function AdminCategoriesPage() {
                           onClick={() => {
                             setCreatingSubcategory(true);
                             setEditingSubcategory(null);
-                            setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+                            setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
                           }}
                           className="text-xs text-blue-600 hover:text-blue-800 underline"
                         >
@@ -1035,12 +1099,17 @@ export default function AdminCategoriesPage() {
                                   onClick={() => {
                                     setEditingSubcategory(subcat);
                                     setCreatingSubcategory(false);
+const sc = subcat as { info_subtitle?: string | null; info_description?: string | null; info_content?: string | null; info_image_url?: string | null };
                                     setSubcategoryForm({
                                       name: subcat.name,
                                       title: subcat.title || "",
                                       description: subcat.description || "",
                                       seo_title: subcat.seo_title || "",
                                       seo_description: subcat.seo_description || "",
+                                      info_subtitle: sc.info_subtitle ?? "",
+                                      info_description: sc.info_description ?? "",
+                                      info_content: sc.info_content ?? "",
+                                      info_image_url: sc.info_image_url ?? "",
                                     });
                                   }}
                                   className="text-xs text-blue-600 hover:text-blue-800"
@@ -1061,41 +1130,8 @@ export default function AdminCategoriesPage() {
                       )}
                     </div>
                   )}
-                </div>
-              </div>
-              <div className="flex gap-2 p-4 sm:p-6 pt-4 border-t border-border-block flex-shrink-0 bg-white">
-                <button
-                  type="submit"
-                  className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
-                >
-                  Сохранить
-                </button>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
-                >
-                  Отмена
-                </button>
-                {editing && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDeleteConfirmId(editing.id);
-                      setEditing(null);
-                      setForm({ name: "", slug: "", is_active: true, description: "", seo_title: "" });
-                      setIsSlugManuallyEdited(false);
-                    }}
-                    className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                  >
-                    Удалить
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+        </form>
+      </Modal>
 
       {/* Модалка создания/редактирования подкатегории */}
       {(creatingSubcategory || editingSubcategory) && (
@@ -1103,7 +1139,7 @@ export default function AdminCategoriesPage() {
           <div className="absolute inset-0 bg-black/40" onClick={() => {
             setCreatingSubcategory(false);
             setEditingSubcategory(null);
-            setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+            setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
           }} aria-hidden />
           <div
             className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
@@ -1118,7 +1154,7 @@ export default function AdminCategoriesPage() {
                 onClick={() => {
                   setCreatingSubcategory(false);
                   setEditingSubcategory(null);
-                  setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+                  setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
                 }}
                 className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 flex-shrink-0"
                 aria-label="Закрыть"
@@ -1190,6 +1226,47 @@ export default function AdminCategoriesPage() {
                     />
                     <p className="mt-1 text-xs text-gray-500">{subcategoryForm.seo_description.length}/500 символов</p>
                   </div>
+                  <div className="pt-4 border-t border-gray-200">
+                    <h4 className="text-sm font-medium text-[#111] mb-3">Информационный блок</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs text-[#111] mb-0.5">Подзаголовок</label>
+                        <input
+                          type="text"
+                          value={subcategoryForm.info_subtitle}
+                          onChange={(e) => setSubcategoryForm({ ...subcategoryForm, info_subtitle: e.target.value })}
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[#111] mb-0.5">Описание подзаголовка</label>
+                        <textarea
+                          value={subcategoryForm.info_description}
+                          onChange={(e) => setSubcategoryForm({ ...subcategoryForm, info_description: e.target.value })}
+                          rows={2}
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[#111] mb-0.5">Контентный блок (HTML)</label>
+                        <textarea
+                          value={subcategoryForm.info_content}
+                          onChange={(e) => setSubcategoryForm({ ...subcategoryForm, info_content: e.target.value })}
+                          rows={6}
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm font-mono text-[#111]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[#111] mb-0.5">Картинка 1:1 (URL)</label>
+                        <input
+                          type="url"
+                          value={subcategoryForm.info_image_url}
+                          onChange={(e) => setSubcategoryForm({ ...subcategoryForm, info_image_url: e.target.value })}
+                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-2 p-4 sm:p-6 pt-4 border-t border-border-block flex-shrink-0 bg-white">
@@ -1204,7 +1281,7 @@ export default function AdminCategoriesPage() {
                   onClick={() => {
                     setCreatingSubcategory(false);
                     setEditingSubcategory(null);
-                    setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+                    setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
                   }}
                   className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
                 >
@@ -1216,7 +1293,7 @@ export default function AdminCategoriesPage() {
                     onClick={() => {
                       setDeleteSubcategoryConfirmId(editingSubcategory.id);
                       setEditingSubcategory(null);
-                      setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "" });
+                      setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
                     }}
                     className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
@@ -1433,14 +1510,17 @@ export default function AdminCategoriesPage() {
           onEdit={(cat) => {
             setEditing(cat);
             setCreating(false);
+            const c = cat as { info_subtitle?: string | null; info_description?: string | null; info_content?: string | null; info_image_url?: string | null };
             setForm({
               name: cat.name,
-              slug: cat.slug ?? slugify(cat.name),
               is_active: cat.is_active,
               description: cat.description ?? "",
               seo_title: cat.seo_title ?? "",
+              info_subtitle: c.info_subtitle ?? "",
+              info_description: c.info_description ?? "",
+              info_content: c.info_content ?? "",
+              info_image_url: c.info_image_url ?? "",
             });
-            setIsSlugManuallyEdited(false);
           }}
           onToggleActive={handleToggleActive}
           onDeleteClick={(cat) => setDeleteConfirmId(cat.id)}

@@ -18,6 +18,10 @@ const createSchema = z.object({
   seo_description: z.string().optional().nullable(),
   sort_order: z.number().int().optional().nullable(),
   is_active: z.boolean().optional().nullable(),
+  info_subtitle: z.string().max(500).optional().nullable(),
+  info_description: z.string().max(2000).optional().nullable(),
+  info_content: z.string().max(50000).optional().nullable(),
+  info_image_url: z.string().max(2000).optional().nullable(),
 });
 
 const updateSchema = z.object({
@@ -29,6 +33,10 @@ const updateSchema = z.object({
   seo_description: z.string().optional().nullable(),
   sort_order: z.number().int().optional().nullable(),
   is_active: z.boolean().optional().nullable(),
+  info_subtitle: z.string().max(500).optional().nullable(),
+  info_description: z.string().max(2000).optional().nullable(),
+  info_content: z.string().max(50000).optional().nullable(),
+  info_image_url: z.string().max(2000).optional().nullable(),
 });
 
 /**
@@ -46,7 +54,7 @@ export async function GET(request: NextRequest) {
     let query = (supabase as any)
       .from("subcategories")
       .select(
-        "id, category_id, name, slug, title, description, seo_title, seo_description, sort_order, is_active, created_at, updated_at"
+        "id, category_id, name, slug, title, description, seo_title, seo_description, sort_order, is_active, created_at, updated_at, info_subtitle, info_description, info_content, info_image_url"
       );
 
     if (categoryId) {
@@ -93,6 +101,10 @@ export async function POST(request: NextRequest) {
         seo_description: parsed.data.seo_description?.trim() || null,
         sort_order: parsed.data.sort_order ?? null,
         is_active: parsed.data.is_active ?? true,
+        info_subtitle: parsed.data.info_subtitle?.trim() || null,
+        info_description: parsed.data.info_description?.trim() || null,
+        info_content: parsed.data.info_content?.trim() || null,
+        info_image_url: parsed.data.info_image_url?.trim() || null,
       })
       .select()
       .single();

@@ -24,6 +24,11 @@ export type Category = {
   seo_title?: string | null;
   /** Подразделы по цветам (только для категории "Цветы в составе") */
   flower_sections?: FlowerSection[] | null;
+  /** Информационный блок внизу страницы */
+  info_subtitle?: string | null;
+  info_description?: string | null;
+  info_content?: string | null;
+  info_image_url?: string | null;
 };
 
 /** Дефолтный SEO-текст, если у категории нет своего seoText. */
@@ -45,7 +50,7 @@ async function getCategoriesUncached(): Promise<Category[]> {
   try {
     const { data, error } = await supabase
       .from("categories")
-      .select("id, name, slug, sort_order, is_active, description, seo_title, flower_sections")
+      .select("id, name, slug, sort_order, is_active, description, seo_title, flower_sections, info_subtitle, info_description, info_content, info_image_url")
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
 
@@ -60,6 +65,10 @@ async function getCategoriesUncached(): Promise<Category[]> {
       description: r.description ?? null,
       seo_title: r.seo_title ?? null,
       flower_sections: Array.isArray(r.flower_sections) ? (r.flower_sections as FlowerSection[]) : null,
+      info_subtitle: (r as { info_subtitle?: string | null }).info_subtitle ?? null,
+      info_description: (r as { info_description?: string | null }).info_description ?? null,
+      info_content: (r as { info_content?: string | null }).info_content ?? null,
+      info_image_url: (r as { info_image_url?: string | null }).info_image_url ?? null,
     }));
   } catch {
     return FALLBACK_CATEGORIES;

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { slugify } from "@/utils/slugify";
 import { z } from "zod";
 
 async function requireAdmin() {
@@ -25,6 +26,10 @@ const updateSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
   seo_title: z.string().max(200).optional().nullable(),
   flower_sections: z.array(flowerSectionSchema).optional().nullable(),
+  info_subtitle: z.string().max(500).optional().nullable(),
+  info_description: z.string().max(2000).optional().nullable(),
+  info_content: z.string().max(50000).optional().nullable(),
+  info_image_url: z.string().max(2000).optional().nullable(),
 });
 
 /** Уникальный slug; если занят другой записью (не excludeId), добавляем -2, -3, ... */
@@ -64,6 +69,10 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
       description?: string | null;
       seo_title?: string | null;
       flower_sections?: unknown;
+      info_subtitle?: string | null;
+      info_description?: string | null;
+      info_content?: string | null;
+      info_image_url?: string | null;
     } = {};
     if (parsed.data.name !== undefined) payload.name = parsed.data.name.trim();
     if (parsed.data.is_active !== undefined) payload.is_active = parsed.data.is_active;
@@ -75,6 +84,10 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
           ? parsed.data.flower_sections
           : null;
     }
+    if (parsed.data.info_subtitle !== undefined) payload.info_subtitle = parsed.data.info_subtitle?.trim() || null;
+    if (parsed.data.info_description !== undefined) payload.info_description = parsed.data.info_description?.trim() || null;
+    if (parsed.data.info_content !== undefined) payload.info_content = parsed.data.info_content?.trim() || null;
+    if (parsed.data.info_image_url !== undefined) payload.info_image_url = parsed.data.info_image_url?.trim() || null;
 
     if (parsed.data.slug !== undefined) {
       const slugTrimmed = parsed.data.slug.trim();
@@ -88,6 +101,15 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
     }
 
     const supabase = getSupabaseAdmin();
+    // Если slug не передан и у категории пустой slug — генерируем из названия
+    if (parsed.data.slug === undefined) {
+      const { data: existing } = await (supabase as any).from("categories").select("slug, name").eq("id", id).maybeSingle();
+      if (existing && (!existing.slug || String(existing.slug).trim() === "")) {
+        const nameToUse = parsed.data.name?.trim() || existing.name || "category";
+        const baseSlug = slugify(nameToUse) || "category";
+        payload.slug = await ensureUniqueSlugExcept(supabase, baseSlug, id);
+      }
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).from("categories").update(payload).eq("id", id).select().single();
     if (error) throw error;

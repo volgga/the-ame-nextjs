@@ -70,6 +70,20 @@ function AccordionItem({
   );
 }
 
+/** Статичный блок без аккордеона (всегда раскрыт, не кликабелен) */
+function StaticBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="border-b border-border-block last:border-b-0">
+      <div className="py-3 md:py-3.5">
+        <span className="text-sm font-medium text-color-text-secondary uppercase tracking-wide">{title}</span>
+      </div>
+      <div className="pb-4">
+        <div className="text-sm text-color-text-secondary leading-relaxed pr-1">{children}</div>
+      </div>
+    </div>
+  );
+}
+
 /** Модалка "Купить в один клик" */
 function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClose: () => void; product: Product }) {
   const [name, setName] = useState("");
@@ -638,13 +652,18 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                       </button>
                     ))}
                   </div>
+                  {effectiveVariant?.photoLabel && (
+                    <p className="mt-1.5 text-sm text-color-text-main font-medium">
+                      На фото: {effectiveVariant.photoLabel}
+                    </p>
+                  )}
                 </div>
               )}
 
               {/* Цена и блок действий в едином контейнере */}
               <div className="mb-4">
                 {/* Цена: основная слева, старая зачёркнута справа (если скидка) */}
-                <div className="text-lg md:text-xl font-medium text-color-text-main mb-4 flex items-baseline gap-2 flex-wrap">
+                <div className="text-lg md:text-xl font-medium text-color-text-main mb-3 flex items-baseline gap-2 flex-wrap">
                   <span>{displayPrice.toLocaleString("ru-RU")} ₽</span>
                   {displayOriginalPrice != null && (
                     <span className="text-sm md:text-base text-color-text-secondary/80 line-through">
@@ -656,7 +675,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                 {/* Блок действий */}
                 <div>
                   {/* Первая строка: количество, CTA кнопки, избранное. На mobile — компактно в одну строку. */}
-                  <div className="flex flex-row items-center gap-1.5 md:gap-2 mb-4 flex-nowrap">
+                  <div className="flex flex-row items-center gap-1.5 md:gap-2 mb-3 flex-nowrap">
                     {/* Селектор количества */}
                     <div className="flex items-center border border-border-block rounded-lg bg-white overflow-hidden flex-shrink-0 h-8 md:h-9">
                       <button
@@ -734,7 +753,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                   <button
                     type="button"
                     onClick={() => setGiftHintOpen(true)}
-                    className="flex items-center gap-1.5 text-xs text-color-text-main hover:text-color-text-secondary transition-colors w-fit min-h-[40px]"
+                    className="flex items-center gap-1.5 text-xs text-color-text-main hover:text-color-text-secondary transition-colors w-fit min-h-[36px] mt-1"
                   >
                     <Bell className="w-3.5 h-3.5" />
                     <span className="relative after:absolute after:left-0 after:-bottom-[3px] after:h-[1px] after:w-full after:bg-[var(--header-foreground)] after:origin-left after:transition-transform after:duration-300 after:ease-out after:scale-x-0 hover:after:scale-x-100">
@@ -747,37 +766,17 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                 </div>
               </div>
 
-              {/* Аккордеон-секции (single-open): без ограничения высоты описания */}
+              {/* Секции: Состав always-open, Размер, Описание, … */}
               <div className="mt-4 space-y-0">
-                {product.shortDescription && (
-                  <AccordionItem
-                    id="Описание"
-                    title="Описание"
-                    isOpen={openedAccordion === "Описание"}
-                    onToggle={() => handleAccordionToggle("Описание")}
-                  >
-                    <p className="whitespace-pre-line">{product.shortDescription}</p>
-                  </AccordionItem>
-                )}
-
+                {/* Состав — всегда раскрыт, не кликабелен */}
                 {displayComposition && displayComposition.trim() ? (
-                  <AccordionItem
-                    id="Состав"
-                    title="Состав"
-                    isOpen={openedAccordion === "Состав"}
-                    onToggle={() => handleAccordionToggle("Состав")}
-                  >
+                  <StaticBlock title="Состав">
                     <p className="whitespace-pre-line">{displayComposition}</p>
-                  </AccordionItem>
+                  </StaticBlock>
                 ) : hasVariants || product.composition != null ? (
-                  <AccordionItem
-                    id="Состав"
-                    title="Состав"
-                    isOpen={openedAccordion === "Состав"}
-                    onToggle={() => handleAccordionToggle("Состав")}
-                  >
+                  <StaticBlock title="Состав">
                     <p className="text-color-text-secondary">—</p>
-                  </AccordionItem>
+                  </StaticBlock>
                 ) : null}
 
                 {(displaySizeHeight != null && displaySizeHeight > 0) ||
@@ -807,6 +806,17 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                     <p className="text-color-text-secondary">—</p>
                   </AccordionItem>
                 ) : null}
+
+                {product.shortDescription && (
+                  <AccordionItem
+                    id="Описание"
+                    title="Описание"
+                    isOpen={openedAccordion === "Описание"}
+                    onToggle={() => handleAccordionToggle("Описание")}
+                  >
+                    <p className="whitespace-pre-line">{product.shortDescription}</p>
+                  </AccordionItem>
+                )}
 
                 <AccordionItem
                   id="Подарок при заказе"

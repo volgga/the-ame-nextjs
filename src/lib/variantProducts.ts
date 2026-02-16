@@ -59,6 +59,8 @@ export type ProductVariantPublic = {
   discountPercent?: number | null;
   /** Цена со скидкой (финальная) */
   discountPrice?: number | null;
+  /** Текст для отображения «На фото: …» под названием варианта */
+  photoLabel?: string | null;
 };
 
 /**
@@ -394,7 +396,7 @@ export async function getVariantProductWithVariantsBySlug(
     const { data: vars, error: vErr } = await supabase
       .from("product_variants")
       .select(
-        "id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image, bouquet_colors, is_preorder, is_new, new_until, discount_percent, discount_price"
+        "id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image, bouquet_colors, is_preorder, is_new, new_until, discount_percent, discount_price, photo_label"
       )
       .eq("product_id", (vp as { id: number }).id)
       .eq("is_active", true)
@@ -419,6 +421,7 @@ export async function getVariantProductWithVariantsBySlug(
         new_until?: string | null;
         discount_percent?: number | null;
         discount_price?: number | null;
+        photo_label?: string | null;
       }) => ({
         id: v.id,
         name: v.title ?? "",
@@ -437,6 +440,7 @@ export async function getVariantProductWithVariantsBySlug(
         isPreorder: v.is_preorder ?? false,
         discountPercent: v.discount_percent != null ? Number(v.discount_percent) : null,
         discountPrice: v.discount_price != null ? Number(v.discount_price) : null,
+        photoLabel: v.photo_label?.trim() || null,
       })
     );
     return { ...product, variants };

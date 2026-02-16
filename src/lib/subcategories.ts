@@ -15,6 +15,11 @@ export interface Subcategory {
   seo_description?: string | null;
   sort_order?: number | null;
   is_active?: boolean | null;
+  /** Информационный блок внизу страницы подкатегории */
+  info_subtitle?: string | null;
+  info_description?: string | null;
+  info_content?: string | null;
+  info_image_url?: string | null;
 }
 
 /**
@@ -38,7 +43,7 @@ export async function getOccasionsSubcategories(): Promise<Subcategory[]> {
     // Загружаем подкатегории этой категории
     const { data: subcategories, error: subError } = await supabase
       .from("subcategories")
-      .select("id, category_id, name, slug, title, description, seo_title, seo_description, sort_order, is_active")
+      .select("id, category_id, name, slug, title, description, seo_title, seo_description, sort_order, is_active, info_subtitle, info_description, info_content, info_image_url")
       .eq("category_id", categories.id)
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
@@ -99,7 +104,7 @@ export async function getSubcategoryBySlug(categoryId: string, slug: string): Pr
   try {
     const { data, error } = await supabase
       .from("subcategories")
-      .select("id, category_id, name, slug, title, description, seo_title, seo_description, sort_order, is_active")
+      .select("id, category_id, name, slug, title, description, seo_title, seo_description, sort_order, is_active, info_subtitle, info_description, info_content, info_image_url")
       .eq("category_id", categoryId)
       .eq("slug", slug)
       .eq("is_active", true)

@@ -15,6 +15,7 @@ import { productHasFlowerSlug } from "@/lib/catalogFlowersFromComposition";
 import { getOccasionsSubcategories } from "@/lib/subcategories";
 import { OCCASIONS_CATEGORY_SLUG, FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
 import { OccasionFilterButtons } from "@/components/catalog/occasion-filter-buttons";
+import { CategoryInfoBlock } from "@/components/catalog/CategoryInfoBlock";
 import {
   canonicalUrl,
   truncateDescription,
@@ -290,6 +291,8 @@ export default async function MagazineCategoryPage({ params, searchParams }: Mag
         >
           <FlowerCatalog products={paginatedProducts} total={total} currentPage={currentPage} pageSize={pageSize} allProductsForInfiniteScroll={products} />
         </Suspense>
+
+        <CategoryInfoBlock data={category} />
       </Container>
     </div>
   );

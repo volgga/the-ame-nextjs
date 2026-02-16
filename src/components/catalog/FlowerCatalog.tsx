@@ -11,9 +11,9 @@ import { getEffectivePrice, isDiscountActive } from "@/lib/priceUtils";
 type SortValue = "default" | "price_asc" | "price_desc";
 
 /**
- * FlowerCatalog — каталог товаров с серверной пагинацией или автодогрузкой.
- * Если singlePage=true: показывает все товары с автодогрузкой при скролле.
- * Иначе: серверная пагинация с кнопкой "Показать ещё" (на desktop); на mobile — infinite scroll, если передан allProductsForInfiniteScroll.
+ * FlowerCatalog — каталог товаров с infinite scroll.
+ * Если singlePage=true или передан allProductsForInfiniteScroll: подгрузка при скролле (IntersectionObserver).
+ * Кнопки "Показать ещё" нет — только infinite scroll.
  */
 type FlowerCatalogProps = {
   products: Product[];
@@ -21,7 +21,7 @@ type FlowerCatalogProps = {
   currentPage: number;
   pageSize: number;
   singlePage?: boolean;
-  /** Полный список товаров для infinite scroll на мобиле (вместо кнопки "Показать ещё") */
+  /** Полный список товаров для infinite scroll (desktop + mobile) */
   allProductsForInfiniteScroll?: Product[];
 };
 
@@ -54,7 +54,7 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
   const sentinelRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
 
-  const useMobileInfiniteScroll = isMobile && !!allProductsForInfiniteScroll?.length;
+  const useInfiniteScrollMode = singlePage || !!allProductsForInfiniteScroll?.length;
 
   const productsBase = allProductsForInfiniteScroll ?? products;
 
@@ -144,19 +144,17 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const useInfiniteScroll = singlePage || useMobileInfiniteScroll;
-
   // Обновляем ref с длиной и ограничиваем visibleCount
   useEffect(() => {
-    if (useInfiniteScroll) {
+    if (useInfiniteScrollMode) {
       sortedFlowersLengthRef.current = sortedFlowers.length;
       setVisibleCount((prev) => Math.min(prev, sortedFlowers.length));
     }
-  }, [useInfiniteScroll, sortedFlowers.length]);
+  }, [useInfiniteScrollMode, sortedFlowers.length]);
 
   // STEP при изменении размера
   useEffect(() => {
-    if (!useInfiniteScroll) return;
+    if (!useInfiniteScrollMode) return;
     const updateStep = () => {
       const mobile = window.innerWidth < 768;
       stepRef.current = mobile ? 12 : 24;
@@ -170,11 +168,11 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
     updateStep();
     window.addEventListener("resize", updateStep);
     return () => window.removeEventListener("resize", updateStep);
-  }, [useInfiniteScroll]);
+  }, [useInfiniteScrollMode]);
 
-  // Scroll listener для singlePage (без sentinel)
+  // Scroll listener для singlePage (без sentinel) — fallback если IntersectionObserver не сработает
   useEffect(() => {
-    if (!singlePage || useMobileInfiniteScroll) return;
+    if (!singlePage || useInfiniteScrollMode) return;
     const handleScroll = () => {
       if (tickingRef.current) return;
       tickingRef.current = true;
@@ -192,11 +190,11 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [singlePage, useMobileInfiniteScroll]);
+  }, [singlePage, useInfiniteScrollMode]);
 
-  // IntersectionObserver для mobile infinite scroll (sentinel)
+  // IntersectionObserver для infinite scroll (sentinel) — desktop + mobile
   useEffect(() => {
-    if (!useMobileInfiniteScroll) return;
+    if (!useInfiniteScrollMode) return;
     const sentinel = sentinelRef.current;
     if (!sentinel) return;
     const obs = new IntersectionObserver(
@@ -217,29 +215,13 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
     );
     obs.observe(sentinel);
     return () => obs.disconnect();
-  }, [useMobileInfiniteScroll]);
+  }, [useInfiniteScrollMode]);
 
   // visibleFlowers
-  const visibleFlowers =
-    singlePage
-      ? sortedFlowers.slice(0, visibleCount)
-      : useMobileInfiniteScroll
-        ? sortedFlowers.slice(0, visibleCount)
-        : allProductsForInfiniteScroll
-          ? sortedFlowers.slice(0, currentPage * pageSize)
-          : sortedFlowers;
+  const visibleFlowers = useInfiniteScrollMode
+    ? sortedFlowers.slice(0, visibleCount)
+    : sortedFlowers;
 
-  // Вычисляем есть ли следующая страница (только для обычного режима)
-  const totalPages = Math.ceil(total / pageSize);
-  const hasMore = !singlePage && currentPage < totalPages;
-  const nextPage = currentPage + 1;
-
-  // Формируем URL для следующей страницы с сохранением всех query параметров
-  const buildNextPageUrl = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("page", String(nextPage));
-    return `${pathname}?${params.toString()}`;
-  };
 
   return (
     <div>
@@ -254,26 +236,14 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
       {/* Debug info (только в dev режиме) */}
       {process.env.NODE_ENV === "development" && (
         <div className="mt-4 text-xs text-gray-500 p-2 bg-gray-100 rounded">
-          total: {total} | currentPage: {currentPage} | pageSize: {pageSize} | totalPages: {totalPages} | rendered: {visibleFlowers.length} | filtered: {sortedFlowers.length}
+          total: {total} | rendered: {visibleFlowers.length} | filtered: {sortedFlowers.length}
         </div>
       )}
 
-      {/* Sentinel для infinite scroll на mobile */}
-      {useMobileInfiniteScroll && visibleCount < sortedFlowers.length && (
+      {/* Sentinel для infinite scroll (desktop + mobile) */}
+      {useInfiniteScrollMode && visibleCount < sortedFlowers.length && (
         <div ref={sentinelRef} className="h-4 flex items-center justify-center py-4" aria-hidden>
           <div className="w-5 h-5 border-2 border-[var(--color-outline-border)] border-t-[var(--color-text-main)] rounded-full animate-spin" />
-        </div>
-      )}
-
-      {/* Кнопка "Показать ещё" — скрыта на mobile при infinite scroll */}
-      {hasMore && !useMobileInfiniteScroll && (
-        <div className="mt-6 flex justify-center">
-          <Link
-            href={buildNextPageUrl()}
-            className="rounded-full border border-[var(--color-outline-border)] bg-white px-6 py-2 text-sm text-color-text-main hover:bg-[rgba(31,42,31,0.06)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
-          >
-            Показать ещё {total - currentPage * pageSize > 0 ? `(${total - currentPage * pageSize} товаров)` : ""}
-          </Link>
         </div>
       )}
 

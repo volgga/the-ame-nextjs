@@ -28,6 +28,7 @@ function getErrorMessage(e: unknown): string {
 
 const updateSchema = z.object({
   size: z.string().min(1).optional(),
+  photo_label: z.string().max(200).optional().nullable().transform((v) => (v === "" ? null : v)),
   composition: z.string().optional().nullable(),
   height_cm: z.number().int().min(0).optional().nullable(),
   width_cm: z.number().int().min(0).optional().nullable(),

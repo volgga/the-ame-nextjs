@@ -6,6 +6,7 @@ import { CategoryChips } from "@/components/catalog/category-chips";
 import { ProductToolbar } from "@/components/catalog/product-toolbar";
 import { FlowerCatalog } from "@/components/catalog/FlowerCatalog";
 import { OccasionFilterButtons } from "@/components/catalog/occasion-filter-buttons";
+import { CategoryInfoBlock } from "@/components/catalog/CategoryInfoBlock";
 import { Container } from "@/components/layout/Container";
 import { getAllCatalogProducts } from "@/lib/products";
 import { getCategories, getCategoryBySlug, DEFAULT_CATEGORY_SEO_TEXT } from "@/lib/categories";
@@ -212,6 +213,8 @@ export default async function OccasionPage({ params, searchParams }: OccasionPag
         >
           <FlowerCatalog products={paginatedProducts} total={total} currentPage={currentPage} pageSize={pageSize} allProductsForInfiniteScroll={products} />
         </Suspense>
+
+        <CategoryInfoBlock data={occasion} />
       </Container>
     </div>
   );

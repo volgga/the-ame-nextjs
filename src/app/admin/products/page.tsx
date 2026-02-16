@@ -69,6 +69,8 @@ type Variant = {
   bouquetColors?: string[];
   discountPercent?: number | null;
   discountPrice?: number | null;
+  /** Текст "На фото: …" для карточки товара */
+  photoLabel?: string | null;
 };
 
 const initialForm = {
@@ -427,6 +429,7 @@ function AdminProductsPageContent() {
                 image_urls?: string[] | null;
                 discount_percent?: number | null;
                 discount_price?: number | null;
+                photo_label?: string | null;
               },
               idx: number
             ) => {
@@ -442,6 +445,7 @@ function AdminProductsPageContent() {
                 bouquetColors: Array.isArray(v.bouquet_colors) ? filterValidBouquetColorKeys(v.bouquet_colors) : [],
                 discountPercent: v.discount_percent != null ? Number(v.discount_percent) : null,
                 discountPrice: v.discount_price != null ? Number(v.discount_price) : null,
+                photoLabel: v.photo_label?.trim() || null,
               };
             }
           );
@@ -955,6 +959,7 @@ function AdminProductsPageContent() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 size: v.name.trim(),
+                photo_label: v.photoLabel?.trim() || null,
                 composition: v.composition.trim() || null,
                 height_cm: v.height_cm ?? null,
                 width_cm: v.width_cm ?? null,
@@ -981,6 +986,7 @@ function AdminProductsPageContent() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 size: v.name.trim(),
+                photo_label: v.photoLabel?.trim() || null,
                 composition: v.composition.trim() || null,
                 height_cm: v.height_cm ?? null,
                 width_cm: v.width_cm ?? null,
@@ -2099,6 +2105,23 @@ function AdminProductsPageContent() {
                                             {fieldErrors[`variant_${idx}_name`]}
                                           </p>
                                         )}
+                                      </div>
+                                      <div>
+                                        <label className="block text-xs text-color-text-main mb-0.5">На фото (текст)</label>
+                                        <input
+                                          type="text"
+                                          placeholder="Например: 31 штука, M размер"
+                                          value={variant.photoLabel ?? ""}
+                                          onChange={(e) =>
+                                            updateVariant(variant.id, {
+                                              photoLabel: e.target.value.trim() || null,
+                                            })
+                                          }
+                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+                                        />
+                                        <p className="mt-0.5 text-[10px] text-color-text-secondary">
+                                          Показывается на карточке под названием варианта: «На фото: …»
+                                        </p>
                                       </div>
                                       <div className="grid grid-cols-2 gap-2">
                                         <div>

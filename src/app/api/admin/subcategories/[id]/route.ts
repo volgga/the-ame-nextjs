@@ -17,6 +17,10 @@ const updateSchema = z.object({
   seo_description: z.string().optional().nullable(),
   sort_order: z.number().int().optional().nullable(),
   is_active: z.boolean().optional().nullable(),
+  info_subtitle: z.string().max(500).optional().nullable(),
+  info_description: z.string().max(2000).optional().nullable(),
+  info_content: z.string().max(50000).optional().nullable(),
+  info_image_url: z.string().max(2000).optional().nullable(),
 });
 
 /**
@@ -41,6 +45,10 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
       seo_description?: string | null;
       sort_order?: number | null;
       is_active?: boolean | null;
+      info_subtitle?: string | null;
+      info_description?: string | null;
+      info_content?: string | null;
+      info_image_url?: string | null;
     } = {};
     if (parsed.data.name !== undefined) payload.name = parsed.data.name.trim();
     if (parsed.data.slug !== undefined) payload.slug = parsed.data.slug?.trim() || null;
@@ -51,6 +59,10 @@ export async function PATCH(_request: NextRequest, { params }: { params: Promise
       payload.seo_description = parsed.data.seo_description?.trim() || null;
     if (parsed.data.sort_order !== undefined) payload.sort_order = parsed.data.sort_order ?? null;
     if (parsed.data.is_active !== undefined) payload.is_active = parsed.data.is_active ?? true;
+    if (parsed.data.info_subtitle !== undefined) payload.info_subtitle = parsed.data.info_subtitle?.trim() || null;
+    if (parsed.data.info_description !== undefined) payload.info_description = parsed.data.info_description?.trim() || null;
+    if (parsed.data.info_content !== undefined) payload.info_content = parsed.data.info_content?.trim() || null;
+    if (parsed.data.info_image_url !== undefined) payload.info_image_url = parsed.data.info_image_url?.trim() || null;
 
     const supabase = getSupabaseAdmin();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -21,7 +21,7 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from("categories")
-      .select("id, name, slug, sort_order, is_active, description, seo_title, flower_sections")
+      .select("id, name, slug, sort_order, is_active, description, seo_title, flower_sections, info_subtitle, info_description, info_content, info_image_url")
       .order("sort_order", { ascending: true });
     if (error) throw error;
     const rows = (data ?? []) as {
@@ -45,6 +45,10 @@ export async function GET() {
         description: r.description ?? null,
         seo_title: r.seo_title ?? null,
         flower_sections: Array.isArray(r.flower_sections) ? r.flower_sections : null,
+        info_subtitle: (r as { info_subtitle?: string | null }).info_subtitle ?? null,
+        info_description: (r as { info_description?: string | null }).info_description ?? null,
+        info_content: (r as { info_content?: string | null }).info_content ?? null,
+        info_image_url: (r as { info_image_url?: string | null }).info_image_url ?? null,
       }));
     return NextResponse.json(list);
   } catch (e) {
@@ -72,6 +76,10 @@ const createSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
   seo_title: z.string().max(200).optional().nullable(),
   flower_sections: z.array(flowerSectionSchema).optional().nullable(),
+  info_subtitle: z.string().max(500).optional().nullable(),
+  info_description: z.string().max(2000).optional().nullable(),
+  info_content: z.string().max(50000).optional().nullable(),
+  info_image_url: z.string().max(2000).optional().nullable(),
 });
 
 /** Находит уникальный slug: base, base-2, base-3, ... */
@@ -134,6 +142,10 @@ export async function POST(request: NextRequest) {
           Array.isArray(parsed.data.flower_sections) && parsed.data.flower_sections.length > 0
             ? parsed.data.flower_sections
             : null,
+        info_subtitle: parsed.data.info_subtitle?.trim() || null,
+        info_description: parsed.data.info_description?.trim() || null,
+        info_content: parsed.data.info_content?.trim() || null,
+        info_image_url: parsed.data.info_image_url?.trim() || null,
       })
       .select()
       .single();
