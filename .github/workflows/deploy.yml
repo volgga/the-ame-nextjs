@@ -17,6 +17,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -43,16 +48,65 @@ jobs:
             
             # Обновляем код из репозитория
             echo "📥 Fetching latest code..."
-            git fetch origin main || {
-              echo "❌ Error: Failed to fetch from origin/main"
-              exit 1
-            }
             
-            echo "🔄 Resetting to origin/main..."
-            git reset --hard origin/main || {
-              echo "❌ Error: Failed to reset to origin/main"
-              exit 1
-            }
+            # Диагностика: проверяем git remote
+            echo "🔍 Checking git remote configuration..."
+            git remote -v || echo "⚠️ Warning: git remote check failed"
+            
+            # Диагностика: проверяем доступность GitHub
+            echo "🔍 Testing GitHub connectivity..."
+            if ping -c 1 github.com >/dev/null 2>&1 || ping -c 1 140.82.121.3 >/dev/null 2>&1; then
+              echo "✅ GitHub is reachable"
+            else
+              echo "⚠️ Warning: GitHub ping failed, but continuing..."
+            fi
+            
+            # Пробуем fetch с таймаутом и retry
+            MAX_RETRIES=3
+            RETRY_COUNT=0
+            FETCH_SUCCESS=false
+            
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              echo "🔄 Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Fetching from origin/main..."
+              if timeout 30 git fetch origin main 2>&1; then
+                FETCH_SUCCESS=true
+                break
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  echo "⏳ Waiting 5 seconds before retry..."
+                  sleep 5
+                fi
+              fi
+            done
+            
+            if [ "$FETCH_SUCCESS" = false ]; then
+              echo "❌ Error: Failed to fetch from origin/main after $MAX_RETRIES attempts"
+              echo "🔍 Debug info:"
+              echo "  Git remote URL: $(git config --get remote.origin.url || echo 'not set')"
+              echo "  Current branch: $(git branch --show-current || echo 'unknown')"
+              echo "  Last commit: $(git log -1 --oneline || echo 'unknown')"
+              echo ""
+              echo "💡 Trying alternative: pull directly..."
+              if timeout 30 git pull origin main 2>&1; then
+                echo "✅ Pull succeeded as fallback"
+              else
+                echo "❌ Pull also failed - this is a network/DNS issue on the server"
+                echo "💡 Solutions:"
+                echo "  1. Check DNS settings on server: /etc/resolv.conf"
+                echo "  2. Try: echo 'nameserver 8.8.8.8' | sudo tee -a /etc/resolv.conf"
+                echo "  3. Or wait for network to recover"
+                echo "  4. Or deploy manually via rsync from GitHub Actions"
+                exit 1
+              fi
+            else
+              echo "✅ Fetch succeeded"
+              echo "🔄 Resetting to origin/main..."
+              git reset --hard origin/main || {
+                echo "❌ Error: Failed to reset to origin/main"
+                exit 1
+              }
+            fi
             
             # Проверяем наличие nvm и активируем если есть
             if [ -s "$HOME/.nvm/nvm.sh" ]; then
