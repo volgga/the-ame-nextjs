@@ -12,6 +12,8 @@ import {
   CANONICAL_BASE,
 } from "@/lib/seo";
 
+export const revalidate = 300;
+
 const FALLBACK_TITLE = "Каталог";
 const FALLBACK_DESCRIPTION =
   "Все цветы The Áme — аккуратные букеты и гармоничные композиции для любого повода. Идеальный выбор, чтобы порадовать близких, создать настроение и подарить эмоции без лишних слов.";

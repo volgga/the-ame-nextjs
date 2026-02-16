@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Генерируем варианты
-    console.log(`Generating variants for: ${imageUrl}`);
+    if (process.env.NODE_ENV !== "production") {
+      console.log(`Generating variants for: ${imageUrl}`);
+    }
     const variants = await generateImageVariants(imageUrl, {
       skipAvifIfLargerPercent: 20,
     });

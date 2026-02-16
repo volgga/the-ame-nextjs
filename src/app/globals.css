@@ -171,6 +171,8 @@ All colors MUST be HSL.
 
   html {
     background-color: var(--page-bg);
+    /* Резервируем место под скроллбар — при открытии модалки/корзины overflow:hidden не сдвигает контент (нет layout shift) */
+    scrollbar-gutter: stable;
     /* Плавная прокрутка для якорей и programmatic scroll */
     scroll-behavior: smooth;
   }

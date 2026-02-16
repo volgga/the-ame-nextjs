@@ -22,27 +22,27 @@ function DividerVertical() {
 
 /**
  * TopBar — инфо-полоса: текст слева, адрес | телефон | иконки справа.
+ * Фиксированная высота 44px и overflow-hidden предотвращают layout shift при переносе строк/загрузке шрифтов (FOIT/FOUT).
  */
 export function TopBar() {
   return (
     <div
-      className="w-full flex items-center justify-between bg-header-bg"
+      className="w-full flex items-center justify-between bg-header-bg overflow-hidden"
       style={{
         margin: 0,
         padding: 0,
         paddingTop: "6px",
         paddingBottom: "6px",
         boxSizing: "border-box",
-        lineHeight: "normal",
-        height: "100%",
+        height: "44px",
         minHeight: "44px",
+        lineHeight: 1.2,
         display: "flex",
-        overflow: "visible",
       }}
     >
       <div className="w-full flex items-center justify-between gap-1 sm:gap-2 md:gap-4 px-4 md:px-6 min-w-0">
-        {/* Слева: 2 строки текста */}
-        <div className="min-w-0 -ml-1 md:-ml-0.5 leading-tight">
+        {/* Слева: 2 строки текста — фиксированный line-height чтобы высота не прыгала при смене шрифта */}
+        <div className="min-w-0 -ml-1 md:-ml-0.5" style={{ lineHeight: 1.2 }}>
           <div className="text-[11px] md:text-xs text-header-foreground-secondary tracking-wide">
             Приём заказов с 09.00 до 21.00
           </div>

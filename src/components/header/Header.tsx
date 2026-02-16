@@ -9,7 +9,8 @@ import type { MarqueeSettings } from "@/lib/homeMarquee";
 
 const MARQUEE_H = 28;
 const MAIN_H = 44;
-const TOP_BAR_H_DEFAULT = 44;
+/** Фиксированная высота top bar — не зависящая от ResizeObserver, чтобы избежать layout shift при переносе строк/загрузке шрифтов */
+const TOP_BAR_H = 44;
 const TOPBAR_TRANSITION_MS = 360;
 const TOPBAR_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
 
@@ -26,10 +27,8 @@ export function Header({ marquee }: { marquee?: MarqueeSettings | null }) {
   const headerMode = useHeaderScrollDirection(animationLockRef);
   const isTopbarShown = headerMode === "expanded";
 
-  const [topbarHeightPx, setTopbarHeightPx] = useState(TOP_BAR_H_DEFAULT);
   const [isMdOrLarger, setIsMdOrLarger] = useState(true); // до гидратации — как на сервере
   const [mounted, setMounted] = useState(false);
-  const topBarMeasureRef = useRef<HTMLDivElement>(null);
   const topbarMaskRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -57,25 +56,13 @@ export function Header({ marquee }: { marquee?: MarqueeSettings | null }) {
     animationLockRef.current = false;
   };
 
-  useEffect(() => {
-    const el = topBarMeasureRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      const h = el.scrollHeight;
-      if (h > 0) setTopbarHeightPx(h);
-    });
-    ro.observe(el);
-    if (el.scrollHeight > 0) setTopbarHeightPx(el.scrollHeight);
-    return () => ro.disconnect();
-  }, []);
-
-  // До mounted используем те же значения, что и на сервере, чтобы не ломать гидратацию
+  // Фиксированные высоты — без ResizeObserver, чтобы хедер не прыгал при смене ширины/шрифта
   const effectiveMdOrLarger = mounted ? isMdOrLarger : true;
   const topbarVisible = effectiveMdOrLarger && isTopbarShown;
-  const topbarMaskHeight = topbarVisible ? `${topbarHeightPx}px` : "0px";
+  const topbarMaskHeight = topbarVisible ? `${TOP_BAR_H}px` : "0px";
   // На мобиле при скролле вниз скрываем основную строку; до mounted не скрываем (гидратация)
   const mainBarVisible = !mounted || effectiveMdOrLarger || headerMode === "expanded";
-  const spacerHeight = marqueeHeight + (topbarVisible ? topbarHeightPx : 0) + (mainBarVisible ? MAIN_H : 0);
+  const spacerHeight = marqueeHeight + (topbarVisible ? TOP_BAR_H : 0) + (mainBarVisible ? MAIN_H : 0);
 
   return (
     <>
@@ -117,7 +104,6 @@ export function Header({ marquee }: { marquee?: MarqueeSettings | null }) {
             onTransitionEnd={handleTopbarMaskTransitionEnd}
           >
             <div
-              ref={topBarMeasureRef}
               className="w-full bg-header-bg"
               style={{
                 transform: isTopbarShown ? "translateY(0)" : "translateY(-100%)",

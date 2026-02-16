@@ -139,7 +139,7 @@ export async function generateImageVariants(
 
         if (sizeDiffPercent <= skipAvifIfLargerPercent) {
           variants[size].avif = avifBuffer;
-        } else {
+        } else if (process.env.NODE_ENV !== "production") {
           console.log(
             `Skipping AVIF for ${size}: ${sizeDiffPercent.toFixed(1)}% larger than WebP`
           );
@@ -201,7 +201,7 @@ export async function uploadVariantsToStorage(
         .from(storageBucket)
         .upload(cleanPath, variant.webp, {
           contentType: "image/webp",
-          cacheControl: "public, max-age=31536000, immutable",
+          cacheControl: "public, max-age=3600, s-maxage=3600",
           upsert: true,
         });
 
@@ -228,7 +228,7 @@ export async function uploadVariantsToStorage(
         .from(storageBucket)
         .upload(cleanPath, variant.avif, {
           contentType: "image/avif",
-          cacheControl: "public, max-age=31536000, immutable",
+          cacheControl: "public, max-age=3600, s-maxage=3600",
           upsert: true,
         });
 

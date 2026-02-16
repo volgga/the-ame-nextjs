@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+
+export const revalidate = 300;
 import { HeroCarousel } from "@/components/hero/HeroCarousel";
 import { RecommendSection } from "@/components/home/RecommendSection";
 import { ProgressiveBelowFold } from "@/components/home/ProgressiveBelowFold";
@@ -74,8 +76,9 @@ export default async function HomePage() {
 
   const { products: recommendProducts } = getRecommendProducts(allProducts);
 
-  // LCP: прелоад первого hero-изображения (серверный вывод — браузер начинает загрузку до гидрации)
-  const firstHeroImageUrl = slides[0]?.imageUrl;
+  // LCP: прелоад первого hero-изображения (приоритет — оптимизированный вариант, иначе оригинал)
+  const firstSlide = slides[0];
+  const firstHeroImageUrl = firstSlide?.imageLargeUrl ?? firstSlide?.imageMediumUrl ?? firstSlide?.imageUrl;
 
   return (
     <div className="min-h-screen bg-page-bg">

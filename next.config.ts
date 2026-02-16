@@ -7,6 +7,7 @@ const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : "placeholder.
 const supabaseHosts = [...new Set([supabaseHost, "eweaqbtqzzoxpwfmjinp.supabase.co"].filter(Boolean))];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // Отключаем полифиллы для современных браузеров (уменьшает размер бандла на ~13 KiB)
   compiler: {
     // SWC уже минифицирует, но можно добавить дополнительные опции если нужно
@@ -16,6 +17,9 @@ const nextConfig: NextConfig = {
     optimizeCss: false,
     // Tree-shaking для lucide-react и др. — меньше размер бандла
     optimizePackageImports: ["lucide-react"],
+    outputFileTracingIncludes: {
+      "/*": ["node_modules/sharp/**/*"],
+    },
   },
   // Исключаем sharp из клиентского бандла (используется только в API routes)
   // Используем webpack вместо Turbopack для совместимости с sharp

@@ -7,6 +7,95 @@ import { YandexMetrikaHitTracker } from "@/components/analytics/YandexMetrika";
 import { CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
 import { getHomeMarquee } from "@/lib/homeMarquee";
 
+/** Schema.org JSON-LD: Organization, Florist, Service, WebSite — один глобальный блок в layout */
+const SCHEMA_ORG_JSON_LD = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": `${CANONICAL_BASE}/#organization`,
+    name: SITE_NAME,
+    url: CANONICAL_BASE,
+    logo: `${CANONICAL_BASE}/1000x1000.png`,
+    telephone: "+79939326095",
+    email: "theame123@mail.ru",
+    sameAs: [
+      "https://api.whatsapp.com/message/XQDDWGSEL35LP1?autoload=1&app_absent=0",
+      "https://t.me/the_ame_flowers",
+      "https://t.me/theame123",
+      "https://max.ru/u/f9LHodD0cOJJBRShH_taOp567aS5B7oZt4PZHqOvsl782HDW1tNY1II4OTY",
+      "https://www.instagram.com/theame.flowers",
+    ],
+  },
+  {
+    "@type": "Florist",
+    "@id": `${CANONICAL_BASE}/#florist`,
+    name: SITE_NAME,
+    url: CANONICAL_BASE,
+    telephone: "+79939326095",
+    priceRange: "$$",
+    address: {
+      "@type": "PostalAddress",
+      addressCountry: "RU",
+      addressRegion: "Краснодарский край",
+      addressLocality: "Сочи",
+      streetAddress: "улица Пластунская 123А, корпус 2, этаж 2, офис 84",
+    },
+    areaServed: [
+      { "@type": "City", name: "Сочи" },
+      { "@type": "City", name: "Адлер" },
+      { "@type": "City", name: "Сириус" },
+      { "@type": "Place", name: "Красная Поляна" },
+      { "@type": "Place", name: "Хоста" },
+      { "@type": "Place", name: "Дагомыс" },
+      { "@type": "Place", name: "Мацеста" },
+    ],
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+        opens: "09:00",
+        closes: "21:00",
+      },
+    ],
+    description:
+      "Цветочный магазин The Ame в Сочи. Приём заказов ежедневно с 09:00 до 21:00. Круглосуточная доставка букетов по Сочи и районам.",
+  },
+  {
+    "@type": "Service",
+    "@id": `${CANONICAL_BASE}/#delivery`,
+    name: "Доставка цветов в Сочи",
+    serviceType: "Flower delivery",
+    provider: { "@id": `${CANONICAL_BASE}/#florist` },
+    areaServed: [
+      { "@type": "City", name: "Сочи" },
+      { "@type": "City", name: "Адлер" },
+      { "@type": "City", name: "Сириус" },
+      { "@type": "Place", name: "Красная Поляна" },
+      { "@type": "Place", name: "Хоста" },
+      { "@type": "Place", name: "Дагомыс" },
+      { "@type": "Place", name: "Мацеста" },
+    ],
+    availableChannel: [
+      {
+        "@type": "ServiceChannel",
+        serviceUrl: "https://api.whatsapp.com/message/XQDDWGSEL35LP1?autoload=1&app_absent=0",
+      },
+      { "@type": "ServiceChannel", serviceUrl: "https://t.me/the_ame_flowers" },
+    ],
+  },
+  {
+    "@type": "WebSite",
+    "@id": `${CANONICAL_BASE}/#website`,
+    url: CANONICAL_BASE,
+    name: SITE_NAME,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${CANONICAL_BASE}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  },
+] as const;
+
 /** Код счётчика Яндекс.Метрики — как можно ближе к началу страницы (официальный сниппет). */
 const YANDEX_METRIKA_INLINE = `
 (function(m,e,t,r,i,k,a){
@@ -56,7 +145,16 @@ export const metadata: Metadata = {
     type: "website",
     locale: LOCALE,
     siteName: SITE_NAME,
-    images: [{ url: "/IMG_4256.JPG", width: 1200, height: 630, alt: SITE_NAME }],
+    title: "Купить цветы в Сочи с доставкой | The Ame",
+    description: "Свежие букеты и доставка цветов по Сочи. Авторские композиции, розы, монобукеты.",
+    url: "https://theame.ru",
+    images: [{ url: "/og-main.jpg", width: 1200, height: 630, alt: SITE_NAME }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Купить цветы в Сочи с доставкой | The Ame",
+    description: "Свежие букеты и доставка цветов по Сочи. Авторские композиции, розы, монобукеты.",
+    images: ["https://theame.ru/og-main.jpg"],
   },
 };
 
@@ -98,39 +196,10 @@ export default async function RootLayout({
             />
           </div>
         </noscript>
-        {/* Структурированные данные для SEO (Organization) */}
+        {/* Schema.org: Organization, Florist, Service, WebSite — один глобальный JSON-LD */}
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "The Ame",
-              url: "https://theame.ru/",
-              logo: "https://theame.ru/android-chrome-512x512.png",
-              sameAs: [
-                // Здесь можно добавить ссылки на соцсети
-              ],
-            }),
-          }}
-        />
-        {/* Структурированные данные для SEO (WebSite) */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "The Ame",
-              alternateName: ["TheAme"],
-              url: "https://theame.ru/",
-              potentialAction: {
-                "@type": "SearchAction",
-                target: "https://theame.ru/search?q={search_term_string}",
-                "query-input": "required name=search_term_string",
-              },
-            }),
-          }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(SCHEMA_ORG_JSON_LD) }}
         />
 
         <YandexMetrikaHitTracker />

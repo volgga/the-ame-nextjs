@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- типы Supabase .storage не в дефолтном клиенте
     const { data, error } = await (supabase as any).storage.from(BUCKET).upload(storagePath, buffer, {
       contentType: mime,
+      cacheControl: "public, max-age=2592000, s-maxage=2592000",
       upsert: false,
     });
 

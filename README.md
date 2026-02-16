@@ -16,6 +16,10 @@ npm run dev
 
 Автодеплой через GitHub Actions при push в `main`. [DEPLOY.md](./DEPLOY.md)
 
+Standalone-деплой на VPS: [DEPLOY_STANDALONE.md](./DEPLOY_STANDALONE.md)
+
+Для мониторинга памяти при работе через PM2: `pm2 monit`
+
 ## Структура проекта
 
 - `src/app/` - Next.js App Router страницы и API routes

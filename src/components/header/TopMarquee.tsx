@@ -27,11 +27,12 @@ export function TopMarquee({ text, href, speed = 50, duplicates = 6 }: TopMarque
   }
   const content = [...row, ...row];
 
+  /* Фиксированный line-height и высота — чтобы промо-полоса не прыгала при загрузке шрифтов (CLS) */
   const inner = (
-    <div className="flex items-center whitespace-nowrap" style={{ animation: `marquee ${speed}s linear infinite` }}>
+    <div className="flex items-center shrink-0 whitespace-nowrap" style={{ animation: `marquee ${speed}s linear infinite`, lineHeight: 1 }}>
       {content.map((t, i) => (
-        <div key={i} className="flex items-center">
-          <span className="py-1 px-8 text-xs uppercase tracking-wide">{t}</span>
+        <div key={i} className="flex items-center shrink-0">
+          <span className="py-1 px-8 text-xs uppercase tracking-wide leading-none" style={{ lineHeight: 1 }}>{t}</span>
           <span className="mx-6 inline-flex items-center justify-center" aria-hidden>
             <span className="block w-2 h-2 rounded-full bg-current" />
           </span>
@@ -41,7 +42,7 @@ export function TopMarquee({ text, href, speed = 50, duplicates = 6 }: TopMarque
   );
 
   const wrapperClass =
-    "block w-full overflow-hidden text-ticker-foreground h-7 flex items-center " + (href ? "cursor-pointer" : "");
+    "block w-full overflow-hidden text-ticker-foreground h-7 min-h-[28px] max-h-[28px] flex items-center shrink-0 " + (href ? "cursor-pointer" : "");
   const style = { backgroundColor: "var(--page-bg)" };
 
   if (href && href.trim() !== "") {

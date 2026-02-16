@@ -47,6 +47,8 @@ scripts/
 !scripts/fix-all.sh
 !scripts/fix-env-and-rebuild.sh
 !scripts/deploy-vps-remote.sh
+!scripts/build-standalone.sh
+!scripts/run-standalone.sh
 
 # ======================
 # Dumps / backups
@@ -55,7 +57,7 @@ dump.backup
 *.backup
 products_data.sql
 deploy.log
-logs/
+logs/*.log
 
 # ======================
 # Local deploy helpers

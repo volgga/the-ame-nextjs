@@ -187,16 +187,18 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
 
   return (
     <>
+      {/* Фиксированная высота 44px — без изменений при скролле/hover, чтобы избежать layout shift */}
       <div
-        className="relative w-full bg-header-bg flex items-center overflow-visible"
+        className="relative w-full bg-header-bg flex items-center overflow-hidden"
         style={{
           margin: 0,
           padding: 0,
-          height: "100%",
-          lineHeight: "normal",
+          height: "44px",
+          minHeight: "44px",
+          lineHeight: 1,
         }}
       >
-        <div className="relative z-10 w-full flex items-center justify-between px-3 md:px-7 gap-4">
+        <div className="relative z-10 w-full flex items-center justify-between px-3 md:px-7 gap-4 min-h-[44px]">
           <div className="relative z-10 flex items-center gap-1.5 md:gap-3 shrink-0 md:-ml-0.5">
             <button
               type="button"
@@ -214,7 +216,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <Link href="/" className="shrink-0 flex items-center" style={{ fontFamily: "Forum, serif", lineHeight: 1 }}>
+            <Link href="/" className="shrink-0 flex items-center" style={{ fontFamily: "Forum, serif", lineHeight: 1, flexShrink: 0 }}>
               <span className="text-[1.8rem] md:text-[1.9rem] text-header-foreground tracking-wide leading-none">
                 The Áme
               </span>
@@ -222,8 +224,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
           </div>
 
           <div
-            className="relative z-10 flex items-center gap-0.5 md:gap-2 shrink-0"
-            style={{ paddingTop: "8px", paddingBottom: "8px", minHeight: "44px" }}
+            className="relative z-10 flex items-center gap-0.5 md:gap-2 shrink-0 h-[44px] items-center"
           >
             <SearchDropdown isHeaderBarVisible={mainBarVisible} />
             <a

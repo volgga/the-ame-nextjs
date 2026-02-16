@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { ProductPageClient } from "@/components/product/ProductPageClient";
 import { canonicalUrl, truncateDescription, ROBOTS_INDEX_FOLLOW, CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
 
+export const revalidate = 300;
+
 type Props = {
   params: Promise<{ slug: string }>;
 };

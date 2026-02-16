@@ -32,7 +32,9 @@ export async function POST(request: Request) {
 
     const { orderId, status } = parsed.data;
 
-    console.info(`[tbank-notify] received request`, { orderId, status });
+    if (process.env.NODE_ENV !== "production") {
+      console.info(`[tbank-notify] received request`, { orderId, status });
+    }
 
     const order = await getOrderById(orderId);
     if (!order) {
@@ -45,12 +47,14 @@ export async function POST(request: Request) {
       (status === "success" && order.status === "paid") ||
       (status === "fail" && (order.status === "failed" || order.status === "canceled"));
 
-    console.info(`[tbank-notify] order status check`, {
-      orderId,
-      requestedStatus: status,
-      orderStatus: order.status,
-      matches: orderStatusMatches,
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.info(`[tbank-notify] order status check`, {
+        orderId,
+        requestedStatus: status,
+        orderStatus: order.status,
+        matches: orderStatusMatches,
+      });
+    }
 
     // Если статус не совпадает - проверяем реальный статус у T-Bank и обновляем заказ
     let actualPaymentStatus: string | null = null;
@@ -65,14 +69,16 @@ export async function POST(request: Request) {
           const isActuallyPaid = TBANK_SUCCESS_STATUSES.has(actualPaymentStatus);
           const isActuallyFailed = TBANK_FAIL_STATUSES.has(actualPaymentStatus);
 
-          console.info(`[tbank-notify] T-Bank status check`, {
-            orderId,
-            paymentId,
-            tbankStatus: actualPaymentStatus,
-            isPaid: isActuallyPaid,
-            isFailed: isActuallyFailed,
-            currentOrderStatus: order.status,
-          });
+          if (process.env.NODE_ENV !== "production") {
+            console.info(`[tbank-notify] T-Bank status check`, {
+              orderId,
+              paymentId,
+              tbankStatus: actualPaymentStatus,
+              isPaid: isActuallyPaid,
+              isFailed: isActuallyFailed,
+              currentOrderStatus: order.status,
+            });
+          }
 
           // Обновляем статус заказа в БД на основе реального статуса T-Bank
           if (status === "success" && isActuallyPaid && order.status !== "paid") {
@@ -132,23 +138,27 @@ export async function POST(request: Request) {
     
     const alreadyNotified = currentOrder?.[fieldName] != null;
     
-    console.info(`[tbank-notify] idempotency check`, {
-      orderId,
-      eventType,
-      fieldName,
-      alreadyNotified,
-      currentValue: currentOrder?.[fieldName],
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.info(`[tbank-notify] idempotency check`, {
+        orderId,
+        eventType,
+        fieldName,
+        alreadyNotified,
+        currentValue: currentOrder?.[fieldName],
+      });
+    }
 
     // Пытаемся установить флаг атомарно
     const shouldSend = await markPaymentNotificationSent(orderId, eventType);
 
-    console.info(`[tbank-notify] markPaymentNotificationSent result`, {
-      orderId,
-      eventType,
-      shouldSend,
-      alreadyNotified,
-    });
+    if (process.env.NODE_ENV !== "production") {
+      console.info(`[tbank-notify] markPaymentNotificationSent result`, {
+        orderId,
+        eventType,
+        shouldSend,
+        alreadyNotified,
+      });
+    }
 
     if (!shouldSend && alreadyNotified) {
       return NextResponse.json({ message: "Уведомление уже отправлено" }, { status: 200 });
@@ -169,11 +179,13 @@ export async function POST(request: Request) {
       const hasTelegramToken = !!process.env.TELEGRAM_BOT_TOKEN;
       const hasTelegramChatId = !!process.env.TELEGRAM_ORDERS_CHAT_ID;
 
-      console.info(`[tbank-notify] telegram env check`, {
-        orderId,
-        hasTelegramToken,
-        hasTelegramChatId,
-      });
+      if (process.env.NODE_ENV !== "production") {
+        console.info(`[tbank-notify] telegram env check`, {
+          orderId,
+          hasTelegramToken,
+          hasTelegramChatId,
+        });
+      }
 
       // Fallback: если TELEGRAM_ORDERS_CHAT_ID не задан, пробуем TELEGRAM_CHAT_ID
       const fallbackChatId = process.env.TELEGRAM_ORDERS_CHAT_ID || process.env.TELEGRAM_CHAT_ID;
@@ -203,18 +215,22 @@ export async function POST(request: Request) {
 
       if (status === "success") {
         const message = formatPaymentSuccess(order, paymentId ?? undefined);
-        console.info(`[tbank-notify] sending payment success notification`, {
-          orderId,
-          paymentId: paymentId ?? "none",
-          messageLength: message.length,
-          hasTelegramToken,
-          hasTelegramChatId,
-          telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "not set",
-          telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID || process.env.TELEGRAM_THREAD_ID || "not set",
-        });
+        if (process.env.NODE_ENV !== "production") {
+          console.info(`[tbank-notify] sending payment success notification`, {
+            orderId,
+            paymentId: paymentId ?? "none",
+            messageLength: message.length,
+            hasTelegramToken,
+            hasTelegramChatId,
+            telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "not set",
+            telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID || process.env.TELEGRAM_THREAD_ID || "not set",
+          });
+        }
         try {
           await sendOrderTelegramMessage(message);
-          console.info(`[tbank-notify] payment success notification sent successfully`, { orderId });
+          if (process.env.NODE_ENV !== "production") {
+            console.info(`[tbank-notify] payment success notification sent successfully`, { orderId });
+          }
         } catch (telegramErr) {
           // Детальная ошибка от Telegram API
           console.error(`[tbank-notify] sendOrderTelegramMessage failed`, {
@@ -227,18 +243,22 @@ export async function POST(request: Request) {
       } else {
         const reason = actualPaymentStatus ?? "Отмена/ошибка оплаты";
         const message = formatPaymentFailed(order, reason);
-        console.info(`[tbank-notify] sending payment failed notification`, {
-          orderId,
-          reason,
-          messageLength: message.length,
-          hasTelegramToken,
-          hasTelegramChatId,
-          telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "not set",
-          telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID || process.env.TELEGRAM_THREAD_ID || "not set",
-        });
+        if (process.env.NODE_ENV !== "production") {
+          console.info(`[tbank-notify] sending payment failed notification`, {
+            orderId,
+            reason,
+            messageLength: message.length,
+            hasTelegramToken,
+            hasTelegramChatId,
+            telegramChatId: process.env.TELEGRAM_ORDERS_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "not set",
+            telegramThreadId: process.env.TELEGRAM_ORDERS_THREAD_ID || process.env.TELEGRAM_THREAD_ID || "not set",
+          });
+        }
         try {
           await sendOrderTelegramMessage(message);
-          console.info(`[tbank-notify] payment failed notification sent successfully`, { orderId });
+          if (process.env.NODE_ENV !== "production") {
+            console.info(`[tbank-notify] payment failed notification sent successfully`, { orderId });
+          }
         } catch (telegramErr) {
           // Детальная ошибка от Telegram API
           console.error(`[tbank-notify] sendOrderTelegramMessage failed`, {
