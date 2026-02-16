@@ -17,6 +17,17 @@ const nextConfig: NextConfig = {
     // Tree-shaking для lucide-react и др. — меньше размер бандла
     optimizePackageImports: ["lucide-react"],
   },
+  // Исключаем sharp из клиентского бандла (используется только в API routes)
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Исключаем sharp из клиентского бандла
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        sharp: false,
+      };
+    }
+    return config;
+  },
   async redirects() {
     return [
       { source: "/privacy", destination: "/docs/privacy", permanent: true },
