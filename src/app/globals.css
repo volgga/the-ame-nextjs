@@ -411,7 +411,8 @@ All colors MUST be HSL.
     background: inherit;
   }
 
-  .productCardBadgeNew {
+  .productCardBadgeNew,
+  .productCardBadgeHit {
     background: var(--page-bg);
     color: #1f2a1f;
   }

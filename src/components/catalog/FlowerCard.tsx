@@ -130,6 +130,8 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
   // Бейдж показывается только если showNewBadge = true (по умолчанию true)
   const isNewEffective =
     showNewBadge && product?.isNew === true && product?.newUntil != null && new Date(product.newUntil) > new Date();
+  // Бейдж «Хит»: приоритет над «Новый» (взаимно исключающие на витрине)
+  const isHitEffective = product?.isHit === true;
 
   const handleCartClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -148,9 +150,12 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
       <Link href={productUrl} aria-label={flower.name} className="block flex-1 relative" prefetch={false}>
         {/* 📸 Image wrapper: clips badges to rounded image (productCardImageWrap = 24px radius + overflow hidden) */}
         <div className="productCardImageWrap group aspect-square bg-[#ece9e2]">
-          {(isNewEffective || hasDiscount) && (
+          {((isHitEffective || isNewEffective) || hasDiscount) && (
             <div className="productCardBadges">
-              {isNewEffective && (
+              {isHitEffective && (
+                <span className="productCardBadge productCardBadgeHit">ХИТ</span>
+              )}
+              {!isHitEffective && isNewEffective && (
                 <span className="productCardBadge productCardBadgeNew">НОВЫЙ</span>
               )}
               {hasDiscount && (
@@ -286,7 +291,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
               <button
                 type="button"
                 onClick={openQuickBuyModal}
-                className="hidden md:flex md:w-9 md:h-9 md:min-w-[36px] md:min-h-[36px] items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main hover:text-color-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
+                className="product-cta hidden md:flex md:w-9 md:h-9 md:min-w-[36px] md:min-h-[36px] items-center justify-center rounded-full bg-page-bg border border-[var(--color-outline-border)] text-color-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2 touch-manipulation"
                 title="Купить в 1 клик"
                 aria-label="Купить в 1 клик"
               >

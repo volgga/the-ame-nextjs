@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { HeroCarousel } from "@/components/hero/HeroCarousel";
 import { RecommendSection } from "@/components/home/RecommendSection";
+import { ProgressiveBelowFold } from "@/components/home/ProgressiveBelowFold";
 import { HomeCategoryTiles } from "@/components/home/HomeCategoryTiles";
 import { AboutSection } from "@/components/home/AboutSection";
 import { OrderBouquetSection } from "@/components/home/OrderBouquetSection";
@@ -83,18 +84,20 @@ export default async function HomePage() {
       ) : null}
       <HeroCarousel slides={slides} />
       <RecommendSection products={recommendProducts} />
-      <HomeCategoryTiles collections={homeCollections} />
-      <AboutSection about={homeAbout} />
-      <OrderBouquetSection
-        title={homeOrderBlock?.title}
-        subtitle1={homeOrderBlock?.subtitle1}
-        text={homeOrderBlock?.text}
-        imageUrl={homeOrderBlock?.imageUrl}
-      />
-      <FaqSection faqItems={homeFaq} />
-      <ReviewsSection reviews={homeReviews} />
-      <MapSection />
-      <BlogSlider posts={blogPosts.slice(0, 6)} />
+      <ProgressiveBelowFold>
+        <HomeCategoryTiles collections={homeCollections} />
+        <AboutSection about={homeAbout} />
+        <OrderBouquetSection
+          title={homeOrderBlock?.title}
+          subtitle1={homeOrderBlock?.subtitle1}
+          text={homeOrderBlock?.text}
+          imageUrl={homeOrderBlock?.imageUrl}
+        />
+        <FaqSection faqItems={homeFaq} />
+        <ReviewsSection reviews={homeReviews} />
+        <MapSection />
+        <BlogSlider posts={blogPosts.slice(0, 6)} />
+      </ProgressiveBelowFold>
     </div>
   );
 }

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const [productsRes, variantProductsRes] = await Promise.all([
       sb
         .from("products")
-        .select("id, name, slug, price, image_url, is_active, is_hidden, is_preorder, is_new, new_until, sort_order")
+        .select("id, name, slug, price, image_url, is_active, is_hidden, is_preorder, is_new, new_until, is_hit, sort_order")
         .order("sort_order", { ascending: true, nullsFirst: false }),
       sb
         .from("variant_products")
@@ -119,6 +119,7 @@ const createSimpleSchema = z.object({
   is_preorder: z.boolean().default(false),
   is_new: z.boolean().default(false),
   new_until: z.string().datetime().nullable().optional(),
+  is_hit: z.boolean().default(false),
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
   seo_title: z.string().max(300).optional().nullable(),
@@ -148,6 +149,7 @@ const createVariantSchema = z.object({
   is_active: z.boolean().default(true),
   is_hidden: z.boolean().default(false),
   is_new: z.boolean().default(false),
+  is_hit: z.boolean().default(false),
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
   seo_title: z.string().max(300).optional().nullable(),
@@ -241,6 +243,7 @@ export async function POST(request: NextRequest) {
           is_preorder: parsed.data.is_preorder,
           is_new: parsed.data.is_new,
           new_until: newUntil,
+          is_hit: parsed.data.is_hit,
           sort_order: 0,
           category_slug: mainCategorySlug,
           category_slugs: categorySlugs,
@@ -318,6 +321,7 @@ export async function POST(request: NextRequest) {
           is_hidden: parsed.data.is_hidden,
           is_new: parsed.data.is_new,
           new_until: vpNewUntil,
+          is_hit: parsed.data.is_hit,
           sort_order: 0,
           category_slug: mainCategorySlug,
           category_slugs: categorySlugs,

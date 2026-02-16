@@ -48,7 +48,7 @@ export function AboutSection({ about }: AboutSectionProps) {
           }
         });
       },
-      { threshold: 0.25, rootMargin: "0px" }
+      { threshold: 0.25, rootMargin: "600px 0px" }
     );
     observer.observe(gridRef.current);
     return () => observer.disconnect();

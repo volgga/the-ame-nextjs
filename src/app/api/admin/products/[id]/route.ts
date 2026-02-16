@@ -63,6 +63,7 @@ const updateSimpleSchema = z.object({
   is_preorder: z.boolean().optional(),
   is_new: z.boolean().optional(),
   new_until: z.string().datetime().nullable().optional(),
+  is_hit: z.boolean().optional(),
   category_slug: z.string().nullable().optional(),
   category_slugs: z.array(z.string()).optional().nullable(),
   sort_order: z.number().int().min(0).optional(),
@@ -109,6 +110,7 @@ const updateVariantSchema = z.object({
     .transform((v) => (v === "" ? null : v)),
   bouquet_colors: z.array(z.string()).optional().nullable(),
   photo_label: z.string().max(200).optional().nullable().transform((v) => (v === "" ? null : v)),
+  is_hit: z.boolean().optional(),
 });
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

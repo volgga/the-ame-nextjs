@@ -39,6 +39,7 @@ type VariantProductsRow = {
   bouquet_colors?: string[] | null;
   is_new?: boolean | null;
   new_until?: string | null;
+  is_hit?: boolean | null;
 };
 
 export type ProductVariantPublic = {
@@ -73,7 +74,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, composition_flowers, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until"
+        "id, slug, name, description, composition_flowers, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until, is_hit"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -231,6 +232,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
           isPreorder: firstVariantIsPreorder,
           isNew: effectiveIsNew,
           newUntil: effectiveNewUntil,
+          isHit: row.is_hit ?? false,
           variants: variantsByProductId.get(row.id) ?? undefined,
         } satisfies Product;
       })
@@ -253,7 +255,7 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
     const { data, error } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until"
+        "id, slug, name, description, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until, is_hit"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -310,6 +312,7 @@ export async function getVariantProductBySlug(slug: string): Promise<Product | n
           : null,
       isNew: row.is_new ?? false,
       newUntil: row.new_until ?? null,
+      isHit: row.is_hit ?? false,
     };
   } catch (e) {
     console.error(`${LOG_PREFIX} getVariantProductBySlug:`, e instanceof Error ? e.message : String(e));
@@ -331,7 +334,7 @@ export async function getVariantProductWithVariantsBySlug(
     const { data: vp, error: vpErr } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, composition_flowers, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until, photo_label"
+        "id, slug, name, description, composition_flowers, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until, is_hit, photo_label"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -389,6 +392,7 @@ export async function getVariantProductWithVariantsBySlug(
         Array.isArray(row.bouquet_colors) && row.bouquet_colors.length > 0
           ? row.bouquet_colors.filter((k): k is string => typeof k === "string" && k.length > 0)
           : null,
+      isHit: row.is_hit ?? false,
       photoLabel: (row as { photo_label?: string | null }).photo_label?.trim() || null,
     };
 

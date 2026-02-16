@@ -123,7 +123,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
           },
           {
             threshold: 0.25, // 25% видимости
-            rootMargin: "0px",
+            rootMargin: "600px 0px", // ранняя подгрузка по скроллу (мобил: нет пустоты)
           }
         );
 

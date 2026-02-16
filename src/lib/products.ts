@@ -66,6 +66,8 @@ export type Product = {
   isNew?: boolean;
   /** Дата окончания статуса "новый" (null если не установлен) */
   newUntil?: string | null;
+  /** Бейдж «Хит» (взаимно исключающий с «Новый» на витрине) */
+  isHit?: boolean;
   /** Ключи цветов букета для фильтра «Цвет букета» */
   bouquetColors?: string[] | null;
   /** Процент скидки 0–100 (для простого товара) */
@@ -109,6 +111,7 @@ type ProductsRow = {
   is_preorder?: boolean | null;
   is_new?: boolean | null;
   new_until?: string | null;
+  is_hit?: boolean | null;
   sort_order?: number | null;
   created_at?: string | null;
   seo_title?: string | null;
@@ -193,6 +196,7 @@ async function rowToProduct(row: ProductsRow, getCategoryNames?: (slugs: string[
     createdAt: row.created_at ?? undefined, // fallback для вторичной сортировки
     isNew: row.is_new ?? false,
     newUntil: row.new_until ?? null,
+    isHit: row.is_hit ?? false,
     bouquetColors:
       Array.isArray(row.bouquet_colors) && row.bouquet_colors.length > 0
         ? row.bouquet_colors.filter((k): k is string => typeof k === "string" && k.length > 0)
@@ -227,7 +231,7 @@ export async function getAllProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, discount_percent, discount_price"
+        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, is_hit, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, discount_percent, discount_price"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -289,7 +293,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     const base = supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors"
+        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, is_hit, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null");

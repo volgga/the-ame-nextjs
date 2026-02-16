@@ -126,6 +126,7 @@ function AdminProductsPageContent() {
   const [createIsHidden, setCreateIsHidden] = useState(false);
   const [createIsPreorder, setCreateIsPreorder] = useState(false);
   const [createIsNew, setCreateIsNew] = useState(false);
+  const [createIsHit, setCreateIsHit] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const productImagesRef = useRef<ImageItem[]>([]);
   productImagesRef.current = productImages;
@@ -342,7 +343,11 @@ function AdminProductsPageContent() {
         });
         setCreateIsHidden(data.is_hidden ?? false);
         setCreateIsPreorder(data.is_preorder ?? false);
-        setCreateIsNew(data.is_new ?? false);
+        // Хит и Новый взаимно исключающие: приоритет Хит
+        const isHit = data.is_hit ?? false;
+        const isNew = data.is_new ?? false;
+        setCreateIsHit(isHit);
+        setCreateIsNew(isHit ? false : isNew);
         setProductPhotoLabel(data.photo_label ?? "");
         setSelectedCategorySlugs(
           Array.isArray(data.category_slugs) ? data.category_slugs : data.category_slug ? [data.category_slug] : []
@@ -506,6 +511,7 @@ function AdminProductsPageContent() {
     setCreateIsHidden(false);
     setCreateIsPreorder(false);
     setCreateIsNew(false);
+    setCreateIsHit(false);
     setFieldErrors({});
     setCreateModalOpen(false);
     setCreateForm(initialForm);
@@ -826,6 +832,7 @@ function AdminProductsPageContent() {
           is_hidden: createIsHidden,
           is_preorder: createIsPreorder,
           is_new: createIsNew,
+          is_hit: createIsHit,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
@@ -908,6 +915,7 @@ function AdminProductsPageContent() {
           is_active: true,
           is_hidden: createIsHidden,
           is_new: createIsNew,
+          is_hit: createIsHit,
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
@@ -1117,6 +1125,7 @@ function AdminProductsPageContent() {
           is_hidden: createIsHidden,
           is_preorder: createIsPreorder,
           is_new: createIsNew,
+          is_hit: createIsHit,
           category_slugs,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
           discount_percent: createForm.discount_percent ?? null,
@@ -1214,6 +1223,7 @@ function AdminProductsPageContent() {
           is_active: true,
           is_hidden: createIsHidden,
           is_new: createIsNew,
+          is_hit: createIsHit,
           category_slugs,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
           photo_label: productPhotoLabel.trim() || null,
@@ -1999,14 +2009,33 @@ function AdminProductsPageContent() {
                           />
                           <span className="text-sm text-color-text-main">Предзаказ</span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className={`flex items-center gap-2 ${createIsHit ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`} title={createIsHit ? "Нельзя выбрать вместе с «Хит»" : ""}>
                           <input
                             type="checkbox"
                             checked={createIsNew}
-                            onChange={(e) => setCreateIsNew(e.target.checked)}
+                            disabled={createIsHit}
+                            onChange={(e) => {
+                              const v = e.target.checked;
+                              setCreateIsNew(v);
+                              if (v) setCreateIsHit(false);
+                            }}
                             className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                           />
                           <span className="text-sm text-color-text-main">Новый</span>
+                        </label>
+                        <label className={`flex items-center gap-2 ${createIsNew ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`} title={createIsNew ? "Нельзя выбрать вместе с «Новый»" : ""}>
+                          <input
+                            type="checkbox"
+                            checked={createIsHit}
+                            disabled={createIsNew}
+                            onChange={(e) => {
+                              const v = e.target.checked;
+                              setCreateIsHit(v);
+                              if (v) setCreateIsNew(false);
+                            }}
+                            className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                          />
+                          <span className="text-sm text-color-text-main">Хит</span>
                         </label>
                       </div>
                       <div className="space-y-0.5 text-xs text-color-text-secondary">
@@ -2015,8 +2044,7 @@ function AdminProductsPageContent() {
                           «Предзаказ» — товар виден на витрине, а кнопки «В корзину» заменяются на оформление предзаказа.
                         </p>
                         <p>
-                          «Новый» — на карточке товара в каталоге и «Рекомендуем» появится бейдж «новый». Автоматически
-                          скрывается через 30 дней.
+                          «Новый» и «Хит» — бейджи на карточке в каталоге; нельзя выбрать оба. «Новый» скрывается через 30 дней.
                         </p>
                       </div>
                     </>
@@ -2568,22 +2596,40 @@ function AdminProductsPageContent() {
                           <span className="text-sm text-color-text-main">Скрыть с витрины</span>
                           </label>
 
-                          <label className="flex items-center gap-2 cursor-pointer">
+                          <label className={`flex items-center gap-2 ${createIsHit ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`} title={createIsHit ? "Нельзя выбрать вместе с «Хит»" : ""}>
                             <input
                               type="checkbox"
                               checked={createIsNew}
-                              onChange={(e) => setCreateIsNew(e.target.checked)}
+                              disabled={createIsHit}
+                              onChange={(e) => {
+                                const v = e.target.checked;
+                                setCreateIsNew(v);
+                                if (v) setCreateIsHit(false);
+                              }}
                               className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
                             />
                             <span className="text-sm text-color-text-main">Новый</span>
+                          </label>
+                          <label className={`flex items-center gap-2 ${createIsNew ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`} title={createIsNew ? "Нельзя выбрать вместе с «Новый»" : ""}>
+                            <input
+                              type="checkbox"
+                              checked={createIsHit}
+                              disabled={createIsNew}
+                              onChange={(e) => {
+                                const v = e.target.checked;
+                                setCreateIsHit(v);
+                                if (v) setCreateIsNew(false);
+                              }}
+                              className="rounded border-border-block text-color-bg-main focus:ring-[rgba(111,131,99,0.5)]"
+                            />
+                            <span className="text-sm text-color-text-main">Хит</span>
                           </label>
                         </div>
 
                         <div className="mt-1 space-y-0.5 text-xs text-color-text-secondary">
                           <p>«Скрыть с витрины» — товар не показывается на сайте, но остаётся в админке.</p>
                           <p>
-                            «Новый» — на карточке товара в каталоге и «Рекомендуем» появится бейдж «новый». Автоматически
-                            скрывается через 30 дней.
+                            «Новый» и «Хит» — бейджи на карточке в каталоге; нельзя выбрать оба. «Новый» скрывается через 30 дней.
                           </p>
                         </div>
                       </div>

@@ -80,7 +80,7 @@ export function FaqSection({ faqItems }: FaqSectionProps) {
           if (entry.isIntersecting && !revealed) setRevealed(true);
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: "600px 0px" }
     );
     observer.observe(sectionRef.current);
     return () => observer.disconnect();
