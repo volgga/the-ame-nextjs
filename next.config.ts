@@ -47,13 +47,6 @@ const nextConfig: NextConfig = {
         source: "/_next/image",
         headers: [{ key: "Cache-Control", value: "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400" }],
       },
-      // Кэширование изображений из Supabase Storage (если используются прямые ссылки)
-      {
-        source: "/(.*\\.(webp|avif|jpg|jpeg|png))",
-        headers: [
-          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
-        ],
-      },
       {
         source: "/IMG_4256.JPG",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
