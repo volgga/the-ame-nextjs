@@ -49,6 +49,23 @@ jobs:
             # Обновляем код из репозитория
             echo "📥 Fetching latest code..."
             
+            # Исправляем DNS для systemd-resolved (если нужно)
+            echo "🔧 Configuring DNS..."
+            if command -v resolvectl >/dev/null 2>&1; then
+              echo "📋 Current DNS status:"
+              resolvectl status || true
+              echo "🔧 Setting DNS servers..."
+              resolvectl dns eth0 8.8.8.8 8.8.4.4 2>/dev/null || resolvectl dns $(ip route | grep default | awk '{print $5}' | head -1) 8.8.8.8 8.8.4.4 2>/dev/null || true
+            fi
+            
+            # Обновляем /etc/resolv.conf для текущей сессии
+            if [ -L /etc/resolv.conf ]; then
+              echo "📝 /etc/resolv.conf is a symlink, checking systemd-resolved..."
+            else
+              echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf.tmp >/dev/null 2>&1 || true
+              echo "nameserver 8.8.4.4" | sudo tee -a /etc/resolv.conf.tmp >/dev/null 2>&1 || true
+            fi
+            
             # Диагностика: проверяем git remote
             echo "🔍 Checking git remote configuration..."
             git remote -v || echo "⚠️ Warning: git remote check failed"
@@ -61,17 +78,79 @@ jobs:
               echo "⚠️ Warning: GitHub ping failed, but continuing..."
             fi
             
+            # Проверяем git remote URL и при необходимости обновляем на HTTPS
+            GIT_REMOTE_URL=$(git config --get remote.origin.url || echo "")
+            if [[ "$GIT_REMOTE_URL" == *"git@"* ]]; then
+              echo "🔍 Git remote uses SSH, checking if we can use HTTPS instead..."
+              # Пробуем использовать HTTPS если SSH не работает
+              GIT_REPO_NAME=$(echo "$GIT_REMOTE_URL" | sed -E 's/.*[:/]([^/]+\/[^/]+)(\.git)?$/\1/' | sed 's/\.git$//')
+              if [ -n "$GIT_REPO_NAME" ]; then
+                echo "💡 Alternative: git remote set-url origin https://github.com/$GIT_REPO_NAME.git"
+                # Не меняем автоматически, только предупреждаем
+              fi
+            fi
+            
             # Пробуем fetch с таймаутом и retry
             MAX_RETRIES=3
             RETRY_COUNT=0
             FETCH_SUCCESS=false
             
+            # Настраиваем DNS через systemd-resolved
+            echo "🔧 Configuring DNS via systemd-resolved..."
+            if command -v resolvectl >/dev/null 2>&1; then
+              # Получаем имя интерфейса
+              INTERFACE=$(ip route | grep default | awk '{print $5}' | head -1 || echo "eth0")
+              echo "📡 Using interface: $INTERFACE"
+              
+              # Устанавливаем DNS серверы
+              resolvectl dns "$INTERFACE" 8.8.8.8 8.8.4.4 2>/dev/null || true
+              
+              # Очищаем DNS кеш
+              echo "🔄 Flushing DNS cache..."
+              resolvectl flush-caches 2>/dev/null || true
+            fi
+            
+            # Добавляем GitHub в /etc/hosts для надежности
+            echo "📝 Adding GitHub to /etc/hosts..."
+            if ! grep -q "github.com" /etc/hosts 2>/dev/null; then
+              GITHUB_IPS="140.82.121.3 140.82.121.4"
+              for IP in $GITHUB_IPS; do
+                if ping -c 1 -W 2 "$IP" >/dev/null 2>&1; then
+                  echo "$IP github.com" | sudo tee -a /etc/hosts >/dev/null 2>&1 || true
+                  echo "✅ Added $IP -> github.com to /etc/hosts"
+                  break
+                fi
+              done
+            else
+              echo "✅ GitHub already in /etc/hosts"
+            fi
+            
+            # Проверяем резолвинг
+            echo "🔍 Testing DNS resolution..."
+            if getent hosts github.com >/dev/null 2>&1; then
+              echo "✅ github.com resolves to: $(getent hosts github.com | awk '{print $1}')"
+            else
+              echo "⚠️ Warning: github.com DNS resolution failed"
+            fi
+            
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
               echo "🔄 Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Fetching from origin/main..."
-              if timeout 30 git fetch origin main 2>&1; then
+              
+              # Пробуем fetch с увеличенным таймаутом
+              if timeout 60 git fetch origin main 2>&1; then
                 FETCH_SUCCESS=true
                 break
               else
+                FETCH_EXIT_CODE=$?
+                echo "⚠️ Fetch attempt failed with exit code: $FETCH_EXIT_CODE"
+                
+                # Если это SSH соединение, пробуем с дополнительными опциями
+                if [[ "$GIT_REMOTE_URL" == *"git@"* ]]; then
+                  echo "💡 Retrying with SSH options..."
+                  GIT_SSH_COMMAND="ssh -o ConnectTimeout=30 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+                  timeout 60 git fetch origin main 2>&1 || true
+                fi
+                
                 RETRY_COUNT=$((RETRY_COUNT + 1))
                 if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                   echo "⏳ Waiting 5 seconds before retry..."
