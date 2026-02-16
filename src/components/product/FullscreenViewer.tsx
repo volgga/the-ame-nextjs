@@ -44,10 +44,14 @@ export function FullscreenViewer({
   const [isDragging, setIsDragging] = useState(false);
   const [canCloseByOverlay, setCanCloseByOverlay] = useState(false);
   const [hasHover, setHasHover] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dragStartRef = useRef<{ clientX: number; clientY: number; offsetX: number; offsetY: number } | null>(null);
   const didDragRef = useRef(false);
   const viewportRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   useEffect(() => {
     setHasHover(window.matchMedia("(hover: hover)").matches);
   }, []);
@@ -185,16 +189,27 @@ export function FullscreenViewer({
     if (hasHover) setCanCloseByOverlay(true);
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const content = (
     <div
-      className="fixed inset-0 flex flex-col md:flex-row items-center justify-center bg-black/90 transition-opacity duration-200 p-3 sm:p-4 md:p-6 box-border"
+      className="flex flex-col md:flex-row items-center justify-center bg-black/90 transition-opacity duration-200 p-3 sm:p-4 md:p-6 box-border"
       role="dialog"
       aria-modal="true"
       aria-label="Просмотр фото"
       onClick={handleOverlayClick}
-      style={{ maxWidth: "100vw", maxHeight: "100vh", zIndex: 9998 }}
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "100vh",
+        maxWidth: "100vw",
+        maxHeight: "100vh",
+        zIndex: 99999,
+      }}
     >
       <div
         className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 flex-1 min-w-0 min-h-0 w-full max-w-[calc(100vw-32px)] max-h-[calc(100vh-32px)] md:max-w-[min(1200px,calc(100vw-48px))] md:max-h-[calc(100vh-48px)]"

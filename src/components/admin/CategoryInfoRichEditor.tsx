@@ -32,7 +32,7 @@ export function CategoryInfoRichEditor({ value, onChange }: CategoryInfoRichEdit
     editorProps: {
       attributes: {
         class:
-          "focus:outline-none min-h-[120px] px-3 py-2 border border-gray-300 rounded text-sm text-[#111] prose prose-sm max-w-none",
+          "focus:outline-none min-h-[120px] px-3 py-2 border border-gray-300 rounded text-sm text-[#111] prose prose-sm max-w-none [&_h2]:text-lg [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-1 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1",
       },
     },
   });

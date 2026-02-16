@@ -447,8 +447,8 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     setQuantity((prev) => Math.max(1, prev + delta));
   };
 
-  // Аккордеон: только один пункт открыт за раз, "Описание" по умолчанию
-  const [openedAccordion, setOpenedAccordion] = useState<string | null>("Описание");
+  // Аккордеон: только один пункт открыт за раз; по умолчанию все свёрнуты (Состав всегда раскрыт отдельно)
+  const [openedAccordion, setOpenedAccordion] = useState<string | null>(null);
 
   const handleAccordionToggle = (id: string) => {
     setOpenedAccordion((prev) => (prev === id ? null : id));
@@ -632,6 +632,13 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                 {product.title.toUpperCase()}
               </h1>
 
+              {/* На фото — сразу под названием */}
+              {product.photoLabel && (
+                <p className="text-sm text-color-text-main font-medium mb-3">
+                  На фото: {product.photoLabel}
+                </p>
+              )}
+
               {/* Вариант (если вариантный товар) */}
               {hasVariants && (
                 <div className="mb-4">
@@ -652,16 +659,11 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                       </button>
                     ))}
                   </div>
-                  {product.photoLabel && (
-                    <p className="mt-1.5 text-sm text-color-text-main font-medium">
-                      На фото: {product.photoLabel}
-                    </p>
-                  )}
                 </div>
               )}
 
               {/* Цена и блок действий в едином контейнере */}
-              <div className="mb-4">
+              <div className="mb-2">
                 {/* Цена: основная слева, старая зачёркнута справа (если скидка) */}
                 <div className="text-lg md:text-xl font-medium text-color-text-main mb-3 flex items-baseline gap-2 flex-wrap">
                   <span>{displayPrice.toLocaleString("ru-RU")} ₽</span>
@@ -767,7 +769,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
               </div>
 
               {/* Секции: Состав always-open, Размер, Описание, … */}
-              <div className="mt-4 space-y-0">
+              <div className="mt-2 space-y-0">
                 {/* Состав — всегда раскрыт, не кликабелен */}
                 {displayComposition && displayComposition.trim() ? (
                   <StaticBlock title="Состав">

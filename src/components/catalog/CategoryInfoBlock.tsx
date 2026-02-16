@@ -32,9 +32,9 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
     : "";
 
   return (
-    <section className="mt-12 pt-8 border-t border-border-block">
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 md:gap-10 items-start">
-        <div className="space-y-4 order-2 md:order-1">
+    <section className="mt-12 pt-8 border-t border-border-block w-full max-w-full min-w-0">
+      <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,460px)] gap-6 md:gap-8 items-start">
+        <div className="min-w-0 space-y-4 order-1">
           {hasSubtitle && (
             <h2 className="text-xl md:text-2xl font-semibold text-color-text-main">
               {data.info_subtitle}
@@ -47,19 +47,19 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
           )}
           {safeContent && (
             <div
-              className="prose prose-sm md:prose-base max-w-none text-color-text-secondary [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-color-text-main [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+              className="prose prose-sm md:prose-base max-w-none text-color-text-secondary [&_h2]:text-lg [&_h2]:md:text-xl [&_h2]:font-semibold [&_h2]:text-color-text-main [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:first:mt-0 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-color-text-main [&_h3]:mt-3 [&_h3]:mb-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-color-text-main [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-color-text-secondary"
               dangerouslySetInnerHTML={{ __html: safeContent }}
             />
           )}
         </div>
         {hasImage && (
-          <div className="relative w-full md:w-[min(400px,40vw)] aspect-square shrink-0 order-1 md:order-2 rounded-xl overflow-hidden bg-[rgba(31,42,31,0.06)]">
+          <div className="relative w-full max-w-full min-w-0 aspect-square order-2 rounded-xl overflow-hidden bg-[rgba(31,42,31,0.06)]">
             <Image
               src={data.info_image_url!}
               alt={data.info_subtitle || "Изображение"}
               fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 400px"
+              className="object-cover w-full h-full"
+              sizes="(max-width: 768px) 100vw, 460px"
             />
           </div>
         )}
