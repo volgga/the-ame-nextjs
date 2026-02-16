@@ -82,6 +82,8 @@ function CartItemRow({
           fill
           variant="thumb"
           sizes="80px"
+          loading="lazy"
+          // TODO: Добавить imageData когда данные корзины будут включать варианты изображений
           className="object-cover"
           onError={() => setImgError(true)}
         />

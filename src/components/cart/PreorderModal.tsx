@@ -167,6 +167,8 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
                 variant="thumb"
                 sizes="56px"
                 className="object-cover"
+                loading="lazy"
+                // TODO: Добавить imageData когда PreorderModal будет получать полные Product объекты
               />
             </div>
             <div className="flex-1 min-w-0">

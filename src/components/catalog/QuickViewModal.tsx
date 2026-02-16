@@ -25,6 +25,13 @@ export type QuickViewProductData = {
   categories?: string[];
   isPreorder?: boolean;
   slug?: string | null;
+  /** Варианты изображения для оптимизации */
+  imageThumbUrl?: string | null;
+  imageMediumUrl?: string | null;
+  imageLargeUrl?: string | null;
+  imageThumbAvifUrl?: string | null;
+  imageMediumAvifUrl?: string | null;
+  imageLargeAvifUrl?: string | null;
 };
 
 type QuickViewModalProps = {
@@ -195,6 +202,20 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                       sizes="(max-width: 768px) 100vw, 50vw"
                       className="object-cover"
                       priority={currentImageIndex === 0}
+                      loading={currentImageIndex === 0 ? "eager" : "lazy"}
+                      imageData={
+                        currentImageIndex === 0
+                          ? {
+                              image_url: product.image,
+                              image_thumb_url: product.imageThumbUrl,
+                              image_medium_url: product.imageMediumUrl,
+                              image_large_url: product.imageLargeUrl,
+                              image_thumb_avif_url: product.imageThumbAvifUrl,
+                              image_medium_avif_url: product.imageMediumAvifUrl,
+                              image_large_avif_url: product.imageLargeAvifUrl,
+                            }
+                          : undefined
+                      }
                     />
                     {displayImages.length > 1 && (
                       <>

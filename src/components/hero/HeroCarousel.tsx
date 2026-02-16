@@ -282,11 +282,20 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                   alt="Слайд"
                   fill
                   variant="hero"
-                  className="object-cover object-center select-none pointer-events-none"
-                  loading={i === 0 ? "eager" : "lazy"}
-                  sizes="100vw"
                   priority={i === 0}
+                  loading={i === 0 ? "eager" : "lazy"}
+                  className="object-cover object-center select-none pointer-events-none"
+                  sizes="100vw"
                   fetchPriority={i === 0 ? "high" : undefined}
+                  imageData={{
+                    image_url: slide.imageUrl,
+                    image_thumb_url: slide.imageThumbUrl,
+                    image_medium_url: slide.imageMediumUrl,
+                    image_large_url: slide.imageLargeUrl,
+                    image_thumb_avif_url: slide.imageThumbAvifUrl,
+                    image_medium_avif_url: slide.imageMediumAvifUrl,
+                    image_large_avif_url: slide.imageLargeAvifUrl,
+                  }}
                 />
                 {hasSlideButton(slide) && slide.buttonHref && slide.buttonText && (
                   <div

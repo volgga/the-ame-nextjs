@@ -147,6 +147,8 @@ export function UpsellSection() {
                       variant="thumb"
                       sizes="160px"
                       className="object-cover"
+                      loading="lazy"
+                      // TODO: Добавить imageData когда API будет возвращать варианты изображений
                     />
                   </div>
                   <h4 className="text-sm font-medium mb-1 line-clamp-2">{addon.title}</h4>

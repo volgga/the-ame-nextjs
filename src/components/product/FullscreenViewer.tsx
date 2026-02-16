@@ -12,6 +12,16 @@ export type FullscreenViewerProps = {
   currentIndex: number;
   onIndexChange: (idx: number) => void;
   productTitle: string;
+  /** Варианты изображения для первого изображения (опционально) */
+  mainImageVariants?: {
+    image_url?: string | null;
+    image_thumb_url?: string | null;
+    image_medium_url?: string | null;
+    image_large_url?: string | null;
+    image_thumb_avif_url?: string | null;
+    image_medium_avif_url?: string | null;
+    image_large_avif_url?: string | null;
+  };
 };
 
 const ZOOM_SCALE = 1.75;
@@ -27,6 +37,7 @@ export function FullscreenViewer({
   currentIndex,
   onIndexChange,
   productTitle,
+  mainImageVariants,
 }: FullscreenViewerProps) {
   const [isZoomed, setIsZoomed] = useState(false);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -278,6 +289,8 @@ export function FullscreenViewer({
                       className="object-contain object-center pointer-events-none"
                       draggable={false}
                       unoptimized={src.startsWith("data:") || src.includes("blob:")}
+                      loading={idx === currentIndex ? "eager" : "lazy"}
+                      imageData={idx === 0 && mainImageVariants ? mainImageVariants : undefined}
                     />
                   </div>
                 </div>

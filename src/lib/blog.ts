@@ -15,6 +15,13 @@ export type BlogPost = {
   cover_image_url: string | null;
   cover_alt: string | null;
   cover_caption: string | null;
+  /** Варианты обложки для оптимизации */
+  cover_image_thumb_url?: string | null;
+  cover_image_medium_url?: string | null;
+  cover_image_large_url?: string | null;
+  cover_image_thumb_avif_url?: string | null;
+  cover_image_medium_avif_url?: string | null;
+  cover_image_large_avif_url?: string | null;
   published: boolean;
   sort_order: number | null;
   created_at: string;

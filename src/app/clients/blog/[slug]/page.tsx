@@ -114,6 +114,15 @@ export default async function ClientsBlogPostPage({ params }: BlogPostPageProps)
                 priority
                 className="object-cover"
                 sizes="100vw"
+                imageData={{
+                  image_url: post.cover_image_url,
+                  image_thumb_url: post.cover_image_thumb_url,
+                  image_medium_url: post.cover_image_medium_url,
+                  image_large_url: post.cover_image_large_url,
+                  image_thumb_avif_url: post.cover_image_thumb_avif_url,
+                  image_medium_avif_url: post.cover_image_medium_avif_url,
+                  image_large_avif_url: post.cover_image_large_avif_url,
+                }}
               />
             </div>
             {post.cover_caption && <p className="mt-4 text-center text-sm text-neutral-500">{post.cover_caption}</p>}

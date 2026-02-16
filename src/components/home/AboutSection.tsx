@@ -118,6 +118,8 @@ export function AboutSection({ about }: AboutSectionProps) {
                   variant="card"
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
+                  loading="lazy"
+                  // TODO: Добавить imageData когда AboutSection будет иметь варианты изображений
                 />
               </div>
             ) : (

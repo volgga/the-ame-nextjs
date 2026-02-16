@@ -72,6 +72,13 @@ export type Product = {
   discountPercent?: number | null;
   /** Цена со скидкой (финальная для оплаты и витрины) */
   discountPrice?: number | null;
+  /** Предгенерированные варианты изображений для оптимизации */
+  imageThumbUrl?: string | null;
+  imageMediumUrl?: string | null;
+  imageLargeUrl?: string | null;
+  imageThumbAvifUrl?: string | null;
+  imageMediumAvifUrl?: string | null;
+  imageLargeAvifUrl?: string | null;
 };
 
 /** Сырая строка таблицы products в Supabase */
@@ -85,6 +92,12 @@ type ProductsRow = {
   width_cm?: number | null;
   image_url?: string | null;
   images?: string[] | null;
+  image_thumb_url?: string | null;
+  image_medium_url?: string | null;
+  image_large_url?: string | null;
+  image_thumb_avif_url?: string | null;
+  image_medium_avif_url?: string | null;
+  image_large_avif_url?: string | null;
   price?: number | null;
   slug?: string | null;
   category_slug?: string | null;
@@ -184,6 +197,12 @@ async function rowToProduct(row: ProductsRow, getCategoryNames?: (slugs: string[
         : null,
     discountPercent: row.discount_percent != null ? Number(row.discount_percent) : null,
     discountPrice: row.discount_price != null ? Number(row.discount_price) : null,
+    imageThumbUrl: row.image_thumb_url ?? null,
+    imageMediumUrl: row.image_medium_url ?? null,
+    imageLargeUrl: row.image_large_url ?? null,
+    imageThumbAvifUrl: row.image_thumb_avif_url ?? null,
+    imageMediumAvifUrl: row.image_medium_avif_url ?? null,
+    imageLargeAvifUrl: row.image_large_avif_url ?? null,
   };
 }
 
@@ -206,7 +225,7 @@ export async function getAllProducts(): Promise<Product[]> {
     const { data, error } = await supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, discount_percent, discount_price"
+        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, discount_percent, discount_price"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null")
@@ -268,7 +287,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     const base = supabase
       .from("products")
       .select(
-        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors"
+        "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors"
       )
       .or("is_active.eq.true,is_active.is.null")
       .or("is_hidden.eq.false,is_hidden.is.null");

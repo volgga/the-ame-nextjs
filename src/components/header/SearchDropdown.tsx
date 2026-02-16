@@ -250,6 +250,8 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                               variant="thumb"
                               sizes="48px"
                               className="object-cover"
+                              loading="lazy"
+                              // TODO: Добавить imageData когда SearchDropdown будет получать полные Product объекты
                             />
                           </div>
                           <div className="min-w-0 flex-1">

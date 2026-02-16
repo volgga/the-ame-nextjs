@@ -104,6 +104,12 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
     categories: product?.categories && product.categories.length > 0 ? product.categories : undefined,
     isPreorder: flower.isPreorder ?? product?.isPreorder,
     slug: flower.slug ?? product?.slug ?? null,
+    imageThumbUrl: product?.imageThumbUrl,
+    imageMediumUrl: product?.imageMediumUrl,
+    imageLargeUrl: product?.imageLargeUrl,
+    imageThumbAvifUrl: product?.imageThumbAvifUrl,
+    imageMediumAvifUrl: product?.imageMediumAvifUrl,
+    imageLargeAvifUrl: product?.imageLargeAvifUrl,
   };
 
   const isPreorder = flower.isPreorder ?? product?.isPreorder ?? false;
@@ -165,6 +171,19 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onError={() => setImgError(true)}
+            imageData={
+              product
+                ? {
+                    image_url: product.image,
+                    image_thumb_url: product.imageThumbUrl,
+                    image_medium_url: product.imageMediumUrl,
+                    image_large_url: product.imageLargeUrl,
+                    image_thumb_avif_url: product.imageThumbAvifUrl,
+                    image_medium_avif_url: product.imageMediumAvifUrl,
+                    image_large_avif_url: product.imageLargeAvifUrl,
+                  }
+                : undefined
+            }
           />
           {/* Mobile: сердечко в правом нижнем углу фото */}
           {!hideFavoriteOnMobile && (

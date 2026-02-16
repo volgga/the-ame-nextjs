@@ -138,6 +138,8 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
                 variant="thumb"
                 sizes="56px"
                 className="object-cover"
+                loading="lazy"
+                // TODO: Добавить imageData когда QuickBuyModal будет получать полные Product объекты
               />
             </div>
             <div className="flex-1 min-w-0">

@@ -71,6 +71,16 @@ export default async function ClientsBlogPage() {
                       variant="blog"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                       sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 33vw"
+                      loading="lazy"
+                      imageData={{
+                        image_url: post.cover_image_url,
+                        image_thumb_url: post.cover_image_thumb_url,
+                        image_medium_url: post.cover_image_medium_url,
+                        image_large_url: post.cover_image_large_url,
+                        image_thumb_avif_url: post.cover_image_thumb_avif_url,
+                        image_medium_avif_url: post.cover_image_medium_avif_url,
+                        image_large_avif_url: post.cover_image_large_avif_url,
+                      }}
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-neutral-400">Нет фото</div>

@@ -167,6 +167,15 @@ function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClos
                   variant="thumb"
                   sizes="64px"
                   className="object-cover"
+                  imageData={{
+                    image_url: product.image,
+                    image_thumb_url: product.imageThumbUrl,
+                    image_medium_url: product.imageMediumUrl,
+                    image_large_url: product.imageLargeUrl,
+                    image_thumb_avif_url: product.imageThumbAvifUrl,
+                    image_medium_avif_url: product.imageMediumAvifUrl,
+                    image_large_avif_url: product.imageLargeAvifUrl,
+                  }}
                 />
               </div>
               <div className="flex-1 min-w-0">
@@ -471,6 +480,19 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                         variant="thumb"
                         sizes="64px"
                         className="object-cover object-center"
+                        imageData={
+                          idx === 0
+                            ? {
+                                image_url: product.image,
+                                image_thumb_url: product.imageThumbUrl,
+                                image_medium_url: product.imageMediumUrl,
+                                image_large_url: product.imageLargeUrl,
+                                image_thumb_avif_url: product.imageThumbAvifUrl,
+                                image_medium_avif_url: product.imageMediumAvifUrl,
+                                image_large_avif_url: product.imageLargeAvifUrl,
+                              }
+                            : undefined
+                        }
                       />
                     </button>
                   ))}
@@ -512,7 +534,21 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                             sizes="(max-width: 1024px) 100vw, 55vw"
                             className="object-contain object-center rounded-xl"
                             priority={idx === 0}
+                            loading={idx === 0 ? "eager" : "lazy"}
                             fetchPriority={idx === 0 ? "high" : undefined}
+                            imageData={
+                              idx === 0
+                                ? {
+                                    image_url: product.image,
+                                    image_thumb_url: product.imageThumbUrl,
+                                    image_medium_url: product.imageMediumUrl,
+                                    image_large_url: product.imageLargeUrl,
+                                    image_thumb_avif_url: product.imageThumbAvifUrl,
+                                    image_medium_avif_url: product.imageMediumAvifUrl,
+                                    image_large_avif_url: product.imageLargeAvifUrl,
+                                  }
+                                : undefined
+                            }
                           />
                         </div>
                       ))
@@ -851,6 +887,15 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
         currentIndex={selectedImageIndex}
         onIndexChange={setSelectedImageIndex}
         productTitle={product.title}
+        mainImageVariants={{
+          image_url: product.image,
+          image_thumb_url: product.imageThumbUrl,
+          image_medium_url: product.imageMediumUrl,
+          image_large_url: product.imageLargeUrl,
+          image_thumb_avif_url: product.imageThumbAvifUrl,
+          image_medium_avif_url: product.imageMediumAvifUrl,
+          image_large_avif_url: product.imageLargeAvifUrl,
+        }}
       />
     </>
   );

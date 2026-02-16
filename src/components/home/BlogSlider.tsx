@@ -126,6 +126,16 @@ export function BlogSlider({ posts, className = "" }: BlogSliderProps) {
                     variant="blog"
                     className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 300px, 320px"
+                    loading="lazy"
+                    imageData={{
+                      image_url: post.cover_image_url,
+                      image_thumb_url: post.cover_image_thumb_url,
+                      image_medium_url: post.cover_image_medium_url,
+                      image_large_url: post.cover_image_large_url,
+                      image_thumb_avif_url: post.cover_image_thumb_avif_url,
+                      image_medium_avif_url: post.cover_image_medium_avif_url,
+                      image_large_avif_url: post.cover_image_large_avif_url,
+                    }}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm">
