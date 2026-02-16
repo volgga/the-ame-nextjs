@@ -203,6 +203,8 @@ jobs:
             
             # Собираем проект
             echo "🔨 Building Next.js application..."
+            # Увеличиваем лимит памяти для Node.js (4GB)
+            export NODE_OPTIONS="--max-old-space-size=4096"
             npm run build || {
               echo "❌ Error: Build failed"
               exit 1
