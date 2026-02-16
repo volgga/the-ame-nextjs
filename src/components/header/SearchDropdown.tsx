@@ -303,7 +303,7 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                         className="flex gap-3 p-3 hover:bg-gray-50 transition-colors"
                       >
                         <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-[#ece9e2] shrink-0">
-                          <Image
+                          <AppImage
                             src={
                               product.image?.trim() &&
                               (product.image.startsWith("http") || product.image.startsWith("/"))
@@ -313,6 +313,7 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                             alt=""
                             fill
                             sizes="48px"
+                            variant="thumb"
                             className="object-cover"
                           />
                         </div>
