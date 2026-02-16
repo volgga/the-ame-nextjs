@@ -207,7 +207,8 @@ jobs:
             export NODE_OPTIONS="--max-old-space-size=6144"
             # Очищаем кеш Next.js перед сборкой
             rm -rf .next || true
-            npm run build || {
+            # Явно указываем использование webpack вместо Turbopack
+            npm run build -- --webpack || {
               echo "❌ Error: Build failed"
               exit 1
             }

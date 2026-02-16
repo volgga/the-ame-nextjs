@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["lucide-react"],
   },
   // Исключаем sharp из клиентского бандла (используется только в API routes)
+  // Используем webpack вместо Turbopack для совместимости с sharp
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Исключаем sharp из клиентского бандла
@@ -28,6 +29,9 @@ const nextConfig: NextConfig = {
     }
     return config;
   },
+  // Явно указываем использование webpack вместо Turbopack (для совместимости с sharp)
+  // Turbopack не поддерживает некоторые нативные модули как sharp
+  turbopack: undefined,
   async redirects() {
     return [
       { source: "/privacy", destination: "/docs/privacy", permanent: true },
