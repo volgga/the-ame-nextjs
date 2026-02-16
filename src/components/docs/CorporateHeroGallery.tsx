@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useCallback, useRef } from "react";
+import { AppImage } from "@/components/ui/AppImage";
 import { ChevronArrow } from "@/components/hero/ChevronArrow";
 
 const TRANSITION_MS = 500;
@@ -101,15 +101,14 @@ export function CorporateHeroGallery({ images, className = "" }: CorporateHeroGa
             className="relative flex-shrink-0 w-full h-full overflow-hidden"
             style={{ width: `${100 / loopSlides.length}%` }}
           >
-            <Image
+            <AppImage
               src={src}
               alt=""
               fill
+              variant="gallery"
               className="object-cover object-center select-none pointer-events-none"
               loading={i === 0 ? "eager" : "lazy"}
               sizes="(max-width: 768px) 100vw, 50vw"
-              quality={i === 0 ? 70 : 75}
-              priority={i === 0}
             />
           </div>
         ))}

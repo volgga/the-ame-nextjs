@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE, CANONICAL_BASE } from "@/lib/seo";
 import { getPublishedPosts } from "@/lib/blog";
 
@@ -58,18 +58,19 @@ export default async function ClientsBlogPage() {
               <Link
                 key={post.id}
                 href={`/clients/blog/${post.slug}`}
+                prefetch={false}
                 className="group block overflow-hidden rounded-lg bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-1"
               >
                 {/* Превью-картинка */}
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
                   {post.cover_image_url ? (
-                    <Image
+                    <AppImage
                       src={post.cover_image_url}
                       alt={post.title}
                       fill
+                      variant="blog"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      quality={75}
+                      sizes="(max-width: 640px) 90vw, (max-width: 1024px) 50vw, 33vw"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-neutral-400">Нет фото</div>

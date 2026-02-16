@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { HomeCollection } from "@/lib/homeCollections";
@@ -210,19 +210,20 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                   }
                 }}
                 href={href}
+                prefetch={false}
                 className={`group relative block w-full overflow-hidden rounded-2xl bg-[#ece9e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2 reveal reveal--stagger ${isRowVisible ? "reveal--in" : ""}`}
                 style={{ "--stagger-delay": `${staggerDelay}ms` } as React.CSSProperties}
                 aria-label={col.name}
               >
                 {/* Изображение с overlay */}
                 <div className="relative w-full aspect-square overflow-hidden">
-                  <Image
+                  <AppImage
                     src={imageSrc}
                     alt=""
                     fill
+                    variant="card"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                    quality={75}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                   {/* Градиент снизу для читаемости текста */}
                   <div

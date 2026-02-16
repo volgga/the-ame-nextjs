@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE, CANONICAL_BASE, buildAutoDescription } from "@/lib/seo";
@@ -106,14 +106,14 @@ export default async function ClientsBlogPostPage({ params }: BlogPostPageProps)
         {post.cover_image_url && (
           <div className="mb-10">
             <div className="relative w-full aspect-[16/7] overflow-hidden bg-neutral-100 rounded-lg">
-              <Image
+              <AppImage
                 src={post.cover_image_url}
                 alt={post.cover_alt || post.title}
                 fill
+                variant="hero"
                 priority
                 className="object-cover"
                 sizes="100vw"
-                quality={80}
               />
             </div>
             {post.cover_caption && <p className="mt-4 text-center text-sm text-neutral-500">{post.cover_caption}</p>}

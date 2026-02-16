@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
 import Link from "next/link";
+import { AppImage } from "@/components/ui/AppImage";
 import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
 import { X, ChevronLeft, ChevronRight, ShoppingCart, Plus, Minus } from "lucide-react";
 import { useCart } from "@/context/CartContext";
@@ -187,12 +187,12 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
               <div className="relative aspect-square rounded-xl overflow-hidden bg-black/5">
                 {displayImages.length > 0 ? (
                   <>
-                    <Image
+                    <AppImage
                       src={displayImages[currentImageIndex]}
                       alt={`${product.name} — фото ${currentImageIndex + 1}`}
                       fill
+                      variant="gallery"
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      quality={75}
                       className="object-cover"
                       priority={currentImageIndex === 0}
                     />

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
+import { AppImage } from "@/components/ui/AppImage";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -160,12 +160,12 @@ function QuickOrderModal({ isOpen, onClose, product }: { isOpen: boolean; onClos
             {/* Товар */}
             <div className="flex items-center gap-3 p-3 bg-[rgba(31,42,31,0.06)] rounded-lg mb-6">
               <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0 bg-[#ece9e2]">
-                <Image
+                <AppImage
                   src={isValidImageUrl(product.image) ? product.image! : PLACEHOLDER_IMAGE}
                   alt={product.title}
                   fill
+                  variant="thumb"
                   sizes="64px"
-                  quality={75}
                   className="object-cover"
                 />
               </div>
@@ -464,12 +464,12 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                           : "ring-1 ring-border-block hover:ring-border-block-hover"
                       }`}
                     >
-                      <Image
+                      <AppImage
                         src={src}
                         alt={`${product.title} — фото ${idx + 1}`}
                         fill
+                        variant="thumb"
                         sizes="64px"
-                        quality={75}
                         className="object-cover object-center"
                       />
                     </button>
@@ -504,15 +504,15 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                             pointerEvents: idx === selectedImageIndex ? "auto" : "none",
                           }}
                         >
-                          <Image
+                          <AppImage
                             src={src}
                             alt={`${product.title} — фото ${idx + 1}`}
                             fill
-                            sizes="(max-width: 768px) 100vw, 700px"
+                            variant="gallery"
+                            sizes="(max-width: 1024px) 100vw, 55vw"
                             className="object-contain object-center rounded-xl"
                             priority={idx === 0}
                             fetchPriority={idx === 0 ? "high" : undefined}
-                            quality={idx === 0 ? 75 : 80}
                           />
                         </div>
                       ))

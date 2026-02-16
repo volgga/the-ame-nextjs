@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { AppImage } from "@/components/ui/AppImage";
 import { ArrowRight } from "lucide-react";
 import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
 import { MAIN_PAGE_BLOCK_GAP, MAIN_PAGE_BLOCK_GAP_MARGIN } from "@/components/ui/breadcrumbs";
@@ -135,14 +135,14 @@ export function OrderBouquetSection({ title, subtitle1, text, imageUrl }: OrderB
           <div className="flex flex-col md:flex-row md:items-stretch gap-6 md:gap-16">
             <div className="order-2 md:order-1 w-full md:flex-[0_0_50%] md:min-h-0">
               <div className="relative aspect-square md:aspect-auto w-full md:h-full overflow-hidden rounded-2xl border border-border-block bg-white md:max-h-[calc(100vh-14rem)]">
-                <Image
+                <AppImage
                   src={blockImageUrl}
                   alt="Букет вашей мечты"
                   fill
+                  variant="card"
                   className="object-cover h-full w-full"
                   sizes="(max-width: 768px) 100vw, 33vw"
                   priority={false}
-                  unoptimized={blockImageUrl.startsWith("http")}
                 />
               </div>
             </div>

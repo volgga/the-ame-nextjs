@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Minus, X } from "lucide-react";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import { useCart } from "@/context/CartContext";
 import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
 import { trackRemoveFromCart } from "@/lib/metrika/ecommerce";
@@ -76,12 +76,12 @@ function CartItemRow({
   return (
     <div className="flex gap-3">
       <div className="relative w-20 h-20 rounded-lg overflow-hidden bg-[#ece9e2] flex-shrink-0">
-        <Image
+        <AppImage
           src={imageSrc}
           alt={item.name}
           fill
+          variant="thumb"
           sizes="80px"
-          quality={75}
           className="object-cover"
           onError={() => setImgError(true)}
         />

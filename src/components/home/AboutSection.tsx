@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { MAIN_PAGE_BLOCK_GAP } from "@/components/ui/breadcrumbs";
@@ -111,13 +111,13 @@ export function AboutSection({ about }: AboutSectionProps) {
           >
             {about?.imageUrl ? (
               <div className="relative aspect-square w-full overflow-hidden">
-                <Image
+                <AppImage
                   src={about.imageUrl}
                   alt=""
                   fill
+                  variant="card"
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  quality={75}
                 />
               </div>
             ) : (

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MAIN_PAGE_BLOCK_GAP, MAIN_PAGE_BLOCK_GAP_MARGIN } from "@/components/ui/breadcrumbs";
 import type { BlogPost } from "@/lib/blog";
@@ -114,17 +114,18 @@ export function BlogSlider({ posts, className = "" }: BlogSliderProps) {
             <Link
               key={post.id}
               href={`/clients/blog/${post.slug}`}
+              prefetch={false}
               className="group flex-shrink-0 w-[min(85vw,320px)] sm:w-[300px] md:w-[min(24vw,320px)] snap-start rounded-xl bg-white shadow-sm overflow-hidden border border-[var(--color-outline-border)] transition-all hover:shadow-md hover:border-[var(--color-outline-border)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main focus-visible:ring-offset-2"
             >
               <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
                 {post.cover_image_url ? (
-                  <Image
+                  <AppImage
                     src={post.cover_image_url}
                     alt={post.cover_alt ?? post.title}
                     fill
+                    variant="blog"
                     className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
                     sizes="(max-width: 640px) 85vw, (max-width: 1024px) 300px, 320px"
-                    quality={75}
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-neutral-400 text-sm">

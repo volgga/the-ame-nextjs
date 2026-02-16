@@ -1,7 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
+import { AppImage } from "@/components/ui/AppImage";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import type { HeroSlide } from "@/lib/heroSlides";
 import { ChevronArrow } from "./ChevronArrow";
@@ -277,14 +277,14 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                 className="relative flex-shrink-0 w-full h-full overflow-hidden"
                 style={{ width: `${100 / loopSlides.length}%` }}
               >
-                <Image
+                <AppImage
                   src={slide.imageUrl}
                   alt="Слайд"
                   fill
+                  variant="hero"
                   className="object-cover object-center select-none pointer-events-none"
                   loading={i === 0 ? "eager" : "lazy"}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1440px"
-                  quality={i === 0 ? 70 : 80}
+                  sizes="100vw"
                   priority={i === 0}
                   fetchPriority={i === 0 ? "high" : undefined}
                 />

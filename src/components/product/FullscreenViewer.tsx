@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
 export type FullscreenViewerProps = {
@@ -269,12 +269,12 @@ export function FullscreenViewer({
                       transformOrigin: "center center",
                     }}
                   >
-                    <Image
+                    <AppImage
                       src={src}
                       alt={`${productTitle} — фото ${idx + 1}`}
                       fill
-                      sizes="(max-width: 1200px) 100vw, 1200px"
-                      quality={80}
+                      variant="gallery"
+                      sizes="100vw"
                       className="object-contain object-center pointer-events-none"
                       draggable={false}
                       unoptimized={src.startsWith("data:") || src.includes("blob:")}

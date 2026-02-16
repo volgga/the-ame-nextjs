@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import dynamic from "next/dynamic";
+import { AppImage } from "@/components/ui/AppImage";
 import { Flower } from "@/types/flower";
 import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
 import { Heart, ShoppingCart, Search, Clock, MousePointerClick } from "lucide-react";
@@ -139,7 +139,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
 
   return (
     <div className="relative flex flex-col h-full">
-      <Link href={productUrl} aria-label={flower.name} className="block flex-1 relative">
+      <Link href={productUrl} aria-label={flower.name} className="block flex-1 relative" prefetch={false}>
         {/* 📸 Image wrapper: clips badges to rounded image (productCardImageWrap = 24px radius + overflow hidden) */}
         <div className="productCardImageWrap group aspect-square bg-[#ece9e2]">
           {(isNewEffective || hasDiscount) && (
@@ -156,12 +156,12 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
               )}
             </div>
           )}
-          <Image
+          <AppImage
             src={imageSrc}
             alt={flower.name}
             fill
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 45vw, (max-width: 1200px) 33vw, 300px"
-            quality={75}
+            variant="card"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onError={() => setImgError(true)}

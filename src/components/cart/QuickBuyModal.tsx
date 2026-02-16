@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import { X } from "lucide-react";
 import { submitOneClick } from "@/lib/formsClient";
 import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
@@ -127,7 +127,7 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
           {/* Позиция: мини-фото, название, количество, цена */}
           <div className="flex items-center gap-3 p-3 bg-[rgba(31,42,31,0.06)] rounded-xl mb-6">
             <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-[#ece9e2]">
-              <Image
+              <AppImage
                 src={
                   product.image?.trim() && (product.image.startsWith("http") || product.image.startsWith("/"))
                     ? product.image
@@ -135,8 +135,8 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
                 }
                 alt={product.name}
                 fill
+                variant="thumb"
                 sizes="56px"
-                quality={75}
                 className="object-cover"
               />
             </div>

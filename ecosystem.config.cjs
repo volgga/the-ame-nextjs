@@ -12,13 +12,14 @@ const envPath = path.join(root, ".env.production");
 let envVars = {};
 if (fs.existsSync(envPath)) {
   const content = fs.readFileSync(envPath, "utf8");
-  content.split("\n").forEach((line) => {
-    const t = line.trim();
+  content.split(/\r?\n/).forEach((line) => {
+    const t = line.replace(/\r$/, "").trim();
     if (t && !t.startsWith("#")) {
       const eq = t.indexOf("=");
       if (eq > 0) {
         const key = t.slice(0, eq).trim();
-        const value = t.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+        let value = t.slice(eq + 1).trim().replace(/^["']|["']$/g, "");
+        value = value.replace(/\r$/, "");
         envVars[key] = value;
       }
     }
@@ -42,6 +43,7 @@ module.exports = {
         PORT: "3000",
         ADMIN_USERNAME: getEnv("ADMIN_USERNAME", "admin"),
         ADMIN_PASSWORD_HASH: getEnv("ADMIN_PASSWORD_HASH"),
+        ADMIN_PASSWORD_PLAIN: getEnv("ADMIN_PASSWORD_PLAIN"),
         ADMIN_SESSION_SECRET: getEnv("ADMIN_SESSION_SECRET"),
         NEXT_PUBLIC_SUPABASE_URL: getEnv("NEXT_PUBLIC_SUPABASE_URL"),
         NEXT_PUBLIC_SUPABASE_ANON_KEY: getEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY"),

@@ -19,13 +19,26 @@ export async function validateSessionToken(token: string | undefined): Promise<b
   return payload !== null;
 }
 
-/** Проверка логина и пароля: только bcrypt.compare, пароль не хранится в коде. */
+/**
+ * Проверка логина и пароля.
+ * 1) Если заданы ADMIN_USERNAME и ADMIN_PASSWORD_HASH — проверка через bcrypt.
+ * 2) Иначе если задан ADMIN_PASSWORD_PLAIN (для восстановления доступа) — сравнение в открытую.
+ *    После входа замените на хеш: ADMIN_PASSWORD_PLAIN=yourpass node scripts/hash-admin-password.mjs
+ */
 export async function verifyAdminCredentials(login: string, password: string): Promise<boolean> {
-  const username = process.env.ADMIN_USERNAME;
-  const hash = process.env.ADMIN_PASSWORD_HASH;
-  if (!username || !hash || typeof login !== "string" || typeof password !== "string") return false;
-  if (login !== username) return false;
-  return bcrypt.compare(password, hash);
+  const username = (process.env.ADMIN_USERNAME ?? "").trim();
+  const hash = (process.env.ADMIN_PASSWORD_HASH ?? "").trim();
+  const plain = (process.env.ADMIN_PASSWORD_PLAIN ?? "").trim();
+  if (typeof login !== "string" || typeof password !== "string") return false;
+  if (!username || login !== username) return false;
+
+  if (hash && hash.startsWith("$2")) {
+    return bcrypt.compare(password, hash);
+  }
+  if (plain) {
+    return password === plain;
+  }
+  return false;
 }
 
 export async function createAdminSession(): Promise<void> {

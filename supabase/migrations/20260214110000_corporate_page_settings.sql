@@ -18,13 +18,31 @@ COMMENT ON COLUMN public.corporate_page_settings.max_link IS 'URL кнопки M
 -- RLS: читать могут все, писать только через service role (админка)
 ALTER TABLE public.corporate_page_settings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public read"
-  ON public.corporate_page_settings FOR SELECT
-  USING (true);
+-- Создаем policies только если их еще нет (идемпотентность)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+      AND tablename = 'corporate_page_settings' 
+      AND policyname = 'Allow public read'
+  ) THEN
+    CREATE POLICY "Allow public read"
+      ON public.corporate_page_settings FOR SELECT
+      USING (true);
+  END IF;
 
-CREATE POLICY "Service role full access"
-  ON public.corporate_page_settings FOR ALL
-  USING (auth.role() = 'service_role');
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies 
+    WHERE schemaname = 'public' 
+      AND tablename = 'corporate_page_settings' 
+      AND policyname = 'Service role full access'
+  ) THEN
+    CREATE POLICY "Service role full access"
+      ON public.corporate_page_settings FOR ALL
+      USING (auth.role() = 'service_role');
+  END IF;
+END $$;
 
 -- Вставка дефолтной записи (опционально, можно создавать при первом GET в API)
 INSERT INTO public.corporate_page_settings (id, title, "text", images, max_link, seo_title, seo_description)

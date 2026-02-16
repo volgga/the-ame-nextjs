@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import { Container } from "@/components/layout/Container";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW, SITE_NAME, LOCALE } from "@/lib/seo";
 import { getAboutPage } from "@/lib/about";
@@ -59,14 +59,14 @@ export default async function AboutPage() {
         {page.cover_image_url && (
           <div className="mb-10">
             <div className="relative w-full aspect-[16/7] overflow-hidden bg-neutral-100 rounded-lg">
-              <Image
+              <AppImage
                 src={page.cover_image_url}
                 alt={page.cover_alt || pageTitle}
                 fill
+                variant="hero"
                 priority
                 className="object-cover"
                 sizes="100vw"
-                quality={90}
               />
             </div>
             {page.cover_caption && <p className="mt-4 text-center text-sm text-neutral-500">{page.cover_caption}</p>}

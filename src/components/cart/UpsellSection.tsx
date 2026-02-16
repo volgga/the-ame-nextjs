@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import Image from "next/image";
+import { AppImage } from "@/components/ui/AppImage";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { Flower } from "@/types/flower";
@@ -140,12 +140,12 @@ export function UpsellSection() {
                   className="flex-shrink-0 w-[140px] md:w-[160px] border border-gray-200 rounded-lg p-3 bg-white"
                 >
                   <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-[#ece9e2] mb-2">
-                    <Image
+                    <AppImage
                       src={addon.image?.trim() || PLACEHOLDER_IMAGE}
                       alt={addon.title}
                       fill
+                      variant="thumb"
                       sizes="160px"
-                      quality={75}
                       className="object-cover"
                     />
                   </div>
