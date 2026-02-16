@@ -69,8 +69,6 @@ type Variant = {
   bouquetColors?: string[];
   discountPercent?: number | null;
   discountPrice?: number | null;
-  /** Текст "На фото: …" для карточки товара */
-  photoLabel?: string | null;
 };
 
 const initialForm = {
@@ -139,6 +137,8 @@ function AdminProductsPageContent() {
   const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
   const [existingMainImageUrl, setExistingMainImageUrl] = useState<string | null>(null);
 
+  // «Размер на фото» — общие настройки вариантного товара (одно поле на товар)
+  const [productPhotoLabel, setProductPhotoLabel] = useState("");
   // Состояние для варианов товара
   const [variants, setVariants] = useState<Variant[]>([]);
   const [variantsDraggedIndex, setVariantsDraggedIndex] = useState<number | null>(null);
@@ -343,6 +343,7 @@ function AdminProductsPageContent() {
         setCreateIsHidden(data.is_hidden ?? false);
         setCreateIsPreorder(data.is_preorder ?? false);
         setCreateIsNew(data.is_new ?? false);
+        setProductPhotoLabel(data.photo_label ?? "");
         setSelectedCategorySlugs(
           Array.isArray(data.category_slugs) ? data.category_slugs : data.category_slug ? [data.category_slug] : []
         );
@@ -445,7 +446,6 @@ function AdminProductsPageContent() {
                 bouquetColors: Array.isArray(v.bouquet_colors) ? filterValidBouquetColorKeys(v.bouquet_colors) : [],
                 discountPercent: v.discount_percent != null ? Number(v.discount_percent) : null,
                 discountPrice: v.discount_price != null ? Number(v.discount_price) : null,
-                photoLabel: v.photo_label?.trim() || null,
               };
             }
           );
@@ -511,6 +511,7 @@ function AdminProductsPageContent() {
     setCreateForm(initialForm);
     setCreateError("");
     setSelectedFlowers([]);
+    setProductPhotoLabel("");
     setInitialVariantIds([]);
     setVariants([]);
     setExpandedVariants(new Set());
@@ -910,6 +911,7 @@ function AdminProductsPageContent() {
           category_slug: selectedCategorySlugs[0] || null,
           category_slugs: selectedCategorySlugs,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
+          photo_label: productPhotoLabel.trim() || null,
         };
         const url = `/api/admin/products/${editProductId}`;
         const res = await fetch(url, {
@@ -959,7 +961,6 @@ function AdminProductsPageContent() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 size: v.name.trim(),
-                photo_label: v.photoLabel?.trim() || null,
                 composition: v.composition.trim() || null,
                 height_cm: v.height_cm ?? null,
                 width_cm: v.width_cm ?? null,
@@ -986,7 +987,6 @@ function AdminProductsPageContent() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 size: v.name.trim(),
-                photo_label: v.photoLabel?.trim() || null,
                 composition: v.composition.trim() || null,
                 height_cm: v.height_cm ?? null,
                 width_cm: v.width_cm ?? null,
@@ -1216,6 +1216,7 @@ function AdminProductsPageContent() {
           is_new: createIsNew,
           category_slugs,
           bouquet_colors: selectedBouquetColorKeys.length > 0 ? selectedBouquetColorKeys : null,
+          photo_label: productPhotoLabel.trim() || null,
           variants: variants.map((v) => ({
             name: v.name.trim(),
             composition: v.composition.trim() || null,
@@ -1393,6 +1394,7 @@ function AdminProductsPageContent() {
               setCreateForm(initialForm);
               setCreateError("");
               setFieldErrors({});
+              setProductPhotoLabel("");
               setVariants([]);
               setExpandedVariants(new Set());
               setCreateModalOpen(true);
@@ -1569,6 +1571,21 @@ function AdminProductsPageContent() {
                       <p className="mt-0.5 text-xs text-red-600">{fieldErrors.description}</p>
                     )}
                   </div>
+                  {createType === "variant" && (
+                    <div>
+                      <label className="block text-sm font-medium text-color-text-main mb-1">Размер на фото (текст)</label>
+                      <input
+                        type="text"
+                        value={productPhotoLabel}
+                        onChange={(e) => setProductPhotoLabel(e.target.value)}
+                        placeholder="Например: 31 штука, M размер"
+                        className="w-full rounded border border-border-block bg-white px-3 py-1.5 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
+                      />
+                      <p className="mt-0.5 text-xs text-color-text-secondary">
+                        Показывается на карточке под названием: «На фото: …»
+                      </p>
+                    </div>
+                  )}
                   {createType === "simple" && (
                     <>
                       <div>
@@ -2105,23 +2122,6 @@ function AdminProductsPageContent() {
                                             {fieldErrors[`variant_${idx}_name`]}
                                           </p>
                                         )}
-                                      </div>
-                                      <div>
-                                        <label className="block text-xs text-color-text-main mb-0.5">На фото (текст)</label>
-                                        <input
-                                          type="text"
-                                          placeholder="Например: 31 штука, M размер"
-                                          value={variant.photoLabel ?? ""}
-                                          onChange={(e) =>
-                                            updateVariant(variant.id, {
-                                              photoLabel: e.target.value.trim() || null,
-                                            })
-                                          }
-                                          className="w-full rounded border border-border-block bg-white px-2 py-1 text-sm text-color-text-main placeholder:text-[rgba(31,42,31,0.45)] focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
-                                        />
-                                        <p className="mt-0.5 text-[10px] text-color-text-secondary">
-                                          Показывается на карточке под названием варианта: «На фото: …»
-                                        </p>
                                       </div>
                                       <div className="grid grid-cols-2 gap-2">
                                         <div>

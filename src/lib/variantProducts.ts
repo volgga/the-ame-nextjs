@@ -59,8 +59,6 @@ export type ProductVariantPublic = {
   discountPercent?: number | null;
   /** Цена со скидкой (финальная) */
   discountPrice?: number | null;
-  /** Текст для отображения «На фото: …» под названием варианта */
-  photoLabel?: string | null;
 };
 
 /**
@@ -333,7 +331,7 @@ export async function getVariantProductWithVariantsBySlug(
     const { data: vp, error: vpErr } = await supabase
       .from("variant_products")
       .select(
-        "id, slug, name, description, composition_flowers, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until"
+        "id, slug, name, description, composition_flowers, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until, photo_label"
       )
       .eq("slug", slug)
       .or("is_active.eq.true,is_active.is.null")
@@ -391,12 +389,13 @@ export async function getVariantProductWithVariantsBySlug(
         Array.isArray(row.bouquet_colors) && row.bouquet_colors.length > 0
           ? row.bouquet_colors.filter((k): k is string => typeof k === "string" && k.length > 0)
           : null,
+      photoLabel: (row as { photo_label?: string | null }).photo_label?.trim() || null,
     };
 
     const { data: vars, error: vErr } = await supabase
       .from("product_variants")
       .select(
-        "id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image, bouquet_colors, is_preorder, is_new, new_until, discount_percent, discount_price, photo_label"
+        "id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image, bouquet_colors, is_preorder, is_new, new_until, discount_percent, discount_price"
       )
       .eq("product_id", (vp as { id: number }).id)
       .eq("is_active", true)
@@ -421,7 +420,6 @@ export async function getVariantProductWithVariantsBySlug(
         new_until?: string | null;
         discount_percent?: number | null;
         discount_price?: number | null;
-        photo_label?: string | null;
       }) => ({
         id: v.id,
         name: v.title ?? "",
@@ -440,7 +438,6 @@ export async function getVariantProductWithVariantsBySlug(
         isPreorder: v.is_preorder ?? false,
         discountPercent: v.discount_percent != null ? Number(v.discount_percent) : null,
         discountPrice: v.discount_price != null ? Number(v.discount_price) : null,
-        photoLabel: v.photo_label?.trim() || null,
       })
     );
     return { ...product, variants };

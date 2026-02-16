@@ -162,6 +162,7 @@ const createVariantSchema = z.object({
     .nullable()
     .transform((v) => (v === "" ? null : v)),
   bouquet_colors: z.array(z.string()).optional().nullable(),
+  photo_label: z.string().max(200).optional().nullable().transform((v) => (v === "" ? null : v)),
   variants: z
     .array(
       z.object({
@@ -330,6 +331,7 @@ export async function POST(request: NextRequest) {
             parsed.data.bouquet_colors && parsed.data.bouquet_colors.length > 0
               ? parsed.data.bouquet_colors.filter((k) => typeof k === "string" && k.length > 0)
               : null,
+          photo_label: parsed.data.photo_label?.trim() || null,
         })
         .select()
         .single();

@@ -8,6 +8,7 @@ import { slugify } from "@/utils/slugify";
 import { Modal } from "@/components/ui/modal";
 import { FLOWERS_IN_COMPOSITION_CATEGORY_SLUG } from "@/lib/constants";
 import { parseAdminResponse } from "@/lib/adminFetch";
+import { CategoryInfoRichEditor } from "@/components/admin/CategoryInfoRichEditor";
 
 const CategoriesGrid = dynamic(
   () => import("@/components/admin/categories/CategoriesGrid").then((m) => ({ default: m.CategoriesGrid })),
@@ -64,6 +65,8 @@ export default function AdminCategoriesPage() {
     info_image_url: "",
   });
   const [deleteSubcategoryConfirmId, setDeleteSubcategoryConfirmId] = useState<string | null>(null);
+  const [infoImageUploading, setInfoImageUploading] = useState(false);
+  const [subcategoryInfoImageUploading, setSubcategoryInfoImageUploading] = useState(false);
   // Справочник "Цветы в составе" (таблица flowers) — только при редактировании категории "Цветы в составе"
   type FlowerItem = {
     id: string;
@@ -323,6 +326,60 @@ export default function AdminCategoriesPage() {
     window.addEventListener("beforeunload", handler);
     return () => window.removeEventListener("beforeunload", handler);
   }, [isDirty]);
+
+  async function handleCategoryInfoImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setInfoImageUploading(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/categories/upload", { method: "POST", body: formData });
+      const result = await parseAdminResponse<{ image_url?: string; error?: string }>(res, {
+        method: "POST",
+        url: "/api/admin/categories/upload",
+      });
+      if (!result.ok) {
+        const msg = result.data && typeof (result.data as any).error === "string" ? (result.data as any).error : result.message ?? "Ошибка загрузки";
+        throw new Error(msg);
+      }
+      const url = (result.data as { image_url?: string })?.image_url ?? "";
+      setForm((f) => ({ ...f, info_image_url: url }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка загрузки");
+    } finally {
+      setInfoImageUploading(false);
+      e.target.value = "";
+    }
+  }
+
+  async function handleSubcategoryInfoImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSubcategoryInfoImageUploading(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/categories/upload", { method: "POST", body: formData });
+      const result = await parseAdminResponse<{ image_url?: string; error?: string }>(res, {
+        method: "POST",
+        url: "/api/admin/categories/upload",
+      });
+      if (!result.ok) {
+        const msg = result.data && typeof (result.data as any).error === "string" ? (result.data as any).error : result.message ?? "Ошибка загрузки";
+        throw new Error(msg);
+      }
+      const url = (result.data as { image_url?: string })?.image_url ?? "";
+      setSubcategoryForm((f) => ({ ...f, info_image_url: url }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка загрузки");
+    } finally {
+      setSubcategoryInfoImageUploading(false);
+      e.target.value = "";
+    }
+  }
 
   async function handleSaveForm(e: React.FormEvent) {
     e.preventDefault();
@@ -906,25 +963,34 @@ export default function AdminCategoriesPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-[#111] mb-0.5">Контентный блок (HTML)</label>
-                        <textarea
+                        <label className="block text-xs text-[#111] mb-0.5">Текст (с форматированием)</label>
+                        <CategoryInfoRichEditor
+                          key={editing?.id ?? "new"}
                           value={form.info_content}
-                          onChange={(e) => setForm((f) => ({ ...f, info_content: e.target.value }))}
-                          rows={8}
-                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm font-mono text-[#111]"
-                          placeholder="Подзаголовки, списки, жирный текст и т.д. (HTML)"
+                          onChange={(html) => setForm((f) => ({ ...f, info_content: html }))}
                         />
-                        <p className="mt-1 text-xs text-gray-500">Можно использовать &lt;h3&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt; и др.</p>
+                        <p className="mt-1 text-xs text-gray-500">Заголовки H2/H3, жирный, курсив, списки, ссылки.</p>
                       </div>
                       <div>
-                        <label className="block text-xs text-[#111] mb-0.5">Картинка 1:1 (URL)</label>
+                        <label className="block text-xs text-[#111] mb-0.5">Картинка 1:1</label>
                         <input
-                          type="url"
-                          value={form.info_image_url}
-                          onChange={(e) => setForm((f) => ({ ...f, info_image_url: e.target.value }))}
-                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
-                          placeholder="https://..."
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCategoryInfoImageUpload}
+                          disabled={infoImageUploading}
+                          className="block w-full text-sm text-[#111] file:mr-2 file:rounded file:border-0 file:bg-gray-200 file:px-3 file:py-1.5 file:text-[#111]"
                         />
+                        {infoImageUploading && <p className="mt-1 text-xs text-gray-500">Загрузка…</p>}
+                        {form.info_image_url && (
+                          <div className="mt-2 relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100 aspect-square">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={form.info_image_url}
+                              alt="Превью"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
                         <p className="mt-1 text-xs text-gray-500">Квадратная картинка, отображается справа от текста (desktop)</p>
                       </div>
                     </div>
@@ -1248,22 +1314,33 @@ const sc = subcat as { info_subtitle?: string | null; info_description?: string 
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-[#111] mb-0.5">Контентный блок (HTML)</label>
-                        <textarea
+                        <label className="block text-xs text-[#111] mb-0.5">Текст (с форматированием)</label>
+                        <CategoryInfoRichEditor
+                          key={editingSubcategory?.id ?? (creatingSubcategory ? "new" : "none")}
                           value={subcategoryForm.info_content}
-                          onChange={(e) => setSubcategoryForm({ ...subcategoryForm, info_content: e.target.value })}
-                          rows={6}
-                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm font-mono text-[#111]"
+                          onChange={(html) => setSubcategoryForm((f) => ({ ...f, info_content: html }))}
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-[#111] mb-0.5">Картинка 1:1 (URL)</label>
+                        <label className="block text-xs text-[#111] mb-0.5">Картинка 1:1</label>
                         <input
-                          type="url"
-                          value={subcategoryForm.info_image_url}
-                          onChange={(e) => setSubcategoryForm({ ...subcategoryForm, info_image_url: e.target.value })}
-                          className="w-full rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleSubcategoryInfoImageUpload}
+                          disabled={subcategoryInfoImageUploading}
+                          className="block w-full text-sm text-[#111] file:mr-2 file:rounded file:border-0 file:bg-gray-200 file:px-3 file:py-1.5 file:text-[#111]"
                         />
+                        {subcategoryInfoImageUploading && <p className="mt-1 text-xs text-gray-500">Загрузка…</p>}
+                        {subcategoryForm.info_image_url && (
+                          <div className="mt-2 relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100 aspect-square">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={subcategoryForm.info_image_url}
+                              alt="Превью"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

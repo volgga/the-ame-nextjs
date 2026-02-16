@@ -24,7 +24,12 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
     return null;
   }
 
-  const safeContent = hasContent ? DOMPurify.sanitize(data.info_content!, { ALLOWED_TAGS: ["h2", "h3", "p", "ul", "ol", "li", "strong", "em", "b", "i", "a", "br"] }) : "";
+  const safeContent = hasContent
+    ? DOMPurify.sanitize(data.info_content!, {
+        ALLOWED_TAGS: ["h2", "h3", "p", "ul", "ol", "li", "strong", "em", "b", "i", "a", "br"],
+        ALLOWED_ATTR: ["href", "target", "rel"],
+      })
+    : "";
 
   return (
     <section className="mt-12 pt-8 border-t border-border-block">

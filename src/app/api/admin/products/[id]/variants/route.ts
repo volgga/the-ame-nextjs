@@ -13,7 +13,6 @@ async function requireAdmin() {
 
 const variantSchema = z.object({
   size: z.string().min(1),
-  photo_label: z.string().max(200).optional().nullable().transform((v) => (v === "" ? null : v)),
   composition: z.string().optional().nullable(),
   height_cm: z.number().int().min(0).optional().nullable(),
   width_cm: z.number().int().min(0).optional().nullable(),
@@ -63,7 +62,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .insert({
         product_id: productId,
         title: parsed.data.size,
-        photo_label: parsed.data.photo_label ?? null,
         composition: parsed.data.composition ?? null,
         height_cm: parsed.data.height_cm ?? null,
         width_cm: parsed.data.width_cm ?? null,

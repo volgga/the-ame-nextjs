@@ -25,8 +25,6 @@ export type ProductVariantOption = {
   discountPercent?: number | null;
   /** Цена со скидкой (финальная для оплаты и витрины) */
   discountPrice?: number | null;
-  /** Текст для отображения «На фото: …» под названием варианта */
-  photoLabel?: string | null;
 };
 
 export type Product = {
@@ -81,6 +79,8 @@ export type Product = {
   imageThumbAvifUrl?: string | null;
   imageMediumAvifUrl?: string | null;
   imageLargeAvifUrl?: string | null;
+  /** Текст «На фото: …» (для вариантного товара — из общих настроек товара) */
+  photoLabel?: string | null;
 };
 
 /** Сырая строка таблицы products в Supabase */

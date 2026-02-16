@@ -652,9 +652,9 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                       </button>
                     ))}
                   </div>
-                  {effectiveVariant?.photoLabel && (
+                  {product.photoLabel && (
                     <p className="mt-1.5 text-sm text-color-text-main font-medium">
-                      На фото: {effectiveVariant.photoLabel}
+                      На фото: {product.photoLabel}
                     </p>
                   )}
                 </div>

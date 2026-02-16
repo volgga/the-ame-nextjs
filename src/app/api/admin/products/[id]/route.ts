@@ -108,6 +108,7 @@ const updateVariantSchema = z.object({
     .nullable()
     .transform((v) => (v === "" ? null : v)),
   bouquet_colors: z.array(z.string()).optional().nullable(),
+  photo_label: z.string().max(200).optional().nullable().transform((v) => (v === "" ? null : v)),
 });
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
