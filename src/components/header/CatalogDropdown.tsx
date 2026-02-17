@@ -72,7 +72,6 @@ type CatalogDropdownProps = {
 
 export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [visible, setVisible] = useState(false);
   const [categories, setCategories] = useState<{ name: string; slug: string }[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -83,17 +82,6 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
   useEffect(() => {
     fetchCategories().then(setCategories);
   }, []);
-
-  useEffect(() => {
-    if (open) {
-      const id = requestAnimationFrame(() => {
-        requestAnimationFrame(() => setVisible(true));
-      });
-      return () => cancelAnimationFrame(id);
-    } else {
-      setVisible(false);
-    }
-  }, [open]);
 
   const handleOpen = () => {
     if (closeTimeoutRef.current) {
@@ -188,9 +176,6 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
               maxWidth: "min(980px, calc(100vw - 24px))",
               borderRadius: "22px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
-              opacity: visible ? 1 : 0,
-              transform: visible ? "translateY(0)" : "translateY(-8px)",
-              transition: "opacity 200ms ease-out, transform 200ms ease-out",
             }}
           >
             <div className="flex flex-col" style={{ gap: ROW_GAP }}>

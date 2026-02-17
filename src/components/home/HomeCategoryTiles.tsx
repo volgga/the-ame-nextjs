@@ -39,10 +39,8 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
     // Проверяем prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     
-    // На мобилке показываем все сразу для лучшего UX
-    const isMobile = window.innerWidth < 768;
-    
-    if (prefersReducedMotion || isMobile) {
+    // Показываем все карточки сразу для лучшего UX (без IntersectionObserver задержек)
+    if (prefersReducedMotion) {
       // Если reduced motion или mobile - показываем все сразу
       const allRows = new Set<number>();
       const rowMap = new Map<string, { rowIndex: number; cardIndexInRow: number }>();
@@ -135,7 +133,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
         observersMap.set(rowIndex, observer);
       });
 
-      // На desktop показываем все строки сразу для лучшего UX (без IntersectionObserver задержек)
+      // Показываем все строки сразу для лучшего UX (без IntersectionObserver задержек)
       if (rows.length > 0) {
         const allRows = new Set<number>();
         rows.forEach((_, idx) => allRows.add(idx));

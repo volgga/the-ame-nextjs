@@ -36,7 +36,7 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10 items-start">
         {/* Текстовая колонка слева */}
-        <div className="min-w-0 max-w-full space-y-4 order-1">
+        <div className="min-w-0 w-full md:max-w-[calc(50%-1rem)] space-y-4 order-1">
           {hasSubtitle && (
             <h2 id="category-info-title" className="text-xl md:text-2xl font-semibold text-color-text-main">
               {data.info_subtitle}
@@ -49,14 +49,14 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
           )}
           {safeContent && (
             <div
-              className="prose prose-sm md:prose-base max-w-none text-color-text-secondary [&_h2]:text-lg [&_h2]:md:text-xl [&_h2]:font-semibold [&_h2]:text-color-text-main [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:first:mt-0 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-color-text-main [&_h3]:mt-3 [&_h3]:mb-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-color-text-main [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-color-text-secondary"
+              className="prose prose-sm md:prose-base text-color-text-secondary [&_h2]:text-lg [&_h2]:md:text-xl [&_h2]:font-semibold [&_h2]:text-color-text-main [&_h2]:mt-4 [&_h2]:mb-2 [&_h2]:first:mt-0 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-color-text-main [&_h3]:mt-3 [&_h3]:mb-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-color-text-main [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-color-text-secondary"
               dangerouslySetInnerHTML={{ __html: safeContent }}
             />
           )}
         </div>
         {/* Фото справа */}
         {hasImage && (
-          <div className="min-w-0 order-2 w-full flex-shrink-0 overflow-hidden rounded-xl bg-[rgba(31,42,31,0.06)] aspect-square relative">
+          <div className="order-2 w-full md:max-w-[calc(50%-1rem)] flex-shrink-0 overflow-hidden rounded-xl bg-[rgba(31,42,31,0.06)] aspect-square relative">
             <Image
               src={data.info_image_url!}
               alt={data.info_subtitle || "Изображение"}
