@@ -34,9 +34,9 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
       className="mt-12 pt-8 border-t border-border-block w-full max-w-full min-w-0"
       aria-labelledby={hasSubtitle ? "category-info-title" : undefined}
     >
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-        {/* Текстовая колонка — отдельный слой, не пересекается с фото */}
-        <div className="lg:col-span-7 min-w-0 space-y-4 order-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10 items-start">
+        {/* Текстовая колонка слева */}
+        <div className="min-w-0 space-y-4 order-1">
           {hasSubtitle && (
             <h2 id="category-info-title" className="text-xl md:text-2xl font-semibold text-color-text-main">
               {data.info_subtitle}
@@ -54,14 +54,15 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
             />
           )}
         </div>
+        {/* Фото справа */}
         {hasImage && (
-          <div className="lg:col-span-5 min-w-0 order-2 w-full overflow-hidden rounded-xl bg-[rgba(31,42,31,0.06)] aspect-square relative">
+          <div className="min-w-0 order-2 w-full overflow-hidden rounded-xl bg-[rgba(31,42,31,0.06)] aspect-square relative">
             <Image
               src={data.info_image_url!}
               alt={data.info_subtitle || "Изображение"}
               fill
               className="object-cover block w-full h-full"
-              sizes="(max-width: 1024px) 100vw, 41.666vw"
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
         )}

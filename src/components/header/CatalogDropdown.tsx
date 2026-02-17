@@ -172,7 +172,7 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
           id="catalog-dropdown-menu"
           role="menu"
           aria-labelledby="catalog-dropdown-trigger"
-          className="absolute left-1/2 top-full z-[75]"
+          className="absolute left-1/2 top-full z-[100]"
           style={{
             transform: "translateX(-50%)",
             paddingTop: "20px",

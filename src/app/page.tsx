@@ -14,7 +14,12 @@ import { getActiveHeroSlides } from "@/lib/heroSlides";
 
 const MapSection = dynamic(
   () => import("@/components/home/MapSection").then((m) => ({ default: m.MapSection })),
-  { ssr: true }
+  { 
+    ssr: true,
+    loading: () => (
+      <div className="w-full h-[400px] md:h-[500px] bg-[#ece9e2] animate-pulse rounded-2xl" aria-hidden="true" />
+    )
+  }
 );
 import { getAllCatalogProducts } from "@/lib/products";
 import { getRecommendProducts } from "@/lib/catalogCategories";

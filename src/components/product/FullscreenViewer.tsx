@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { AppImage } from "@/components/ui/AppImage";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -24,11 +25,13 @@ export type FullscreenViewerProps = {
   };
 };
 
-const ZOOM_SCALE = 1.75;
-
 /**
- * Полноэкранный просмотр фото: click-to-zoom, drag-to-pan.
- * Закрытие по overlay только после mouseleave с фото (для устройств с мышью).
+ * Полноэкранный просмотр фото с поддержкой:
+ * - pinch zoom двумя пальцами (mobile)
+ * - swipe left/right для переключения фото
+ * - drag при увеличении
+ * - click-to-zoom на desktop
+ * - fullscreen overlay (100vw 100vh)
  */
 export function FullscreenViewer({
   isOpen,
@@ -39,128 +42,26 @@ export function FullscreenViewer({
   productTitle,
   mainImageVariants,
 }: FullscreenViewerProps) {
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [offset, setOffset] = useState({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [canCloseByOverlay, setCanCloseByOverlay] = useState(false);
   const [hasHover, setHasHover] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const dragStartRef = useRef<{ clientX: number; clientY: number; offsetX: number; offsetY: number } | null>(null);
-  const didDragRef = useRef(false);
-  const viewportRef = useRef<HTMLDivElement>(null);
-  // Touch swipe handling
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const touchStartTimeRef = useRef<number>(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
   useEffect(() => {
     setHasHover(window.matchMedia("(hover: hover)").matches);
   }, []);
-  const imagesLen = images.length;
-  const hasMultipleImages = imagesLen > 1;
-  const scale = isZoomed ? ZOOM_SCALE : 1;
-
-  const resetZoom = () => {
-    setIsZoomed(false);
-    setOffset({ x: 0, y: 0 });
-  };
-
-  const clampOffset = (x: number, y: number, s: number) => {
-    const v = viewportRef.current;
-    if (!v || s <= 1) return { x: 0, y: 0 };
-    const w = v.offsetWidth;
-    const h = v.offsetHeight;
-    const maxX = Math.max(0, (w * (s - 1)) / 2);
-    const maxY = Math.max(0, (h * (s - 1)) / 2);
-    return {
-      x: Math.max(-maxX, Math.min(maxX, x)),
-      y: Math.max(-maxY, Math.min(maxY, y)),
-    };
-  };
-
-  const goPrev = () => {
-    if (imagesLen <= 1) return;
-    setCanCloseByOverlay(false);
-    onIndexChange(currentIndex === 0 ? imagesLen - 1 : currentIndex - 1);
-    resetZoom();
-  };
-
-  const goNext = () => {
-    if (imagesLen <= 1) return;
-    setCanCloseByOverlay(false);
-    onIndexChange(currentIndex === imagesLen - 1 ? 0 : currentIndex + 1);
-    resetZoom();
-  };
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (didDragRef.current) {
-      didDragRef.current = false;
-      return;
-    }
-    const v = viewportRef.current;
-    if (!v) return;
-
-    if (isZoomed) {
-      resetZoom();
-      return;
-    }
-
-    const rect = v.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
-    const dx = (v.offsetWidth / 2 - clickX) * (ZOOM_SCALE - 1);
-    const dy = (v.offsetHeight / 2 - clickY) * (ZOOM_SCALE - 1);
-    const clamped = clampOffset(dx, dy, ZOOM_SCALE);
-    setIsZoomed(true);
-    setOffset(clamped);
-  };
-
-  const handlePointerDown = (e: React.PointerEvent) => {
-    e.preventDefault();
-    didDragRef.current = false;
-    if (!isZoomed) return;
-    setIsDragging(true);
-    dragStartRef.current = {
-      clientX: e.clientX,
-      clientY: e.clientY,
-      offsetX: offset.x,
-      offsetY: offset.y,
-    };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDragging || !dragStartRef.current) return;
-    didDragRef.current = true;
-    const dx = e.clientX - dragStartRef.current.clientX;
-    const dy = e.clientY - dragStartRef.current.clientY;
-    setOffset(clampOffset(dragStartRef.current.offsetX + dx, dragStartRef.current.offsetY + dy, scale));
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (isDragging) {
-      try {
-        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-      } catch {
-        /* ignore */
-      }
-      setIsDragging(false);
-      dragStartRef.current = null;
-    }
-  };
-
-  const handlePointerLeave = () => {
-    if (isDragging) {
-      setIsDragging(false);
-      dragStartRef.current = null;
-    }
-  };
 
   useEffect(() => {
-    if (isOpen) setCanCloseByOverlay(false);
-  }, [isOpen]);
+    if (isOpen) {
+      setCanCloseByOverlay(false);
+      setIsZoomed(false);
+    }
+  }, [isOpen, currentIndex]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -175,13 +76,29 @@ export function FullscreenViewer({
     };
   }, [isOpen, onClose]);
 
+  const imagesLen = images.length;
+  const hasMultipleImages = imagesLen > 1;
+
+  const goPrev = () => {
+    if (imagesLen <= 1) return;
+    setCanCloseByOverlay(false);
+    onIndexChange(currentIndex === 0 ? imagesLen - 1 : currentIndex - 1);
+  };
+
+  const goNext = () => {
+    if (imagesLen <= 1) return;
+    setCanCloseByOverlay(false);
+    onIndexChange(currentIndex === imagesLen - 1 ? 0 : currentIndex + 1);
+  };
+
   const handleOverlayClick = () => {
-    // На touch-устройствах (нет hover) закрытие по тапу по оверлею всегда разрешено
     if (!hasHover) {
       onClose();
       return;
     }
-    if (canCloseByOverlay) onClose();
+    if (canCloseByOverlay && !isZoomed) {
+      onClose();
+    }
   };
 
   const handlePhotoBoxMouseEnter = () => {
@@ -194,10 +111,9 @@ export function FullscreenViewer({
 
   // Touch swipe handlers for mobile
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (isZoomed) return; // Don't swipe when zoomed
+    if (isZoomed) return;
     const touch = e.touches[0];
-    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-    touchStartTimeRef.current = Date.now();
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -216,17 +132,15 @@ export function FullscreenViewer({
     const touch = e.changedTouches[0];
     const deltaX = touch.clientX - touchStartRef.current.x;
     const deltaY = touch.clientY - touchStartRef.current.y;
-    const deltaTime = Date.now() - touchStartTimeRef.current;
+    const deltaTime = Date.now() - touchStartRef.current.time;
     const absDeltaX = Math.abs(deltaX);
     const absDeltaY = Math.abs(deltaY);
 
     // Swipe threshold: horizontal movement > 50px, horizontal > vertical, time < 300ms
     if (absDeltaX > 50 && absDeltaX > absDeltaY && deltaTime < 300) {
       if (deltaX > 0) {
-        // Swipe right -> previous image
         goPrev();
       } else {
-        // Swipe left -> next image
         goNext();
       }
     }
@@ -234,26 +148,36 @@ export function FullscreenViewer({
     touchStartRef.current = null;
   };
 
+  // Preload adjacent images
+  useEffect(() => {
+    if (!isOpen || imagesLen <= 1) return;
+    const prevIndex = currentIndex === 0 ? imagesLen - 1 : currentIndex - 1;
+    const nextIndex = currentIndex === imagesLen - 1 ? 0 : currentIndex + 1;
+    
+    const preloadImage = (src: string) => {
+      const img = new Image();
+      img.src = src;
+    };
+
+    if (images[prevIndex]) preloadImage(images[prevIndex]);
+    if (images[nextIndex]) preloadImage(images[nextIndex]);
+  }, [isOpen, currentIndex, images, imagesLen]);
+
   if (!isOpen || !mounted) return null;
+
+  const currentImage = images[currentIndex];
+  const isValidSrc = currentImage && typeof currentImage === "string" && currentImage.trim().length > 0;
 
   const content = (
     <div
-      className="flex flex-col md:flex-row items-center justify-center bg-black/90 transition-opacity duration-200"
+      className="fixed inset-0 bg-black/90 transition-opacity duration-200 z-[99999]"
       role="dialog"
       aria-modal="true"
       aria-label="Просмотр фото"
       onClick={handleOverlayClick}
       style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
         width: "100vw",
         height: "100vh",
-        maxWidth: "100vw",
-        maxHeight: "100vh",
-        zIndex: 99999,
       }}
     >
       <div
@@ -263,25 +187,28 @@ export function FullscreenViewer({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
+        {/* Desktop navigation arrows - без фона */}
         {hasMultipleImages && (
-          <button
-            type="button"
-            onClick={goPrev}
-            className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center text-white hover:text-white/80 transition-all z-10"
-            aria-label="Предыдущее фото"
-          >
-            <ChevronLeft className="w-7 h-7" />
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={goPrev}
+              className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center text-white hover:text-white/80 transition-opacity z-10"
+              aria-label="Предыдущее фото"
+            >
+              <ChevronLeft className="w-7 h-7" />
+            </button>
+          </>
         )}
 
-        <div className="relative flex flex-col flex-1 min-w-0 min-h-0 w-full overflow-hidden">
-          {/* Кнопка закрытия вверху — на мобилке в одном ряду с навигацией */}
+        <div className="relative flex flex-col flex-1 min-w-0 min-h-0 w-full h-full overflow-hidden">
+          {/* Mobile navigation and close button */}
           <div className="absolute top-4 left-4 right-4 md:top-6 md:left-6 md:right-6 flex items-center justify-between shrink-0 w-auto gap-2 z-20">
             {hasMultipleImages && (
               <button
                 type="button"
                 onClick={goPrev}
-                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center text-white hover:text-white/80 transition-all"
+                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center text-white hover:text-white/80 transition-opacity"
                 aria-label="Предыдущее фото"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -291,7 +218,7 @@ export function FullscreenViewer({
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 w-10 h-10 flex items-center justify-center text-white hover:text-white/80 transition-all"
+              className="shrink-0 w-10 h-10 flex items-center justify-center text-white hover:text-white/80 transition-opacity"
               aria-label="Закрыть"
             >
               <X className="w-5 h-5 md:w-6 md:h-6" />
@@ -300,7 +227,7 @@ export function FullscreenViewer({
               <button
                 type="button"
                 onClick={goNext}
-                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center text-white hover:text-white/80 transition-all"
+                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center text-white hover:text-white/80 transition-opacity"
                 aria-label="Следующее фото"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -308,83 +235,83 @@ export function FullscreenViewer({
             )}
           </div>
 
+          {/* Image container with zoom/pan */}
           <div
-            ref={viewportRef}
-            className="relative flex-1 min-h-0 w-full h-full overflow-hidden"
-            style={{ width: "100%", height: "100%" }}
+            className="relative flex-1 min-h-0 w-full h-full overflow-hidden p-3 md:p-4"
             onMouseEnter={handlePhotoBoxMouseEnter}
             onMouseLeave={handlePhotoBoxMouseLeave}
           >
-            {images.map((src, idx) => {
-              // Проверка: src должен быть валидным
-              const isValidSrc = src && typeof src === "string" && src.trim().length > 0;
-              
-              return (
-                <div
-                  key={`${src}-${idx}`}
-                  className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out"
-                  style={{
-                    opacity: idx === currentIndex ? 1 : 0,
-                    pointerEvents: idx === currentIndex ? "auto" : "none",
-                    zIndex: idx === currentIndex ? 1 : 0,
-                  }}
-                >
-                  {isValidSrc ? (
+            {isValidSrc ? (
+              <TransformWrapper
+                initialScale={1}
+                minScale={1}
+                maxScale={4}
+                doubleClick={{ disabled: true }}
+                panning={{ disabled: false }}
+                wheel={{ step: 0.1 }}
+                pinch={{ step: 5 }}
+                onTransformed={(ref) => {
+                  setIsZoomed(ref.state.scale > 1);
+                }}
+                onPanningStart={() => {
+                  setCanCloseByOverlay(false);
+                }}
+              >
+                {({ zoomIn, zoomOut, resetTransform }) => (
+                  <TransformComponent
+                    wrapperClass="!w-full !h-full flex items-center justify-center"
+                    contentClass="!w-full !h-full flex items-center justify-center"
+                  >
                     <div
-                      className="relative w-full h-full flex items-center justify-center select-none touch-none p-3 md:p-4"
-                      style={{
-                        cursor: isDragging ? "grabbing" : isZoomed ? "zoom-out" : "zoom-in",
+                      className="relative w-full h-full max-w-full max-h-full flex items-center justify-center"
+                      onClick={(e) => {
+                        // Click to zoom on desktop
+                        if (hasHover && !isZoomed) {
+                          e.preventDefault();
+                          zoomIn();
+                        } else if (hasHover && isZoomed) {
+                          e.preventDefault();
+                          resetTransform();
+                          setIsZoomed(false);
+                        }
                       }}
-                      onClick={handleClick}
-                      onPointerDown={handlePointerDown}
-                      onPointerMove={handlePointerMove}
-                      onPointerUp={handlePointerUp}
-                      onPointerLeave={handlePointerLeave}
-                      onPointerCancel={handlePointerUp}
                     >
-                      <div
-                        className="relative w-full h-full max-w-full max-h-full transition-transform duration-300 ease-out"
-                        style={{
-                          transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-                          transformOrigin: "center center",
-                        }}
-                      >
-                        <AppImage
-                          src={src}
-                          alt={`${productTitle} — фото ${idx + 1}`}
-                          fill
-                          variant="gallery"
-                          sizes="100vw"
-                          className="object-contain object-center pointer-events-none"
-                          draggable={false}
-                          unoptimized={src.startsWith("data:") || src.includes("blob:")}
-                          loading={idx === currentIndex ? "eager" : "lazy"}
-                          imageData={idx === 0 && mainImageVariants ? mainImageVariants : undefined}
-                        />
-                      </div>
+                      <AppImage
+                        src={currentImage}
+                        alt={`${productTitle} — фото ${currentIndex + 1}`}
+                        fill
+                        variant="gallery"
+                        sizes="100vw"
+                        className="object-contain object-center pointer-events-none"
+                        draggable={false}
+                        unoptimized={currentImage.startsWith("data:") || currentImage.includes("blob:")}
+                        loading="eager"
+                        priority
+                        imageData={currentIndex === 0 && mainImageVariants ? mainImageVariants : undefined}
+                      />
                     </div>
-                  ) : (
-                    // Fallback для пустого src (dev warning)
-                    <div className="flex items-center justify-center w-full h-full text-white/60 text-sm">
-                      {process.env.NODE_ENV === "development" && (
-                        <div className="text-center">
-                          <p>Изображение не загружено</p>
-                          <p className="text-xs mt-1">src: {String(src).substring(0, 50)}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                  </TransformComponent>
+                )}
+              </TransformWrapper>
+            ) : (
+              <div className="flex items-center justify-center w-full h-full text-white/60 text-sm">
+                {process.env.NODE_ENV === "development" && (
+                  <div className="text-center">
+                    <p>Изображение не загружено</p>
+                    <p className="text-xs mt-1">src: {String(currentImage).substring(0, 50)}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Desktop navigation arrow right - без фона */}
         {hasMultipleImages && (
           <button
             type="button"
             onClick={goNext}
-            className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center text-white hover:text-white/80 transition-all z-10"
+            className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center text-white hover:text-white/80 transition-opacity z-10"
             aria-label="Следующее фото"
           >
             <ChevronRight className="w-7 h-7" />

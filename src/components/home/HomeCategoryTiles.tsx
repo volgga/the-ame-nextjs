@@ -179,6 +179,20 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
           </div>
         </div>
         <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          {/* Skeleton placeholders для первой строки пока загружаются изображения */}
+          {!isReady && collections.length > 0 && (
+            <>
+              {Array.from({ length: Math.min(3, collections.length) }).map((_, idx) => (
+                <div
+                  key={`skeleton-${idx}`}
+                  className="relative w-full aspect-square overflow-hidden rounded-2xl bg-[#ece9e2] animate-pulse"
+                  aria-hidden
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-[rgba(31,42,31,0.1)] to-[rgba(31,42,31,0.05)]" />
+                </div>
+              ))}
+            </>
+          )}
           {collections.map((col) => {
             const href =
               !col.categorySlug || col.categorySlug === "magazin" ? "/magazin" : `/magazine/${col.categorySlug}`;
@@ -203,8 +217,11 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                 }}
                 href={href}
                 prefetch={false}
-                className={`group relative block w-full overflow-hidden rounded-2xl bg-[#ece9e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2 reveal reveal--stagger ${isRowVisible ? "reveal--in" : ""}`}
-                style={{ "--stagger-delay": `${staggerDelay}ms` } as React.CSSProperties}
+                className={`group relative block w-full overflow-hidden rounded-2xl bg-[#ece9e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2 reveal reveal--stagger ${isRowVisible ? "reveal--in" : "opacity-0"}`}
+                style={{ 
+                  "--stagger-delay": `${staggerDelay}ms`,
+                  minHeight: isRowVisible ? "auto" : "0px"
+                } as React.CSSProperties}
                 aria-label={col.name}
               >
                 {/* Изображение с overlay */}
@@ -217,6 +234,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     loading="lazy"
+                    quality={65}
                     // TODO: Добавить imageData когда категории будут иметь варианты изображений
                   />
                   {/* Градиент снизу для читаемости текста */}

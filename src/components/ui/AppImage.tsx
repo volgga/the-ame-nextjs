@@ -96,17 +96,17 @@ export function AppImage({ variant = "card", quality, src, variants, imageData, 
 
     switch (variant) {
       case "card":
-        return 62;
+        return 65; // Оптимизировано для PageSpeed (было 62)
       case "thumb":
-        return 58;
+        return 60; // Оптимизировано для PageSpeed (было 58)
       case "blog":
-        return 68;
+        return 70; // Оптимизировано для PageSpeed (было 68)
       case "gallery":
-        return 78;
+        return 75; // Снижено для PageSpeed (было 78)
       case "hero":
-        return 78;
+        return 75; // Снижено для PageSpeed (было 78)
       default:
-        return 75;
+        return 70; // Оптимизировано для PageSpeed (было 75)
     }
   };
 
