@@ -23,13 +23,22 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
   const [isReady, setIsReady] = useState(false);
   const [visibleRows, setVisibleRows] = useState<Set<number>>(new Set());
   const [cardRowMap, setCardRowMap] = useState<Map<string, { rowIndex: number; cardIndexInRow: number }>>(new Map());
+  const [isMobile, setIsMobile] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
   const observersRef = useRef<Map<number, IntersectionObserver>>(new Map());
 
-  // SSR-safe: скрытие применяется только после mount на клиенте
+  // Мгновенный показ контента (без скелетона) — быстрее LCP и нет «пустых блоков» на мобиле
   useEffect(() => {
     setIsReady(true);
+  }, []);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 768px)");
+    setIsMobile(mql.matches);
+    const handler = () => setIsMobile(mql.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
   }, []);
 
   // Группировка карточек по строкам через offsetTop
@@ -179,21 +188,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
           </div>
         </div>
         <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-          {/* Skeleton placeholders для первой строки пока загружаются изображения */}
-          {!isReady && collections.length > 0 && (
-            <>
-              {Array.from({ length: Math.min(3, collections.length) }).map((_, idx) => (
-                <div
-                  key={`skeleton-${idx}`}
-                  className="relative w-full aspect-square overflow-hidden rounded-2xl bg-[#ece9e2] animate-pulse"
-                  aria-hidden
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-[rgba(31,42,31,0.1)] to-[rgba(31,42,31,0.05)]" />
-                </div>
-              ))}
-            </>
-          )}
-          {collections.map((col) => {
+          {collections.map((col, index) => {
             const href =
               !col.categorySlug || col.categorySlug === "magazin" ? "/magazin" : `/magazine/${col.categorySlug}`;
             const imageSrc =
@@ -202,8 +197,8 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                 : "/placeholder.svg";
             const cardKey = col.id;
             const rowInfo = cardRowMap.get(cardKey);
-            const isRowVisible = rowInfo ? visibleRows.has(rowInfo.rowIndex) : false;
-            const staggerDelay = rowInfo ? rowInfo.cardIndexInRow * 160 : 0; // 160ms между карточками в строке (премиум, мягче)
+            const isRowVisible = rowInfo ? visibleRows.has(rowInfo.rowIndex) : true; // показываем сразу, если мап ещё не готов
+            const staggerDelay = isMobile ? 0 : (rowInfo ? rowInfo.cardIndexInRow * 120 : 0); // на мобиле без задержки — быстрее
 
             return (
               <Link
@@ -232,9 +227,9 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                     variant="card"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    loading="eager"
+                    loading={index < 2 ? "eager" : "lazy"}
                     quality={65}
-                    priority={rowInfo?.rowIndex === 0}
+                    priority={index === 0}
                     // TODO: Добавить imageData когда категории будут иметь варианты изображений
                   />
                   {/* Градиент снизу для читаемости текста */}

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { CLIENT_LINKS } from "@/lib/navLinks";
 
-const FOOTER_LINK = "block text-[#7e7e7e] hover:text-black transition-colors py-0.5";
+/* Контраст по WCAG: чуть темнее #7e7e7e для читаемости на светлом фоне */
+const FOOTER_LINK = "block text-[#5a5a5a] hover:text-black transition-colors py-0.5";
 
 /**
  * Footer — подвал сайта.
@@ -22,7 +23,7 @@ export function Footer() {
                 </Link>
                 <div className="text-sm md:text-base font-normal tracking-wide text-black mt-0.5">ЦВЕТЫ × ЧУВСТВА</div>
               </div>
-              <p className="text-[#7e7e7e] text-sm">2025–2026 © The Áme</p>
+              <p className="text-[#5a5a5a] text-sm">2025–2026 © The Áme</p>
               {/* Бейдж рейтинга Яндекса: ниже копирайта, по левому краю, не растягивать на мобильных */}
               <div className="pt-3 w-full max-w-[150px]">
                 <iframe
@@ -70,14 +71,14 @@ export function Footer() {
             {/* 4. Контакты */}
             <div className="min-w-0">
               <h3 className="text-base font-semibold text-black mb-4">Контакты</h3>
-              <div className="space-y-3 text-[#7e7e7e] text-sm leading-relaxed">
+              <div className="space-y-3 text-[#5a5a5a] text-sm leading-relaxed">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-black mt-0.5 shrink-0" />
                   <a
                     href="https://yandex.ru/maps/239/sochi/?from=mapframe&ll=39.732810%2C43.615391&mode=poi&poi%5Buri%5D=ymapsbm1%3A%2F%2Forg%3Foid%3D77269998905&source=mapframe&utm_source=mapframe&z=19"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[#7e7e7e] hover:text-black transition-colors"
+                    className="text-[#5a5a5a] hover:text-black transition-colors"
                   >
                     Пластунская 123А, корпус 2, этаж 2, офис 84
                   </a>

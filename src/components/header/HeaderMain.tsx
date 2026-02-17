@@ -189,7 +189,7 @@ export function HeaderMain({ isMenuOpen, setIsMenuOpen, mainBarVisible = true }:
     <>
       {/* Фиксированная высота 44px — без изменений при скролле/hover, чтобы избежать layout shift */}
       <div
-        className="relative w-full bg-header-bg flex items-center overflow-hidden"
+        className="relative w-full bg-header-bg flex items-center overflow-visible"
         style={{
           margin: 0,
           padding: 0,

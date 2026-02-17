@@ -55,6 +55,11 @@ const nextConfig: NextConfig = {
       { source: "/index.html", destination: "/", permanent: true },
       { source: "/home", destination: "/", permanent: true },
       { source: "/home.html", destination: "/", permanent: true },
+      // Страниц по /blog и /magazine в приложении нет (контент: блог — /clients/blog, каталог — /magazin).
+      // Редиректы не создают страницы, а только отдают 301, чтобы не было 404 в Вебмастере.
+      { source: "/blog", destination: "/clients/blog", permanent: true },
+      { source: "/blog/:path*", destination: "/clients/blog/:path*", permanent: true },
+      { source: "/magazine", destination: "/magazin", permanent: true },
     ];
   },
   async headers() {
@@ -87,6 +92,8 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ["image/avif", "image/webp"],
+    deviceSizes: [430, 640, 750, 828, 1080, 1200, 1920, 2048],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       { protocol: "https", hostname: "theame.ru", pathname: "/**" },
       { protocol: "http", hostname: "theame.ru", pathname: "/**" },

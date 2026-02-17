@@ -1202,7 +1202,7 @@ const sc = subcat as { info_subtitle?: string | null; info_description?: string 
       {/* Модалка создания/редактирования подкатегории */}
       {(creatingSubcategory || editingSubcategory) && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => {
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => {
             setCreatingSubcategory(false);
             setEditingSubcategory(null);
             setSubcategoryForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", info_subtitle: "", info_description: "", info_content: "", info_image_url: "" });
@@ -1386,7 +1386,7 @@ const sc = subcat as { info_subtitle?: string | null; info_description?: string 
       {/* Модалка подтверждения удаления подкатегории */}
       {deleteSubcategoryConfirmId && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteSubcategoryConfirmId(null)} aria-hidden />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={() => setDeleteSubcategoryConfirmId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -1416,7 +1416,7 @@ const sc = subcat as { info_subtitle?: string | null; info_description?: string 
       {editingFlower && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
             onClick={() => {
               setEditingFlower(null);
               setFlowerForm({ name: "", title: "", description: "", seo_title: "", seo_description: "", is_active: true });
@@ -1523,7 +1523,7 @@ const sc = subcat as { info_subtitle?: string | null; info_description?: string 
       {/* Подтверждение отключения цветка */}
       {deleteFlowerConfirmId && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteFlowerConfirmId(null)} aria-hidden />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={() => setDeleteFlowerConfirmId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -1552,7 +1552,7 @@ const sc = subcat as { info_subtitle?: string | null; info_description?: string 
       {/* Подтверждение удаления цветка из справочника */}
       {deleteFlowerHardConfirmId && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteFlowerHardConfirmId(null)} aria-hidden />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={() => setDeleteFlowerHardConfirmId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[340px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -1608,7 +1608,7 @@ const sc = subcat as { info_subtitle?: string | null; info_description?: string 
       {/* Мини-модалка подтверждения удаления */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmId(null)} aria-hidden />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={() => setDeleteConfirmId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}

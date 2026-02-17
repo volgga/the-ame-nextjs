@@ -582,6 +582,13 @@ All colors MUST be HSL.
     transition-delay: var(--stagger-delay, 0ms);
   }
 
+  /* Мобилка: быстрее появление — меньше ожидание, контент виден сразу */
+  @media (max-width: 768px) {
+    .reveal {
+      transition-duration: 280ms;
+    }
+  }
+
   /* Section divider: тонкая линия, почти на всю ширину, сужение только у краёв, тёмно-зелёный */
   .section-divider-line {
     height: 1px;

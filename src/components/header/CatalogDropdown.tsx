@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { ALL_CATALOG, CATALOG_PAGE, FALLBACK_CATEGORIES } from "@/lib/catalogCategories";
 
@@ -73,11 +74,17 @@ type CatalogDropdownProps = {
 export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<{ name: string; slug: string }[]>([]);
+  const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const menuItems = useMemo(() => buildMenuItems(categories), [categories]);
   const rows = useMemo(() => splitIntoRows(menuItems), [menuItems]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     fetchCategories().then(setCategories);
@@ -129,87 +136,120 @@ export function CatalogDropdown({ triggerClassName }: CatalogDropdownProps) {
     };
   }, []);
 
-  return (
-    <div
-      ref={containerRef}
-      className="relative"
-      onMouseEnter={isTouch ? undefined : handleOpen}
-      onMouseLeave={isTouch ? undefined : handleClose}
-    >
-      <Link
-        href={CATALOG_PAGE.href}
-        className={triggerClassName}
-        aria-expanded={open}
-        aria-haspopup="true"
-        aria-controls="catalog-dropdown-menu"
-        id="catalog-dropdown-trigger"
-        onClick={
-          isTouch
-            ? (e) => {
-                e.preventDefault();
-                setOpen((v) => !v);
-              }
-            : undefined
-        }
-      >
-        Каталог
-      </Link>
+  // Вычисляем позицию для портала
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
-      {open && (
-        <div
-          id="catalog-dropdown-menu"
-          role="menu"
-          aria-labelledby="catalog-dropdown-trigger"
-          className="absolute left-1/2 top-full z-[200]"
-          style={{
-            transform: "translateX(-50%)",
-            paddingTop: "20px",
-          }}
-          onMouseEnter={handleOpen}
-          onMouseLeave={handleClose}
-        >
-          <div
-            className="overflow-hidden bg-white transition-all duration-200 ease-out border border-[#1F2A1F]"
-            style={{
-              padding: "22px 26px",
-              width: "max-content",
-              maxWidth: "min(980px, calc(100vw - 24px))",
-              borderRadius: "22px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
-            }}
-          >
-            <div className="flex flex-col" style={{ gap: ROW_GAP }}>
-              {rows.map((row, rowIdx) => (
-                <div
-                  key={rowIdx}
-                  className="flex flex-wrap gap-x-8 gap-y-1"
-                  style={{ minWidth: COLUMN_MIN_WIDTH }}
-                >
-                  {row.map((item, itemIdx) => {
-                    const isFirst = rowIdx === 0 && itemIdx === 0;
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        role="menuitem"
-                        className={
-                          isFirst
-                            ? "block py-0.5 text-sm font-semibold text-color-text-main hover:opacity-80 hover:underline decoration-2 underline-offset-2 transition-colors leading-tight shrink-0"
-                            : "block py-0.5 text-sm text-color-text-secondary hover:text-color-text-main hover:underline decoration-2 underline-offset-2 transition-colors leading-tight shrink-0"
-                        }
-                        style={{ minWidth: COLUMN_MIN_WIDTH }}
-                        onClick={close}
-                      >
-                        {item.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              ))}
+  useEffect(() => {
+    if (!open || !mounted || !containerRef.current) {
+      setPosition(null);
+      return;
+    }
+
+    const updatePosition = () => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 20, // fixed positioning - no scroll offset needed
+        left: rect.left + rect.width / 2,
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [open, mounted]);
+
+  const dropdownContent = open && position && mounted ? (
+    <div
+      ref={dropdownRef}
+      id="catalog-dropdown-menu"
+      role="menu"
+      aria-labelledby="catalog-dropdown-trigger"
+      className="fixed z-[200]"
+      style={{
+        transform: "translateX(-50%)",
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+      }}
+      onMouseEnter={handleOpen}
+      onMouseLeave={handleClose}
+    >
+      <div
+        className="overflow-hidden bg-white transition-all duration-200 ease-out border border-[#1F2A1F]"
+        style={{
+          padding: "22px 26px",
+          width: "max-content",
+          maxWidth: "min(980px, calc(100vw - 24px))",
+          borderRadius: "22px",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.08)",
+        }}
+      >
+        <div className="flex flex-col" style={{ gap: ROW_GAP }}>
+          {rows.map((row, rowIdx) => (
+            <div
+              key={rowIdx}
+              className="flex flex-wrap gap-x-8 gap-y-1"
+              style={{ minWidth: COLUMN_MIN_WIDTH }}
+            >
+              {row.map((item, itemIdx) => {
+                const isFirst = rowIdx === 0 && itemIdx === 0;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    role="menuitem"
+                    className={
+                      isFirst
+                        ? "block py-0.5 text-sm font-semibold text-color-text-main hover:opacity-80 hover:underline decoration-2 underline-offset-2 transition-colors leading-tight shrink-0"
+                        : "block py-0.5 text-sm text-color-text-secondary hover:text-color-text-main hover:underline decoration-2 underline-offset-2 transition-colors leading-tight shrink-0"
+                    }
+                    style={{ minWidth: COLUMN_MIN_WIDTH }}
+                    onClick={close}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
             </div>
-          </div>
+          ))}
         </div>
-      )}
+      </div>
     </div>
+  ) : null;
+
+  return (
+    <>
+      <div
+        ref={containerRef}
+        className="relative"
+        onMouseEnter={isTouch ? undefined : handleOpen}
+        onMouseLeave={isTouch ? undefined : handleClose}
+      >
+        <Link
+          href={CATALOG_PAGE.href}
+          className={triggerClassName}
+          aria-expanded={open}
+          aria-haspopup="true"
+          aria-controls="catalog-dropdown-menu"
+          id="catalog-dropdown-trigger"
+          onClick={
+            isTouch
+              ? (e) => {
+                  e.preventDefault();
+                  setOpen((v) => !v);
+                }
+              : undefined
+          }
+        >
+          Каталог
+        </Link>
+      </div>
+      {mounted && dropdownContent && createPortal(dropdownContent, document.body)}
+    </>
   );
 }

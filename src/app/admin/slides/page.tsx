@@ -442,7 +442,7 @@ export default function AdminSlidesPage() {
         (creating || editing) &&
         createPortal(
           <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
-            <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={closeModal} aria-hidden />
             <div
               className="relative w-full max-w-[720px] max-h-[85vh] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl hover:border-border-block-hover"
               onClick={(e) => e.stopPropagation()}

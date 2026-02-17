@@ -104,20 +104,28 @@ export function AppImage({ variant = "card", quality, src, variants, imageData, 
       case "gallery":
         return 75; // Снижено для PageSpeed (было 78)
       case "hero":
-        return 75; // Снижено для PageSpeed (было 78)
+        return 70; // Ниже для мобильного LCP (меньше байт при 100vw)
       default:
         return 70; // Оптимизировано для PageSpeed (было 75)
     }
   };
 
-  // Для remote images отключаем оптимизацию Next.js, чтобы избежать ресайза на лету
-  // Используем прямую ссылку на изображение
+  // Remote images: используем оптимизацию Next.js (WebP/AVIF, ресайз под sizes) для LCP и PageSpeed.
+  // Раньше был unoptimized из-за ресайза «на лету» — теперь кэш _next/image даёт быструю отдачу.
   const isRemote = src.startsWith("http://") || src.startsWith("https://");
 
+  const defaultSizesByVariant: Record<AppImageVariant, string> = {
+    hero: "(max-width: 768px) 100vw, (max-width: 1440px) 100vw, 1400px",
+    card: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
+    thumb: "160px",
+    blog: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw",
+    gallery: "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 480px",
+  };
+  const sizes = props.sizes ?? defaultSizesByVariant[variant];
+
   if (isRemote) {
-    // Для remote images используем unoptimized, чтобы не было ресайза на лету
-    return <Image {...props} src={src} quality={getQuality()} unoptimized={true} />;
+    return <Image {...props} src={src} quality={getQuality()} sizes={sizes} />;
   }
 
-  return <Image {...props} src={src} quality={getQuality()} />;
+  return <Image {...props} src={src} quality={getQuality()} sizes={sizes} />;
 }

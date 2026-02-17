@@ -477,7 +477,7 @@ export default function AdminHomeCollectionsPage() {
 
       {(creating || editing) && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={requestClose} aria-hidden />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={requestClose} aria-hidden />
           <div
             className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -626,7 +626,7 @@ export default function AdminHomeCollectionsPage() {
             </form>
             </div>
             {showCloseConfirm && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/30 z-10">
+              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/30 backdrop-blur-sm z-10">
                 <div className="bg-white rounded-xl border border-border-block p-4 shadow-xl max-w-sm w-full mx-4">
                   <p className="text-[#111] font-medium mb-3">Сохранить изменения?</p>
                   <div className="flex gap-2 justify-end">

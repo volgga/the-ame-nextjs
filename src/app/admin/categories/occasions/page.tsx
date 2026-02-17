@@ -323,7 +323,7 @@ export default function AdminOccasionsPage() {
 
       {(creating || editing) && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={closeModal} aria-hidden />
           <div
             className="relative w-full max-w-[600px] max-h-[90vh] flex flex-col rounded-xl border border-border-block bg-white hover:border-border-block-hover shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -526,7 +526,7 @@ export default function AdminOccasionsPage() {
 
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmId(null)} aria-hidden />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={() => setDeleteConfirmId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}

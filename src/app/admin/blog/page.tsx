@@ -187,8 +187,9 @@ export default function AdminBlogPage() {
       )}
 
       {deleteConfirmId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-y-auto">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setDeleteConfirmId(null)} aria-hidden />
+          <div className="relative bg-white rounded-xl border border-border-block p-6 max-w-md w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">Удалить пост?</h3>
             <p className="text-gray-600 mb-6">Это действие нельзя отменить. Пост будет удалён навсегда.</p>
             <div className="flex gap-3 justify-end">

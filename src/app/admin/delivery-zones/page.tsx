@@ -293,7 +293,7 @@ export default function AdminDeliveryZonesPage() {
       {/* Модалка: Условия доставки и зоны */}
       {openModal === "zones" && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpenModal(null)} aria-hidden />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setOpenModal(null)} aria-hidden />
           <div
             className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -327,7 +327,7 @@ export default function AdminDeliveryZonesPage() {
 
       {(creating || editing) && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={closeModal} aria-hidden />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={closeModal} aria-hidden />
           <div
             className="relative w-[calc(100vw-32px)] max-w-[480px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -522,7 +522,7 @@ export default function AdminDeliveryZonesPage() {
 
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setDeleteConfirmId(null)} aria-hidden />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={() => setDeleteConfirmId(null)} aria-hidden />
           <div
             className="relative w-full max-w-[320px] rounded-xl border border-gray-200 bg-white p-5 shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -555,7 +555,7 @@ export default function AdminDeliveryZonesPage() {
       {/* Модалка: Время доставки */}
       {openModal === "schedule" && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpenModal(null)} aria-hidden />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setOpenModal(null)} aria-hidden />
           <div
             className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -580,7 +580,7 @@ export default function AdminDeliveryZonesPage() {
       {/* Модалка: Минимальный заказ */}
       {openModal === "minimum" && (
         <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpenModal(null)} aria-hidden />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setOpenModal(null)} aria-hidden />
           <div
             className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}

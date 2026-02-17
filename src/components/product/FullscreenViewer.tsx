@@ -47,6 +47,7 @@ export function FullscreenViewer({
   const [hasHover, setHasHover] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const transformRef = useRef<{ resetTransform: () => void } | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -60,6 +61,15 @@ export function FullscreenViewer({
     if (isOpen) {
       setCanCloseByOverlay(false);
       setIsZoomed(false);
+      // Принудительно сбрасываем трансформацию при открытии или смене изображения
+      // Используем большую задержку для первого изображения, чтобы оно успело загрузиться
+      const delay = currentIndex === 0 ? 200 : 100;
+      const timeoutId = setTimeout(() => {
+        if (transformRef.current) {
+          transformRef.current.resetTransform();
+        }
+      }, delay);
+      return () => clearTimeout(timeoutId);
     }
   }, [isOpen, currentIndex]);
 
@@ -243,6 +253,7 @@ export function FullscreenViewer({
           >
             {isValidSrc ? (
               <TransformWrapper
+                key={`${currentIndex}-${currentImage}`}
                 initialScale={1}
                 minScale={1}
                 maxScale={4}
@@ -252,8 +263,19 @@ export function FullscreenViewer({
                 pinch={{ step: 5 }}
                 limitToBounds={false}
                 centerOnInit={true}
+                centerZoomedOut={true}
                 initialPositionX={0}
                 initialPositionY={0}
+                onInit={() => {
+                  // Принудительно центрируем при инициализации через resetTransform
+                  // Дополнительная задержка для первого изображения с вариантами
+                  const delay = currentIndex === 0 ? 250 : 150;
+                  setTimeout(() => {
+                    if (transformRef.current) {
+                      transformRef.current.resetTransform();
+                    }
+                  }, delay);
+                }}
                 onTransformed={(ref) => {
                   setIsZoomed(ref.state.scale > 1);
                 }}
@@ -261,41 +283,55 @@ export function FullscreenViewer({
                   setCanCloseByOverlay(false);
                 }}
               >
-                {({ zoomIn, zoomOut, resetTransform }) => (
-                  <TransformComponent
-                    wrapperClass="!w-full !h-full flex items-center justify-center"
-                    contentClass="!w-full !h-full flex items-center justify-center"
-                  >
-                    <div
-                      className="relative w-full h-full max-w-full max-h-full flex items-center justify-center"
-                      onClick={(e) => {
-                        // Click to zoom on desktop
-                        if (hasHover && !isZoomed) {
-                          e.preventDefault();
-                          zoomIn();
-                        } else if (hasHover && isZoomed) {
-                          e.preventDefault();
-                          resetTransform();
-                          setIsZoomed(false);
-                        }
-                      }}
+                {({ zoomIn, zoomOut, resetTransform }) => {
+                  // Сохраняем ссылку на resetTransform для использования в useEffect
+                  transformRef.current = { resetTransform };
+                  
+                  return (
+                    <TransformComponent
+                      wrapperClass="!w-full !h-full flex items-center justify-center"
+                      contentClass="!w-full !h-full flex items-center justify-center"
                     >
-                      <AppImage
-                        src={currentImage}
-                        alt={`${productTitle} — фото ${currentIndex + 1}`}
-                        fill
-                        variant="gallery"
-                        sizes="100vw"
-                        className="object-contain object-center pointer-events-none"
-                        draggable={false}
-                        unoptimized={currentImage.startsWith("data:") || currentImage.includes("blob:")}
-                        loading="eager"
-                        priority
-                        imageData={currentIndex === 0 && mainImageVariants ? mainImageVariants : undefined}
-                      />
-                    </div>
-                  </TransformComponent>
-                )}
+                      <div
+                        className="relative w-full h-full max-w-full max-h-full flex items-center justify-center"
+                        onClick={(e) => {
+                          // Click to zoom on desktop
+                          if (hasHover && !isZoomed) {
+                            e.preventDefault();
+                            zoomIn();
+                          } else if (hasHover && isZoomed) {
+                            e.preventDefault();
+                            resetTransform();
+                            setIsZoomed(false);
+                          }
+                        }}
+                      >
+                        <AppImage
+                          src={currentImage}
+                          alt={`${productTitle} — фото ${currentIndex + 1}`}
+                          fill
+                          variant="gallery"
+                          sizes="100vw"
+                          className="object-contain object-center pointer-events-none"
+                          draggable={false}
+                          unoptimized={currentImage.startsWith("data:") || currentImage.includes("blob:")}
+                          loading="eager"
+                          priority
+                          imageData={currentIndex === 0 && mainImageVariants ? mainImageVariants : undefined}
+                          onLoad={() => {
+                            // Принудительно центрируем после загрузки изображения
+                            // Особенно важно для первого изображения с вариантами
+                            if (transformRef.current) {
+                              setTimeout(() => {
+                                transformRef.current?.resetTransform();
+                              }, currentIndex === 0 ? 150 : 50);
+                            }
+                          }}
+                        />
+                      </div>
+                    </TransformComponent>
+                  );
+                }}
               </TransformWrapper>
             ) : (
               <div className="flex items-center justify-center w-full h-full text-white/60 text-sm">
