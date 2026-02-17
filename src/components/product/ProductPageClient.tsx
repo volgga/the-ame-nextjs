@@ -607,7 +607,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                     <button
                       type="button"
                       onClick={goToPrev}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-md transition-all z-10 hover:scale-105"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 p-2 transition-all z-10 hover:opacity-70"
                       aria-label="Предыдущее фото"
                     >
                       <ChevronLeft className="w-5 h-5 text-color-text-main" />
@@ -615,7 +615,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                     <button
                       type="button"
                       onClick={goToNext}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-md transition-all z-10 hover:scale-105"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 transition-all z-10 hover:opacity-70"
                       aria-label="Следующее фото"
                     >
                       <ChevronRight className="w-5 h-5 text-color-text-main" />

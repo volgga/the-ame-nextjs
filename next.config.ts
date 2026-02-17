@@ -50,6 +50,11 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       { source: "/docs/corporate", destination: "/corporate", permanent: true },
+      // Редиректы для вариантов главной страницы (убираем дубли)
+      { source: "/index", destination: "/", permanent: true },
+      { source: "/index.html", destination: "/", permanent: true },
+      { source: "/home", destination: "/", permanent: true },
+      { source: "/home.html", destination: "/", permanent: true },
     ];
   },
   async headers() {

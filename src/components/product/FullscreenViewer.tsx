@@ -48,6 +48,9 @@ export function FullscreenViewer({
   const dragStartRef = useRef<{ clientX: number; clientY: number; offsetX: number; offsetY: number } | null>(null);
   const didDragRef = useRef(false);
   const viewportRef = useRef<HTMLDivElement>(null);
+  // Touch swipe handling
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchStartTimeRef = useRef<number>(0);
 
   useEffect(() => {
     setMounted(true);
@@ -189,11 +192,53 @@ export function FullscreenViewer({
     if (hasHover) setCanCloseByOverlay(true);
   };
 
+  // Touch swipe handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isZoomed) return; // Don't swipe when zoomed
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    touchStartTimeRef.current = Date.now();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || isZoomed) return;
+    // Prevent default scrolling when swiping horizontally
+    const touch = e.touches[0];
+    const deltaX = Math.abs(touch.clientX - touchStartRef.current.x);
+    const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+    if (deltaX > deltaY && deltaX > 10) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartRef.current || isZoomed) return;
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    const deltaTime = Date.now() - touchStartTimeRef.current;
+    const absDeltaX = Math.abs(deltaX);
+    const absDeltaY = Math.abs(deltaY);
+
+    // Swipe threshold: horizontal movement > 50px, horizontal > vertical, time < 300ms
+    if (absDeltaX > 50 && absDeltaX > absDeltaY && deltaTime < 300) {
+      if (deltaX > 0) {
+        // Swipe right -> previous image
+        goPrev();
+      } else {
+        // Swipe left -> next image
+        goNext();
+      }
+    }
+
+    touchStartRef.current = null;
+  };
+
   if (!isOpen || !mounted) return null;
 
   const content = (
     <div
-      className="flex flex-col md:flex-row items-center justify-center bg-black/90 transition-opacity duration-200 p-3 sm:p-4 md:p-6 box-border"
+      className="flex flex-col md:flex-row items-center justify-center bg-black/90 transition-opacity duration-200"
       role="dialog"
       aria-modal="true"
       aria-label="Просмотр фото"
@@ -212,14 +257,17 @@ export function FullscreenViewer({
       }}
     >
       <div
-        className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 flex-1 min-w-0 min-h-0 w-full max-w-[calc(100vw-32px)] max-h-[calc(100vh-32px)] md:max-w-[min(1200px,calc(100vw-48px))] md:max-h-[calc(100vh-48px)]"
+        className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-3 flex-1 min-w-0 min-h-0 w-full h-full"
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {hasMultipleImages && (
           <button
             type="button"
             onClick={goPrev}
-            className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all z-10"
+            className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center text-white hover:text-white/80 transition-all z-10"
             aria-label="Предыдущее фото"
           >
             <ChevronLeft className="w-7 h-7" />
@@ -228,12 +276,12 @@ export function FullscreenViewer({
 
         <div className="relative flex flex-col flex-1 min-w-0 min-h-0 w-full overflow-hidden">
           {/* Кнопка закрытия вверху — на мобилке в одном ряду с навигацией */}
-          <div className="flex items-center justify-between shrink-0 w-full mb-2 gap-2">
+          <div className="absolute top-4 left-4 right-4 md:top-6 md:left-6 md:right-6 flex items-center justify-between shrink-0 w-auto gap-2 z-20">
             {hasMultipleImages && (
               <button
                 type="button"
                 onClick={goPrev}
-                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all"
+                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center text-white hover:text-white/80 transition-all"
                 aria-label="Предыдущее фото"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -243,7 +291,7 @@ export function FullscreenViewer({
             <button
               type="button"
               onClick={onClose}
-              className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-secondary hover:text-color-text-main transition-all"
+              className="shrink-0 w-10 h-10 flex items-center justify-center text-white hover:text-white/80 transition-all"
               aria-label="Закрыть"
             >
               <X className="w-5 h-5 md:w-6 md:h-6" />
@@ -252,7 +300,7 @@ export function FullscreenViewer({
               <button
                 type="button"
                 onClick={goNext}
-                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all"
+                className="md:hidden shrink-0 w-10 h-10 flex items-center justify-center text-white hover:text-white/80 transition-all"
                 aria-label="Следующее фото"
               >
                 <ChevronRight className="w-5 h-5" />
@@ -262,8 +310,8 @@ export function FullscreenViewer({
 
           <div
             ref={viewportRef}
-            className="relative flex-1 min-h-0 w-full overflow-hidden"
-            style={{ width: "100%", height: "100%", minHeight: "200px" }}
+            className="relative flex-1 min-h-0 w-full h-full overflow-hidden"
+            style={{ width: "100%", height: "100%" }}
             onMouseEnter={handlePhotoBoxMouseEnter}
             onMouseLeave={handlePhotoBoxMouseLeave}
           >
@@ -318,7 +366,7 @@ export function FullscreenViewer({
           <button
             type="button"
             onClick={goNext}
-            className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center rounded-full bg-white/90 hover:bg-white text-color-text-main transition-all z-10"
+            className="hidden md:flex shrink-0 min-w-[48px] min-h-[48px] w-12 h-12 items-center justify-center text-white hover:text-white/80 transition-all z-10"
             aria-label="Следующее фото"
           >
             <ChevronRight className="w-7 h-7" />

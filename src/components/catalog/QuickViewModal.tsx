@@ -223,8 +223,8 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                           type="button"
                           onClick={handlePrevImage}
                           disabled={!canGoPrev}
-                          className={`absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-[var(--color-outline-border)] text-color-text-main shadow-sm transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main ${
-                            canGoPrev ? "opacity-100 hover:opacity-90" : "opacity-50 cursor-not-allowed"
+                          className={`absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-color-text-main transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main ${
+                            canGoPrev ? "opacity-100 hover:opacity-70" : "opacity-50 cursor-not-allowed"
                           }`}
                           aria-label="Предыдущее фото"
                         >
@@ -234,8 +234,8 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                           type="button"
                           onClick={handleNextImage}
                           disabled={!canGoNext}
-                          className={`absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm border border-[var(--color-outline-border)] text-color-text-main shadow-sm transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main ${
-                            canGoNext ? "opacity-100 hover:opacity-90" : "opacity-50 cursor-not-allowed"
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-color-text-main transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-color-bg-main ${
+                            canGoNext ? "opacity-100 hover:opacity-70" : "opacity-50 cursor-not-allowed"
                           }`}
                           aria-label="Следующее фото"
                         >

@@ -14,7 +14,7 @@ const MAGAZINE_PREFIX = "/magazine";
 const CANONICAL_HOST = "theame.ru";
 
 export async function middleware(request: NextRequest) {
-  const { pathname, hostname, protocol } = request.nextUrl;
+  const { pathname, hostname, protocol, searchParams } = request.nextUrl;
 
   // /api/* и /_next/* не трогаем — запрос идёт сразу в route/статику
   if (pathname.startsWith("/api") || pathname.startsWith("/_next")) {
@@ -34,6 +34,38 @@ export async function middleware(request: NextRequest) {
   if (hostname === CANONICAL_HOST && protocol === "http:") {
     const url = new URL(request.url);
     url.protocol = "https:";
+    return NextResponse.redirect(url, 301);
+  }
+
+  // ============================================================
+  // Нормализация trailing slash: убираем trailing slash (кроме корня)
+  // ============================================================
+  if (pathname !== "/" && pathname.endsWith("/")) {
+    const url = new URL(request.url);
+    url.pathname = pathname.slice(0, -1);
+    return NextResponse.redirect(url, 301);
+  }
+
+  // ============================================================
+  // Удаление маркетинговых параметров (UTM, gclid, fbclid, yclid и т.д.)
+  // Редирект на canonical URL без этих параметров
+  // ============================================================
+  const marketingParams = [
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "gclid",
+    "fbclid",
+    "yclid",
+    "ref",
+    "source",
+  ];
+  const hasMarketingParams = marketingParams.some((param) => searchParams.has(param));
+  if (hasMarketingParams) {
+    const url = new URL(request.url);
+    marketingParams.forEach((param) => url.searchParams.delete(param));
     return NextResponse.redirect(url, 301);
   }
 

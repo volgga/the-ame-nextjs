@@ -56,7 +56,7 @@ export function AboutSection({ about }: AboutSectionProps) {
 
   return (
     <section
-      className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP} ${isReady ? "reveal-ready" : ""}`}
+      className={`bg-page-bg ${MAIN_PAGE_BLOCK_GAP}`}
       aria-labelledby="about-heading"
     >
       <div className="container mx-auto px-4 md:px-6">

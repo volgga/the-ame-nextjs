@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date().toISOString().split("T")[0];
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: absoluteUrl(BASE, "/"), lastModified: now, changeFrequency: "daily", priority: 1 },
-    { url: absoluteUrl(BASE, "/catalog"), lastModified: now, changeFrequency: "daily", priority: 0.9 },
+    // /catalog редиректится на /magazin в middleware, не включаем в sitemap
     { url: absoluteUrl(BASE, "/clients/blog"), lastModified: now, changeFrequency: "weekly", priority: 0.8 },
     { url: absoluteUrl(BASE, "/about"), lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     { url: absoluteUrl(BASE, "/contacts"), lastModified: now, changeFrequency: "monthly", priority: 0.8 },
@@ -35,8 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: absoluteUrl(BASE, "/magazin"), lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: absoluteUrl(BASE, "/posmotret-vse-tsvety"), lastModified: now, changeFrequency: "daily", priority: 0.9 },
     { url: absoluteUrl(BASE, "/marketing-consent"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
-    { url: absoluteUrl(BASE, "/payment/success"), lastModified: now, changeFrequency: "monthly", priority: 0.4 },
-    { url: absoluteUrl(BASE, "/payment/fail"), lastModified: now, changeFrequency: "monthly", priority: 0.4 },
+    // payment/success и payment/fail имеют robots: noindex, не включаем в sitemap
   ];
 
   let categories: Awaited<ReturnType<typeof getCategories>> = [];
