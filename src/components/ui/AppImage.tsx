@@ -55,17 +55,15 @@ export function AppImage({ variant = "card", quality, src, variants, imageData, 
   const optimizedVariants = variants || (imageData ? createImageVariants(imageData) : null);
 
   if (optimizedVariants && (optimizedVariants.thumb || optimizedVariants.medium || optimizedVariants.large)) {
-    // Определяем размер и responsive настройки по варианту использования
-    // На мобильных используем меньшие размеры для быстрой загрузки
+    // Размеры без привязки к isMobile, чтобы не портить LCP (первая отрисовка до гидрации).
+    // Браузер сам выберет размер по srcset/sizes; качество снижаем только в fallback-path.
     const isLazy = props.loading === "lazy" || (!props.priority && props.loading !== "eager");
-    
     const sizeMap: Record<AppImageVariant, "thumb" | "medium" | "large"> = {
-      // Карточки: на мобильных всегда thumb, на десктопе thumb для lazy (превью при скролле), medium для eager/priority
-      card: isMobile ? "thumb" : (isLazy ? "thumb" : "medium"),
-      thumb: "thumb", // Миниатюры: только thumb
-      blog: isMobile ? "thumb" : "medium", // Блог: thumb на мобиле, medium на десктопе
-      gallery: "large", // Галерея товара: всегда large (открытая карточка - высокое качество)
-      hero: isMobile ? "medium" : "large", // Hero: medium на мобиле для быстрой загрузки, large на десктопе
+      card: isLazy ? "thumb" : "medium", // Превью при скролле — thumb, иначе medium
+      thumb: "thumb",
+      blog: "medium",
+      gallery: "large",
+      hero: "large",
     };
 
     // Responsive srcset для разных вариантов
@@ -111,29 +109,24 @@ export function AppImage({ variant = "card", quality, src, variants, imageData, 
   const getQuality = (): number => {
     if (quality !== undefined) return quality;
 
-    // Снижаем качество на мобильных для быстрой загрузки
-    const mobileReduction = isMobile ? 8 : 0; // Снижение на 8 единиц для мобильных
+    // Базовое качество 80; на мобильных чуть ниже для ускорения загрузки
+    const base = 80;
+    const mobileQ = isMobile ? 72 : base;
 
     switch (variant) {
       case "card":
-        // Для карточек: снижаем качество на мобильных и для lazy-загрузки (превью в каталоге при скролле)
-        const cardBase = 65;
         const isLazy = props.loading === "lazy" || (!props.priority && props.loading !== "eager");
-        // На мобильных - снижаем на 8, при lazy-загрузке (превью) - снижаем на 5 для десктопа
-        if (isMobile) return cardBase - mobileReduction;
-        if (isLazy) return cardBase - 5; // Превью при скролле на десктопе - немного снижаем
-        return cardBase; // Открытые карточки на десктопе - полное качество
+        return isMobile ? 72 : (isLazy ? 76 : base); // превью при скролле — чуть ниже
       case "thumb":
-        return 60 - (isMobile ? 5 : 0); // Миниатюры: меньше снижение
+        return isMobile ? 70 : 76;
       case "blog":
-        return 70 - (isMobile ? 8 : 0); // Блог: снижаем на мобильных
+        return mobileQ;
       case "gallery":
-        return 75; // Галерея товара: высокое качество всегда (открытая карточка)
+        return base; // галерея товара — всегда 80
       case "hero":
-        // Hero слайды: снижаем качество на мобильных для быстрой загрузки
-        return 70 - mobileReduction;
+        return mobileQ;
       default:
-        return 70 - (isMobile ? 5 : 0);
+        return mobileQ;
     }
   };
 

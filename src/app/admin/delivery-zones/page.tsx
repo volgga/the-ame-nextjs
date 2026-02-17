@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { parseAdminResponse } from "@/lib/adminFetch";
+import { Modal } from "@/components/ui/modal";
 import { DeliveryScheduleContent } from "@/components/admin/DeliveryScheduleContent";
 import { MinimumOrderModalContent } from "@/components/admin/MinimumOrderModalContent";
 
@@ -291,128 +292,36 @@ export default function AdminDeliveryZonesPage() {
       </div>
 
       {/* Модалка: Условия доставки и зоны */}
-      {openModal === "zones" && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setOpenModal(null)} aria-hidden />
-          <div
-            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
-              <h3 className="text-lg font-semibold text-[#111] truncate pr-2">Условия доставки и зоны</h3>
-              <button
-                type="button"
-                onClick={() => setOpenModal(null)}
-                className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 transition-colors flex-shrink-0"
-                aria-label="Закрыть"
-              >
-                ×
-              </button>
-            </div>
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4" style={{ overscrollBehavior: "contain" }}>
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCreating(true);
-                    setEditing(null);
-                    setForm(emptyForm());
-                  }}
-                  className="rounded px-4 py-2 text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
-                >
-                  Добавить зону
-                </button>
-              </div>
-              {error && !creating && !editing && <p className="text-sm text-red-600">{error}</p>}
+      <Modal
+        isOpen={openModal === "zones"}
+        onClose={() => setOpenModal(null)}
+        title="Условия доставки и зоны"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => {
+                setCreating(true);
+                setEditing(null);
+                setForm(emptyForm());
+              }}
+              className="rounded px-4 py-2 text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+            >
+              Добавить зону
+            </button>
+          </div>
+          {error && !creating && !editing && <p className="text-sm text-red-600">{error}</p>}
 
-      {(creating || editing) && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={closeModal} aria-hidden />
-          <div
-            className="relative w-[calc(100vw-32px)] max-w-[480px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 border-b border-border-block flex-shrink-0 bg-white">
-              <h3 className="text-lg font-semibold text-[#111] truncate pr-2">{creating ? "Новая зона" : "Редактирование"}</h3>
-              <button type="button" onClick={closeModal} className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 flex-shrink-0" aria-label="Закрыть">×</button>
-            </div>
-            <form onSubmit={handleSaveForm} className="flex flex-col flex-1 min-h-0">
-              <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6" style={{ overscrollBehavior: "contain" }}>
-                {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-[#111]">Название района *</label>
-                    <input
-                      type="text"
-                      value={form.zone_title}
-                      onChange={(e) => setForm((f) => ({ ...f, zone_title: e.target.value }))}
-                      className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
-                      required
-                      autoFocus
-                    />
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-[#111]">до (₽)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={form.paid_up_to}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            paid_up_to: parseInt(e.target.value, 10) || 0,
-                          }))
-                        }
-                        className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#111]">цена (₽)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={form.delivery_price}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            delivery_price: parseInt(e.target.value, 10) || 0,
-                          }))
-                        }
-                        className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[#111]">бесплатно от (₽)</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={form.free_from}
-                        onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            free_from: parseInt(e.target.value, 10) || 0,
-                          }))
-                        }
-                        className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#111]">Подзоны (опционально)</label>
-                    <textarea
-                      value={form.subareas_text}
-                      onChange={(e) => setForm((f) => ({ ...f, subareas_text: e.target.value }))}
-                      rows={3}
-                      className="mt-1 w-full resize-y rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
-                      placeholder="Донская, Виноградная, ..."
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2 p-4 sm:p-6 pt-4 border-t border-border-block flex-shrink-0 bg-white">
+          <Modal
+            isOpen={!!(creating || editing)}
+            onClose={closeModal}
+            title={creating ? "Новая зона" : "Редактирование"}
+            footer={
+              <div className="flex gap-2">
                 <button
                   type="submit"
+                  form="zone-form"
                   className="rounded px-4 py-2 text-white bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
                 >
                   Сохранить
@@ -437,12 +346,67 @@ export default function AdminDeliveryZonesPage() {
                   </button>
                 )}
               </div>
+            }
+          >
+            <form id="zone-form" onSubmit={handleSaveForm} className="space-y-3">
+              {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
+              <div>
+                <label className="block text-sm font-medium text-[#111]">Название района *</label>
+                <input
+                  type="text"
+                  value={form.zone_title}
+                  onChange={(e) => setForm((f) => ({ ...f, zone_title: e.target.value }))}
+                  className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-[#111]">до (₽)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.paid_up_to}
+                    onChange={(e) => setForm((f) => ({ ...f, paid_up_to: parseInt(e.target.value, 10) || 0 }))}
+                    className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#111]">цена (₽)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.delivery_price}
+                    onChange={(e) => setForm((f) => ({ ...f, delivery_price: parseInt(e.target.value, 10) || 0 }))}
+                    className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#111]">бесплатно от (₽)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.free_from}
+                    onChange={(e) => setForm((f) => ({ ...f, free_from: parseInt(e.target.value, 10) || 0 }))}
+                    className="mt-1 w-full rounded border border-gray-300 px-3 py-2 text-[#111]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-[#111]">Подзоны (опционально)</label>
+                <textarea
+                  value={form.subareas_text}
+                  onChange={(e) => setForm((f) => ({ ...f, subareas_text: e.target.value }))}
+                  rows={3}
+                  className="mt-1 w-full resize-y rounded border border-gray-300 px-3 py-2 text-sm text-[#111]"
+                  placeholder="Донская, Виноградная, ..."
+                />
+              </div>
             </form>
-          </div>
-        </div>
-      )}
+          </Modal>
 
-      {zones.length > 0 ? (
+          {zones.length > 0 ? (
         <div className="overflow-x-auto rounded-xl border border-border-block bg-white">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead>
@@ -516,9 +480,11 @@ export default function AdminDeliveryZonesPage() {
             </tbody>
           </table>
         </div>
-      ) : (
-        <p className="py-8 text-center text-gray-500">Нет зон. Нажмите «Добавить зону».</p>
-      )}
+          ) : (
+            <p className="py-8 text-center text-gray-500">Нет зон. Нажмите «Добавить зону».</p>
+          )}
+        </div>
+      </Modal>
 
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overflow-y-auto">
@@ -543,10 +509,6 @@ export default function AdminDeliveryZonesPage() {
               >
                 Да
               </button>
-            </div>
-          </div>
-        </div>
-      )}
             </div>
           </div>
         </div>

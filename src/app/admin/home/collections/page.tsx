@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { Collection } from "@/components/admin/collections/CollectionCard";
 import { CollectionsGrid } from "@/components/admin/collections/CollectionsGrid";
+import { Modal } from "@/components/ui/modal";
 import { parseAdminResponse } from "@/lib/adminFetch";
 
 const RECOMMENDED_SIZE = "800×800";
@@ -36,10 +37,12 @@ export default function AdminHomeCollectionsPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [modalFormDirty, setModalFormDirty] = useState(false);
-  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const saveThenCloseRef = useRef(false);
+  const resolveSaveRef = useRef<(() => void) | null>(null);
   const initialFormSnapshotRef = useRef<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const requestCloseRef = useRef<() => void>(() => {});
 
   const isDirty = !areOrdersEqual(collectionsFromServer, collectionsDraft);
 
@@ -115,53 +118,10 @@ export default function AdminHomeCollectionsPage() {
   }, [load]);
 
   function closeModal() {
-    setShowCloseConfirm(false);
     setCreating(false);
     setEditing(null);
     setForm({ file: null, name: "", category_slug: "magazin", sort_order: 0, is_active: true, description: "" });
     initialFormSnapshotRef.current = "";
-  }
-
-  function requestClose() {
-    if (modalFormDirty) {
-      setShowCloseConfirm(true);
-    } else {
-      closeModal();
-    }
-  }
-  const requestCloseRef = useRef(requestClose);
-  requestCloseRef.current = requestClose;
-
-  const anyModalOpen = creating || !!editing || showCloseConfirm;
-  useEffect(() => {
-    if (typeof document === "undefined" || !document.body) return;
-    if (anyModalOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
-    } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-      if (scrollY) window.scrollTo(0, parseInt(scrollY || "0") * -1);
-    }
-    return () => {
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      document.body.style.overflow = "";
-    };
-  }, [anyModalOpen]);
-
-  function confirmSaveAndClose() {
-    setShowCloseConfirm(false);
-    saveThenCloseRef.current = true;
-    const formEl = document.getElementById("collections-modal-form") as HTMLFormElement | null;
-    if (formEl) formEl.requestSubmit();
   }
 
   function resetModalFormToInitial() {
@@ -202,6 +162,7 @@ export default function AdminHomeCollectionsPage() {
 
   useEffect(() => {
     if (!creating && !editing) return;
+    requestCloseRef.current = closeModal;
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         if (showCloseConfirm) setShowCloseConfirm(false);
@@ -210,7 +171,7 @@ export default function AdminHomeCollectionsPage() {
     };
     window.addEventListener("keydown", onEsc);
     return () => window.removeEventListener("keydown", onEsc);
-  }, [creating, editing, showCloseConfirm]);
+  }, [creating, editing, showCloseConfirm, closeModal]);
 
   useEffect(() => {
     if (form.file) {
@@ -377,6 +338,10 @@ export default function AdminHomeCollectionsPage() {
       saveThenCloseRef.current = false;
     } finally {
       setUploading(false);
+      if (resolveSaveRef.current) {
+        resolveSaveRef.current();
+        resolveSaveRef.current = null;
+      }
     }
   }
 
@@ -475,26 +440,57 @@ export default function AdminHomeCollectionsPage() {
         </button>
       </div>
 
-      {(creating || editing) && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={requestClose} aria-hidden />
-          <div
-            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
-              <h3 className="text-lg font-semibold text-[#111] truncate pr-2">{creating ? "Новая коллекция" : "Редактирование"}</h3>
+      <Modal
+        isOpen={!!(creating || editing)}
+        onClose={closeModal}
+        title={creating ? "Новая коллекция" : "Редактирование"}
+        unsavedChanges={modalFormDirty}
+        onSaveAndClose={() =>
+          new Promise<void>((resolve) => {
+            resolveSaveRef.current = resolve;
+            saveThenCloseRef.current = true;
+            const formEl = document.getElementById("collections-modal-form") as HTMLFormElement | null;
+            if (formEl) formEl.requestSubmit();
+          })
+        }
+        footer={
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="submit"
+              form="collections-modal-form"
+              disabled={uploading || (creating && (!form.file || !form.name.trim()))}
+              className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
+            >
+              {uploading ? "Загрузка…" : "Сохранить"}
+            </button>
+            <button
+              type="button"
+              onClick={resetModalFormToInitial}
+              disabled={!modalFormDirty || uploading}
+              className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Отменить изменения
+            </button>
+            <button
+              type="button"
+              onClick={closeModal}
+              className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
+            >
+              Отмена
+            </button>
+            {editing && (
               <button
                 type="button"
-                onClick={requestClose}
-                className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 transition-colors flex-shrink-0"
-                aria-label="Закрыть"
+                onClick={() => handleDelete(editing.id)}
+                className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
               >
-                ×
+                Удалить
               </button>
-            </div>
-            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6" style={{ overscrollBehavior: "contain" }}>
-            <form id="collections-modal-form" onSubmit={handleSaveForm} className="space-y-3">
+            )}
+          </div>
+        }
+      >
+        <form id="collections-modal-form" onSubmit={handleSaveForm} className="space-y-3">
               {error && (creating || editing) && <p className="mb-3 text-sm text-red-600">{error}</p>}
               <div className="space-y-3">
                 <div>
@@ -589,68 +585,9 @@ export default function AdminHomeCollectionsPage() {
                     />
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  <button
-                    type="submit"
-                    disabled={uploading || (creating && (!form.file || !form.name.trim()))}
-                    className="rounded text-white px-4 py-2 bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active disabled:bg-accent-btn-disabled-bg disabled:text-accent-btn-disabled-text"
-                  >
-                    {uploading ? "Загрузка…" : "Сохранить"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetModalFormToInitial}
-                    disabled={!modalFormDirty || uploading}
-                    className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Отменить изменения
-                  </button>
-                  <button
-                    type="button"
-                    onClick={requestClose}
-                    className="rounded border border-gray-300 px-4 py-2 text-[#111] hover:bg-gray-50"
-                  >
-                    Отмена
-                  </button>
-                  {editing && (
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(editing.id)}
-                      className="rounded border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      Удалить
-                    </button>
-                  )}
-                </div>
               </div>
             </form>
-            </div>
-            {showCloseConfirm && (
-              <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/30 backdrop-blur-sm z-10">
-                <div className="bg-white rounded-xl border border-border-block p-4 shadow-xl max-w-sm w-full mx-4">
-                  <p className="text-[#111] font-medium mb-3">Сохранить изменения?</p>
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setShowCloseConfirm(false)}
-                      className="rounded border border-gray-300 px-3 py-1.5 text-sm text-[#111] hover:bg-gray-50"
-                    >
-                      Нет
-                    </button>
-                    <button
-                      type="button"
-                      onClick={confirmSaveAndClose}
-                      className="rounded px-3 py-1.5 text-sm text-white bg-accent-btn hover:bg-accent-btn-hover"
-                    >
-                      Да
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {collectionsDraft.length > 0 && (
         <CollectionsGrid

@@ -17,7 +17,8 @@ const nextConfig: NextConfig = {
   },
   // Экспериментальные оптимизации
   experimental: {
-    optimizeCss: false,
+    // Уменьшает блокировку отрисовки: объединяет/оптимизирует CSS (фото 1 — ожидаемая экономия ~820 мс)
+    optimizeCss: true,
     // Tree-shaking для lucide-react и др. — меньше размер бандла
     optimizePackageImports: ["lucide-react"],
   },

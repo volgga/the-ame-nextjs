@@ -6,6 +6,7 @@ import { AppShell } from "@/app/AppShell";
 import { YandexMetrikaHitTracker } from "@/components/analytics/YandexMetrika";
 import { CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
 import { getHomeMarquee } from "@/lib/homeMarquee";
+import { getActiveHeroSlides } from "@/lib/heroSlides";
 
 /** Schema.org JSON-LD: Organization, Florist, Service, WebSite — один глобальный блок в layout */
 const SCHEMA_ORG_JSON_LD = [
@@ -169,16 +170,29 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const marquee = await getHomeMarquee();
-  
+  const [marquee, heroSlides] = await Promise.all([getHomeMarquee(), getActiveHeroSlides()]);
+
+  // Preload первого слайда для LCP (фото 4 — снижение задержки отрисовки)
+  const firstSlide = heroSlides?.[0];
+  const firstSlideImageUrl =
+    firstSlide?.imageLargeUrl || firstSlide?.imageUrl || null;
+  const lcpPreloadHref =
+    firstSlideImageUrl && CANONICAL_BASE
+      ? `${CANONICAL_BASE}/_next/image?url=${encodeURIComponent(firstSlideImageUrl)}&w=1920&q=80`
+      : null;
+
   // Получаем домен Supabase для preconnect
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : null;
   const additionalSupabaseHost = "eweaqbtqzzoxpwfmjinp.supabase.co";
-  
+
   return (
     <html lang="ru" suppressHydrationWarning>
       <head>
+        {/* Preload LCP-изображения (первый слайд) на главной */}
+        {lcpPreloadHref && (
+          <link rel="preload" as="image" href={lcpPreloadHref} />
+        )}
         {/* Preconnect к Supabase Storage для ускорения загрузки изображений */}
         {supabaseHost && (
           <>
@@ -201,11 +215,10 @@ export default async function RootLayout({
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: "window.dataLayer = window.dataLayer || [];" }}
         />
-        {/* Яндекс.Метрика — загружаем через next/script после интерактивности для уменьшения блокировки рендера.
-            ⚠️ После деплоя проверить, что аналитика работает корректно (первые события могут не учитываться). */}
+        {/* Яндекс.Метрика — lazyOnload чтобы не блокировать основной поток (фото 2, 6, 7). Счётчик подгрузится при простое. */}
         <Script
           id="yandex-metrika"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{ __html: YANDEX_METRIKA_INLINE }}
         />
         <noscript>

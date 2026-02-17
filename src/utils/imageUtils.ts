@@ -12,3 +12,21 @@ export function normalizeImageUrl(url: string | null | undefined): string {
   const s = typeof url === "string" ? url.trim() : "";
   return isValidImageUrl(s) ? s : PLACEHOLDER_IMAGE;
 }
+
+/** Короткий хеш строки для cache-bust (при смене фото товара URL меняется — браузер подтянет новое) */
+export function imageUrlVersion(url: string | null | undefined): string {
+  const s = typeof url === "string" ? url.trim() : "";
+  if (!s) return "";
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}
+
+/** Добавить query-параметр v= к URL, чтобы при смене изображения кэш браузера не отдавал старое */
+export function addImageCacheBust(url: string | null | undefined, version?: string): string {
+  const s = typeof url === "string" ? url.trim() : "";
+  if (!s) return "";
+  const v = version ?? imageUrlVersion(s);
+  const sep = s.includes("?") ? "&" : "?";
+  return `${s}${sep}v=${v}`;
+}

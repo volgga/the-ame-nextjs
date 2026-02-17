@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { AppImage } from "@/components/ui/AppImage";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -165,7 +166,7 @@ export function FullscreenViewer({
     const nextIndex = currentIndex === imagesLen - 1 ? 0 : currentIndex + 1;
     
     const preloadImage = (src: string) => {
-      const img = new Image();
+      const img = new window.Image();
       img.src = src;
     };
 
@@ -306,28 +307,45 @@ export function FullscreenViewer({
                           }
                         }}
                       >
-                        <AppImage
-                          src={currentImage}
-                          alt={`${productTitle} — фото ${currentIndex + 1}`}
-                          fill
-                          variant="gallery"
-                          sizes="100vw"
-                          className="object-contain object-center pointer-events-none select-none"
-                          draggable={false}
-                          unoptimized={currentImage.startsWith("data:") || currentImage.includes("blob:")}
-                          loading="eager"
-                          priority
-                          imageData={currentIndex === 0 && mainImageVariants ? mainImageVariants : undefined}
-                          onLoad={() => {
-                            // Принудительно центрируем после загрузки изображения
-                            // Особенно важно для первого изображения с вариантами
-                            if (transformRef.current) {
-                              setTimeout(() => {
-                                transformRef.current?.resetTransform();
-                              }, currentIndex === 0 ? 150 : 50);
-                            }
-                          }}
-                        />
+                        {/* Первое фото: один URL (large) через next/image, чтобы не было растягивания как у 2/3 */}
+                        {currentIndex === 0 && mainImageVariants && (mainImageVariants.image_large_url || mainImageVariants.image_url) ? (
+                          <Image
+                            src={mainImageVariants.image_large_url || mainImageVariants.image_url || currentImage}
+                            alt={`${productTitle} — фото 1`}
+                            fill
+                            sizes="100vw"
+                            className="object-contain object-center pointer-events-none select-none"
+                            draggable={false}
+                            unoptimized={currentImage.startsWith("data:") || currentImage.includes("blob:")}
+                            loading="eager"
+                            priority
+                            quality={80}
+                            onLoad={() => {
+                              if (transformRef.current) {
+                                setTimeout(() => transformRef.current?.resetTransform(), 100);
+                              }
+                            }}
+                          />
+                        ) : (
+                          <AppImage
+                            src={currentImage}
+                            alt={`${productTitle} — фото ${currentIndex + 1}`}
+                            fill
+                            variant="gallery"
+                            sizes="100vw"
+                            className="object-contain object-center pointer-events-none select-none"
+                            draggable={false}
+                            unoptimized={currentImage.startsWith("data:") || currentImage.includes("blob:")}
+                            loading="eager"
+                            priority
+                            imageData={undefined}
+                            onLoad={() => {
+                              if (transformRef.current) {
+                                setTimeout(() => transformRef.current?.resetTransform(), currentIndex === 0 ? 150 : 50);
+                              }
+                            }}
+                          />
+                        )}
                       </div>
                     </TransformComponent>
                   );

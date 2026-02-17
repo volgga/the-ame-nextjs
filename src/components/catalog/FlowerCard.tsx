@@ -5,7 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { AppImage } from "@/components/ui/AppImage";
 import { Flower } from "@/types/flower";
-import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
+import { PLACEHOLDER_IMAGE, isValidImageUrl, addImageCacheBust, imageUrlVersion } from "@/utils/imageUtils";
 import { Heart, ShoppingCart, Search, Clock, MousePointerClick } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -51,7 +51,9 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
 
   useEffect(() => setMounted(true), []);
 
-  const imageSrc = !isValidImageUrl(flower.image) || imgError ? PLACEHOLDER_IMAGE : flower.image!.trim();
+  const rawImageSrc = !isValidImageUrl(flower.image) || imgError ? PLACEHOLDER_IMAGE : flower.image!.trim();
+  const imageVersion = imageUrlVersion(flower.image ?? "");
+  const imageSrc = rawImageSrc === PLACEHOLDER_IMAGE ? rawImageSrc : addImageCacheBust(rawImageSrc, imageVersion);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -172,20 +174,20 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
             alt={flower.name}
             fill
             variant="card"
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
             onError={() => setImgError(true)}
             imageData={
-              product
+              product?.image && imageVersion
                 ? {
-                    image_url: product.image,
-                    image_thumb_url: product.imageThumbUrl,
-                    image_medium_url: product.imageMediumUrl,
-                    image_large_url: product.imageLargeUrl,
-                    image_thumb_avif_url: product.imageThumbAvifUrl,
-                    image_medium_avif_url: product.imageMediumAvifUrl,
-                    image_large_avif_url: product.imageLargeAvifUrl,
+                    image_url: addImageCacheBust(product.image, imageVersion),
+                    image_thumb_url: product.imageThumbUrl ? addImageCacheBust(product.imageThumbUrl, imageVersion) : null,
+                    image_medium_url: product.imageMediumUrl ? addImageCacheBust(product.imageMediumUrl, imageVersion) : null,
+                    image_large_url: product.imageLargeUrl ? addImageCacheBust(product.imageLargeUrl, imageVersion) : null,
+                    image_thumb_avif_url: product.imageThumbAvifUrl ? addImageCacheBust(product.imageThumbAvifUrl, imageVersion) : null,
+                    image_medium_avif_url: product.imageMediumAvifUrl ? addImageCacheBust(product.imageMediumAvifUrl, imageVersion) : null,
+                    image_large_avif_url: product.imageLargeAvifUrl ? addImageCacheBust(product.imageLargeAvifUrl, imageVersion) : null,
                   }
                 : undefined
             }

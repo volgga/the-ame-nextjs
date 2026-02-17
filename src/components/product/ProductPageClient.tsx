@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { PLACEHOLDER_IMAGE, isValidImageUrl } from "@/utils/imageUtils";
+import { PLACEHOLDER_IMAGE, isValidImageUrl, addImageCacheBust, imageUrlVersion } from "@/utils/imageUtils";
 import { AppImage } from "@/components/ui/AppImage";
 import Link from "next/link";
 import {
@@ -334,22 +334,38 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
     }),
   };
 
-  // Массив изображений: product.image + product.images; невалидные заменяем placeholder
+  // Массив изображений: product.image + product.images; cache-bust чтобы после смены фото в админке отображалось новое
   const base = product.image?.trim();
   const extra = product.images ?? [];
   const seen = new Set<string>();
-  const images: string[] = [];
+  const rawImages: string[] = [];
   const first = isValidImageUrl(base) ? base! : PLACEHOLDER_IMAGE;
-  images.push(first);
+  rawImages.push(first);
   seen.add(first);
   for (const url of extra) {
     const u = typeof url === "string" ? url.trim() : "";
     if (u && isValidImageUrl(u) && !seen.has(u)) {
-      images.push(u);
+      rawImages.push(u);
       seen.add(u);
     }
   }
+  const mainVersion = imageUrlVersion(product.image ?? "");
+  const images = rawImages.map((url, i) =>
+    addImageCacheBust(url, i === 0 ? mainVersion : imageUrlVersion(url))
+  );
   const imagesLen = images.length;
+  const productImageDataBust =
+    product.image?.trim() && mainVersion
+      ? {
+        image_url: addImageCacheBust(product.image, mainVersion),
+        image_thumb_url: product.imageThumbUrl ? addImageCacheBust(product.imageThumbUrl, mainVersion) : null,
+        image_medium_url: product.imageMediumUrl ? addImageCacheBust(product.imageMediumUrl, mainVersion) : null,
+        image_large_url: product.imageLargeUrl ? addImageCacheBust(product.imageLargeUrl, mainVersion) : null,
+        image_thumb_avif_url: product.imageThumbAvifUrl ? addImageCacheBust(product.imageThumbAvifUrl, mainVersion) : null,
+        image_medium_avif_url: product.imageMediumAvifUrl ? addImageCacheBust(product.imageMediumAvifUrl, mainVersion) : null,
+        image_large_avif_url: product.imageLargeAvifUrl ? addImageCacheBust(product.imageLargeAvifUrl, mainVersion) : null,
+      }
+    : undefined;
   const hasMultipleImages = imagesLen > 1;
 
   // Циклическое переключение стрелками
@@ -495,17 +511,19 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                         sizes="64px"
                         className="object-cover object-center"
                         imageData={
-                          idx === 0
-                            ? {
-                                image_url: product.image,
-                                image_thumb_url: product.imageThumbUrl,
-                                image_medium_url: product.imageMediumUrl,
-                                image_large_url: product.imageLargeUrl,
-                                image_thumb_avif_url: product.imageThumbAvifUrl,
-                                image_medium_avif_url: product.imageMediumAvifUrl,
-                                image_large_avif_url: product.imageLargeAvifUrl,
-                              }
-                            : undefined
+                          idx === 0 && productImageDataBust
+                            ? productImageDataBust
+                            : idx === 0
+                              ? {
+                                  image_url: product.image,
+                                  image_thumb_url: product.imageThumbUrl,
+                                  image_medium_url: product.imageMediumUrl,
+                                  image_large_url: product.imageLargeUrl,
+                                  image_thumb_avif_url: product.imageThumbAvifUrl,
+                                  image_medium_avif_url: product.imageMediumAvifUrl,
+                                  image_large_avif_url: product.imageLargeAvifUrl,
+                                }
+                              : undefined
                         }
                       />
                     </button>
@@ -551,17 +569,19 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                             loading={idx === 0 ? "eager" : "lazy"}
                             fetchPriority={idx === 0 ? "high" : undefined}
                             imageData={
-                              idx === 0
-                                ? {
-                                    image_url: product.image,
-                                    image_thumb_url: product.imageThumbUrl,
-                                    image_medium_url: product.imageMediumUrl,
-                                    image_large_url: product.imageLargeUrl,
-                                    image_thumb_avif_url: product.imageThumbAvifUrl,
-                                    image_medium_avif_url: product.imageMediumAvifUrl,
-                                    image_large_avif_url: product.imageLargeAvifUrl,
-                                  }
-                                : undefined
+                              idx === 0 && productImageDataBust
+                                ? productImageDataBust
+                                : idx === 0
+                                  ? {
+                                      image_url: product.image,
+                                      image_thumb_url: product.imageThumbUrl,
+                                      image_medium_url: product.imageMediumUrl,
+                                      image_large_url: product.imageLargeUrl,
+                                      image_thumb_avif_url: product.imageThumbAvifUrl,
+                                      image_medium_avif_url: product.imageMediumAvifUrl,
+                                      image_large_avif_url: product.imageLargeAvifUrl,
+                                    }
+                                  : undefined
                             }
                           />
                         </div>
@@ -899,15 +919,17 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
         currentIndex={selectedImageIndex}
         onIndexChange={setSelectedImageIndex}
         productTitle={product.title}
-        mainImageVariants={{
-          image_url: product.image,
-          image_thumb_url: product.imageThumbUrl,
-          image_medium_url: product.imageMediumUrl,
-          image_large_url: product.imageLargeUrl,
-          image_thumb_avif_url: product.imageThumbAvifUrl,
-          image_medium_avif_url: product.imageMediumAvifUrl,
-          image_large_avif_url: product.imageLargeAvifUrl,
-        }}
+        mainImageVariants={
+          productImageDataBust ?? {
+            image_url: product.image,
+            image_thumb_url: product.imageThumbUrl,
+            image_medium_url: product.imageMediumUrl,
+            image_large_url: product.imageLargeUrl,
+            image_thumb_avif_url: product.imageThumbAvifUrl,
+            image_medium_avif_url: product.imageMediumAvifUrl,
+            image_large_avif_url: product.imageLargeAvifUrl,
+          }
+        }
       />
     </>
   );
