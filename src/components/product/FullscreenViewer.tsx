@@ -250,6 +250,8 @@ export function FullscreenViewer({
                 panning={{ disabled: false }}
                 wheel={{ step: 0.1 }}
                 pinch={{ step: 5 }}
+                limitToBounds={false}
+                centerOnInit={true}
                 onTransformed={(ref) => {
                   setIsZoomed(ref.state.scale > 1);
                 }}

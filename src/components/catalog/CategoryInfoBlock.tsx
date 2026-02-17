@@ -36,7 +36,7 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10 items-start">
         {/* Текстовая колонка слева */}
-        <div className="min-w-0 space-y-4 order-1">
+        <div className="min-w-0 max-w-full space-y-4 order-1">
           {hasSubtitle && (
             <h2 id="category-info-title" className="text-xl md:text-2xl font-semibold text-color-text-main">
               {data.info_subtitle}
@@ -56,7 +56,7 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
         </div>
         {/* Фото справа */}
         {hasImage && (
-          <div className="min-w-0 order-2 w-full overflow-hidden rounded-xl bg-[rgba(31,42,31,0.06)] aspect-square relative">
+          <div className="min-w-0 order-2 w-full flex-shrink-0 overflow-hidden rounded-xl bg-[rgba(31,42,31,0.06)] aspect-square relative">
             <Image
               src={data.info_image_url!}
               alt={data.info_subtitle || "Изображение"}

@@ -38,8 +38,12 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
 
     // Проверяем prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) {
-      // Если reduced motion - показываем все сразу
+    
+    // На мобилке показываем все сразу для лучшего UX
+    const isMobile = window.innerWidth < 768;
+    
+    if (prefersReducedMotion || isMobile) {
+      // Если reduced motion или mobile - показываем все сразу
       const allRows = new Set<number>();
       const rowMap = new Map<string, { rowIndex: number; cardIndexInRow: number }>();
       let rowIndex = 0;
@@ -122,8 +126,8 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
             });
           },
           {
-            threshold: 0.1, // 10% видимости для более раннего срабатывания
-            rootMargin: "800px 0px", // увеличенный rootMargin для еще более ранней подгрузки
+            threshold: 0.01, // Минимальный threshold для раннего срабатывания
+            rootMargin: "200px 0px", // Уменьшен rootMargin - показываем сразу все строки
           }
         );
 
@@ -131,15 +135,13 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
         observersMap.set(rowIndex, observer);
       });
 
-      // Первая строка показывается сразу (без проверки viewport для быстрой загрузки)
+      // На desktop показываем все строки сразу для лучшего UX (без IntersectionObserver задержек)
       if (rows.length > 0) {
-        setVisibleRows((prev) => {
-          const next = new Set(prev);
-          next.add(0);
-          return next;
-        });
+        const allRows = new Set<number>();
+        rows.forEach((_, idx) => allRows.add(idx));
+        setVisibleRows(allRows);
       }
-    }, 0); // Убрали задержку для мгновенного показа первой строки
+    }, 0); // Убрали задержку для мгновенного показа всех строк
 
     return () => {
       clearTimeout(timer);
@@ -217,10 +219,9 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                 }}
                 href={href}
                 prefetch={false}
-                className={`group relative block w-full overflow-hidden rounded-2xl bg-[#ece9e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2 reveal reveal--stagger ${isRowVisible ? "reveal--in" : "opacity-0"}`}
+                className={`group relative block w-full overflow-hidden rounded-2xl bg-[#ece9e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2 reveal reveal--stagger reveal--in`}
                 style={{ 
-                  "--stagger-delay": `${staggerDelay}ms`,
-                  minHeight: isRowVisible ? "auto" : "0px"
+                  "--stagger-delay": `${staggerDelay}ms`
                 } as React.CSSProperties}
                 aria-label={col.name}
               >
@@ -233,8 +234,9 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                     variant="card"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    loading="lazy"
+                    loading="eager"
                     quality={65}
+                    priority={rowInfo?.rowIndex === 0}
                     // TODO: Добавить imageData когда категории будут иметь варианты изображений
                   />
                   {/* Градиент снизу для читаемости текста */}
