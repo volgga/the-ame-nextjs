@@ -122,8 +122,8 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
             });
           },
           {
-            threshold: 0.25, // 25% видимости
-            rootMargin: "600px 0px", // ранняя подгрузка по скроллу (мобил: нет пустоты)
+            threshold: 0.1, // 10% видимости для более раннего срабатывания
+            rootMargin: "800px 0px", // увеличенный rootMargin для еще более ранней подгрузки
           }
         );
 
@@ -131,23 +131,15 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
         observersMap.set(rowIndex, observer);
       });
 
-      // Первая строка показывается сразу (если она уже в viewport)
+      // Первая строка показывается сразу (без проверки viewport для быстрой загрузки)
       if (rows.length > 0) {
-        const firstRowCards = rows[0];
-        if (firstRowCards.length > 0) {
-          const firstCard = firstRowCards[0][1];
-          const rect = firstCard.getBoundingClientRect();
-          const isInViewport = rect.top < window.innerHeight * 0.8;
-          if (isInViewport) {
-            setVisibleRows((prev) => {
-              const next = new Set(prev);
-              next.add(0);
-              return next;
-            });
-          }
-        }
+        setVisibleRows((prev) => {
+          const next = new Set(prev);
+          next.add(0);
+          return next;
+        });
       }
-    }, 100);
+    }, 0); // Убрали задержку для мгновенного показа первой строки
 
     return () => {
       clearTimeout(timer);

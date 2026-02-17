@@ -170,8 +170,29 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const marquee = await getHomeMarquee();
+  
+  // Получаем домен Supabase для preconnect
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : null;
+  const additionalSupabaseHost = "eweaqbtqzzoxpwfmjinp.supabase.co";
+  
   return (
     <html lang="ru" suppressHydrationWarning>
+      <head>
+        {/* Preconnect к Supabase Storage для ускорения загрузки изображений */}
+        {supabaseHost && (
+          <>
+            <link rel="preconnect" href={`https://${supabaseHost}`} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={`https://${supabaseHost}`} />
+          </>
+        )}
+        {supabaseHost !== additionalSupabaseHost && (
+          <>
+            <link rel="preconnect" href={`https://${additionalSupabaseHost}`} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={`https://${additionalSupabaseHost}`} />
+          </>
+        )}
+      </head>
       <body className={`${montserrat.variable} antialiased`} suppressHydrationWarning>
         {/* Контейнер dataLayer для e-commerce: создаём до загрузки счётчика и любых push.
             Доки: https://yandex.ru/support/metrica/data/e-commerce.html */}

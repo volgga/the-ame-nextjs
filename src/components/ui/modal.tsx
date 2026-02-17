@@ -135,7 +135,9 @@ export function Modal({
 
   const content = (
     <div
-      className="fixed inset-0 flex items-center justify-center p-4 overflow-hidden"
+      className={`fixed inset-0 overflow-hidden ${
+        size === "full" ? "p-0" : "flex items-center justify-center p-4"
+      }`}
       style={{ zIndex: Z_OVERLAY }}
     >
       <div
@@ -144,10 +146,10 @@ export function Modal({
         aria-hidden="true"
       />
       <div
-        className={`relative bg-white rounded-xl shadow-xl flex flex-col border border-border-block overflow-hidden ${
+        className={`relative bg-white flex flex-col border border-border-block overflow-hidden ${
           size === "full"
-            ? "w-[min(1200px,calc(100vw-32px))] max-w-[95vw] max-h-[calc(100vh-48px)] min-h-[min(400px,80vh)]"
-            : "w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)]"
+            ? "fixed inset-0 w-screen h-screen rounded-none"
+            : "w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] rounded-xl shadow-xl"
         }`}
         style={{ zIndex: Z_PANEL }}
         onClick={(e) => e.stopPropagation()}

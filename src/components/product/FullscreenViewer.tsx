@@ -315,50 +315,68 @@ export function FullscreenViewer({
             onMouseEnter={handlePhotoBoxMouseEnter}
             onMouseLeave={handlePhotoBoxMouseLeave}
           >
-            {images.map((src, idx) => (
-              <div
-                key={src}
-                className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out"
-                style={{
-                  opacity: idx === currentIndex ? 1 : 0,
-                  pointerEvents: idx === currentIndex ? "auto" : "none",
-                }}
-              >
+            {images.map((src, idx) => {
+              // Проверка: src должен быть валидным
+              const isValidSrc = src && typeof src === "string" && src.trim().length > 0;
+              
+              return (
                 <div
-                  className="relative w-full h-full flex items-center justify-center select-none touch-none"
+                  key={`${src}-${idx}`}
+                  className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out"
                   style={{
-                    cursor: isDragging ? "grabbing" : isZoomed ? "zoom-out" : "zoom-in",
+                    opacity: idx === currentIndex ? 1 : 0,
+                    pointerEvents: idx === currentIndex ? "auto" : "none",
+                    zIndex: idx === currentIndex ? 1 : 0,
                   }}
-                  onClick={handleClick}
-                  onPointerDown={handlePointerDown}
-                  onPointerMove={handlePointerMove}
-                  onPointerUp={handlePointerUp}
-                  onPointerLeave={handlePointerLeave}
-                  onPointerCancel={handlePointerUp}
                 >
-                  <div
-                    className="relative w-full h-full max-w-full max-h-full transition-transform duration-300 ease-out"
-                    style={{
-                      transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
-                      transformOrigin: "center center",
-                    }}
-                  >
-                    <AppImage
-                      src={src}
-                      alt={`${productTitle} — фото ${idx + 1}`}
-                      fill
-                      variant="gallery"
-                      sizes="100vw"
-                      className="object-contain object-center pointer-events-none"
-                      draggable={false}
-                      unoptimized={src.startsWith("data:") || src.includes("blob:")}
-                      loading={idx === currentIndex ? "eager" : "lazy"}
-                      imageData={idx === 0 && mainImageVariants ? mainImageVariants : undefined}
-                    />
-                  </div>
+                  {isValidSrc ? (
+                    <div
+                      className="relative w-full h-full flex items-center justify-center select-none touch-none p-3 md:p-4"
+                      style={{
+                        cursor: isDragging ? "grabbing" : isZoomed ? "zoom-out" : "zoom-in",
+                      }}
+                      onClick={handleClick}
+                      onPointerDown={handlePointerDown}
+                      onPointerMove={handlePointerMove}
+                      onPointerUp={handlePointerUp}
+                      onPointerLeave={handlePointerLeave}
+                      onPointerCancel={handlePointerUp}
+                    >
+                      <div
+                        className="relative w-full h-full max-w-full max-h-full transition-transform duration-300 ease-out"
+                        style={{
+                          transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
+                          transformOrigin: "center center",
+                        }}
+                      >
+                        <AppImage
+                          src={src}
+                          alt={`${productTitle} — фото ${idx + 1}`}
+                          fill
+                          variant="gallery"
+                          sizes="100vw"
+                          className="object-contain object-center pointer-events-none"
+                          draggable={false}
+                          unoptimized={src.startsWith("data:") || src.includes("blob:")}
+                          loading={idx === currentIndex ? "eager" : "lazy"}
+                          imageData={idx === 0 && mainImageVariants ? mainImageVariants : undefined}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    // Fallback для пустого src (dev warning)
+                    <div className="flex items-center justify-center w-full h-full text-white/60 text-sm">
+                      {process.env.NODE_ENV === "development" && (
+                        <div className="text-center">
+                          <p>Изображение не загружено</p>
+                          <p className="text-xs mt-1">src: {String(src).substring(0, 50)}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
