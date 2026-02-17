@@ -239,6 +239,17 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             : null;
       }
 
+      // При смене основного изображения сбрасываем предгенерированные варианты (thumb/medium/large),
+      // чтобы на сайте отображалось новое фото, а не закэшированные старые превью
+      if (result.data.image_url !== undefined || (result.data.images !== undefined && result.data.images?.length)) {
+        updates.image_thumb_url = null;
+        updates.image_medium_url = null;
+        updates.image_large_url = null;
+        updates.image_thumb_avif_url = null;
+        updates.image_medium_avif_url = null;
+        updates.image_large_avif_url = null;
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("products")
@@ -296,6 +307,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       updates.category_slug = categorySlugs[0] ?? null;
     } else if (result.data.category_slug !== undefined) {
       updates.category_slug = result.data.category_slug;
+    }
+    // При смене основного изображения сбрасываем предгенерированные варианты
+    if (result.data.image_url !== undefined || (result.data.images !== undefined && result.data.images?.length)) {
+      updates.image_thumb_url = null;
+      updates.image_medium_url = null;
+      updates.image_large_url = null;
+      updates.image_thumb_avif_url = null;
+      updates.image_medium_avif_url = null;
+      updates.image_large_avif_url = null;
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)

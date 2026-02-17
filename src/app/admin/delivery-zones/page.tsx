@@ -522,7 +522,8 @@ export default function AdminDeliveryZonesPage() {
             className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-[2] flex items-center justify-end py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
+            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
+              <h2 className="text-lg font-semibold text-[#111] truncate pr-2">Время доставки</h2>
               <button
                 type="button"
                 onClick={() => setOpenModal(null)}
@@ -547,7 +548,8 @@ export default function AdminDeliveryZonesPage() {
             className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 z-[2] flex items-center justify-end py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
+            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
+              <h2 className="text-lg font-semibold text-[#111] truncate pr-2">Минимальный заказ</h2>
               <button
                 type="button"
                 onClick={() => setOpenModal(null)}

@@ -249,7 +249,7 @@ export function RecommendSection({ products }: RecommendSectionProps) {
             const product = products.find((p) => p.id === flower.id);
             return (
               <div key={flower.id} className="flex-shrink-0 w-[80vw] max-w-[260px] sm:w-[280px] md:w-[300px] lg:w-[320px] snap-start">
-                <FlowerCard flower={flower} product={product} />
+                <FlowerCard flower={flower} product={product} imagePriority />
               </div>
             );
           })}

@@ -23,7 +23,6 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
   const [isReady, setIsReady] = useState(false);
   const [visibleRows, setVisibleRows] = useState<Set<number>>(new Set());
   const [cardRowMap, setCardRowMap] = useState<Map<string, { rowIndex: number; cardIndexInRow: number }>>(new Map());
-  const [isMobile, setIsMobile] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Map<string, HTMLAnchorElement>>(new Map());
   const observersRef = useRef<Map<number, IntersectionObserver>>(new Map());
@@ -31,14 +30,6 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
   // Мгновенный показ контента (без скелетона) — быстрее LCP и нет «пустых блоков» на мобиле
   useEffect(() => {
     setIsReady(true);
-  }, []);
-
-  useEffect(() => {
-    const mql = window.matchMedia("(max-width: 768px)");
-    setIsMobile(mql.matches);
-    const handler = () => setIsMobile(mql.matches);
-    mql.addEventListener("change", handler);
-    return () => mql.removeEventListener("change", handler);
   }, []);
 
   // Группировка карточек по строкам через offsetTop
@@ -50,7 +41,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
     
     // Показываем все карточки сразу для лучшего UX (без IntersectionObserver задержек)
     if (prefersReducedMotion) {
-      // Если reduced motion или mobile - показываем все сразу
+      // Если reduced motion — показываем все сразу без анимации
       const allRows = new Set<number>();
       const rowMap = new Map<string, { rowIndex: number; cardIndexInRow: number }>();
       let rowIndex = 0;
@@ -135,8 +126,8 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
             });
           },
           {
-            threshold: 0.01, // Минимальный threshold для раннего срабатывания
-            rootMargin: "200px 0px", // Уменьшен rootMargin - показываем сразу все строки
+            threshold: 0.05,
+            rootMargin: "80px 0px 80px 0px", // Начинаем анимацию чуть до попадания в viewport
           }
         );
 
@@ -144,12 +135,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
         observersMap.set(rowIndex, observer);
       });
 
-      // Показываем все строки сразу для лучшего UX (без IntersectionObserver задержек)
-      if (rows.length > 0) {
-        const allRows = new Set<number>();
-        rows.forEach((_, idx) => allRows.add(idx));
-        setVisibleRows(allRows);
-      }
+      // Не показываем строки сразу — анимация по viewport (доскроллили → слева направо по очереди)
       return true;
     };
 
@@ -198,7 +184,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
             </Link>
           </div>
         </div>
-        <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+        <div ref={gridRef} className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 ${isReady ? "reveal-ready" : ""}`}>
           {collections.map((col, index) => {
             const href =
               !col.categorySlug || col.categorySlug === "magazin" ? "/magazin" : `/magazine/${col.categorySlug}`;
@@ -208,8 +194,8 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                 : "/placeholder.svg";
             const cardKey = col.id;
             const rowInfo = cardRowMap.get(cardKey);
-            const isRowVisible = rowInfo ? visibleRows.has(rowInfo.rowIndex) : true; // показываем сразу, если мап ещё не готов
-            const staggerDelay = isMobile ? 0 : (rowInfo ? rowInfo.cardIndexInRow * 120 : 0); // на мобиле без задержки — быстрее
+            const isRowVisible = rowInfo ? visibleRows.has(rowInfo.rowIndex) : false; // показываем только когда строка в viewport
+            const staggerDelay = rowInfo ? rowInfo.cardIndexInRow * 140 : 0; // слева направо по очереди (мобил и десктоп)
 
             return (
               <Link
@@ -223,7 +209,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                 }}
                 href={href}
                 prefetch={false}
-                className={`group relative block w-full overflow-hidden rounded-2xl bg-[#ece9e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2 reveal reveal--stagger reveal--in`}
+                className={`group relative block w-full overflow-hidden rounded-2xl bg-[#ece9e2] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-outline-border)] focus-visible:ring-offset-2 reveal reveal--stagger reveal--from-left ${isRowVisible ? "reveal--in" : ""}`}
                 style={{ 
                   "--stagger-delay": `${staggerDelay}ms`
                 } as React.CSSProperties}

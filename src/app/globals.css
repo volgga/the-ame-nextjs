@@ -582,10 +582,25 @@ All colors MUST be HSL.
     transition-delay: var(--stagger-delay, 0ms);
   }
 
-  /* Мобилка: быстрее появление — меньше ожидание, контент виден сразу */
+  /* Коллекции: появление слева направо, длинная анимация по viewport */
+  .reveal--from-left {
+    transition-duration: 720ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal-ready .reveal.reveal--from-left {
+    transform: translateX(-28px);
+  }
+  .reveal.reveal--from-left.reveal--in {
+    transform: translateX(0);
+  }
+
+  /* Мобилка: чуть быстрее для коллекций, но всё ещё плавно */
   @media (max-width: 768px) {
     .reveal {
       transition-duration: 280ms;
+    }
+    .reveal--from-left {
+      transition-duration: 520ms;
     }
   }
 

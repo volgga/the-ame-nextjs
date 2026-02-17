@@ -44,8 +44,6 @@ docs/
 scripts/
 !scripts/fix-nginx-413.sh
 !scripts/deploy.sh
-!scripts/fix-all.sh
-!scripts/fix-env-and-rebuild.sh
 !scripts/deploy-vps-remote.sh
 !scripts/build-standalone.sh
 !scripts/run-standalone.sh
@@ -57,15 +55,30 @@ dump.backup
 *.backup
 products_data.sql
 deploy.log
-logs/*.log
 
 # ======================
-# Local deploy helpers
+# Logs (вся папка — не коммитить)
+# ======================
+logs/
+
+# ======================
+# Local deploy helpers (никогда не коммитить — могут содержать секреты)
 # ======================
 DEPLOY-UBUNTU.md
+DEPLOY_STANDALONE.md
+CHECKLIST.md
 deploy-commands.sh
+*-commands*.sh
 build-locally-and-deploy.sh
 add-telegram-env.sh
+
+# ======================
+# Секреты и ключи
+# ======================
+*.pem
+*.key
+secrets/
+*.secret
 
 # ======================
 # Logs
@@ -87,3 +100,6 @@ pnpm-debug.log*
 *.patch
 *-backup-*/
 src-backup-*/
+
+# Пустые/локальные папки миграций (не Supabase)
+/migrations/

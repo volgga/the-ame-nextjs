@@ -27,6 +27,17 @@ cd $DEPLOY_PATH && bash scripts/deploy.sh
 # или с авто-поиском проекта: bash scripts/deploy-vps-remote.sh
 ```
 
+## Standalone-сборка (опционально)
+
+При `output: "standalone"` можно собрать архив без полного `node_modules`:
+
+```bash
+bash scripts/build-standalone.sh
+# → deploy-standalone.tar.gz
+```
+
+На сервере: распаковать в `DEPLOY_PATH`, затем `pm2 start ecosystem.config.js`. Переменные окружения — в `.env` в каталоге приложения.
+
 ## Проблемы
 
 - PM2 не найден → `npm install -g pm2`; процесс не перезапускается → `pm2 list`, при необходимости `pm2 start ecosystem.config.cjs`

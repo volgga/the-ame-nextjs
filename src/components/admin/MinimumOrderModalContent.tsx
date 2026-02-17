@@ -146,8 +146,6 @@ export function MinimumOrderModalContent() {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-[#111]">Минимальный заказ</h3>
-
       <form onSubmit={handleSave} className="rounded-xl border border-border-block bg-white p-4 space-y-3">
         <h4 className="font-medium text-[#111]">{editingId ? "Редактировать правило" : "Новое правило"}</h4>
         {error && <p className="text-sm text-red-600">{error}</p>}

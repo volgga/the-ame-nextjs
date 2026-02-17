@@ -38,9 +38,11 @@ interface FlowerCardProps {
   showPriceFromOnMobile?: boolean; // Показывать ли "от" перед ценой на мобилке (по умолчанию false)
   /** Компактный режим для блока «Хотите добавить к заказу?»: единая высота блока с ценой/кнопками */
   compactCard?: boolean;
+  /** Приоритет загрузки изображения (для первых карточек в каталоге — быстрее LCP, меньше пустых при скролле) */
+  imagePriority?: boolean;
 }
 
-export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteOnMobile = false, showPriceFromOnMobile = false, compactCard = false }: FlowerCardProps) => {
+export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteOnMobile = false, showPriceFromOnMobile = false, compactCard = false, imagePriority = false }: FlowerCardProps) => {
   const { addToCart } = useCart();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
   const [quickBuyOpen, setQuickBuyOpen] = useState(false);
@@ -176,7 +178,8 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
             variant="card"
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 320px"
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+            loading={imagePriority ? "eager" : "lazy"}
+            priority={imagePriority}
             onError={() => setImgError(true)}
             imageData={
               product?.image && imageVersion
