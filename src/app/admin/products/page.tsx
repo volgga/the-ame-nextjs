@@ -1467,7 +1467,7 @@ function AdminProductsPageContent() {
         isOpen={createModalOpen}
         onClose={closeCreateModal}
         title={isEditMode ? "Редактировать товар" : "Новый товар"}
-        size="full"
+        size="default"
         footer={
           <div className="flex flex-wrap gap-2">
             <button

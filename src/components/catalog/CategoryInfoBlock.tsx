@@ -34,9 +34,10 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
       className="mt-12 pt-8 border-t border-border-block w-full max-w-full min-w-0"
       aria-labelledby={hasSubtitle ? "category-info-title" : undefined}
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-10 items-start">
-        {/* Текстовая колонка слева */}
-        <div className="min-w-0 space-y-4">
+      {/* Сетка: слева текст (не заезжает под фото), справа фото уменьшенного размера как на референсе */}
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_minmax(280px,400px)] gap-6 md:gap-8 lg:gap-10 items-start">
+        {/* Левая колонка: заголовок, подзаголовок (описание), блок текста */}
+        <div className="min-w-0 flex flex-col gap-4 order-1">
           {hasSubtitle && (
             <h2 id="category-info-title" className="text-xl md:text-2xl font-semibold text-color-text-main">
               {data.info_subtitle}
@@ -54,15 +55,15 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
             />
           )}
         </div>
-        {/* Фото справа - квадратное */}
+        {/* Правая колонка: фото уменьшенного размера (не перекрывает текст) */}
         {hasImage && (
-          <div className="w-full flex-shrink-0 overflow-hidden rounded-xl bg-[rgba(31,42,31,0.06)] aspect-square relative">
+          <div className="w-full max-w-full md:max-w-[400px] flex-shrink-0 overflow-hidden rounded-xl bg-[rgba(31,42,31,0.06)] aspect-square relative order-2">
             <Image
               src={data.info_image_url!}
               alt={data.info_subtitle || "Изображение"}
               fill
               className="object-cover block w-full h-full"
-              sizes="(max-width: 768px) 100vw, 50vw"
+              sizes="(max-width: 768px) 100vw, 400px"
             />
           </div>
         )}

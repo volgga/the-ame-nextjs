@@ -1,5 +1,7 @@
+"use client";
+
 import Image, { type ImageProps } from "next/image";
-import { type ComponentPropsWithoutRef } from "react";
+import { type ComponentPropsWithoutRef, useEffect, useState } from "react";
 import { OptimizedImage, createImageVariants, type OptimizedImageVariants } from "./OptimizedImage";
 
 export type AppImageVariant = "card" | "hero" | "gallery" | "thumb" | "blog";
@@ -38,17 +40,32 @@ type AppImageProps = Omit<ImageProps, "quality" | "src"> & {
  * - hero: 75-80 (hero слайды, крупные баннеры)
  */
 export function AppImage({ variant = "card", quality, src, variants, imageData, ...props }: AppImageProps) {
+  // Определяем мобильное устройство для снижения качества на мобильных
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 768px)");
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
   // Если есть готовые варианты, используем OptimizedImage
   const optimizedVariants = variants || (imageData ? createImageVariants(imageData) : null);
 
   if (optimizedVariants && (optimizedVariants.thumb || optimizedVariants.medium || optimizedVariants.large)) {
     // Определяем размер и responsive настройки по варианту использования
+    // На мобильных используем меньшие размеры для быстрой загрузки
+    const isLazy = props.loading === "lazy" || (!props.priority && props.loading !== "eager");
+    
     const sizeMap: Record<AppImageVariant, "thumb" | "medium" | "large"> = {
-      card: "medium", // Каталог: medium с srcset thumb+medium
+      // Карточки: на мобильных всегда thumb, на десктопе thumb для lazy (превью при скролле), medium для eager/priority
+      card: isMobile ? "thumb" : (isLazy ? "thumb" : "medium"),
       thumb: "thumb", // Миниатюры: только thumb
-      blog: "medium", // Блог карточки: medium с srcset thumb+medium
-      gallery: "large", // Галерея товара: large с srcset medium+large
-      hero: "large", // Hero слайды: large с srcset medium+large
+      blog: isMobile ? "thumb" : "medium", // Блог: thumb на мобиле, medium на десктопе
+      gallery: "large", // Галерея товара: всегда large (открытая карточка - высокое качество)
+      hero: isMobile ? "medium" : "large", // Hero: medium на мобиле для быстрой загрузки, large на десктопе
     };
 
     // Responsive srcset для разных вариантов
@@ -94,19 +111,29 @@ export function AppImage({ variant = "card", quality, src, variants, imageData, 
   const getQuality = (): number => {
     if (quality !== undefined) return quality;
 
+    // Снижаем качество на мобильных для быстрой загрузки
+    const mobileReduction = isMobile ? 8 : 0; // Снижение на 8 единиц для мобильных
+
     switch (variant) {
       case "card":
-        return 65; // Оптимизировано для PageSpeed (было 62)
+        // Для карточек: снижаем качество на мобильных и для lazy-загрузки (превью в каталоге при скролле)
+        const cardBase = 65;
+        const isLazy = props.loading === "lazy" || (!props.priority && props.loading !== "eager");
+        // На мобильных - снижаем на 8, при lazy-загрузке (превью) - снижаем на 5 для десктопа
+        if (isMobile) return cardBase - mobileReduction;
+        if (isLazy) return cardBase - 5; // Превью при скролле на десктопе - немного снижаем
+        return cardBase; // Открытые карточки на десктопе - полное качество
       case "thumb":
-        return 60; // Оптимизировано для PageSpeed (было 58)
+        return 60 - (isMobile ? 5 : 0); // Миниатюры: меньше снижение
       case "blog":
-        return 70; // Оптимизировано для PageSpeed (было 68)
+        return 70 - (isMobile ? 8 : 0); // Блог: снижаем на мобильных
       case "gallery":
-        return 75; // Снижено для PageSpeed (было 78)
+        return 75; // Галерея товара: высокое качество всегда (открытая карточка)
       case "hero":
-        return 70; // Ниже для мобильного LCP (меньше байт при 100vw)
+        // Hero слайды: снижаем качество на мобильных для быстрой загрузки
+        return 70 - mobileReduction;
       default:
-        return 70; // Оптимизировано для PageSpeed (было 75)
+        return 70 - (isMobile ? 5 : 0);
     }
   };
 

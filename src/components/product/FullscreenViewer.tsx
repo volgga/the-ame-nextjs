@@ -293,7 +293,7 @@ export function FullscreenViewer({
                       contentClass="!w-full !h-full flex items-center justify-center"
                     >
                       <div
-                        className="relative w-full h-full max-w-full max-h-full flex items-center justify-center"
+                        className="relative w-full h-full max-w-full max-h-full flex items-center justify-center [&_picture]:max-w-full [&_picture]:max-h-full [&_picture]:flex [&_picture]:items-center [&_picture]:justify-center [&_img]:max-w-full [&_img]:max-h-full [&_img]:w-auto [&_img]:h-auto [&_img]:object-contain"
                         onClick={(e) => {
                           // Click to zoom on desktop
                           if (hasHover && !isZoomed) {
@@ -312,7 +312,7 @@ export function FullscreenViewer({
                           fill
                           variant="gallery"
                           sizes="100vw"
-                          className="object-contain object-center pointer-events-none"
+                          className="object-contain object-center pointer-events-none select-none"
                           draggable={false}
                           unoptimized={currentImage.startsWith("data:") || currentImage.includes("blob:")}
                           loading="eager"

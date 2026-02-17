@@ -76,10 +76,12 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
     // Копируем ref в переменную для корректной очистки в cleanup (react-hooks/exhaustive-deps)
     const observersMap = observersRef.current;
 
-    // Небольшая задержка для обеспечения правильного рендера и вычисления offsetTop
-    const timer = setTimeout(() => {
+    // Небольшая задержка для обеспечения правильного рендера и вычисления offsetTop (на мобиле refs могут появиться позже — повторяем)
+    let retryId: ReturnType<typeof setTimeout> | null = null;
+
+    const runLayout = () => {
       const cards = Array.from(cardRefs.current.entries());
-      if (cards.length === 0) return;
+      if (cards.length === 0) return false;
 
       // Группируем карточки по offsetTop (с допуском в 3px для погрешности)
       const rowsMap = new Map<number, Array<[string, HTMLAnchorElement]>>();
@@ -148,10 +150,19 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
         rows.forEach((_, idx) => allRows.add(idx));
         setVisibleRows(allRows);
       }
-    }, 0); // Убрали задержку для мгновенного показа всех строк
+      return true;
+    };
+
+    const timer = setTimeout(() => {
+      if (!runLayout()) {
+        // На мобиле refs могут быть ещё не готовы — повтор через 80ms для быстрого появления контента
+        retryId = setTimeout(runLayout, 80);
+      }
+    }, 0);
 
     return () => {
       clearTimeout(timer);
+      if (retryId) clearTimeout(retryId);
       observersMap.forEach((observer) => observer.disconnect());
       observersMap.clear();
     };
@@ -228,7 +239,6 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     loading={index < 2 ? "eager" : "lazy"}
-                    quality={65}
                     priority={index === 0}
                     // TODO: Добавить imageData когда категории будут иметь варианты изображений
                   />
