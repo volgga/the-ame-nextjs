@@ -53,6 +53,7 @@ scripts/
 !scripts/increase-swap.sh
 !scripts/check-server-status.sh
 !scripts/full-diagnosis.sh
+!scripts/cleanup-disk.sh
 
 # ======================
 # Dumps / backups
