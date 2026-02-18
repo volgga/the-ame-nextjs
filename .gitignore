@@ -47,6 +47,8 @@ scripts/
 !scripts/deploy-vps-remote.sh
 !scripts/build-standalone.sh
 !scripts/run-standalone.sh
+!scripts/update-telegram-token.sh
+!scripts/check-telegram-env.sh
 
 # ======================
 # Dumps / backups
