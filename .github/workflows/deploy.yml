@@ -246,9 +246,10 @@ jobs:
               NODE_MEM_LIMIT=$((AVAILABLE_MEM * 60 / 100))
               echo "⚠️  Low memory detected (${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit (60%)"
             elif [ "$AVAILABLE_MEM" -lt 1024 ]; then
-              # Мало памяти (768-1024MB) - используем 65% от доступной
-              NODE_MEM_LIMIT=$((AVAILABLE_MEM * 65 / 100))
-              echo "⚠️  Low memory detected (${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit (65%)"
+              # Мало памяти (768-1024MB) - для сборки используем до 1GB (с swap)
+              # Это безопасно, так как у нас есть 2GB swap
+              NODE_MEM_LIMIT=1024
+              echo "⚠️  Low memory detected (${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit for build (with swap support)"
             elif [ "$AVAILABLE_MEM" -lt 2048 ]; then
               # Средняя память - используем 70% от доступной, но не более 1.5GB
               NODE_MEM_LIMIT=$((AVAILABLE_MEM * 70 / 100))
