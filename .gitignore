@@ -51,6 +51,7 @@ scripts/
 !scripts/check-telegram-env.sh
 !scripts/check-server-memory.sh
 !scripts/increase-swap.sh
+!scripts/check-server-status.sh
 
 # ======================
 # Dumps / backups
