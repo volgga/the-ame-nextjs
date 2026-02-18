@@ -311,9 +311,11 @@ jobs:
             fi
             
             # Копируем статику для standalone (критично для работы!)
-            echo "📁 Copying static assets for standalone..."
+            echo "📁 Copying static assets and server files for standalone..."
+            mkdir -p .next/standalone/.next/server
             cp -r public .next/standalone/public
             cp -r .next/static .next/standalone/.next/static
+            cp -r .next/server .next/standalone/.next/
             
             mkdir -p logs
             
