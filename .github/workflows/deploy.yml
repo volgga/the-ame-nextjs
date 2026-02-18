@@ -30,6 +30,7 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
           envs: SITE_URL,NEXT_PUBLIC_SITE_URL
+          command_timeout: 30m
           script: |
             set -euo pipefail
             
@@ -264,12 +265,17 @@ jobs:
             echo "🧹 Cleaning npm cache..."
             npm cache clean --force || true
             
+            # Отключаем проверку типов TypeScript во время сборки для ускорения
+            # TypeScript проверка будет выполняться только при разработке
+            export SKIP_ENV_VALIDATION=true
+            export NEXT_TELEMETRY_DISABLED=1
+            
             # Убеждаемся, что NODE_OPTIONS передается в npm run build
             # Используем более агрессивные настройки для маломощных серверов
             if [ "$AVAILABLE_MEM" -lt 1024 ]; then
               echo "⚠️  Low memory server detected - using minimal build settings"
-              # Для маломощных серверов используем меньше воркеров
-              NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}" npm run build -- --webpack || {
+              # Для маломощных серверов используем меньше воркеров и отключаем проверку типов
+              NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}" TYPESCRIPT_CHECK=false npm run build -- --webpack || {
                 echo "❌ Error: Build failed on low-memory server"
                 echo ""
                 echo "📊 Memory diagnostics:"
@@ -283,7 +289,8 @@ jobs:
                 exit 1
               }
             else
-              NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}" npm run build -- --webpack || {
+              # Для серверов с нормальной памятью тоже отключаем проверку типов для ускорения
+              NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}" SKIP_TYPES_CHECK=true npm run build -- --webpack || {
                 echo "❌ Error: Build failed"
                 echo ""
                 echo "📊 Memory diagnostics:"

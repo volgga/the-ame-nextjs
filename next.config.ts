@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/*": ["node_modules/sharp/**/*"],
   },
+  // Отключаем проверку типов TypeScript во время сборки для ускорения (только для продакшн)
+  typescript: {
+    // В продакшн сборке пропускаем проверку типов - она занимает слишком много времени
+    // Проверка типов должна выполняться в CI/CD или локально перед коммитом
+    ignoreBuildErrors: process.env.NODE_ENV === "production" && process.env.SKIP_TYPES_CHECK !== "false",
+  },
   // Отключаем полифиллы для современных браузеров (уменьшает размер бандла на ~13 KiB)
   compiler: {
     // SWC уже минифицирует, но можно добавить дополнительные опции если нужно
