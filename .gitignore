@@ -52,6 +52,7 @@ scripts/
 !scripts/check-server-memory.sh
 !scripts/increase-swap.sh
 !scripts/check-server-status.sh
+!scripts/full-diagnosis.sh
 
 # ======================
 # Dumps / backups
