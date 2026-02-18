@@ -4,7 +4,41 @@
 
 set -euo pipefail
 
-DEPLOY_PATH="${DEPLOY_PATH:-/var/www/theame}"
+# Автоопределение пути к проекту, если не задан явно
+if [ -z "${DEPLOY_PATH:-}" ]; then
+  # Сначала проверяем текущую директорию (если скрипт запущен из проекта)
+  CURRENT_DIR="$(pwd)"
+  if [ -f "$CURRENT_DIR/package.json" ] && [ -d "$CURRENT_DIR/.git" ]; then
+    DEPLOY_PATH="$CURRENT_DIR"
+    echo "🔍 Автоопределен путь к проекту (текущая директория): $DEPLOY_PATH"
+  else
+    # Проверяем возможные стандартные пути
+    POSSIBLE_PATHS=(
+      "/var/www/theame-nextjs"
+      "/var/www/theame"
+      "/var/www/theame-next"
+    )
+    
+    DEPLOY_PATH=""
+    for path in "${POSSIBLE_PATHS[@]}"; do
+      if [ -d "$path" ] && [ -f "$path/package.json" ] && [ -d "$path/.git" ]; then
+        DEPLOY_PATH="$path"
+        echo "🔍 Автоопределен путь к проекту: $DEPLOY_PATH"
+        break
+      fi
+    done
+    
+    # Если не нашли, используем значение по умолчанию
+    if [ -z "$DEPLOY_PATH" ]; then
+      DEPLOY_PATH="/var/www/theame"
+      echo "⚠️  Используется путь по умолчанию: $DEPLOY_PATH"
+      echo "   Для использования другого пути задайте переменную: DEPLOY_PATH=/path/to/project"
+    fi
+  fi
+else
+  echo "📁 Используется заданный путь: $DEPLOY_PATH"
+fi
+
 PM2_APP_NAME="${PM2_APP_NAME:-theame-next}"
 
 echo "🔍 ПОЛНЫЙ АУДИТ И НАСТРОЙКА СЕРВЕРА"
