@@ -14,9 +14,7 @@ npm run dev
 
 ## Деплой
 
-Автодеплой через GitHub Actions при push в `main`. [DEPLOY.md](./DEPLOY.md)
-
-Standalone-деплой на VPS: [DEPLOY_STANDALONE.md](./DEPLOY_STANDALONE.md)
+Автодеплой через GitHub Actions при push в `main`. Подробности: [DEPLOY.md](./DEPLOY.md)
 
 Для мониторинга памяти при работе через PM2: `pm2 monit`
 

@@ -54,6 +54,8 @@ scripts/
 !scripts/check-server-status.sh
 !scripts/full-diagnosis.sh
 !scripts/cleanup-disk.sh
+!scripts/server-setup-and-audit.sh
+!scripts/quick-fix.sh
 
 # ======================
 # Dumps / backups
