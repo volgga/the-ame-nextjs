@@ -203,13 +203,47 @@ jobs:
             
             # Собираем проект
             echo "🔨 Building Next.js application..."
-            # Увеличиваем лимит памяти для Node.js (6GB для надежности)
-            export NODE_OPTIONS="--max-old-space-size=6144"
+            
+            # Проверяем доступную память
+            echo "💾 System memory info:"
+            free -h || true
+            echo ""
+            
+            # Увеличиваем лимит памяти для Node.js (4GB, адаптивно под доступную память)
+            # Проверяем доступную память и устанавливаем лимит соответственно
+            AVAILABLE_MEM=$(free -m | awk '/^Mem:/{print $7}' || echo "4096")
+            if [ "$AVAILABLE_MEM" -lt 2048 ]; then
+              NODE_MEM_LIMIT=2048
+              echo "⚠️  Low memory detected (${AVAILABLE_MEM}MB available), using 2GB limit"
+            elif [ "$AVAILABLE_MEM" -lt 4096 ]; then
+              NODE_MEM_LIMIT=3072
+              echo "ℹ️  Medium memory detected (${AVAILABLE_MEM}MB available), using 3GB limit"
+            else
+              NODE_MEM_LIMIT=4096
+              echo "✅ Sufficient memory detected (${AVAILABLE_MEM}MB available), using 4GB limit"
+            fi
+            
+            export NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}"
+            echo "📊 NODE_OPTIONS set to: $NODE_OPTIONS"
+            
             # Очищаем кеш Next.js перед сборкой
+            echo "🧹 Cleaning Next.js cache..."
             rm -rf .next || true
+            
             # Явно указываем использование webpack вместо Turbopack
-            npm run build -- --webpack || {
+            echo "🔨 Starting build with webpack..."
+            # Убеждаемся, что NODE_OPTIONS передается в npm run build
+            NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}" npm run build -- --webpack || {
               echo "❌ Error: Build failed"
+              echo ""
+              echo "📊 Memory diagnostics:"
+              free -h || true
+              echo ""
+              echo "💡 Troubleshooting:"
+              echo "   1. Check if server has enough RAM (recommended: 4GB+)"
+              echo "   2. Check if swap is enabled: swapon --show"
+              echo "   3. Check build logs above for OOM (Out of Memory) errors"
+              echo "   4. Try increasing NODE_MEM_LIMIT or adding swap space"
               exit 1
             }
             
