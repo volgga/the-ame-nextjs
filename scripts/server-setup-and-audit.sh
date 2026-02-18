@@ -171,10 +171,15 @@ fi
 # Проверка node_modules
 if [ ! -d "node_modules" ]; then
   echo "⚠️  node_modules отсутствует, устанавливаем..."
+  echo "🧹 Очищаем npm кеш перед установкой..."
+  npm cache clean --force 2>/dev/null || true
+  
   if [ -f "package-lock.json" ]; then
     echo "📦 Используем npm ci для чистой установки..."
     npm ci || {
-      echo "⚠️  npm ci не удался, пробуем npm install..."
+      echo "⚠️  npm ci не удался (возможно corrupted cache), очищаем кеш и пробуем снова..."
+      npm cache clean --force 2>/dev/null || true
+      echo "📦 Повторная попытка с npm install..."
       npm install --production=false
     }
   else
@@ -208,7 +213,8 @@ else
     if [ -f "package-lock.json" ]; then
       echo "📦 Используем npm ci для чистой установки..."
       npm ci || {
-        echo "⚠️  npm ci не удался, пробуем npm install..."
+        echo "⚠️  npm ci не удался (возможно corrupted cache), очищаем кеш и пробуем npm install..."
+        npm cache clean --force 2>/dev/null || true
         npm install --production=false
       }
     else
@@ -301,7 +307,8 @@ if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
     if [ -f "package-lock.json" ]; then
       echo "📦 Используем npm ci для чистой установки..."
       npm ci || {
-        echo "⚠️  npm ci не удался, пробуем npm install..."
+        echo "⚠️  npm ci не удался (возможно corrupted cache), очищаем кеш и пробуем npm install..."
+        npm cache clean --force 2>/dev/null || true
         npm install --production=false
       }
     else
@@ -326,7 +333,8 @@ if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
     if [ -f "package-lock.json" ]; then
       echo "📦 Используем npm ci для чистой установки..."
       npm ci || {
-        echo "⚠️  npm ci не удался, пробуем npm install..."
+        echo "⚠️  npm ci не удался (возможно corrupted cache), очищаем кеш и пробуем npm install..."
+        npm cache clean --force 2>/dev/null || true
         npm install --production=false
       }
     else
