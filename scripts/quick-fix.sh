@@ -33,6 +33,8 @@ echo ""
 # 3. Проверяем наличие node_modules
 echo "3️⃣  Проверяем зависимости..."
 if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
+  echo "   Удаляем старый node_modules (если есть)..."
+  rm -rf node_modules 2>/dev/null || true
   echo "   Устанавливаем зависимости..."
   npm ci
 else

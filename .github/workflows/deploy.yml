@@ -197,9 +197,17 @@ jobs:
             
             # Устанавливаем зависимости
             echo "📦 Installing dependencies..."
+            # Удаляем node_modules если есть проблемы с npm ci
+            if [ -d "node_modules" ]; then
+              echo "🧹 Cleaning node_modules before install..."
+              rm -rf node_modules || true
+            fi
             npm ci || {
-              echo "❌ Error: npm ci failed"
-              exit 1
+              echo "⚠️  npm ci failed, trying npm install..."
+              npm install || {
+                echo "❌ Error: npm install failed"
+                exit 1
+              }
             }
             
             # Собираем проект
