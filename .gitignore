@@ -50,6 +50,7 @@ scripts/
 !scripts/update-telegram-token.sh
 !scripts/check-telegram-env.sh
 !scripts/check-server-memory.sh
+!scripts/increase-swap.sh
 
 # ======================
 # Dumps / backups
