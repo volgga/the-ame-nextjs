@@ -59,6 +59,7 @@ scripts/
 !scripts/nginx-theame.conf
 !scripts/nginx-theame-fixed.conf
 !scripts/nginx-check-and-fix.sh
+!scripts/apply-nginx-config.sh
 
 # ======================
 # Dumps / backups
