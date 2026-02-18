@@ -12,8 +12,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "typecheck": "tsc --noEmit",
     "check": "npm run typecheck && npm run lint",
-    "fix-visibility": "echo 'Выполните scripts/fix_visibility.sql в Supabase SQL Editor'",
-    "diagnose": "echo 'Выполните scripts/diagnose.sql в Supabase SQL Editor'",
+    "fix-visibility": "echo 'Выполните supabase/scripts/rls-open-public-close-sensitive.sql в Supabase'",
+    "diagnose": "echo 'Проверьте supabase/checks.sql и RLS-политики в Supabase'",
     "migrate-images": "tsx scripts/migrate-images.ts"
   },
   "dependencies": {
@@ -54,6 +54,6 @@
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.11",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "5.9.3"
   }
 }

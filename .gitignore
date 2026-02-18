@@ -63,6 +63,7 @@ scripts/
 !scripts/prepare-standalone.sh
 !scripts/full-server-reconfigure.sh
 !scripts/nginx-theame-reconfigure.conf
+!scripts/server-fix-404.sh
 
 # ======================
 # Dumps / backups

@@ -14,11 +14,11 @@ import { getActiveHeroSlides } from "@/lib/heroSlides";
 
 const MapSection = dynamic(
   () => import("@/components/home/MapSection").then((m) => ({ default: m.MapSection })),
-  { 
+  {
     ssr: true,
     loading: () => (
       <div className="w-full h-[400px] md:h-[500px] bg-[#ece9e2] animate-pulse rounded-2xl" aria-hidden="true" />
-    )
+    ),
   }
 );
 import { getAllCatalogProducts } from "@/lib/products";
@@ -81,38 +81,17 @@ export default async function HomePage() {
 
   const { products: recommendProducts } = getRecommendProducts(allProducts);
 
-  // Диагностика: в логах PM2 видно, пришли ли данные с сервера
-  const baseData = {
-    slidesCount: slides?.length ?? 0,
-    allProductsCount: allProducts?.length ?? 0,
-    homeCollectionsCount: homeCollections?.length ?? 0,
-    homeReviewsCount: homeReviews?.length ?? 0,
-    hasHomeAbout: !!homeAbout,
-    homeFaqCount: homeFaq?.length ?? 0,
-    hasHomeOrderBlock: !!homeOrderBlock,
-    blogPostsCount: blogPosts?.length ?? 0,
-  };
-  console.log("BASE DATA:", JSON.stringify(baseData));
-
-  // LCP: прелоад первого hero-изображения (приоритет — оптимизированный вариант, иначе оригинал)
   const firstSlide = slides[0];
   const firstHeroImageUrl = firstSlide?.imageLargeUrl ?? firstSlide?.imageMediumUrl ?? firstSlide?.imageUrl;
 
-  // Preload изображений для секций "Кто мы" и "Заказать букет" для быстрой загрузки
   const aboutImageUrl = homeAbout?.imageUrl;
   const orderBlockImageUrl = homeOrderBlock?.imageUrl;
 
   return (
     <div className="min-h-screen bg-page-bg">
-      {firstHeroImageUrl ? (
-        <link rel="preload" as="image" href={firstHeroImageUrl} />
-      ) : null}
-      {aboutImageUrl ? (
-        <link rel="preload" as="image" href={aboutImageUrl} />
-      ) : null}
-      {orderBlockImageUrl ? (
-        <link rel="preload" as="image" href={orderBlockImageUrl} />
-      ) : null}
+      {firstHeroImageUrl ? <link rel="preload" as="image" href={firstHeroImageUrl} /> : null}
+      {aboutImageUrl ? <link rel="preload" as="image" href={aboutImageUrl} /> : null}
+      {orderBlockImageUrl ? <link rel="preload" as="image" href={orderBlockImageUrl} /> : null}
       <HeroCarousel slides={slides} />
       <RecommendSection products={recommendProducts} />
       <ProgressiveBelowFold>
