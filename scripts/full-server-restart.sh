@@ -124,24 +124,28 @@ echo ""
 echo "5️⃣  СБОРКА ПРОЕКТА"
 echo "------------------"
 
-# Определяем лимит памяти
+# Определяем лимит памяти на основе общей памяти сервера
+TOTAL_MEM=$(free -m | awk '/^Mem:/{print $2}' || echo "1024")
 AVAILABLE_MEM=$(free -m | awk '/^Mem:/{print $7}' || echo "1024")
-if [ "$AVAILABLE_MEM" -lt 512 ]; then
-  NODE_MEM_LIMIT=400
-elif [ "$AVAILABLE_MEM" -lt 768 ]; then
-  NODE_MEM_LIMIT=$((AVAILABLE_MEM * 60 / 100))
-elif [ "$AVAILABLE_MEM" -lt 1024 ]; then
-  NODE_MEM_LIMIT=$((AVAILABLE_MEM * 65 / 100))
+
+# Для сборки используем общую память сервера, так как есть swap
+if [ "$TOTAL_MEM" -lt 1024 ]; then
+  # Сервер с 1GB RAM - используем 1GB для сборки (с поддержкой swap)
+  NODE_MEM_LIMIT=1024
+elif [ "$TOTAL_MEM" -lt 2048 ]; then
+  # Сервер с 1-2GB RAM - используем до 1.5GB для сборки
+  NODE_MEM_LIMIT=1536
+elif [ "$TOTAL_MEM" -lt 4096 ]; then
+  # Сервер с 2-4GB RAM - используем до 2GB для сборки
+  NODE_MEM_LIMIT=2048
 else
-  NODE_MEM_LIMIT=$((AVAILABLE_MEM * 70 / 100))
-  if [ "$NODE_MEM_LIMIT" -gt 1536 ]; then
-    NODE_MEM_LIMIT=1536
-  fi
+  # Сервер с 4GB+ RAM - используем до 3GB для сборки
+  NODE_MEM_LIMIT=3072
 fi
 
 export NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}"
-echo "💾 Доступная память: ${AVAILABLE_MEM}MB"
-echo "📊 Лимит Node.js: ${NODE_MEM_LIMIT}MB"
+echo "💾 Общая память: ${TOTAL_MEM}MB, Доступная: ${AVAILABLE_MEM}MB"
+echo "📊 Лимит Node.js для сборки: ${NODE_MEM_LIMIT}MB (с поддержкой swap)"
 
 # Собираем проект
 echo "🔨 Сборка проекта..."
