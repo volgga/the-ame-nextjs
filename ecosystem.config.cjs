@@ -31,8 +31,11 @@ module.exports = {
   apps: [
     {
       name: "theame-next",
-      script: path.join(root, "node_modules/next/dist/bin/next"),
-      args: "start",
+      // Для standalone режима используем прямой запуск сервера
+      script: path.join(root, ".next/standalone/server.js"),
+      // Fallback: если standalone нет, используем обычный next start
+      // script: path.join(root, "node_modules/next/dist/bin/next"),
+      // args: "start",
       cwd: root,
       instances: 1,
       autorestart: true,
