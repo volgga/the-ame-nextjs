@@ -7,7 +7,8 @@ const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : "placeholder.
 const supabaseHosts = [...new Set([supabaseHost, "eweaqbtqzzoxpwfmjinp.supabase.co"].filter(Boolean))];
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // Отключаем standalone режим - он требует дополнительной настройки и копирования файлов
+  // output: "standalone",
   outputFileTracingIncludes: {
     "/*": ["node_modules/sharp/**/*"],
   },

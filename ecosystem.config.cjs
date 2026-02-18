@@ -27,20 +27,13 @@ if (fs.existsSync(envPath)) {
 }
 const getEnv = (key, def = "") => envVars[key] || process.env[key] || def;
 
-// Проверяем, есть ли standalone сборка
-const standalonePath = path.join(root, ".next/standalone/server.js");
-const useStandalone = fs.existsSync(standalonePath);
-
 module.exports = {
   apps: [
     {
       name: "theame-next",
-      // Для standalone режима используем прямой запуск сервера
-      // Иначе используем обычный next start
-      script: useStandalone 
-        ? standalonePath 
-        : path.join(root, "node_modules/next/dist/bin/next"),
-      args: useStandalone ? undefined : "start",
+      // Используем обычный next start (standalone режим отключен)
+      script: path.join(root, "node_modules/next/dist/bin/next"),
+      args: "start",
       cwd: root,
       instances: 1,
       autorestart: true,
