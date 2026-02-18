@@ -107,16 +107,12 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "rharjnqjchmbpwqrxgey.supabase.co",
-        port: "",
-        pathname: "/storage/v1/object/public/**",
       },
       { protocol: "https", hostname: "theame.ru", pathname: "/**" },
       { protocol: "http", hostname: "theame.ru", pathname: "/**" },
       ...supabaseHosts.map((host) => ({
         protocol: "https" as const,
         hostname: host,
-        port: "",
-        pathname: "/storage/v1/object/public/**" as const,
       })),
     ],
   },
