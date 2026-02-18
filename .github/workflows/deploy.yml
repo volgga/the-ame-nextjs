@@ -34,7 +34,7 @@ jobs:
             set -euo pipefail
             
             DEPLOY_PATH="${DEPLOY_PATH:-/var/www/theame}"
-            PM2_APP_NAME="${PM2_APP_NAME:-nextjs-project}"
+            PM2_APP_NAME="${PM2_APP_NAME:-theame-next}"
             
             echo "🚀 Starting deployment..."
             echo "📁 Deploy path: $DEPLOY_PATH"
@@ -255,15 +255,16 @@ jobs:
               else
                 echo "Process '$PM2_APP_NAME' not found, cleaning and starting..."
                 pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
-                pm2 delete "theame-next" 2>/dev/null || true
-                pm2 start ecosystem.config.js
+                pm2 delete "nextjs-project" 2>/dev/null || true
+                pm2 delete "theame" 2>/dev/null || true
+                pm2 start ecosystem.config.cjs
                 echo "✅ PM2 process started"
               fi
               pm2 save || true
             else
               echo "❌ Error: PM2 is not installed or not in PATH"
               echo "💡 Hint: Install PM2 with: npm install -g pm2"
-              echo "💡 Hint: Then start the app with: pm2 start ecosystem.config.js"
+              echo "💡 Hint: Then start the app with: pm2 start ecosystem.config.cjs"
               exit 1
             fi
             
