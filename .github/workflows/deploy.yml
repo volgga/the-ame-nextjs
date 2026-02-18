@@ -250,17 +250,54 @@ jobs:
             # Перезапускаем или запускаем PM2 процесс
             echo "🔄 Restarting/Starting PM2 process..."
             if command -v pm2 >/dev/null 2>&1; then
+              # Проверяем текущие процессы PM2
+              echo "📋 Current PM2 processes:"
+              pm2 list || true
+              echo ""
+              
               if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-                pm2 restart "$PM2_APP_NAME" && echo "✅ PM2 process '$PM2_APP_NAME' restarted"
+                echo "🔄 Restarting existing process '$PM2_APP_NAME'..."
+                pm2 restart "$PM2_APP_NAME" || {
+                  echo "⚠️  Restart failed, trying to delete and start fresh..."
+                  pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
+                  pm2 start ecosystem.config.cjs || {
+                    echo "❌ Failed to start PM2 process"
+                    exit 1
+                  }
+                }
+                echo "✅ PM2 process '$PM2_APP_NAME' restarted"
               else
-                echo "Process '$PM2_APP_NAME' not found, cleaning and starting..."
+                echo "Process '$PM2_APP_NAME' not found, cleaning old processes and starting..."
                 pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
                 pm2 delete "nextjs-project" 2>/dev/null || true
                 pm2 delete "theame" 2>/dev/null || true
-                pm2 start ecosystem.config.cjs
+                pm2 delete "theame-next" 2>/dev/null || true
+                
+                echo "🚀 Starting PM2 process from ecosystem.config.cjs..."
+                pm2 start ecosystem.config.cjs || {
+                  echo "❌ Failed to start PM2 process"
+                  echo "💡 Check if ecosystem.config.cjs exists and is valid"
+                  exit 1
+                }
                 echo "✅ PM2 process started"
               fi
+              
+              # Сохраняем конфигурацию PM2
               pm2 save || true
+              
+              # Проверяем статус после запуска
+              echo ""
+              echo "📊 PM2 status after restart:"
+              pm2 status "$PM2_APP_NAME" || pm2 list
+              
+              # Ждем немного и проверяем, что процесс запущен
+              sleep 3
+              if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
+                echo "✅ Process '$PM2_APP_NAME' is running"
+              else
+                echo "⚠️  Warning: Process '$PM2_APP_NAME' may not be running properly"
+                pm2 list
+              fi
             else
               echo "❌ Error: PM2 is not installed or not in PATH"
               echo "💡 Hint: Install PM2 with: npm install -g pm2"
