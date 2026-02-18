@@ -212,13 +212,39 @@ jobs:
             # Увеличиваем лимит памяти для Node.js (4GB, адаптивно под доступную память)
             # Проверяем доступную память и устанавливаем лимит соответственно
             AVAILABLE_MEM=$(free -m | awk '/^Mem:/{print $7}' || echo "4096")
-            if [ "$AVAILABLE_MEM" -lt 2048 ]; then
+            TOTAL_MEM=$(free -m | awk '/^Mem:/{print $2}' || echo "4096")
+            
+            echo "💾 Total RAM: ${TOTAL_MEM}MB"
+            echo "💾 Available RAM: ${AVAILABLE_MEM}MB"
+            
+            # Проверяем swap
+            SWAP_TOTAL=$(free -m | awk '/^Swap:/{print $2}' || echo "0")
+            SWAP_USED=$(free -m | awk '/^Swap:/{print $3}' || echo "0")
+            if [ "$SWAP_TOTAL" -gt 0 ]; then
+              echo "💾 Swap: ${SWAP_TOTAL}MB total, ${SWAP_USED}MB used"
+            fi
+            
+            # Устанавливаем лимит памяти в зависимости от доступной памяти
+            # Используем более консервативные значения для маломощных серверов
+            if [ "$AVAILABLE_MEM" -lt 512 ]; then
+              # Очень мало памяти - используем минимум
+              NODE_MEM_LIMIT=1024
+              echo "⚠️  Very low memory detected (${AVAILABLE_MEM}MB available), using 1GB limit"
+              echo "💡 Consider upgrading server RAM or adding more swap"
+            elif [ "$AVAILABLE_MEM" -lt 1024 ]; then
+              # Мало памяти - используем 1.5GB
+              NODE_MEM_LIMIT=1536
+              echo "⚠️  Low memory detected (${AVAILABLE_MEM}MB available), using 1.5GB limit"
+            elif [ "$AVAILABLE_MEM" -lt 2048 ]; then
+              # Средняя память - используем 2GB
               NODE_MEM_LIMIT=2048
-              echo "⚠️  Low memory detected (${AVAILABLE_MEM}MB available), using 2GB limit"
+              echo "ℹ️  Medium memory detected (${AVAILABLE_MEM}MB available), using 2GB limit"
             elif [ "$AVAILABLE_MEM" -lt 4096 ]; then
+              # Хорошая память - используем 3GB
               NODE_MEM_LIMIT=3072
-              echo "ℹ️  Medium memory detected (${AVAILABLE_MEM}MB available), using 3GB limit"
+              echo "✅ Good memory detected (${AVAILABLE_MEM}MB available), using 3GB limit"
             else
+              # Отличная память - используем 4GB
               NODE_MEM_LIMIT=4096
               echo "✅ Sufficient memory detected (${AVAILABLE_MEM}MB available), using 4GB limit"
             fi
@@ -232,20 +258,45 @@ jobs:
             
             # Явно указываем использование webpack вместо Turbopack
             echo "🔨 Starting build with webpack..."
+            echo "📊 Using NODE_OPTIONS: --max-old-space-size=${NODE_MEM_LIMIT}"
+            
+            # Очищаем кеш npm перед сборкой для экономии памяти
+            echo "🧹 Cleaning npm cache..."
+            npm cache clean --force || true
+            
             # Убеждаемся, что NODE_OPTIONS передается в npm run build
-            NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}" npm run build -- --webpack || {
-              echo "❌ Error: Build failed"
-              echo ""
-              echo "📊 Memory diagnostics:"
-              free -h || true
-              echo ""
-              echo "💡 Troubleshooting:"
-              echo "   1. Check if server has enough RAM (recommended: 4GB+)"
-              echo "   2. Check if swap is enabled: swapon --show"
-              echo "   3. Check build logs above for OOM (Out of Memory) errors"
-              echo "   4. Try increasing NODE_MEM_LIMIT or adding swap space"
-              exit 1
-            }
+            # Используем более агрессивные настройки для маломощных серверов
+            if [ "$AVAILABLE_MEM" -lt 1024 ]; then
+              echo "⚠️  Low memory server detected - using minimal build settings"
+              # Для маломощных серверов используем меньше воркеров
+              NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}" npm run build -- --webpack || {
+                echo "❌ Error: Build failed on low-memory server"
+                echo ""
+                echo "📊 Memory diagnostics:"
+                free -h || true
+                echo ""
+                echo "💡 Troubleshooting for low-memory servers:"
+                echo "   1. Upgrade server RAM to at least 2GB (recommended: 4GB+)"
+                echo "   2. Increase swap space: sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile"
+                echo "   3. Free up memory: stop unnecessary services, clear caches"
+                echo "   4. Consider building locally and deploying pre-built files"
+                exit 1
+              }
+            else
+              NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}" npm run build -- --webpack || {
+                echo "❌ Error: Build failed"
+                echo ""
+                echo "📊 Memory diagnostics:"
+                free -h || true
+                echo ""
+                echo "💡 Troubleshooting:"
+                echo "   1. Check if server has enough RAM (recommended: 4GB+)"
+                echo "   2. Check if swap is enabled: swapon --show"
+                echo "   3. Check build logs above for OOM (Out of Memory) errors"
+                echo "   4. Try increasing NODE_MEM_LIMIT or adding swap space"
+                exit 1
+              }
+            fi
             
             # Перезапускаем или запускаем PM2 процесс
             echo "🔄 Restarting/Starting PM2 process..."
