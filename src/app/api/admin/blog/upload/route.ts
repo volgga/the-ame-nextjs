@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any).storage.from(BUCKET).upload(storagePath, buffer, {
       contentType: mime,
-      cacheControl: "public, max-age=2592000, s-maxage=2592000",
+      cacheControl: "public, max-age=31536000, s-maxage=31536000, immutable",
       upsert: true,
     });
 

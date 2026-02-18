@@ -142,9 +142,9 @@ export function OrderBouquetSection({ title, subtitle1, text, imageUrl }: OrderB
                   variant="card"
                   className="object-cover h-full w-full"
                   sizes="(max-width: 768px) 100vw, 33vw"
-                  loading="lazy"
+                  priority
+                  loading="eager"
                   // TODO: Добавить imageData когда OrderBouquetSection будет иметь варианты изображений
-                  priority={false}
                 />
               </div>
             </div>

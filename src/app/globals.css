@@ -584,7 +584,7 @@ All colors MUST be HSL.
 
   /* Коллекции: появление слева направо, длинная анимация по viewport */
   .reveal--from-left {
-    transition-duration: 720ms;
+    transition-duration: 1500ms;
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
   .reveal-ready .reveal.reveal--from-left {
@@ -594,13 +594,13 @@ All colors MUST be HSL.
     transform: translateX(0);
   }
 
-  /* Мобилка: чуть быстрее для коллекций, но всё ещё плавно */
+  /* Мобилка: чуть быстрее для коллекций, но всё ещё плавно и заметно */
   @media (max-width: 768px) {
     .reveal {
       transition-duration: 280ms;
     }
     .reveal--from-left {
-      transition-duration: 520ms;
+      transition-duration: 1100ms;
     }
   }
 

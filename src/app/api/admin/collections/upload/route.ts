@@ -58,9 +58,10 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Годовой кэш: изображения коллекций меняются редко, immutable для максимальной производительности
     const { data, error } = await (supabase as any).storage.from(BUCKET).upload(safeName, buffer, {
       contentType: mime,
-      cacheControl: "public, max-age=2592000, s-maxage=2592000",
+      cacheControl: "public, max-age=31536000, s-maxage=31536000, immutable",
       upsert: true,
     });
 

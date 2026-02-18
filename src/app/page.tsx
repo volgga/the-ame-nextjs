@@ -85,10 +85,20 @@ export default async function HomePage() {
   const firstSlide = slides[0];
   const firstHeroImageUrl = firstSlide?.imageLargeUrl ?? firstSlide?.imageMediumUrl ?? firstSlide?.imageUrl;
 
+  // Preload изображений для секций "Кто мы" и "Заказать букет" для быстрой загрузки
+  const aboutImageUrl = homeAbout?.imageUrl;
+  const orderBlockImageUrl = homeOrderBlock?.imageUrl;
+
   return (
     <div className="min-h-screen bg-page-bg">
       {firstHeroImageUrl ? (
         <link rel="preload" as="image" href={firstHeroImageUrl} />
+      ) : null}
+      {aboutImageUrl ? (
+        <link rel="preload" as="image" href={aboutImageUrl} />
+      ) : null}
+      {orderBlockImageUrl ? (
+        <link rel="preload" as="image" href={orderBlockImageUrl} />
       ) : null}
       <HeroCarousel slides={slides} />
       <RecommendSection products={recommendProducts} />

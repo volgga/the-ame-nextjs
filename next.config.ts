@@ -75,7 +75,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/_next/image",
-        headers: [{ key: "Cache-Control", value: "public, max-age=2592000, s-maxage=2592000, stale-while-revalidate=86400" }],
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, s-maxage=31536000, stale-while-revalidate=86400, immutable" }],
       },
       {
         source: "/IMG_4256.JPG",

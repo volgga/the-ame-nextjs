@@ -201,7 +201,7 @@ export async function uploadVariantsToStorage(
         .from(storageBucket)
         .upload(cleanPath, variant.webp, {
           contentType: "image/webp",
-          cacheControl: "public, max-age=3600, s-maxage=3600",
+          cacheControl: "public, max-age=31536000, s-maxage=31536000, immutable",
           upsert: true,
         });
 
@@ -228,7 +228,7 @@ export async function uploadVariantsToStorage(
         .from(storageBucket)
         .upload(cleanPath, variant.avif, {
           contentType: "image/avif",
-          cacheControl: "public, max-age=3600, s-maxage=3600",
+          cacheControl: "public, max-age=31536000, s-maxage=31536000, immutable",
           upsert: true,
         });
 

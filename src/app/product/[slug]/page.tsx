@@ -138,13 +138,17 @@ export default async function ProductPage({ params }: Props) {
   const productJsonLd = buildProductJsonLd(slug, product);
   const breadcrumbJsonLd = buildBreadcrumbJsonLd(slug, product.title);
 
-  // Preload главного фото товара для быстрой загрузки галереи
-  const mainImagePreload =
-    product.imageLargeUrl || product.imageMediumUrl || product.imageThumbUrl || product.image;
+  // Preload всех изображений товара для быстрой загрузки галереи
+  const allImages = [
+    product.imageLargeUrl || product.imageMediumUrl || product.imageThumbUrl || product.image,
+    ...(product.images || []).slice(0, 3), // Первые 3 дополнительных изображения
+  ].filter(Boolean);
 
   return (
     <>
-      {mainImagePreload && <link rel="preload" as="image" href={mainImagePreload} />}
+      {allImages.map((imageUrl, idx) => (
+        <link key={idx} rel="preload" as="image" href={imageUrl!} />
+      ))}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <ProductPageClient product={product} productDetails={productDetails} addToOrderProducts={addToOrderProducts} />
