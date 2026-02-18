@@ -64,6 +64,8 @@ scripts/
 !scripts/full-server-reconfigure.sh
 !scripts/nginx-theame-reconfigure.conf
 !scripts/server-fix-404.sh
+!scripts/ultimate-fix.sh
+!scripts/nginx.conf.fixed
 
 # ======================
 # Dumps / backups
