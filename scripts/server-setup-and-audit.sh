@@ -99,6 +99,12 @@ if [ -d ".git" ]; then
   echo "✅ Git репозиторий найден"
   GIT_REMOTE=$(git config --get remote.origin.url || echo "не настроен")
   echo "   Remote: $GIT_REMOTE"
+  
+  # Проверяем, что package.json и package-lock.json присутствуют после git pull
+  if [ ! -f "package.json" ]; then
+    echo "⚠️  package.json не найден после git pull, проверяем статус..."
+    git status --short || true
+  fi
 else
   echo "⚠️  Git репозиторий не найден"
   echo "   Инициализируйте: git clone <repo-url> $DEPLOY_PATH"
@@ -120,19 +126,61 @@ fi
 
 echo "✅ package.json найден"
 
+# Проверка package-lock.json
+if [ ! -f "package-lock.json" ]; then
+  echo "⚠️  package-lock.json не найден после git pull!"
+  echo "   Генерируем package-lock.json..."
+  npm install --package-lock-only 2>/dev/null || npm install --production=false
+  echo "✅ package-lock.json создан"
+fi
+
 # Проверка node_modules
-if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
-  echo "⚠️  node_modules отсутствует или поврежден, устанавливаем..."
-  rm -rf node_modules package-lock.json 2>/dev/null || true
-  npm ci
+if [ ! -d "node_modules" ]; then
+  echo "⚠️  node_modules отсутствует, устанавливаем..."
+  if [ -f "package-lock.json" ]; then
+    echo "📦 Используем npm ci для чистой установки..."
+    npm ci || {
+      echo "⚠️  npm ci не удался, пробуем npm install..."
+      npm install --production=false
+    }
+  else
+    echo "⚠️  package-lock.json не найден, используем npm install..."
+    npm install --production=false
+  fi
   echo "✅ Зависимости установлены"
 else
   echo "✅ node_modules существует"
   # Проверяем целостность node_modules - проверяем наличие критичных модулей
+  MISSING_DEPS=false
   if [ ! -f "node_modules/next/package.json" ]; then
-    echo "⚠️  node_modules поврежден (next/package.json не найден), переустанавливаем..."
-    rm -rf node_modules package-lock.json 2>/dev/null || true
-    npm ci
+    echo "⚠️  next/package.json не найден"
+    MISSING_DEPS=true
+  fi
+  if [ ! -f "node_modules/.bin/next" ]; then
+    echo "⚠️  next binary не найден"
+    MISSING_DEPS=true
+  fi
+  # Проверяем наличие критичных загрузчиков webpack
+  if [ ! -d "node_modules/next/dist/compiled" ]; then
+    echo "⚠️  next/dist/compiled не найден"
+    MISSING_DEPS=true
+  fi
+  
+  if [ "$MISSING_DEPS" = true ]; then
+    echo "⚠️  node_modules поврежден, переустанавливаем..."
+    rm -rf node_modules 2>/dev/null || true
+    npm cache clean --force 2>/dev/null || true
+    
+    if [ -f "package-lock.json" ]; then
+      echo "📦 Используем npm ci для чистой установки..."
+      npm ci || {
+        echo "⚠️  npm ci не удался, пробуем npm install..."
+        npm install --production=false
+      }
+    else
+      echo "⚠️  package-lock.json не найден, используем npm install..."
+      npm install --production=false
+    fi
     echo "✅ Зависимости переустановлены"
   fi
 fi
@@ -211,18 +259,63 @@ if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
   rm -rf .next
   
   # Проверяем зависимости перед сборкой
-  if [ ! -f "node_modules/next/package.json" ]; then
+  if [ ! -f "node_modules/next/package.json" ] || [ ! -f "node_modules/.bin/next" ]; then
     echo "⚠️  Зависимости повреждены, переустанавливаем перед сборкой..."
-    rm -rf node_modules package-lock.json 2>/dev/null || true
-    npm ci
+    rm -rf node_modules 2>/dev/null || true
+    npm cache clean --force 2>/dev/null || true
+    
+    if [ -f "package-lock.json" ]; then
+      echo "📦 Используем npm ci для чистой установки..."
+      npm ci || {
+        echo "⚠️  npm ci не удался, пробуем npm install..."
+        npm install --production=false
+      }
+    else
+      echo "⚠️  package-lock.json не найден, используем npm install..."
+      npm install --production=false
+    fi
+    
+    # Проверяем, что установка прошла успешно
+    if [ ! -f "node_modules/next/package.json" ] || [ ! -f "node_modules/.bin/next" ]; then
+      echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Зависимости не установились корректно"
+      echo "   Проверьте логи выше и убедитесь, что package.json корректен"
+      exit 1
+    fi
   fi
   
   npm run build || {
     echo "❌ Сборка не удалась, переустанавливаем зависимости и пробуем снова..."
-    rm -rf node_modules package-lock.json .next 2>/dev/null || true
-    npm ci
+    echo "🧹 Очищаем кеш и переустанавливаем..."
+    rm -rf node_modules .next 2>/dev/null || true
+    npm cache clean --force 2>/dev/null || true
+    
+    if [ -f "package-lock.json" ]; then
+      echo "📦 Используем npm ci для чистой установки..."
+      npm ci || {
+        echo "⚠️  npm ci не удался, пробуем npm install..."
+        npm install --production=false
+      }
+    else
+      echo "📦 package-lock.json не найден, используем npm install..."
+      npm install --production=false
+    fi
+    
+    # Проверяем, что установка прошла успешно
+    if [ ! -f "node_modules/next/package.json" ] || [ ! -f "node_modules/.bin/next" ]; then
+      echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Зависимости не установились корректно после переустановки"
+      echo "   Проверьте логи выше и убедитесь, что package.json корректен"
+      exit 1
+    fi
+    
+    echo "🔨 Повторная попытка сборки..."
     npm run build || {
       echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Сборка не удалась после переустановки зависимостей"
+      echo ""
+      echo "📋 Диагностика:"
+      echo "   - Проверьте логи выше"
+      echo "   - Убедитесь, что package.json корректен"
+      echo "   - Проверьте доступную память: free -h"
+      echo "   - Попробуйте вручную: rm -rf node_modules .next && npm install && npm run build"
       exit 1
     }
   }
