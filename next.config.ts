@@ -7,8 +7,8 @@ const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : "placeholder.
 const supabaseHosts = [...new Set([supabaseHost, "eweaqbtqzzoxpwfmjinp.supabase.co"].filter(Boolean))];
 
 const nextConfig: NextConfig = {
-  // Отключаем standalone режим - он требует дополнительной настройки и копирования файлов
-  // output: "standalone",
+  // Standalone — критично для 1GB RAM: минимальный footprint, только нужные файлы
+  output: "standalone",
   outputFileTracingIncludes: {
     "/*": ["node_modules/sharp/**/*"],
   },

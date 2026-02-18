@@ -1,12 +1,14 @@
 /**
- * PM2 config для запуска Next.js на VPS (VDSina и др.).
- * Запуск обязательно из корня проекта: pm2 start ecosystem.config.cjs
- * Переменные (ADMIN_*, Supabase, Tinkoff, Telegram и т.д.) берутся из .env.production в корне проекта.
+ * PM2 config для запуска Next.js standalone на VPS (VDSina и др.).
+ * Standalone — минимальный footprint, критично для 1GB RAM.
+ * Запуск из корня проекта: pm2 start ecosystem.config.cjs
+ * Переменные (ADMIN_*, Supabase, Tinkoff, Telegram и т.д.) берутся из .env.production.
  * Логи: pm2 logs или logs/out.log, logs/err.log
  */
 const path = require("path");
 const fs = require("fs");
 const root = __dirname;
+const standaloneDir = path.join(root, ".next/standalone");
 
 const envPath = path.join(root, ".env.production");
 let envVars = {};
@@ -31,14 +33,13 @@ module.exports = {
   apps: [
     {
       name: "theame-next",
-      // Используем обычный next start (standalone режим отключен)
-      script: path.join(root, "node_modules/next/dist/bin/next"),
-      args: "start",
-      cwd: root,
+      script: path.join(standaloneDir, "server.js"),
+      cwd: standaloneDir,
       instances: 1,
+      exec_mode: "fork",
       autorestart: true,
       watch: false,
-      max_memory_restart: "400M", // Уменьшено для серверов с ограниченной памятью (1GB RAM)
+      max_memory_restart: "400M",
       env: {
         NODE_ENV: "production",
         PORT: "3000",

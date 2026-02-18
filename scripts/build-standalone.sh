@@ -8,13 +8,13 @@ npm ci 2>/dev/null || npm install
 echo "[build-standalone] Building Next.js..."
 npm run build
 
-echo "[build-standalone] Copying assets into standalone..."
-cp -r public .next/standalone/
-cp -r .next/static .next/standalone/.next/
+echo "[build-standalone] Copying static assets into standalone (critical!)..."
+cp -r public .next/standalone/public
+cp -r .next/static .next/standalone/.next/static
 
 echo "[build-standalone] Copying run script and PM2 config into standalone..."
 cp scripts/run-standalone.sh .next/standalone/
-cp ecosystem.config.js .next/standalone/
+cp ecosystem.config.cjs .next/standalone/
 mkdir -p .next/standalone/logs
 chmod +x .next/standalone/run-standalone.sh
 

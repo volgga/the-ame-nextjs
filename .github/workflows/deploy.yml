@@ -310,6 +310,13 @@ jobs:
               }
             fi
             
+            # Копируем статику для standalone (критично для работы!)
+            echo "📁 Copying static assets for standalone..."
+            cp -r public .next/standalone/public
+            cp -r .next/static .next/standalone/.next/static
+            
+            mkdir -p logs
+            
             # Перезапускаем или запускаем PM2 процесс
             echo "🔄 Restarting/Starting PM2 process..."
             if command -v pm2 >/dev/null 2>&1; then
