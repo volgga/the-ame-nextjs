@@ -233,41 +233,26 @@ jobs:
               echo "💾 Swap: ${SWAP_TOTAL}MB total, ${SWAP_USED}MB used"
             fi
             
-            # Устанавливаем лимит памяти в зависимости от доступной памяти
-            # ВАЖНО: лимит должен быть меньше доступной памяти, чтобы оставалось место для системы
-            # Используем консервативные значения (60-70% от доступной памяти)
-            if [ "$AVAILABLE_MEM" -lt 512 ]; then
-              # Очень мало памяти - используем максимум 400MB (оставляем место для системы)
-              NODE_MEM_LIMIT=400
-              echo "⚠️  Very low memory detected (${AVAILABLE_MEM}MB available), using 400MB limit"
-              echo "💡 Consider upgrading server RAM or adding more swap"
-            elif [ "$AVAILABLE_MEM" -lt 768 ]; then
-              # Мало памяти (512-768MB) - используем 60% от доступной
-              NODE_MEM_LIMIT=$((AVAILABLE_MEM * 60 / 100))
-              echo "⚠️  Low memory detected (${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit (60%)"
-            elif [ "$AVAILABLE_MEM" -lt 1024 ]; then
-              # Мало памяти (768-1024MB) - для сборки используем до 1GB (с swap)
+            # Устанавливаем лимит памяти в зависимости от общей памяти сервера
+            # Для сборки можно использовать больше памяти, так как есть swap (2GB)
+            # Проверяем общую память (TOTAL_MEM), а не только доступную (AVAILABLE_MEM)
+            if [ "$TOTAL_MEM" -lt 1024 ]; then
+              # Сервер с 1GB RAM - используем 1GB для сборки (с поддержкой swap)
               # Это безопасно, так как у нас есть 2GB swap
               NODE_MEM_LIMIT=1024
-              echo "⚠️  Low memory detected (${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit for build (with swap support)"
-            elif [ "$AVAILABLE_MEM" -lt 2048 ]; then
-              # Средняя память - используем 70% от доступной, но не более 1.5GB
-              NODE_MEM_LIMIT=$((AVAILABLE_MEM * 70 / 100))
-              if [ "$NODE_MEM_LIMIT" -gt 1536 ]; then
-                NODE_MEM_LIMIT=1536
-              fi
-              echo "ℹ️  Medium memory detected (${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit"
-            elif [ "$AVAILABLE_MEM" -lt 4096 ]; then
-              # Хорошая память - используем 75% от доступной, но не более 3GB
-              NODE_MEM_LIMIT=$((AVAILABLE_MEM * 75 / 100))
-              if [ "$NODE_MEM_LIMIT" -gt 3072 ]; then
-                NODE_MEM_LIMIT=3072
-              fi
-              echo "✅ Good memory detected (${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit"
+              echo "⚠️  Low memory server (${TOTAL_MEM}MB total, ${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit for build (with swap support)"
+            elif [ "$TOTAL_MEM" -lt 2048 ]; then
+              # Сервер с 1-2GB RAM - используем до 1.5GB для сборки
+              NODE_MEM_LIMIT=1536
+              echo "ℹ️  Medium memory server (${TOTAL_MEM}MB total, ${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit"
+            elif [ "$TOTAL_MEM" -lt 4096 ]; then
+              # Сервер с 2-4GB RAM - используем до 2GB для сборки
+              NODE_MEM_LIMIT=2048
+              echo "✅ Good memory server (${TOTAL_MEM}MB total, ${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit"
             else
-              # Отличная память - используем до 4GB
-              NODE_MEM_LIMIT=4096
-              echo "✅ Sufficient memory detected (${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit"
+              # Сервер с 4GB+ RAM - используем до 3GB для сборки
+              NODE_MEM_LIMIT=3072
+              echo "✅ Sufficient memory server (${TOTAL_MEM}MB total, ${AVAILABLE_MEM}MB available), using ${NODE_MEM_LIMIT}MB limit"
             fi
             
             export NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}"
