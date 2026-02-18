@@ -38,7 +38,7 @@ module.exports = {
       instances: 1,
       autorestart: true,
       watch: false,
-      max_memory_restart: "600M",
+      max_memory_restart: "400M", // Уменьшено для серверов с ограниченной памятью (1GB RAM)
       env: {
         NODE_ENV: "production",
         PORT: "3000",
