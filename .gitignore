@@ -49,6 +49,7 @@ scripts/
 !scripts/run-standalone.sh
 !scripts/update-telegram-token.sh
 !scripts/check-telegram-env.sh
+!scripts/check-server-memory.sh
 
 # ======================
 # Dumps / backups
