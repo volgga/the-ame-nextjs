@@ -128,6 +128,13 @@ if [ ! -d "node_modules" ] || [ ! -f "node_modules/.package-lock.json" ]; then
   echo "✅ Зависимости установлены"
 else
   echo "✅ node_modules существует"
+  # Проверяем целостность node_modules - проверяем наличие критичных модулей
+  if [ ! -f "node_modules/next/package.json" ]; then
+    echo "⚠️  node_modules поврежден (next/package.json не найден), переустанавливаем..."
+    rm -rf node_modules package-lock.json 2>/dev/null || true
+    npm ci
+    echo "✅ Зависимости переустановлены"
+  fi
 fi
 
 echo ""
@@ -202,7 +209,23 @@ echo "------------------"
 if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
   echo "⚠️  Проект не собран или сборка повреждена, собираем..."
   rm -rf .next
-  npm run build
+  
+  # Проверяем зависимости перед сборкой
+  if [ ! -f "node_modules/next/package.json" ]; then
+    echo "⚠️  Зависимости повреждены, переустанавливаем перед сборкой..."
+    rm -rf node_modules package-lock.json 2>/dev/null || true
+    npm ci
+  fi
+  
+  npm run build || {
+    echo "❌ Сборка не удалась, переустанавливаем зависимости и пробуем снова..."
+    rm -rf node_modules package-lock.json .next 2>/dev/null || true
+    npm ci
+    npm run build || {
+      echo "❌ КРИТИЧЕСКАЯ ОШИБКА: Сборка не удалась после переустановки зависимостей"
+      exit 1
+    }
+  }
   echo "✅ Проект собран"
 else
   echo "✅ Директория .next существует"
