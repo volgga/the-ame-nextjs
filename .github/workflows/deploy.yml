@@ -349,12 +349,28 @@ jobs:
               pm2 status "$PM2_APP_NAME" || pm2 list
               
               # Ждем немного и проверяем, что процесс запущен
-              sleep 3
+              sleep 5
               if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-                echo "✅ Process '$PM2_APP_NAME' is running"
+                STATUS=$(pm2 jlist 2>/dev/null | grep -o "\"name\":\"$PM2_APP_NAME\".*\"pm_id\":[0-9]*" | grep -o "\"status\":\"[^\"]*\"" | cut -d'"' -f4 || echo "unknown")
+                echo "✅ Process '$PM2_APP_NAME' is running (status: ${STATUS})"
+                
+                # Проверяем, что приложение отвечает
+                echo "🔍 Checking if application is responding..."
+                sleep 2
+                if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 > /dev/null 2>&1; then
+                  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
+                  echo "✅ Application is responding on localhost:3000 (HTTP $HTTP_CODE)"
+                else
+                  echo "⚠️  Warning: Application is not responding on localhost:3000"
+                  echo "📋 Recent PM2 logs:"
+                  pm2 logs "$PM2_APP_NAME" --lines 20 --nostream || true
+                fi
               else
                 echo "⚠️  Warning: Process '$PM2_APP_NAME' may not be running properly"
                 pm2 list
+                echo ""
+                echo "📋 Recent PM2 error logs:"
+                pm2 logs "$PM2_APP_NAME" --err --lines 30 --nostream || true
               fi
             else
               echo "❌ Error: PM2 is not installed or not in PATH"
