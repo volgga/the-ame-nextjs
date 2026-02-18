@@ -81,6 +81,19 @@ export default async function HomePage() {
 
   const { products: recommendProducts } = getRecommendProducts(allProducts);
 
+  // Диагностика: в логах PM2 видно, пришли ли данные с сервера
+  const baseData = {
+    slidesCount: slides?.length ?? 0,
+    allProductsCount: allProducts?.length ?? 0,
+    homeCollectionsCount: homeCollections?.length ?? 0,
+    homeReviewsCount: homeReviews?.length ?? 0,
+    hasHomeAbout: !!homeAbout,
+    homeFaqCount: homeFaq?.length ?? 0,
+    hasHomeOrderBlock: !!homeOrderBlock,
+    blogPostsCount: blogPosts?.length ?? 0,
+  };
+  console.log("BASE DATA:", JSON.stringify(baseData));
+
   // LCP: прелоад первого hero-изображения (приоритет — оптимизированный вариант, иначе оригинал)
   const firstSlide = slides[0];
   const firstHeroImageUrl = firstSlide?.imageLargeUrl ?? firstSlide?.imageMediumUrl ?? firstSlide?.imageUrl;

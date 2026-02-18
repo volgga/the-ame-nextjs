@@ -1,12 +1,24 @@
 /**
  * Товары: загрузка из Supabase (таблица products + variant_products для единого каталога).
  * Один источник данных — клиент из @/lib/supabaseClient.
+ *
+ * ВРЕМЕННО ДЛЯ ТЕСТА RLS: на сервере при наличии SUPABASE_SERVICE_ROLE_KEY используется
+ * admin-клиент (обход RLS). После проверки — вернуть использование только anon и поправить Policies в Supabase.
  */
 
 import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { getAllVariantProducts } from "@/lib/variantProducts";
 import { slugify } from "@/utils/slugify";
 import { getCategories } from "@/lib/categories";
+
+/** На сервере при наличии service role — обход RLS для теста. На клиенте всегда anon. */
+function getSupabaseForFetch() {
+  if (typeof window === "undefined" && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return getSupabaseAdmin();
+  }
+  return supabase;
+}
 
 /** Вариант товара (для вариантных товаров на витрине) */
 export type ProductVariantOption = {
@@ -221,14 +233,16 @@ const LOG_PREFIX = "[products/Supabase]";
 export async function getAllProducts(): Promise<Product[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    console.warn(`${LOG_PREFIX} NEXT_PUBLIC_SUPABASE_URL или NEXT_PUBLIC_SUPABASE_ANON_KEY не заданы.`);
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || (!key && !serviceKey)) {
+    console.warn(`${LOG_PREFIX} NEXT_PUBLIC_SUPABASE_URL или ключ (anon/service) не заданы.`);
     return [];
   }
 
+  const db = getSupabaseForFetch();
   try {
     // Показываем все, где не скрыто явно: is_active не false, is_hidden не true
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("products")
       .select(
         "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, is_hit, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, discount_percent, discount_price"
@@ -284,13 +298,15 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) {
-    console.warn(`${LOG_PREFIX} NEXT_PUBLIC_SUPABASE_URL или NEXT_PUBLIC_SUPABASE_ANON_KEY не заданы.`);
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || (!key && !serviceKey)) {
+    console.warn(`${LOG_PREFIX} NEXT_PUBLIC_SUPABASE_URL или ключ (anon/service) не заданы.`);
     return null;
   }
 
+  const db = getSupabaseForFetch();
   try {
-    const base = supabase
+    const base = db
       .from("products")
       .select(
         "id, name, description, composition_size, composition_flowers, height_cm, width_cm, image_url, images, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, price, slug, category_slug, category_slugs, is_active, is_hidden, is_preorder, is_new, new_until, is_hit, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors"

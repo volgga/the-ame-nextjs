@@ -2,11 +2,22 @@
  * variant_products + product_variants: загрузка из Supabase.
  * Один клиент — @/lib/supabaseClient.
  * Формат как Product (id, slug, title, price, image, shortDescription) для единого каталога.
+ *
+ * ВРЕМЕННО ДЛЯ ТЕСТА RLS: на сервере при наличии SUPABASE_SERVICE_ROLE_KEY используется
+ * admin-клиент. После проверки — вернуть только anon и поправить Policies в Supabase.
  */
 
 import { supabase } from "@/lib/supabaseClient";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import type { Product } from "@/lib/products";
 import { getCategories } from "@/lib/categories";
+
+function getSupabaseForFetch() {
+  if (typeof window === "undefined" && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return getSupabaseAdmin();
+  }
+  return supabase;
+}
 
 const VP_ID_PREFIX = "vp-";
 const LOG_PREFIX = "[variantProducts/Supabase]";
@@ -68,10 +79,12 @@ export type ProductVariantPublic = {
 export async function getAllVariantProducts(): Promise<Product[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return [];
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || (!key && !serviceKey)) return [];
 
+  const db = getSupabaseForFetch();
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("variant_products")
       .select(
         "id, slug, name, description, composition_flowers, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until, is_hit"
@@ -87,7 +100,7 @@ export async function getAllVariantProducts(): Promise<Product[]> {
     if (!data?.length) return [];
 
     const vpIds = (data as VariantProductsRow[]).map((r) => r.id);
-    const { data: variantsData } = await supabase
+    const { data: variantsData } = await db
       .from("product_variants")
       .select("id, product_id, title, bouquet_colors, is_preorder, is_new, new_until, sort_order, price, discount_percent, discount_price")
       .in("product_id", vpIds)
@@ -249,10 +262,12 @@ export async function getAllVariantProducts(): Promise<Product[]> {
 export async function getVariantProductBySlug(slug: string): Promise<Product | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || (!key && !serviceKey)) return null;
 
+  const db = getSupabaseForFetch();
   try {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from("variant_products")
       .select(
         "id, slug, name, description, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until, is_hit"
@@ -328,10 +343,12 @@ export async function getVariantProductWithVariantsBySlug(
 ): Promise<(Product & { variants?: ProductVariantPublic[] }) | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || (!key && !serviceKey)) return null;
 
+  const db = getSupabaseForFetch();
   try {
-    const { data: vp, error: vpErr } = await supabase
+    const { data: vp, error: vpErr } = await db
       .from("variant_products")
       .select(
         "id, slug, name, description, composition_flowers, image_url, images, min_price_cache, category_slug, category_slugs, is_active, is_hidden, published_at, sort_order, created_at, seo_title, seo_description, seo_keywords, og_title, og_description, og_image, bouquet_colors, is_new, new_until, is_hit, photo_label"
@@ -396,7 +413,7 @@ export async function getVariantProductWithVariantsBySlug(
       photoLabel: (row as { photo_label?: string | null }).photo_label?.trim() || null,
     };
 
-    const { data: vars, error: vErr } = await supabase
+    const { data: vars, error: vErr } = await db
       .from("product_variants")
       .select(
         "id, title, composition, height_cm, width_cm, price, image_url, seo_title, seo_description, og_image, bouquet_colors, is_preorder, is_new, new_until, discount_percent, discount_price"

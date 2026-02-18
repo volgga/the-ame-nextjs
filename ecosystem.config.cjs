@@ -2,7 +2,7 @@
  * PM2 config для запуска Next.js standalone на VPS (VDSina и др.).
  * Standalone — минимальный footprint, критично для 1GB RAM.
  * Запуск из корня проекта: pm2 start ecosystem.config.cjs
- * Переменные (ADMIN_*, Supabase, Tinkoff, Telegram и т.д.) берутся из .env.production.
+ * Переменные берутся из .env (или .env.production).
  * Логи: pm2 logs или logs/out.log, logs/err.log
  */
 const path = require("path");
@@ -10,7 +10,10 @@ const fs = require("fs");
 const root = __dirname;
 const standaloneDir = path.join(root, ".next/standalone");
 
-const envPath = path.join(root, ".env.production");
+// На сервере обычно .env; локально можно .env.production
+const envPath = fs.existsSync(path.join(root, ".env"))
+  ? path.join(root, ".env")
+  : path.join(root, ".env.production");
 let envVars = {};
 if (fs.existsSync(envPath)) {
   const content = fs.readFileSync(envPath, "utf8");
@@ -57,6 +60,7 @@ module.exports = {
         TINKOFF_NOTIFICATION_URL: getEnv("TINKOFF_NOTIFICATION_URL"),
         TELEGRAM_BOT_TOKEN: getEnv("TELEGRAM_BOT_TOKEN"),
         TELEGRAM_CHAT_ID: getEnv("TELEGRAM_CHAT_ID"),
+        TELEGRAM_THREAD_ID: getEnv("TELEGRAM_THREAD_ID"),
         TELEGRAM_ORDERS_CHAT_ID: getEnv("TELEGRAM_ORDERS_CHAT_ID"),
         TELEGRAM_ORDERS_THREAD_ID: getEnv("TELEGRAM_ORDERS_THREAD_ID"),
       },
