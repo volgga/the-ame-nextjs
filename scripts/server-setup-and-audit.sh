@@ -198,16 +198,35 @@ echo ""
 echo "5️⃣  ПРОВЕРКА СБОРКИ"
 echo "------------------"
 
-if [ ! -d ".next" ]; then
-  echo "⚠️  Проект не собран, собираем..."
+# Проверяем наличие BUILD_ID - это признак валидной сборки
+if [ ! -d ".next" ] || [ ! -f ".next/BUILD_ID" ]; then
+  echo "⚠️  Проект не собран или сборка повреждена, собираем..."
+  rm -rf .next
   npm run build
   echo "✅ Проект собран"
 else
   echo "✅ Директория .next существует"
-  # Проверяем свежесть сборки (не старше 1 дня)
-  BUILD_AGE=$(find .next -name "BUILD_ID" -mtime +1 2>/dev/null | wc -l)
-  if [ "$BUILD_AGE" -gt 0 ]; then
-    echo "⚠️  Сборка устарела (старше 1 дня), пересобираем..."
+  # Проверяем валидность сборки - пытаемся прочитать BUILD_ID
+  if [ -f ".next/BUILD_ID" ]; then
+    BUILD_ID=$(cat .next/BUILD_ID 2>/dev/null || echo "")
+    if [ -z "$BUILD_ID" ]; then
+      echo "⚠️  BUILD_ID пустой, пересобираем..."
+      rm -rf .next
+      npm run build
+      echo "✅ Проект пересобран"
+    else
+      echo "✅ Сборка валидна (BUILD_ID: $BUILD_ID)"
+      # Проверяем свежесть сборки (не старше 1 дня)
+      BUILD_AGE=$(find .next -name "BUILD_ID" -mtime +1 2>/dev/null | wc -l)
+      if [ "$BUILD_AGE" -gt 0 ]; then
+        echo "⚠️  Сборка устарела (старше 1 дня), пересобираем..."
+        rm -rf .next
+        npm run build
+        echo "✅ Проект пересобран"
+      fi
+    fi
+  else
+    echo "⚠️  BUILD_ID не найден, пересобираем..."
     rm -rf .next
     npm run build
     echo "✅ Проект пересобран"
@@ -255,14 +274,30 @@ echo ""
 echo "7️⃣  ПРОВЕРКА ДОСТУПНОСТИ"
 echo "----------------------"
 
-# Проверка localhost:3000
-if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 > /dev/null 2>&1; then
-  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
-  echo "✅ Приложение отвечает на localhost:3000 (HTTP $HTTP_CODE)"
-else
+# Проверка localhost:3000 (с несколькими попытками)
+LOCALHOST_OK=false
+for i in 1 2 3; do
+  sleep 2
+  if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 > /dev/null 2>&1; then
+    HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
+    if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "304" ]; then
+      echo "✅ Приложение отвечает на localhost:3000 (HTTP $HTTP_CODE)"
+      LOCALHOST_OK=true
+      break
+    fi
+  fi
+done
+
+if [ "$LOCALHOST_OK" = false ]; then
   echo "❌ Приложение НЕ отвечает на localhost:3000"
-  echo "📋 Логи PM2:"
-  pm2 logs "$PM2_APP_NAME" --lines 20 --nostream || true
+  echo "📋 Логи PM2 (последние 30 строк):"
+  pm2 logs "$PM2_APP_NAME" --lines 30 --nostream || true
+  echo ""
+  echo "💡 Попробуйте пересобрать проект:"
+  echo "   pm2 stop $PM2_APP_NAME"
+  echo "   rm -rf .next"
+  echo "   npm run build"
+  echo "   pm2 start ecosystem.config.cjs"
 fi
 
 # Проверка через Nginx
