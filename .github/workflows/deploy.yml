@@ -12,6 +12,8 @@ concurrency:
 env:
   SITE_URL: https://theame.ru
   NEXT_PUBLIC_SITE_URL: https://theame.ru
+  DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/var/www/theame' }}
+  PM2_APP_NAME: ${{ secrets.PM2_APP_NAME || 'theame-next' }}
 
 jobs:
   deploy:
@@ -29,13 +31,25 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: ${{ secrets.DEPLOY_PORT || 22 }}
-          envs: SITE_URL,NEXT_PUBLIC_SITE_URL
+          envs: SITE_URL,NEXT_PUBLIC_SITE_URL,DEPLOY_PATH,PM2_APP_NAME
           command_timeout: 30m
           script: |
             set -euo pipefail
             
             DEPLOY_PATH="${DEPLOY_PATH:-/var/www/theame}"
             PM2_APP_NAME="${PM2_APP_NAME:-theame-next}"
+            
+            # Автоопределение пути: если DEPLOY_PATH не существует, ищем проект в типичных местах
+            if [ ! -d "$DEPLOY_PATH" ] || [ ! -f "$DEPLOY_PATH/package.json" ]; then
+              echo "⚠️  DEPLOY_PATH ($DEPLOY_PATH) не найден или не содержит package.json, ищем проект..."
+              for try_path in /var/www/theame /var/www/nextjs-project /var/www/theame-nextjs /var/www/theame-next /home/ubuntu/theame /home/ubuntu/nextjs-project /home/deploy/theame; do
+                if [ -d "$try_path" ] && [ -f "$try_path/package.json" ] && [ -f "$try_path/ecosystem.config.cjs" ]; then
+                  DEPLOY_PATH="$try_path"
+                  echo "✅ Найден проект: $DEPLOY_PATH"
+                  break
+                fi
+              done
+            fi
             
             echo "🚀 Starting deployment..."
             echo "📁 Deploy path: $DEPLOY_PATH"
@@ -44,8 +58,13 @@ jobs:
             # Переходим в директорию проекта
             cd "$DEPLOY_PATH" || {
               echo "❌ Error: Directory $DEPLOY_PATH does not exist"
+              echo "💡 Укажите правильный путь через GitHub Secret: DEPLOY_PATH"
               exit 1
             }
+            
+            # Диагностика: содержимое директории
+            echo "📂 Содержимое DEPLOY_PATH (ls -la):"
+            ls -la
             
             # Обновляем код из репозитория
             echo "📥 Fetching latest code..."
@@ -319,48 +338,52 @@ jobs:
             
             mkdir -p logs
             
-            # Перезапускаем или запускаем PM2 процесс
+            # Диагностика перед PM2: убеждаемся, что видим нужные файлы
+            echo "📂 Содержимое перед PM2 (ls -la):"
+            ls -la
+            echo "📂 Проверка ключевых файлов:"
+            ls -la package.json ecosystem.config.cjs .next/BUILD_ID 2>/dev/null || true
+            
+            # Проверяем, что мы в корне проекта (ecosystem и package.json)
+            if [ ! -f "ecosystem.config.cjs" ] || [ ! -f "package.json" ]; then
+              echo "❌ Error: ecosystem.config.cjs or package.json not found in $(pwd)"
+              echo "   Expected project root: $DEPLOY_PATH"
+              echo "   Current directory: $(pwd)"
+              exit 1
+            fi
+            
+            # Перезапускаем или запускаем PM2 процесс (startOrRestart = старт или рестарт)
             echo "🔄 Restarting/Starting PM2 process..."
             if command -v pm2 >/dev/null 2>&1; then
-              # Проверяем текущие процессы PM2
-              echo "📋 Current PM2 processes:"
+              # Текущий статус PM2 до деплоя
+              echo "📋 PM2 processes BEFORE deploy:"
               pm2 list || true
               echo ""
               
-              if pm2 describe "$PM2_APP_NAME" >/dev/null 2>&1; then
-                echo "🔄 Restarting existing process '$PM2_APP_NAME'..."
-                pm2 restart "$PM2_APP_NAME" || {
-                  echo "⚠️  Restart failed, trying to delete and start fresh..."
-                  pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
-                  pm2 start ecosystem.config.cjs || {
-                    echo "❌ Failed to start PM2 process"
-                    exit 1
-                  }
-                }
-                echo "✅ PM2 process '$PM2_APP_NAME' restarted"
-              else
-                echo "Process '$PM2_APP_NAME' not found, cleaning old processes and starting..."
-                pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
-                pm2 delete "nextjs-project" 2>/dev/null || true
-                pm2 delete "theame" 2>/dev/null || true
-                pm2 delete "theame-next" 2>/dev/null || true
-                
-                echo "🚀 Starting PM2 process from ecosystem.config.cjs..."
-                pm2 start ecosystem.config.cjs || {
+              # Удаляем старые/битые процессы с любыми именами
+              pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
+              pm2 delete "nextjs-project" 2>/dev/null || true
+              pm2 delete "theame" 2>/dev/null || true
+              pm2 delete "theame-next" 2>/dev/null || true
+              echo ""
+              
+              # Запуск из текущей директории (restart = перезапуск или старт, если не запущен)
+              echo "🚀 Starting PM2 from $(pwd)..."
+              PM2_CWD="$(pwd)" pm2 restart ecosystem.config.cjs --update-env || {
+                echo "⚠️  restart failed (app may not exist), trying pm2 start..."
+                PM2_CWD="$(pwd)" pm2 start ecosystem.config.cjs || {
                   echo "❌ Failed to start PM2 process"
-                  echo "💡 Check if ecosystem.config.cjs exists and is valid"
                   exit 1
                 }
-                echo "✅ PM2 process started"
-              fi
+              }
               
               # Сохраняем конфигурацию PM2
               pm2 save || true
               
               # Проверяем статус после запуска
               echo ""
-              echo "📊 PM2 status after restart:"
-              pm2 status "$PM2_APP_NAME" || pm2 list
+              echo "📊 PM2 list AFTER deploy:"
+              pm2 list
               
               # Ждем немного и проверяем, что процесс запущен
               sleep 5
@@ -393,16 +416,16 @@ jobs:
               exit 1
             fi
             
-            # Финальная проверка и аудит
+            # Финальная проверка и аудит (необязательно — не прерываем деплой при ошибках)
             echo ""
             echo "🔍 Выполняем финальную проверку..."
             if [ -f "scripts/server-setup-and-audit.sh" ]; then
-              echo "📋 Запускаем скрипт аудита..."
-              bash scripts/server-setup-and-audit.sh || {
-                echo "⚠️  Скрипт аудита завершился с предупреждениями, но деплой завершен"
+              echo "📋 Запускаем скрипт аудита (DEPLOY_PATH=$DEPLOY_PATH)..."
+              DEPLOY_PATH="$DEPLOY_PATH" PM2_APP_NAME="$PM2_APP_NAME" bash scripts/server-setup-and-audit.sh 2>&1 || {
+                echo "⚠️  Скрипт аудита завершился с предупреждениями (возможно требуются права sudo), деплой завершен успешно"
               }
             else
-              echo "ℹ️  Скрипт аудита не найден, пропускаем"
+              echo "ℹ️  Скрипт аудита не найден (scripts/server-setup-and-audit.sh), пропускаем"
             fi
             
             echo ""
