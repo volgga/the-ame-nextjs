@@ -2,7 +2,7 @@
 # Nginx: client_max_body_size 30m (исправляет 413 при загрузке в админке). Запуск: ssh root@HOST 'bash -s' < scripts/fix-nginx-413.sh
 set -e
 
-CONF="/etc/nginx/sites-available/theame.ru"
+CONF="/etc/nginx/sites-available/theame"
 [ -f "$CONF" ] || CONF="/etc/nginx/sites-available/nextapp"
 [ -f "$CONF" ] || { echo "ERROR: Nginx config not found"; exit 1; }
 

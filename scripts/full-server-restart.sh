@@ -160,7 +160,7 @@ echo ""
 echo "6️⃣  НАСТРОЙКА NGINX"
 echo "-------------------"
 
-NGINX_CONFIG="/etc/nginx/sites-available/theame.ru"
+NGINX_CONFIG="/etc/nginx/sites-available/theame"
 if [ ! -f "$NGINX_CONFIG" ]; then
   echo "📝 Создание конфигурации Nginx..."
   cat > "$NGINX_CONFIG" << 'EOF'
@@ -191,8 +191,9 @@ EOF
 fi
 
 # Активируем конфигурацию
-if [ ! -L "/etc/nginx/sites-enabled/theame.ru" ]; then
-  ln -sf "$NGINX_CONFIG" /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+if [ ! -L "/etc/nginx/sites-enabled/theame" ]; then
+  ln -sf "$NGINX_CONFIG" /etc/nginx/sites-enabled/theame
 fi
 
 # Проверяем и перезагружаем Nginx

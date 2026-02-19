@@ -233,11 +233,20 @@ echo ""
 echo "4️⃣  НАСТРОЙКА NGINX"
 echo "------------------"
 
-NGINX_CONFIG="/etc/nginx/sites-available/theame.ru"
+NGINX_CONFIG="/etc/nginx/sites-available/theame"
 
-if [ ! -f "$NGINX_CONFIG" ]; then
-  echo "⚠️  Конфигурация Nginx не найдена, создаем..."
-  
+# Удаляем старый конфликтующий theame.ru, если есть
+if [ -L "/etc/nginx/sites-enabled/theame.ru" ]; then
+  rm -f /etc/nginx/sites-enabled/theame.ru
+  echo "✅ Удалён конфликтующий конфиг theame.ru"
+fi
+
+# Копируем nginx-final.conf из проекта, если есть
+if [ -f "$DEPLOY_PATH/scripts/nginx-final.conf" ]; then
+  cp -f "$DEPLOY_PATH/scripts/nginx-final.conf" "$NGINX_CONFIG"
+  echo "✅ Использован nginx-final.conf из проекта"
+elif [ ! -f "$NGINX_CONFIG" ]; then
+  echo "⚠️  Конфигурация Nginx не найдена, создаем базовую..."
   cat > "$NGINX_CONFIG" << 'EOF'
 server {
     listen 80;
@@ -265,13 +274,12 @@ server {
 EOF
   
   echo "✅ Конфигурация создана"
-else
-  echo "✅ Конфигурация Nginx существует"
 fi
 
-# Активируем конфигурацию
-if [ ! -L "/etc/nginx/sites-enabled/theame.ru" ]; then
-  ln -sf "$NGINX_CONFIG" /etc/nginx/sites-enabled/
+# Активируем конфигурацию (theame, не theame.ru)
+rm -f /etc/nginx/sites-enabled/default
+if [ ! -L "/etc/nginx/sites-enabled/theame" ]; then
+  ln -sf "$NGINX_CONFIG" /etc/nginx/sites-enabled/theame
   echo "✅ Конфигурация активирована"
 fi
 

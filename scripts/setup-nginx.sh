@@ -25,8 +25,8 @@ else
   echo "✅ Nginx запущен и добавлен в автозагрузку"
 fi
 
-# Создаем конфигурацию для theame.ru
-NGINX_CONFIG="/etc/nginx/sites-available/theame.ru"
+# Конфигурация Nginx (theame — единый конфиг)
+NGINX_CONFIG="/etc/nginx/sites-available/theame"
 echo ""
 echo "📝 Создаем конфигурацию Nginx..."
 
@@ -76,8 +76,9 @@ EOF
 echo "✅ Конфигурация создана: $NGINX_CONFIG"
 
 # Активируем конфигурацию
-if [ ! -L "/etc/nginx/sites-enabled/theame.ru" ]; then
-  ln -s "$NGINX_CONFIG" /etc/nginx/sites-enabled/theame.ru
+rm -f /etc/nginx/sites-enabled/default
+if [ ! -L "/etc/nginx/sites-enabled/theame" ]; then
+  ln -sf "$NGINX_CONFIG" /etc/nginx/sites-enabled/theame
   echo "✅ Конфигурация активирована"
 fi
 
