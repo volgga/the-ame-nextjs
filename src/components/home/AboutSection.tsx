@@ -113,11 +113,11 @@ export function AboutSection({ about }: AboutSectionProps) {
               <div className="relative aspect-square w-full overflow-hidden">
                 <AppImage
                   src={about.imageUrl}
-                  alt=""
+                  alt={about?.title ? `Фото для блока «${about.title}»` : "The Ame — о нас"}
                   fill
                   variant="card"
                   className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px"
                   priority
                   loading="eager"
                   // TODO: Добавить imageData когда AboutSection будет иметь варианты изображений

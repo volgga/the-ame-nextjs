@@ -218,6 +218,8 @@ export default async function RootLayout({
           <div>
             <img
               src="https://mc.yandex.ru/watch/103806735"
+              width={1}
+              height={1}
               style={{ position: "absolute", left: -9999 }}
               alt=""
             />

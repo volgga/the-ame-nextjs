@@ -35,6 +35,10 @@ export interface OptimizedImageProps extends Omit<ComponentPropsWithoutRef<"img"
   priority?: boolean;
   /** Lazy loading (по умолчанию true, кроме priority) */
   loading?: "lazy" | "eager";
+  /** Hint для браузера: размер отображения (для загрузки меньших изображений на мобилках) */
+  sizes?: string;
+  /** Заполнить родителя (position: relative); для CLS требуется aspect-ratio на родителе */
+  fill?: boolean;
 }
 
 /**
@@ -111,6 +115,9 @@ function getFallbackUrl(variants: OptimizedImageVariants, size: ImageSize): stri
   return variants.original;
 }
 
+/** Sizes по умолчанию: на мобилках грузятся меньшие разрешения (фикс 768px для 455px контейнера) */
+const DEFAULT_SIZES = "(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 400px";
+
 export function OptimizedImage({
   variants,
   size,
@@ -119,6 +126,8 @@ export function OptimizedImage({
   loading,
   className,
   alt = "",
+  sizes: sizesProp,
+  fill,
   ...props
 }: OptimizedImageProps) {
   const optimalSize = getOptimalSize(size, responsive);
@@ -144,26 +153,23 @@ export function OptimizedImage({
   const avifSrcSet = generateSrcSet(variants, "avif", responsive);
   const webpSrcSet = generateSrcSet(variants, "webp", responsive);
 
-  // Определяем sizes для адаптивности
-  const sizesAttr = responsive
-    ? "(max-width: 640px) 320px, (max-width: 1024px) 768px, 1400px"
-    : undefined;
+  const sizesAttr = responsive ? (sizesProp ?? DEFAULT_SIZES) : undefined;
+
+  const pictureClass = fill ? "absolute inset-0 block w-full h-full" : "block";
+  const imgClass = [className, fill ? "w-full h-full object-cover" : ""].filter(Boolean).join(" ");
 
   return (
-    <picture>
-      {/* AVIF источник (если доступен) */}
+    <picture className={pictureClass}>
       {avifSrcSet && (
         <source type="image/avif" srcSet={avifSrcSet} sizes={sizesAttr} />
       )}
-      {/* WebP источник */}
       {webpSrcSet && (
         <source type="image/webp" srcSet={webpSrcSet} sizes={sizesAttr} />
       )}
-      {/* Fallback */}
       <img
         src={fallbackUrl}
         alt={alt}
-        className={className}
+        className={imgClass}
         loading={loadingAttr}
         decoding={decoding}
         sizes={sizesAttr}

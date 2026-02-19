@@ -227,7 +227,7 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
   }, [slides.length, loopSlides.length]);
 
   const btnBase =
-    "absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] text-white transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
+    "absolute top-1/2 -translate-y-1/2 z-20 hidden md:flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)] transition-opacity hover:opacity-90 active:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent";
 
   // Touch swipe: мобилка без стрелок — переключение свайпом
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -279,13 +279,13 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
               >
                 <AppImage
                   src={slide.imageUrl}
-                  alt="Слайд"
+                  alt={slide.buttonText ? `Баннер: ${slide.buttonText}` : "Доставка цветов в Сочи — The Ame"}
                   fill
                   variant="hero"
                   priority={i === 0}
                   loading={i === 0 ? "eager" : "lazy"}
                   className="object-cover object-center select-none pointer-events-none"
-                  sizes="100vw"
+                  sizes="(max-width: 768px) 100vw, 100vw"
                   fetchPriority={i === 0 ? "high" : undefined}
                   imageData={{
                     image_url: slide.imageUrl,
@@ -305,7 +305,7 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                       href={slide.buttonHref}
                       className={
                         slide.buttonVariant === "transparent"
-                          ? "rounded-lg px-5 py-2.5 min-[768px]:px-6 min-[768px]:py-3 text-[clamp(0.875rem,2.5vw,1rem)] font-medium leading-snug min-h-[44px] min-w-[44px] inline-flex items-center justify-center border-2 border-white text-white bg-transparent hover:bg-white/10 transition max-w-[min(calc(100vw-2rem),22rem)] break-words text-center"
+                          ? "rounded-lg px-5 py-2.5 min-[768px]:px-6 min-[768px]:py-3 text-[clamp(0.875rem,2.5vw,1rem)] font-medium leading-snug min-h-[44px] min-w-[44px] inline-flex items-center justify-center border-2 border-white text-white bg-transparent hover:bg-white/10 transition max-w-[min(calc(100vw-2rem),22rem)] break-words text-center drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]"
                           : "rounded-lg px-5 py-2.5 min-[768px]:px-6 min-[768px]:py-3 text-[clamp(0.875rem,2.5vw,1rem)] font-medium leading-snug min-h-[44px] min-w-[44px] inline-flex items-center justify-center bg-accent-btn text-white border-0 hover:bg-accent-btn-hover active:bg-accent-btn-active transition max-w-[min(calc(100vw-2rem),22rem)] break-words text-center"
                       }
                     >

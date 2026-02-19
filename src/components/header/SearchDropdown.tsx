@@ -245,7 +245,7 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                                   ? product.image
                                   : "/placeholder.svg"
                               }
-                              alt=""
+                              alt={product.title}
                               fill
                               variant="thumb"
                               sizes="48px"
@@ -312,7 +312,7 @@ export function SearchDropdown({ onClose, isHeaderBarVisible = true }: SearchDro
                                 ? product.image
                                 : "/placeholder.svg"
                             }
-                            alt=""
+                            alt={product.title}
                             fill
                             sizes="48px"
                             variant="thumb"

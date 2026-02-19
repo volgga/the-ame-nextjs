@@ -199,7 +199,7 @@ export function QuickViewModal({ isOpen, onClose, product }: QuickViewModalProps
                       alt={`${product.name} — фото ${currentImageIndex + 1}`}
                       fill
                       variant="gallery"
-                      sizes="(max-width: 768px) 100vw, 50vw"
+                      sizes="(max-width: 768px) 90vw, 50vw"
                       className="object-cover"
                       priority={currentImageIndex === 0}
                       loading={currentImageIndex === 0 ? "eager" : "lazy"}

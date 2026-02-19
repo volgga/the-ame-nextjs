@@ -219,37 +219,37 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                 <div className="relative w-full aspect-square overflow-hidden">
                   <AppImage
                     src={imageSrc}
-                    alt=""
+                    alt={col.name}
                     fill
                     variant="card"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    sizes="(max-width: 768px) 50vw, 33vw"
                     loading={index < 2 ? "eager" : "lazy"}
                     priority={index === 0}
                     // TODO: Добавить imageData когда категории будут иметь варианты изображений
                   />
-                  {/* Градиент снизу для читаемости текста */}
+                  {/* Градиент снизу для читаемости текста (A11y: контраст ≥4.5:1) */}
                   <div
-                    className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/35 via-black/20 to-transparent pointer-events-none"
+                    className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/55 via-black/25 to-transparent pointer-events-none"
                     aria-hidden
                   />
                   {/* Overlay: название сверху слева, стрелка сверху справа, описание снизу */}
                   <div className="absolute inset-0 pointer-events-none">
                     {/* Название коллекции - сверху слева */}
-                    <h3 className="absolute top-4 left-4 md:top-5 md:left-5 text-white font-bold text-lg md:text-xl lg:text-2xl uppercase tracking-tight drop-shadow-lg">
+                    <h3 className="absolute top-4 left-4 md:top-5 md:left-5 text-white font-bold text-lg md:text-xl lg:text-2xl uppercase tracking-tight drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                       {col.name}
                     </h3>
                     {/* Стрелка - сверху справа */}
                     <div className="absolute top-4 right-4 md:top-5 md:right-5">
                       <ArrowRight
-                        className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-lg"
+                        className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
                         strokeWidth={2.5}
                         aria-hidden
                       />
                     </div>
                     {/* Описание - снизу на фото */}
                     {col.description && col.description.trim() && (
-                      <p className="absolute bottom-4 left-4 md:bottom-5 md:left-5 right-4 md:right-5 text-white text-sm md:text-base leading-relaxed drop-shadow-lg">
+                      <p className="absolute bottom-4 left-4 md:bottom-5 md:left-5 right-4 md:right-5 text-white text-sm md:text-base leading-relaxed drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]">
                         {col.description}
                       </p>
                     )}

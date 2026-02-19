@@ -75,6 +75,13 @@ export function AppImage({ variant = "card", quality, src, variants, imageData, 
       hero: true, // Hero: адаптивный (medium на мобиле, large на десктопе)
     };
 
+    const defaultSizesByVariant: Record<AppImageVariant, string> = {
+      hero: "(max-width: 768px) 100vw, 100vw",
+      card: "(max-width: 768px) 50vw, 33vw",
+      thumb: "160px",
+      blog: "(max-width: 768px) 50vw, 33vw",
+      gallery: "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 480px",
+    };
     return (
       <OptimizedImage
         variants={optimizedVariants}
@@ -85,6 +92,8 @@ export function AppImage({ variant = "card", quality, src, variants, imageData, 
         className={props.className}
         alt={props.alt || ""}
         decoding={props.decoding}
+        fill={props.fill}
+        sizes={props.sizes ?? defaultSizesByVariant[variant]}
         {...(props as any)}
       />
     );

@@ -565,7 +565,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                             alt={`${product.title} — фото ${idx + 1}`}
                             fill
                             variant="gallery"
-                            sizes="(max-width: 1024px) 100vw, 55vw"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 55vw"
                             className="object-contain object-center rounded-xl"
                             priority={idx < 3}
                             loading={idx < 3 ? "eager" : "lazy"}

@@ -352,7 +352,7 @@ export function FullscreenViewer({
                 }}
               </TransformWrapper>
             ) : (
-              <div className="flex items-center justify-center w-full h-full text-white/60 text-sm">
+              <div className="flex items-center justify-center w-full h-full text-white/90 text-sm bg-black/30">
                 {process.env.NODE_ENV === "development" && (
                   <div className="text-center">
                     <p>Изображение не загружено</p>
