@@ -1,15 +1,13 @@
 /**
- * PM2 config для запуска Next.js standalone на VPS.
- * КРИТИЧНО: cwd должен указывать внутрь .next/standalone — иначе server.js не найдёт статику.
- * Статику раздаёт Nginx (см. nginx-final.conf), Node.js обрабатывает только динамику/API/_next/image.
- * Запуск: pm2 start ecosystem.config.cjs (из корня проекта).
+ * PM2 config для Next.js — стандартный режим (next start)
+ * Запуск: pm2 start ecosystem.config.cjs (из корня проекта)
  */
 const path = require("path");
 const fs = require("fs");
 const root = __dirname;
-const standaloneDir = path.resolve(root, ".next/standalone");
+const deployPath = process.env.DEPLOY_PATH || "/var/www/theame";
 
-// На сервере обычно .env; локально можно .env.production
+// Переменные из .env
 const envPath = fs.existsSync(path.join(root, ".env"))
   ? path.join(root, ".env")
   : path.join(root, ".env.production");
@@ -35,17 +33,18 @@ module.exports = {
   apps: [
     {
       name: "theame-next",
-      script: "server.js",
-      cwd: standaloneDir,
+      script: path.join(root, "node_modules/next/dist/bin/next"),
+      args: "start",
+      cwd: path.resolve(root),
       instances: 1,
       exec_mode: "fork",
       autorestart: true,
       watch: false,
-      max_memory_restart: "400M",
+      max_memory_restart: "500M",
       env: {
         NODE_ENV: "production",
         PORT: "3000",
-        HOSTNAME: "0.0.0.0",
+        HOSTNAME: "127.0.0.1",
         ADMIN_USERNAME: getEnv("ADMIN_USERNAME", "admin"),
         ADMIN_PASSWORD_HASH: getEnv("ADMIN_PASSWORD_HASH"),
         ADMIN_PASSWORD_PLAIN: getEnv("ADMIN_PASSWORD_PLAIN"),

@@ -7,11 +7,8 @@ const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : "placeholder.
 const supabaseHosts = [...new Set([supabaseHost, "eweaqbtqzzoxpwfmjinp.supabase.co"].filter(Boolean))];
 
 const nextConfig: NextConfig = {
-  // Standalone — критично для 1GB RAM: минимальный footprint, только нужные файлы
-  output: "standalone",
-  outputFileTracingIncludes: {
-    "/*": ["node_modules/sharp/**/*"],
-  },
+  // Стандартный билд (без standalone) — статика раздаётся встроенным сервером Next.js
+  // output: "standalone", — отключено: ломало пути к статике на сервере
   // Отключаем проверку типов TypeScript во время сборки для ускорения (только для продакшн)
   typescript: {
     // В продакшн сборке пропускаем проверку типов - она занимает слишком много времени
