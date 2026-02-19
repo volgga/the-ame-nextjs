@@ -4,6 +4,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Search, ChevronDown } from "lucide-react";
 import { BOUQUET_COLORS, filterValidBouquetColorKeys } from "@/shared/catalog/bouquetColors";
+import { formatPrice } from "@/utils/formatPrice";
 import { BouquetColorSwatch } from "@/components/catalog/BouquetColorSwatch";
 import type { CatalogFlowerOption } from "@/lib/catalogFlowersFromComposition";
 
@@ -29,10 +30,6 @@ function buildQueryString(
   });
   const s = next.toString();
   return s ? `?${s}` : "";
-}
-
-function formatPrice(n: number) {
-  return n.toLocaleString("ru-RU") + " ₽";
 }
 
 const rangeInputClass =

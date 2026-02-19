@@ -24,11 +24,15 @@ dist/
 coverage/
 
 # ======================
-# Environment variables
+# Environment variables & secrets
 # ======================
 .env
 .env.*
 !.env.example
+.env.local
+.env.production
+.env.development
+.env*.local
 
 # ======================
 # TypeScript

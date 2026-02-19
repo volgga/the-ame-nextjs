@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Montserrat } from "next/font/google";
 import "./globals.css";
-import { AppShell } from "@/app/AppShell";
+import { AppShell } from "@/components/layout/AppShell";
 import { YandexMetrikaHitTracker } from "@/components/analytics/YandexMetrika";
 import { CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
 import { getHomeMarquee } from "@/lib/homeMarquee";
@@ -184,7 +184,6 @@ export default async function RootLayout({
   // Получаем домен Supabase для preconnect
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseHost = supabaseUrl ? new URL(supabaseUrl).hostname : null;
-  const additionalSupabaseHost = "eweaqbtqzzoxpwfmjinp.supabase.co";
 
   return (
     <html lang="ru" suppressHydrationWarning>
@@ -198,12 +197,6 @@ export default async function RootLayout({
           <>
             <link rel="preconnect" href={`https://${supabaseHost}`} crossOrigin="anonymous" />
             <link rel="dns-prefetch" href={`https://${supabaseHost}`} />
-          </>
-        )}
-        {supabaseHost !== additionalSupabaseHost && (
-          <>
-            <link rel="preconnect" href={`https://${additionalSupabaseHost}`} crossOrigin="anonymous" />
-            <link rel="dns-prefetch" href={`https://${additionalSupabaseHost}`} />
           </>
         )}
       </head>

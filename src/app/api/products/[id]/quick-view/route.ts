@@ -43,25 +43,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         return NextResponse.json({ error: "Invalid variant product ID" }, { status: 400 });
       }
 
-      // Получаем основной товар
-      const { data: vp, error: vpErr } = await supabase
-        .from("variant_products")
-        .select("id, name, description, image_url, images, min_price_cache, category_slug, category_slugs, is_preorder")
-        .eq("id", n)
-        .or("is_active.eq.true,is_active.is.null")
-        .or("is_hidden.eq.false,is_hidden.is.null")
-        .maybeSingle();
+      // Параллельно: основной товар + варианты (оба зависят только от n)
+      const [vpResult, variantsResult] = await Promise.all([
+        supabase
+          .from("variant_products")
+          .select("id, name, description, image_url, images, min_price_cache, category_slug, category_slugs, is_preorder")
+          .eq("id", n)
+          .or("is_active.eq.true,is_active.is.null")
+          .or("is_hidden.eq.false,is_hidden.is.null")
+          .maybeSingle(),
+        supabase
+          .from("product_variants")
+          .select("composition")
+          .eq("product_id", n)
+          .eq("is_active", true),
+      ]);
+
+      const { data: vp, error: vpErr } = vpResult;
+      const { data: variants } = variantsResult;
 
       if (vpErr || !vp) {
         return NextResponse.json({ error: "Product not found" }, { status: 404 });
       }
-
-      // Получаем варианты только для состава
-      const { data: variants } = await supabase
-        .from("product_variants")
-        .select("composition")
-        .eq("product_id", n)
-        .eq("is_active", true);
 
       // Используем только изображения товара (не вариантов)
       const imagesRaw = vp.images;

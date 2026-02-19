@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getAllCatalogProducts } from "@/lib/products";
-import { FavoritesPageClient } from "./FavoritesPageClient";
+import { FavoritesPageClient } from "@/components/favorites/FavoritesPageClient";
 import { canonicalUrl, ROBOTS_INDEX_FOLLOW } from "@/lib/seo";
 
 export const metadata: Metadata = {

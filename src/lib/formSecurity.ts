@@ -12,7 +12,7 @@ interface RateLimitEntry {
 const rateLimitMap = new Map<string, RateLimitEntry>();
 
 const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 60 секунд
-const RATE_LIMIT_MAX_REQUESTS = 10; // максимум 10 запросов
+const RATE_LIMIT_MAX_REQUESTS = 15; // максимум 15 запросов в минуту (формы: one-click, bouquet, preorder, gift-hint)
 
 /**
  * Проверяет rate limit для IP адреса.

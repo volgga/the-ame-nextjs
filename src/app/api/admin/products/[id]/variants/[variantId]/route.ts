@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { z } from "zod";
-import { getVariantProductId, recalcMinPrice } from "../../../utils";
+import { getVariantProductId, recalcMinPrice } from "@/lib/adminProductUtils";
 
 async function requireAdmin() {
   const ok = await isAdminAuthenticated();
