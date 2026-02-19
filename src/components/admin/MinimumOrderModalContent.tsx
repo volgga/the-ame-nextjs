@@ -145,11 +145,11 @@ export function MinimumOrderModalContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSave} className="rounded-xl border border-border-block bg-white p-4 space-y-3">
+    <div className="flex flex-col gap-4">
+      <form onSubmit={handleSave} className="rounded-xl border border-border-block bg-white p-4 flex flex-col gap-3">
         <h4 className="font-medium text-[#111]">{editingId ? "Редактировать правило" : "Новое правило"}</h4>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <div className="flex flex-wrap gap-3 items-end">
+        <div className="flex flex-wrap gap-3 items-end justify-end">
           <div>
             <label className="block text-sm font-medium text-[#111] mb-1">Дата</label>
             <input
@@ -192,10 +192,10 @@ export function MinimumOrderModalContent() {
         </div>
       </form>
 
-      <div>
-        <h4 className="font-medium text-[#111] mb-2">Существующие правила</h4>
+      <div className="flex flex-col gap-2">
+        <h4 className="font-medium text-[#111]">Существующие правила</h4>
         {rules.length === 0 ? (
-          <p className="text-sm text-gray-500 py-4">Нет правил. Добавьте дату и минимальную сумму выше.</p>
+          <p className="text-sm text-gray-500 p-6 text-center">Нет правил. Добавьте дату и минимальную сумму выше.</p>
         ) : (
           <ul className="space-y-2">
             {rules.map((rule) => (

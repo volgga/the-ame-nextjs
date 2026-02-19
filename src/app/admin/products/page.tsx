@@ -57,6 +57,9 @@ const ALLOWED_IMAGE_TYPES = "image/jpeg,image/png,image/webp,image/avif,image/gi
 
 type ImageItem = { file: File; previewUrl: string };
 
+/** Единый массив изображений в порядке отображения (для сохранения порядка при drag-and-drop) */
+type OrderedImageItem = { type: "existing"; url: string } | { type: "new"; file: File; previewUrl: string };
+
 type Variant = {
   id: string | number; // number = existing, string = new (uuid)
   name: string;
@@ -111,6 +114,7 @@ function AdminProductsPageContent() {
   const [productImages, setProductImages] = useState<ImageItem[]>([]);
   const [productImagesMainIndex, setProductImagesMainIndex] = useState(0);
   const [productImagesUploading, setProductImagesUploading] = useState(false);
+  const [orderedImageItems, setOrderedImageItems] = useState<OrderedImageItem[]>([]);
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string; is_active: boolean }[]>([]);
   const [selectedCategorySlugs, setSelectedCategorySlugs] = useState<string[]>([]);
   const [availableFlowers, setAvailableFlowers] = useState<string[]>([]);
@@ -413,6 +417,7 @@ function AdminProductsPageContent() {
           setExistingImageUrls(all);
           setProductImages([]);
           setProductImagesMainIndex(0);
+          setOrderedImageItems(all.map((url) => ({ type: "existing" as const, url })));
           setExistingMainImageUrl(null);
           const rawVariants = data.variants ?? [];
           setInitialVariantIds(
@@ -465,6 +470,7 @@ function AdminProductsPageContent() {
           setExistingImageUrls(all);
           setProductImages([]);
           setProductImagesMainIndex(0);
+          setOrderedImageItems(all.map((url) => ({ type: "existing" as const, url })));
         }
       })
       .catch((e) => {
@@ -498,7 +504,8 @@ function AdminProductsPageContent() {
   }
 
   const closeCreateModal = useCallback(() => {
-    productImages.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+    orderedImageItems.filter((x): x is { type: "new"; file: File; previewUrl: string } => x.type === "new").forEach((x) => URL.revokeObjectURL(x.previewUrl));
+    setOrderedImageItems([]);
     setProductImages([]);
     setProductImagesMainIndex(0);
     setExistingImageUrls([]);
@@ -522,7 +529,7 @@ function AdminProductsPageContent() {
     setVariants([]);
     setExpandedVariants(new Set());
     setExistingMainImageUrl(null);
-  }, [productImages, variants]);
+  }, [orderedImageItems, variants]);
 
   /** Валидация обязательных полей для обычного товара. Возвращает объект с ключами полей и текстами ошибок (пустой — если всё ок). */
   function validateCreateForm(): Record<string, string> {
@@ -536,7 +543,7 @@ function AdminProductsPageContent() {
     if (!description) errors.description = "Введите описание";
 
     if (createType === "simple") {
-      const totalImages = existingImageUrls.length + productImages.length;
+      const totalImages = orderedImageItems.length;
       if (totalImages === 0) errors.images = "Загрузите хотя бы одно фото";
       if (selectedCategorySlugs.length === 0) errors.categories = "Выберите минимум одну категорию";
       const price = createForm.price;
@@ -548,7 +555,7 @@ function AdminProductsPageContent() {
     }
 
     if (createType === "variant") {
-      const totalImages = existingImageUrls.length + productImages.length;
+      const totalImages = orderedImageItems.length;
       if (totalImages === 0) errors.images = "Загрузите хотя бы одно фото";
       if (selectedCategorySlugs.length === 0) errors.categories = "Выберите минимум одну категорию";
       if (variants.length === 0) errors.variants = "Добавьте хотя бы один вариант";
@@ -615,63 +622,63 @@ function AdminProductsPageContent() {
   function addProductImages(files: FileList | null) {
     if (!files?.length) return;
     const allowed = Array.from(files).filter((f) => ALLOWED_IMAGE_TYPES.split(",").some((t) => f.type === t.trim()));
-    setProductImages((prev) => {
-      const currentTotal = existingImageUrls.length + prev.length;
-      const remaining = Math.max(0, MAX_IMAGES - currentTotal);
+    setOrderedImageItems((prev) => {
+      const remaining = Math.max(0, MAX_IMAGES - prev.length);
       if (remaining <= 0) return prev;
       const next = [...prev];
       for (const file of allowed.slice(0, remaining)) {
-        next.push({ file, previewUrl: URL.createObjectURL(file) });
+        next.push({ type: "new", file, previewUrl: URL.createObjectURL(file) });
       }
       return next;
     });
   }
 
-  function removeProductImage(index: number) {
-    const combinedOffset = existingImageUrls.length;
-    setProductImages((prev) => {
-      const next = prev.filter((_, i) => i !== index);
-      URL.revokeObjectURL(prev[index].previewUrl);
-      return next;
-    });
-    setProductImagesMainIndex((prev) => {
-      const fileIndex = prev - combinedOffset;
-      if (fileIndex === index) return 0;
-      if (prev > combinedOffset + index) return prev - 1;
-      return prev;
-    });
-  }
-
-  function removeExistingImage(index: number) {
-    setExistingImageUrls((prev) => prev.filter((_, i) => i !== index));
-    setProductImagesMainIndex((prev) => {
-      if (prev === index) return 0;
-      if (prev > index) return prev - 1;
-      return prev;
+  function removeOrderedImage(index: number) {
+    setOrderedImageItems((prev) => {
+      const item = prev[index];
+      if (item?.type === "new") URL.revokeObjectURL(item.previewUrl);
+      return prev.filter((_, i) => i !== index);
     });
   }
 
   function setProductImageMain(index: number) {
-    setProductImagesMainIndex(index);
+    setOrderedImageItems((prev) => {
+      if (index <= 0 || index >= prev.length) return prev;
+      const item = prev[index];
+      if (!item) return prev;
+      const rest = prev.filter((_, i) => i !== index);
+      return [item, ...rest];
+    });
   }
 
-  const productImageItems: SortableImageItem[] = [
-    ...existingImageUrls.map((url, i) => ({ id: `existing-${i}`, url })),
-    ...productImages.map((p, i) => ({ id: `file-${i}`, url: p.previewUrl, file: p.file })),
-  ];
+  const productImageItems: SortableImageItem[] = orderedImageItems.map((x, i) =>
+    x.type === "existing"
+      ? { id: `existing-${i}`, url: x.url }
+      : { id: `file-${i}`, url: x.previewUrl, file: x.file }
+  );
+
+  const { existingImageUrls, productImages } = (() => {
+    const existing = orderedImageItems.filter((x): x is { type: "existing"; url: string } => x.type === "existing").map((x) => x.url);
+    const product = orderedImageItems.filter((x): x is { type: "new"; file: File; previewUrl: string } => x.type === "new").map((x) => ({ file: x.file, previewUrl: x.previewUrl }));
+    return { existingImageUrls: existing, productImages: product };
+  })();
 
   function handleProductImageReorder(newItems: SortableImageItem[]) {
-    setExistingImageUrls(newItems.filter((x) => !x.file).map((x) => x.url));
-    setProductImages(newItems.filter((x) => x.file).map((x) => ({ file: x.file!, previewUrl: x.url })));
-    setProductImagesMainIndex(0);
+    const newOrder: OrderedImageItem[] = newItems.map((item) =>
+      item.file ? { type: "new", file: item.file, previewUrl: item.url } : { type: "existing", url: item.url }
+    );
+    setOrderedImageItems(newOrder);
   }
 
   function handleProductImageRemove(id: string) {
     const idx = productImageItems.findIndex((x) => x.id === id);
     if (idx === -1) return;
-    const existingCount = productImageItems.filter((x) => !x.file).length;
-    if (idx < existingCount) removeExistingImage(idx);
-    else removeProductImage(idx - existingCount);
+    removeOrderedImage(idx);
+  }
+
+  function handleProductImageSetMain(id: string) {
+    const idx = productImageItems.findIndex((x) => x.id === id);
+    if (idx > 0) setProductImageMain(idx);
   }
 
   // Функции для работы с вариантами
@@ -797,10 +804,11 @@ function AdminProductsPageContent() {
     setCreateLoading(true);
     try {
       if (createType === "simple") {
+        const newItems = orderedImageItems.filter((x): x is { type: "new"; file: File; previewUrl: string } => x.type === "new");
         const uploadedUrls: string[] = [];
-        if (productImages.length > 0) {
+        if (newItems.length > 0) {
           setProductImagesUploading(true);
-          for (const item of productImages) {
+          for (const item of newItems) {
             const formData = new FormData();
             formData.append("file", item.file);
             const res = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
@@ -816,9 +824,12 @@ function AdminProductsPageContent() {
           }
           setProductImagesUploading(false);
         }
-        const allUrls = [...existingImageUrls, ...uploadedUrls].slice(0, MAX_IMAGES);
-        const mainUrl = allUrls[productImagesMainIndex] ?? allUrls[0] ?? null;
-        const otherUrls = allUrls.filter((_, i) => i !== productImagesMainIndex);
+        let uploadIdx = 0;
+        const allUrls = orderedImageItems.slice(0, MAX_IMAGES).map((x) =>
+          x.type === "existing" ? x.url : uploadedUrls[uploadIdx++]
+        );
+        const mainUrl = allUrls[0] ?? null;
+        const otherUrls = allUrls.slice(1);
         const payload = {
           name: createForm.name.trim(),
           description: createForm.description.trim() || null,
@@ -885,10 +896,11 @@ function AdminProductsPageContent() {
         closeCreateModal();
         load();
       } else {
+        const newItems = orderedImageItems.filter((x): x is { type: "new"; file: File; previewUrl: string } => x.type === "new");
         const uploadedUrls: string[] = [];
-        if (productImages.length > 0) {
+        if (newItems.length > 0) {
           setProductImagesUploading(true);
-          for (const item of productImages) {
+          for (const item of newItems) {
             const formData = new FormData();
             formData.append("file", item.file);
             const res = await fetch("/api/admin/products/upload", { method: "POST", body: formData });
@@ -904,9 +916,12 @@ function AdminProductsPageContent() {
           }
           setProductImagesUploading(false);
         }
-        const allUrls = [...existingImageUrls, ...uploadedUrls].slice(0, MAX_IMAGES);
-        const mainUrl = allUrls[productImagesMainIndex] ?? allUrls[0] ?? null;
-        const otherUrls = allUrls.filter((_, i) => i !== productImagesMainIndex);
+        let uploadIdx = 0;
+        const allUrls = orderedImageItems.slice(0, MAX_IMAGES).map((x) =>
+          x.type === "existing" ? x.url : uploadedUrls[uploadIdx++]
+        );
+        const mainUrl = allUrls[0] ?? null;
+        const otherUrls = allUrls.slice(1);
         const payload = {
           name: createForm.name.trim(),
           description: createForm.description.trim() || null,
@@ -1063,11 +1078,12 @@ function AdminProductsPageContent() {
       let data: { error?: string; fieldErrors?: Record<string, string[]>; id?: string | number } = {};
       if (createType === "simple") {
         // Загрузка изображений для простого товара
+        const newItems = orderedImageItems.filter((x): x is { type: "new"; file: File; previewUrl: string } => x.type === "new");
         const imageUrls: string[] = [];
-        if (productImages.length > 0) {
+        if (newItems.length > 0) {
           setProductImagesUploading(true);
           try {
-            for (const item of productImages) {
+            for (const item of newItems) {
               const formData = new FormData();
               formData.append("file", item.file);
               const res = await fetch("/api/admin/products/upload", {
@@ -1102,11 +1118,8 @@ function AdminProductsPageContent() {
         }
 
         const limitedImageUrls = imageUrls.slice(0, MAX_IMAGES);
-        const mainUrl = limitedImageUrls[productImagesMainIndex] ?? limitedImageUrls[0] ?? undefined;
-        const otherUrls =
-          limitedImageUrls.length > 0
-            ? [...limitedImageUrls.slice(0, productImagesMainIndex), ...limitedImageUrls.slice(productImagesMainIndex + 1)]
-            : [];
+        const mainUrl = limitedImageUrls[0] ?? undefined;
+        const otherUrls = limitedImageUrls.length > 1 ? limitedImageUrls.slice(1) : [];
         const slug = slugify(createForm.name);
         const category_slugs = selectedCategorySlugs.length > 0 ? selectedCategorySlugs : null;
 
@@ -1165,11 +1178,12 @@ function AdminProductsPageContent() {
         }
       } else if (createType === "variant") {
         // Загрузка изображений для вариантного товара
+        const newItems = orderedImageItems.filter((x): x is { type: "new"; file: File; previewUrl: string } => x.type === "new");
         const imageUrls: string[] = [];
-        if (productImages.length > 0) {
+        if (newItems.length > 0) {
           setProductImagesUploading(true);
           try {
-            for (const item of productImages) {
+            for (const item of newItems) {
               const formData = new FormData();
               formData.append("file", item.file);
               const res = await fetch("/api/admin/products/upload", {
@@ -1204,11 +1218,8 @@ function AdminProductsPageContent() {
         }
 
         const limitedImageUrls = imageUrls.slice(0, MAX_IMAGES);
-        const mainUrl = limitedImageUrls[productImagesMainIndex] ?? limitedImageUrls[0] ?? undefined;
-        const otherUrls =
-          limitedImageUrls.length > 0
-            ? [...limitedImageUrls.slice(0, productImagesMainIndex), ...limitedImageUrls.slice(productImagesMainIndex + 1)]
-            : [];
+        const mainUrl = limitedImageUrls[0] ?? undefined;
+        const otherUrls = limitedImageUrls.length > 1 ? limitedImageUrls.slice(1) : [];
 
         const slug = slugify(createForm.name);
         const category_slugs = selectedCategorySlugs.length > 0 ? selectedCategorySlugs : null;
@@ -1395,7 +1406,8 @@ function AdminProductsPageContent() {
               setCreateType("simple");
               setExistingImageUrls([]);
               setExistingMainImageUrl(null);
-              productImages.forEach((item) => URL.revokeObjectURL(item.previewUrl));
+              orderedImageItems.filter((x): x is { type: "new"; file: File; previewUrl: string } => x.type === "new").forEach((x) => URL.revokeObjectURL(x.previewUrl));
+              setOrderedImageItems([]);
               setProductImages([]);
               setProductImagesMainIndex(0);
               setSelectedCategorySlugs([]);
@@ -1622,7 +1634,7 @@ function AdminProductsPageContent() {
                           accept={ALLOWED_IMAGE_TYPES}
                           multiple
                           onChange={(e) => addProductImages(e.target.files)}
-                          disabled={existingImageUrls.length + productImages.length >= MAX_IMAGES}
+                          disabled={orderedImageItems.length >= MAX_IMAGES}
                           className="block w-full text-sm text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-3 file:py-1.5 file:text-white file:hover:bg-accent-btn-hover focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                         />
                         {fieldErrors.images && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.images}</p>}
@@ -1632,6 +1644,7 @@ function AdminProductsPageContent() {
                               items={productImageItems}
                               onReorder={handleProductImageReorder}
                               onRemove={handleProductImageRemove}
+                              onSetMain={handleProductImageSetMain}
                               firstIsMain
                               thumbSize={88}
                             />
@@ -2350,7 +2363,7 @@ function AdminProductsPageContent() {
                           accept={ALLOWED_IMAGE_TYPES}
                           multiple
                           onChange={(e) => addProductImages(e.target.files)}
-                          disabled={existingImageUrls.length + productImages.length >= MAX_IMAGES}
+                          disabled={orderedImageItems.length >= MAX_IMAGES}
                           className="block w-full text-sm text-color-text-main file:mr-2 file:rounded file:border-0 file:bg-accent-btn file:px-3 file:py-1.5 file:text-white file:hover:bg-accent-btn-hover focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)]"
                         />
                         {fieldErrors.images && <p className="mt-0.5 text-xs text-red-600">{fieldErrors.images}</p>}
@@ -2360,6 +2373,7 @@ function AdminProductsPageContent() {
                               items={productImageItems}
                               onReorder={handleProductImageReorder}
                               onRemove={handleProductImageRemove}
+                              onSetMain={handleProductImageSetMain}
                               firstIsMain
                               thumbSize={88}
                             />

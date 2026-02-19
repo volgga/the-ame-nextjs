@@ -35,9 +35,14 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!isOpen) setSuccess(false);
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";
@@ -91,10 +96,7 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
       }
 
       setLoading(false);
-      if (typeof window !== "undefined") {
-        window.alert("Заявка отправлена! Мы свяжемся с вами в течение 5 минут.");
-      }
-      onClose();
+      setSuccess(true);
     } catch {
       setSubmitError("Ошибка сети. Проверьте интернет и попробуйте снова.");
       setLoading(false);
@@ -112,7 +114,7 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-border-block">
-          <h2 className="text-xl font-semibold text-color-text-main">Купить в 1 клик</h2>
+          <h2 className="text-xl font-semibold text-color-text-main">{success ? "Заявка отправлена" : "Купить в 1 клик"}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -124,6 +126,26 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
         </div>
 
         <div className="overflow-y-auto flex-1 p-4">
+          {success ? (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 mx-auto mb-4 bg-color-text-main/10 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-color-text-main" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <p className="text-color-text-secondary text-sm mb-6">
+                Заявка отправлена. Мы свяжемся с вами в течение 5 минут.
+              </p>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2 text-white rounded-lg transition-colors bg-accent-btn hover:bg-accent-btn-hover active:bg-accent-btn-active"
+              >
+                Закрыть
+              </button>
+            </div>
+          ) : (
+          <>
           {/* Позиция: мини-фото, название, количество, цена */}
           <div className="flex items-center gap-3 p-3 bg-[rgba(31,42,31,0.06)] rounded-xl mb-6">
             <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-[#ece9e2]">
@@ -203,6 +225,8 @@ export function QuickBuyModal({ isOpen, onClose, product }: QuickBuyModalProps) 
               {loading ? "Отправка…" : "Отправить"}
             </button>
           </form>
+          </>
+          )}
         </div>
       </div>
     </div>

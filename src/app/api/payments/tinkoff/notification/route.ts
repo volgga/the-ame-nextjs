@@ -14,21 +14,20 @@ export async function POST(request: Request) {
   try {
     const payload = (await request.json()) as Record<string, unknown>;
     
-    const orderId = payload.OrderId as string | undefined;
-    const status = payload.Status as string | undefined;
+    const orderId = payload.OrderId != null ? String(payload.OrderId) : undefined;
+    const status = payload.Status != null ? String(payload.Status) : undefined;
     const success = payload.Success === true || payload.Success === "true";
-    const paymentId = payload.PaymentId as string | undefined;
+    const paymentId = payload.PaymentId != null ? String(payload.PaymentId) : undefined;
 
     const password = process.env.TINKOFF_PASSWORD;
-    if (!password) {
+    if (password) {
+      const valid = verifyTinkoffNotificationToken(payload, password);
+      if (!valid) {
+        console.warn("[tinkoff-notification] invalid token, rejecting", { orderId, status });
+        return new NextResponse("OK", { status: 200 });
+      }
+    } else {
       console.warn("[tinkoff-notification] TINKOFF_PASSWORD not set, skipping verification", { orderId });
-      return new NextResponse("OK", { status: 200 });
-    }
-
-    const valid = verifyTinkoffNotificationToken(payload, password);
-    if (!valid) {
-      console.warn("[tinkoff-notification] invalid token, rejecting", { orderId, status });
-      return new NextResponse("OK", { status: 200 });
     }
 
     if (!orderId) {

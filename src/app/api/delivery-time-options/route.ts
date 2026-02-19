@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
           options.push(...customIntervals);
           return NextResponse.json(options);
         }
+        // День существует, но слотов нет (все удалены) — fallback на стандартные интервалы ниже
       }
     } catch (dbError) {
       // Если таблицы еще не созданы или ошибка БД - fallback на стандартные опции

@@ -144,11 +144,18 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Обновляем ref с длиной и ограничиваем visibleCount
+  // Обновляем ref с длиной и ограничиваем visibleCount.
+  // При сбросе фильтров: если prev был мал (напр. 1), а список вырос — показываем минимум stepRef.current товаров.
   useEffect(() => {
     if (useInfiniteScrollMode) {
-      sortedFlowersLengthRef.current = sortedFlowers.length;
-      setVisibleCount((prev) => Math.min(prev, sortedFlowers.length));
+      const maxCount = sortedFlowers.length;
+      sortedFlowersLengthRef.current = maxCount;
+      setVisibleCount((prev) => {
+        const step = stepRef.current;
+        const capped = Math.min(prev, maxCount);
+        if (maxCount >= step && capped < step) return Math.min(step, maxCount);
+        return capped;
+      });
     }
   }, [useInfiniteScrollMode, sortedFlowers.length]);
 

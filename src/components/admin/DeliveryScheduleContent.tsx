@@ -262,7 +262,7 @@ export function DeliveryScheduleContent() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-4">
       <div className="flex justify-end">
         <button
           type="button"
@@ -311,7 +311,7 @@ export function DeliveryScheduleContent() {
       )}
 
       {days.length === 0 ? (
-        <p className="py-8 text-center text-gray-500">Нет дней. Нажмите «Добавить день».</p>
+        <p className="p-6 text-center text-gray-500">Нет дней. Нажмите «Добавить день».</p>
       ) : (
         <div className="space-y-3">
           {days.map((day) => {

@@ -52,7 +52,9 @@ export async function POST(request: Request) {
         { status: 502 }
       );
     }
-    // Webhook URL: если не задан в env, используем дефолтный для прода
+    // Webhook URL для уведомлений Tinkoff. Tinkoff вызывает его при смене статуса платежа.
+    // Важно: URL в кабинете T-Bank и TINKOFF_NOTIFICATION_URL должны совпадать.
+    // Дефолт: /api/tinkoff-callback (альтернатива: /api/payments/tinkoff/notification).
     const notificationUrl = process.env.TINKOFF_NOTIFICATION_URL || `${safeBaseUrl}/api/tinkoff-callback`;
     const c = order.customer ?? {};
     const data: Record<string, string> = {};

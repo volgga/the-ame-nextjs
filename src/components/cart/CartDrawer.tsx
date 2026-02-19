@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { CartItemsList } from "./CartItemsList";
@@ -21,6 +21,7 @@ type CartDrawerProps = {
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { state } = useCart();
   const [mounted, setMounted] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [totals, setTotals] = useState<PromoTotals | null>(null);
 
   const subtotal = state.total; // сумма по позициям
@@ -79,6 +80,12 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (isOpen && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo(0, 0);
+    }
+  }, [isOpen]);
+
   const displayTotals: PromoTotals = totals ?? { subtotal, discount: 0, total: subtotal, promo: null };
 
   const handlePromoApplySuccess = useCallback((newTotals: PromoTotals) => {
@@ -125,7 +132,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           </button>
         </div>
         {/* Контент с прокруткой */}
-        <div className="overflow-y-auto flex-1 min-h-0">
+        <div ref={scrollContainerRef} className="overflow-y-auto flex-1 min-h-0">
           <div className="p-4 sm:p-6 pt-4 space-y-4">
             <div>
               <h2 className="text-lg font-bold mb-4">Ваш заказ:</h2>

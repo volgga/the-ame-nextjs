@@ -25,6 +25,8 @@ type AdminSortableImagesProps = {
   items: SortableImageItem[];
   onReorder: (items: SortableImageItem[]) => void;
   onRemove: (id: string) => void;
+  /** При клике на картинку — сделать главной (переместить на индекс 0) */
+  onSetMain?: (id: string) => void;
   /** Показывать подпись «Главное» на первом (для товаров) */
   firstIsMain?: boolean;
   /** Размер превью: 72–96px */
@@ -38,6 +40,7 @@ function SortableImageCard({
   firstIsMain,
   thumbSize,
   onRemove,
+  onSetMain,
   disabled,
 }: {
   item: SortableImageItem;
@@ -45,6 +48,7 @@ function SortableImageCard({
   firstIsMain?: boolean;
   thumbSize: number;
   onRemove: (id: string) => void;
+  onSetMain?: (id: string) => void;
   disabled?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -56,6 +60,10 @@ function SortableImageCard({
     transition,
     width: thumbSize,
     height: thumbSize,
+  };
+
+  const handleImageClick = () => {
+    if (onSetMain && index !== 0) onSetMain(item.id);
   };
 
   return (
@@ -71,16 +79,30 @@ function SortableImageCard({
         ${disabled ? "pointer-events-none opacity-60" : ""}
       `}
     >
-      <img
-        src={item.url}
-        alt=""
-        className="w-full h-full object-cover block"
-        width={thumbSize}
-        height={thumbSize}
-        draggable={false}
-      />
+      <div
+        className="w-full h-full cursor-pointer"
+        onClick={handleImageClick}
+        role={onSetMain && index !== 0 ? "button" : undefined}
+        tabIndex={onSetMain && index !== 0 ? 0 : undefined}
+        onKeyDown={(e) => {
+          if (onSetMain && index !== 0 && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            onSetMain(item.id);
+          }
+        }}
+        title={onSetMain && index !== 0 ? "Сделать главным" : undefined}
+      >
+        <img
+          src={item.url}
+          alt=""
+          className="w-full h-full object-cover block pointer-events-none"
+          width={thumbSize}
+          height={thumbSize}
+          draggable={false}
+        />
+      </div>
       {firstIsMain && index === 0 && (
-        <span className="absolute bottom-0 left-0 right-0 bg-accent-btn text-white text-xs text-center py-0.5">
+        <span className="absolute bottom-0 left-0 right-0 bg-green-600 text-white text-xs text-center py-0.5">
           Главное
         </span>
       )}
@@ -104,6 +126,7 @@ export function AdminSortableImages({
   items,
   onReorder,
   onRemove,
+  onSetMain,
   firstIsMain = false,
   thumbSize = 88,
   disabled = false,
@@ -137,6 +160,7 @@ export function AdminSortableImages({
               firstIsMain={firstIsMain}
               thumbSize={thumbSize}
               onRemove={onRemove}
+              onSetMain={onSetMain}
               disabled={disabled}
             />
           ))}

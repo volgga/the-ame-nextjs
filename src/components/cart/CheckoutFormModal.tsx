@@ -852,10 +852,15 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
                 }}
                 min={getMinDate()}
                 lang="ru"
-                className={`w-full min-w-0 box-border px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 overflow-hidden ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
+                className={`w-full min-w-0 box-border px-4 h-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent overflow-hidden ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
               />
               {firstInvalidField === FIELD_IDS.deliveryDate && (
                 <p className="text-sm text-red-600 mt-1">Выберите дату доставки</p>
+              )}
+              {deliveryDate && minimumOrderAmount != null && (
+                <p className="text-sm text-red-500 mt-1">
+                  Минимальный заказ на эту дату — от {minimumOrderAmount.toLocaleString("ru-RU")} ₽
+                </p>
               )}
             </div>
             {/* Время доставки: скрыто при "Уточнить время и адрес у получателя"; при самовывозе — показываем */}
@@ -872,7 +877,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
                     clearFieldError(FIELD_IDS.deliveryTime);
                   }}
                   disabled={loadingTimeOptions}
-                  className={`w-full px-4 py-3 min-h-[44px] border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 ${firstInvalidField === FIELD_IDS.deliveryTime ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"} ${loadingTimeOptions ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`w-full px-4 h-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent appearance-none bg-white ${firstInvalidField === FIELD_IDS.deliveryTime ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"} ${loadingTimeOptions ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <option value="">{loadingTimeOptions ? "Загрузка..." : "Выберите время"}</option>
                   {getTimeIntervals().map((interval) => (
@@ -1033,11 +1038,6 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
           receiveMailings: agreeNewsletter,
         }}
       />
-      {belowMinimumOrder && minimumOrderAmount != null && (
-        <p className="text-sm text-red-600 mt-2" role="alert">
-          Минимальный заказ на эту дату — от {minimumOrderAmount.toLocaleString("ru-RU")} ₽
-        </p>
-      )}
     </div>
   );
 }

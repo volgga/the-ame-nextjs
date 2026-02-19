@@ -20,10 +20,10 @@ export async function POST(request: Request) {
     return new NextResponse("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
   }
 
-  const orderId = payload.OrderId as string | undefined;
-  const status = payload.Status as string | undefined;
+  const orderId = payload.OrderId != null ? String(payload.OrderId) : undefined;
+  const status = payload.Status != null ? String(payload.Status) : undefined;
   const success = payload.Success === true || payload.Success === "true";
-  const paymentId = payload.PaymentId as string | undefined;
+  const paymentId = payload.PaymentId != null ? String(payload.PaymentId) : undefined;
 
   const password = process.env.TINKOFF_PASSWORD;
   if (password) {
