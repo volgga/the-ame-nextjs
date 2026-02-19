@@ -1,14 +1,13 @@
 /**
- * PM2 config для запуска Next.js standalone на VPS (VDSina и др.).
- * Standalone — минимальный footprint, критично для 1GB RAM.
- * Запуск из корня проекта: pm2 start ecosystem.config.cjs
- * Переменные берутся из .env (или .env.production).
- * Логи: pm2 logs или logs/out.log, logs/err.log
+ * PM2 config для запуска Next.js standalone на VPS.
+ * КРИТИЧНО: cwd должен указывать внутрь .next/standalone — иначе server.js не найдёт статику.
+ * Статику раздаёт Nginx (см. nginx-final.conf), Node.js обрабатывает только динамику/API/_next/image.
+ * Запуск: pm2 start ecosystem.config.cjs (из корня проекта).
  */
 const path = require("path");
 const fs = require("fs");
 const root = __dirname;
-const standaloneDir = path.join(root, ".next/standalone");
+const standaloneDir = path.resolve(root, ".next/standalone");
 
 // На сервере обычно .env; локально можно .env.production
 const envPath = fs.existsSync(path.join(root, ".env"))
@@ -36,7 +35,7 @@ module.exports = {
   apps: [
     {
       name: "theame-next",
-      script: path.join(standaloneDir, "server.js"),
+      script: "server.js",
       cwd: standaloneDir,
       instances: 1,
       exec_mode: "fork",
@@ -46,6 +45,7 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: "3000",
+        HOSTNAME: "0.0.0.0",
         ADMIN_USERNAME: getEnv("ADMIN_USERNAME", "admin"),
         ADMIN_PASSWORD_HASH: getEnv("ADMIN_PASSWORD_HASH"),
         ADMIN_PASSWORD_PLAIN: getEnv("ADMIN_PASSWORD_PLAIN"),

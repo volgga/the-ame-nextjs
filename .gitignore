@@ -66,6 +66,7 @@ scripts/
 !scripts/server-fix-404.sh
 !scripts/ultimate-fix.sh
 !scripts/nginx.conf.fixed
+!scripts/nginx-final.conf
 
 # ======================
 # Dumps / backups
