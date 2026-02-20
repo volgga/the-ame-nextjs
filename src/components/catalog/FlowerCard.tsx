@@ -151,7 +151,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
 
   return (
     <div className="relative flex flex-col h-full">
-      <Link href={productUrl} aria-label={flower.name} className="block flex-1 relative" prefetch={false}>
+      <Link href={productUrl} aria-label={flower.name} className="block flex-1 relative" prefetch={true}>
         {/* 📸 Image wrapper: clips badges to rounded image (productCardImageWrap = 24px radius + overflow hidden) */}
         <div className="productCardImageWrap group aspect-square bg-[#ece9e2]">
           {((isHitEffective || isNewEffective) || hasDiscount) && (
