@@ -657,12 +657,6 @@ function AdminProductsPageContent() {
       : { id: `file-${i}`, url: x.previewUrl, file: x.file }
   );
 
-  const { existingImageUrls, productImages } = (() => {
-    const existing = orderedImageItems.filter((x): x is { type: "existing"; url: string } => x.type === "existing").map((x) => x.url);
-    const product = orderedImageItems.filter((x): x is { type: "new"; file: File; previewUrl: string } => x.type === "new").map((x) => ({ file: x.file, previewUrl: x.previewUrl }));
-    return { existingImageUrls: existing, productImages: product };
-  })();
-
   function handleProductImageReorder(newItems: SortableImageItem[]) {
     const newOrder: OrderedImageItem[] = newItems.map((item) =>
       item.file ? { type: "new", file: item.file, previewUrl: item.url } : { type: "existing", url: item.url }
