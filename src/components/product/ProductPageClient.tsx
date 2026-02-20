@@ -39,6 +39,9 @@ type ProductPageClientProps = {
   addToOrderProducts: Product[];
 };
 
+/** Плавная анимация раскрытия (как в FAQ): grid-template-rows 0fr → 1fr */
+const ACCORDION_TRANSITION_MS = 300;
+
 /** Аккордеон-секция (single-open: при открытии нового — предыдущий закрывается) */
 function AccordionItem({
   id: _id,
@@ -62,9 +65,15 @@ function AccordionItem({
         />
       </button>
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-[3000px] pb-4" : "max-h-0"}`}
+        className="grid transition-[grid-template-rows] ease-in-out"
+        style={{
+          gridTemplateRows: isOpen ? "1fr" : "0fr",
+          transitionDuration: `${ACCORDION_TRANSITION_MS}ms`,
+        }}
       >
-        <div className="text-sm text-color-text-secondary leading-relaxed pr-1">{children}</div>
+        <div className="overflow-hidden">
+          <div className="pb-4 text-sm text-color-text-secondary leading-relaxed pr-1">{children}</div>
+        </div>
       </div>
     </div>
   );
@@ -510,8 +519,8 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                         variant="thumb"
                         sizes="64px"
                         className="object-cover object-center"
-                        priority={idx < 3}
-                        loading={idx < 3 ? "eager" : "lazy"}
+                        priority={idx === 0}
+                        loading={idx === 0 ? "eager" : "lazy"}
                         imageData={
                           idx === 0 && productImageDataBust
                             ? productImageDataBust
@@ -567,9 +576,9 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                             variant="gallery"
                             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 55vw"
                             className="object-contain object-center rounded-xl"
-                            priority={idx < 3}
-                            loading={idx < 3 ? "eager" : "lazy"}
-                            fetchPriority={idx === 0 ? "high" : idx < 3 ? "auto" : undefined}
+                            priority={idx === 0}
+                            loading={idx === 0 ? "eager" : "lazy"}
+                            fetchPriority={idx === 0 ? "high" : undefined}
                             imageData={
                               idx === 0 && productImageDataBust
                                 ? productImageDataBust

@@ -15,6 +15,7 @@ export async function POST(request: Request) {
   let payload: Record<string, unknown> = {};
   try {
     payload = (await request.json()) as Record<string, unknown>;
+    console.log("Tinkoff Webhook Payload:", payload);
   } catch (err) {
     console.warn("[tinkoff-callback] invalid JSON", err instanceof Error ? err.message : err);
     return new NextResponse("OK", { status: 200, headers: { "Content-Type": "text/plain" } });

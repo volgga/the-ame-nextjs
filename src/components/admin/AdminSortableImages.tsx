@@ -1,17 +1,6 @@
 "use client";
 
-import {
-  DndContext,
-  DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { useState } from "react";
 import { X } from "lucide-react";
 
 export type SortableImageItem = {
@@ -25,7 +14,7 @@ type AdminSortableImagesProps = {
   items: SortableImageItem[];
   onReorder: (items: SortableImageItem[]) => void;
   onRemove: (id: string) => void;
-  /** При клике на картинку — сделать главной (переместить на индекс 0) */
+  /** @deprecated Убрано: порядок меняется только через drag-and-drop. Первое фото (индекс 0) — главное. */
   onSetMain?: (id: string) => void;
   /** Показывать подпись «Главное» на первом (для товаров) */
   firstIsMain?: boolean;
@@ -34,68 +23,58 @@ type AdminSortableImagesProps = {
   disabled?: boolean;
 };
 
+function arrayMove<T>(arr: T[], from: number, to: number): T[] {
+  const result = [...arr];
+  const [removed] = result.splice(from, 1);
+  result.splice(to, 0, removed);
+  return result;
+}
+
 function SortableImageCard({
   item,
   index,
   firstIsMain,
   thumbSize,
   onRemove,
-  onSetMain,
   disabled,
+  isDragging,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
 }: {
   item: SortableImageItem;
   index: number;
   firstIsMain?: boolean;
   thumbSize: number;
   onRemove: (id: string) => void;
-  onSetMain?: (id: string) => void;
   disabled?: boolean;
+  isDragging: boolean;
+  onDragStart: (e: React.DragEvent, index: number) => void;
+  onDragOver: (e: React.DragEvent, index: number) => void;
+  onDrop: (e: React.DragEvent, index: number) => void;
+  onDragEnd: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: item.id,
-  });
-
-  const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    width: thumbSize,
-    height: thumbSize,
-  };
-
-  const handleImageClick = () => {
-    if (onSetMain && index !== 0) onSetMain(item.id);
-  };
-
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
+      draggable={!disabled}
+      onDragStart={(e) => onDragStart(e, index)}
+      onDragOver={(e) => onDragOver(e, index)}
+      onDrop={(e) => onDrop(e, index)}
+      onDragEnd={onDragEnd}
       className={`
         relative flex-shrink-0 rounded-lg overflow-hidden border-2 bg-[rgba(31,42,31,0.04)]
         cursor-grab active:cursor-grabbing
         ${isDragging ? "z-50 border-color-text-main opacity-90 shadow-lg" : "border-border-block"}
         ${disabled ? "pointer-events-none opacity-60" : ""}
       `}
+      style={{ width: thumbSize, height: thumbSize }}
     >
-      <div
-        className="w-full h-full cursor-pointer"
-        onClick={handleImageClick}
-        role={onSetMain && index !== 0 ? "button" : undefined}
-        tabIndex={onSetMain && index !== 0 ? 0 : undefined}
-        onKeyDown={(e) => {
-          if (onSetMain && index !== 0 && (e.key === "Enter" || e.key === " ")) {
-            e.preventDefault();
-            onSetMain(item.id);
-          }
-        }}
-        title={onSetMain && index !== 0 ? "Сделать главным" : undefined}
-      >
+      <div className="w-full h-full">
         <img
           src={item.url}
           alt=""
-          className="w-full h-full object-cover block pointer-events-none"
+          className="w-full h-full object-cover block pointer-events-none select-none"
           width={thumbSize}
           height={thumbSize}
           draggable={false}
@@ -126,46 +105,58 @@ export function AdminSortableImages({
   items,
   onReorder,
   onRemove,
-  onSetMain,
+  onSetMain: _onSetMain,
   firstIsMain = false,
   thumbSize = 88,
   disabled = false,
 }: AdminSortableImagesProps) {
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(KeyboardSensor)
-  );
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const oldIndex = items.findIndex((i) => i.id === active.id);
-    const newIndex = items.findIndex((i) => i.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-    const reordered = arrayMove(items, oldIndex, newIndex);
+  function handleDragStart(e: React.DragEvent, index: number) {
+    if (disabled) return;
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(index));
+    e.dataTransfer.setData("application/json", JSON.stringify({ index }));
+  }
+
+  function handleDragOver(e: React.DragEvent, dropIndex: number) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  }
+
+  function handleDrop(e: React.DragEvent, dropIndex: number) {
+    e.preventDefault();
+    setDraggedIndex(null);
+    if (disabled) return;
+    const dragIndex = parseInt(e.dataTransfer.getData("text/plain"), 10);
+    if (Number.isNaN(dragIndex) || dragIndex === dropIndex) return;
+    const reordered = arrayMove(items, dragIndex, dropIndex);
     onReorder(reordered);
   }
 
+  function handleDragEnd() {
+    setDraggedIndex(null);
+  }
+
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext items={items.map((i) => i.id)} strategy={horizontalListSortingStrategy}>
-        <div className="flex flex-wrap gap-3 overflow-x-auto py-1">
-          {items.map((item, index) => (
-            <SortableImageCard
-              key={item.id}
-              item={item}
-              index={index}
-              firstIsMain={firstIsMain}
-              thumbSize={thumbSize}
-              onRemove={onRemove}
-              onSetMain={onSetMain}
-              disabled={disabled}
-            />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
+    <div className="flex flex-wrap gap-3 overflow-x-auto py-1">
+      {items.map((item, index) => (
+        <SortableImageCard
+          key={item.id}
+          item={item}
+          index={index}
+          firstIsMain={firstIsMain}
+          thumbSize={thumbSize}
+          onRemove={onRemove}
+          disabled={disabled}
+          isDragging={draggedIndex === index}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onDragEnd={handleDragEnd}
+        />
+      ))}
+    </div>
   );
 }

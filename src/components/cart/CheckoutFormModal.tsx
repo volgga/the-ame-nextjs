@@ -835,10 +835,10 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
           </div>
         )}
 
-        {/* Дата и время доставки: одна строка на десктопе/планшете, друг под другом на мобильных */}
+        {/* Дата и время доставки: grid — на мобилке 1 колонка 100%, на ПК — 2 колонки */}
         {(deliveryType || isPickup || (!isRecipientSelf && askRecipientForDetails)) && (
-          <div className="flex flex-col md:flex-row md:gap-4 gap-3 min-w-0">
-            <div className="w-full min-w-0 md:flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
+            <div className="w-full min-w-0">
               <label className="block text-sm mb-1 text-color-text-main">
                 Дата доставки <span className="text-red-500">*</span>
               </label>
@@ -852,7 +852,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
                 }}
                 min={getMinDate()}
                 lang="ru"
-                className={`w-full min-w-0 box-border px-4 h-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent overflow-hidden ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
+                className={`w-full min-w-0 box-border appearance-none bg-white px-4 h-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent overflow-hidden ${firstInvalidField === FIELD_IDS.deliveryDate ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"}`}
               />
               {firstInvalidField === FIELD_IDS.deliveryDate && (
                 <p className="text-sm text-red-600 mt-1">Выберите дату доставки</p>
@@ -865,7 +865,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
             </div>
             {/* Время доставки: скрыто при "Уточнить время и адрес у получателя"; при самовывозе — показываем */}
             {!(!isRecipientSelf && askRecipientForDetails) && (
-              <div className="w-full min-w-0 md:flex-1">
+              <div className="w-full min-w-0">
                 <label className="block text-sm mb-1 text-color-text-main">
                   Время доставки <span className="text-red-500">*</span>
                 </label>
@@ -877,7 +877,7 @@ export function CheckoutFormModal({ totals, onTotalsUpdate, onTotalsReset }: Che
                     clearFieldError(FIELD_IDS.deliveryTime);
                   }}
                   disabled={loadingTimeOptions}
-                  className={`w-full px-4 h-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent appearance-none bg-white ${firstInvalidField === FIELD_IDS.deliveryTime ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"} ${loadingTimeOptions ? "opacity-50 cursor-not-allowed" : ""}`}
+                  className={`w-full box-border appearance-none bg-white px-4 h-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-transparent ${firstInvalidField === FIELD_IDS.deliveryTime ? "border-red-500 focus:ring-red-500/30 focus:border-red-500" : "border-gray-300"} ${loadingTimeOptions ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
                   <option value="">{loadingTimeOptions ? "Загрузка..." : "Выберите время"}</option>
                   {getTimeIntervals().map((interval) => (

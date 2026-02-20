@@ -514,57 +514,23 @@ export default function AdminDeliveryZonesPage() {
         </div>
       )}
 
-      {/* Модалка: Время доставки */}
-      {openModal === "schedule" && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setOpenModal(null)} aria-hidden />
-          <div
-            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
-              <h2 className="text-lg font-semibold text-[#111] truncate pr-2">Время доставки</h2>
-              <button
-                type="button"
-                onClick={() => setOpenModal(null)}
-                className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 transition-colors flex-shrink-0"
-                aria-label="Закрыть"
-              >
-                ×
-              </button>
-            </div>
-            <div className="flex-1 min-h-0 overflow-y-auto p-4" style={{ overscrollBehavior: "contain" }}>
-              <DeliveryScheduleContent />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Модалка: Время доставки — через Modal (fixed inset-0, z-50, bg-black/50) как у «Зон» */}
+      <Modal
+        isOpen={openModal === "schedule"}
+        onClose={() => setOpenModal(null)}
+        title="Время доставки"
+      >
+        <DeliveryScheduleContent />
+      </Modal>
 
-      {/* Модалка: Минимальный заказ */}
-      {openModal === "minimum" && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 overflow-hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" onClick={() => setOpenModal(null)} aria-hidden />
-          <div
-            className="relative w-[calc(100vw-32px)] max-w-[1000px] max-h-[calc(100vh-80px)] flex flex-col overflow-hidden rounded-xl border border-border-block bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 z-[2] flex items-center justify-between py-3 px-4 sm:px-6 border-b border-border-block flex-shrink-0 bg-white">
-              <h2 className="text-lg font-semibold text-[#111] truncate pr-2">Минимальный заказ</h2>
-              <button
-                type="button"
-                onClick={() => setOpenModal(null)}
-                className="p-1.5 rounded-full text-gray-500 hover:text-[#111] hover:bg-gray-100 transition-colors flex-shrink-0"
-                aria-label="Закрыть"
-              >
-                ×
-              </button>
-            </div>
-            <div className="flex-1 min-h-0 overflow-y-auto p-4" style={{ overscrollBehavior: "contain" }}>
-              <MinimumOrderModalContent />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Модалка: Минимальный заказ — через Modal (fixed inset-0, z-50, bg-black/50) как у «Зон» */}
+      <Modal
+        isOpen={openModal === "minimum"}
+        onClose={() => setOpenModal(null)}
+        title="Минимальный заказ"
+      >
+        <MinimumOrderModalContent />
+      </Modal>
     </div>
   );
 }

@@ -246,7 +246,7 @@ export function PreorderModal({ isOpen, onClose, product }: PreorderModalProps) 
                 }}
                 min={getTodayISO()}
                 lang="ru"
-                className="w-full min-w-0 box-border px-4 py-3 min-h-[48px] border border-border-block rounded-lg bg-white text-color-text-main focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block overflow-hidden"
+                className="w-full min-w-0 box-border appearance-none bg-white px-4 h-12 border border-border-block rounded-lg text-color-text-main focus:outline-none focus:ring-2 focus:ring-[rgba(111,131,99,0.5)] focus:border-border-block overflow-hidden"
               />
               {dateError && <p className="text-sm text-red-600 mt-1">{dateError}</p>}
             </div>
