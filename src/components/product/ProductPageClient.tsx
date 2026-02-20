@@ -638,18 +638,18 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                     <button
                       type="button"
                       onClick={goToPrev}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 p-2 transition-all z-10 hover:opacity-70"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 p-2 transition-all z-10 hover:opacity-70 text-white"
                       aria-label="Предыдущее фото"
                     >
-                      <ChevronLeft className="w-5 h-5 text-color-text-main" />
+                      <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                       type="button"
                       onClick={goToNext}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 transition-all z-10 hover:opacity-70"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-2 transition-all z-10 hover:opacity-70 text-white"
                       aria-label="Следующее фото"
                     >
-                      <ChevronRight className="w-5 h-5 text-color-text-main" />
+                      <ChevronRight className="w-5 h-5" />
                     </button>
                   </>
                 )}
