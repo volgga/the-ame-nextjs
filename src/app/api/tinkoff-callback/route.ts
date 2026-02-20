@@ -8,7 +8,7 @@
 import { NextResponse } from "next/server";
 import { verifyTinkoffNotificationToken } from "@/lib/tinkoff";
 import { getOrderById, updateOrderStatus, markPaymentNotificationSent } from "@/services/orders";
-import { sendOrderTelegramMessage } from "@/lib/telegram";
+import { sendTelegramAlert } from "@/utils/telegramAlert";
 import { formatPaymentSuccess, formatPaymentFailed } from "@/lib/telegramOrdersFormat";
 
 export async function POST(request: Request) {
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
         if (shouldSend) {
           try {
             const finalPaymentId = paymentId ?? order.tinkoffPaymentId ?? order.paymentId ?? undefined;
-            await sendOrderTelegramMessage(formatPaymentSuccess(order, finalPaymentId));
+            await sendTelegramAlert(formatPaymentSuccess(order, finalPaymentId));
           } catch (err) {
             console.error(
               "[tinkoff-callback] payment success tg failed",
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
               (payload.Message as string | undefined) ??
               (payload.ErrorCode != null ? String(payload.ErrorCode) : undefined) ??
               status;
-            await sendOrderTelegramMessage(formatPaymentFailed(order, reason));
+            await sendTelegramAlert(formatPaymentFailed(order, reason));
           } catch (err) {
             console.error(
               "[tinkoff-callback] payment failed tg failed",

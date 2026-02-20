@@ -118,6 +118,7 @@ export function AboutSection({ about }: AboutSectionProps) {
                   variant="card"
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px"
+                  quality={75}
                   priority
                   loading="eager"
                   // TODO: Добавить imageData когда AboutSection будет иметь варианты изображений

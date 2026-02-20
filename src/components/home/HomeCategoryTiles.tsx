@@ -224,6 +224,7 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
                     variant="card"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="(max-width: 768px) 50vw, 33vw"
+                    quality={75}
                     loading={index < 2 ? "eager" : "lazy"}
                     priority={index === 0}
                     // TODO: Добавить imageData когда категории будут иметь варианты изображений

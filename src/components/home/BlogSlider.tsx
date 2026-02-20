@@ -125,7 +125,8 @@ export function BlogSlider({ posts, className = "" }: BlogSliderProps) {
                     fill
                     variant="blog"
                     className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                    sizes="(max-width: 640px) 85vw, (max-width: 1024px) 300px, 320px"
+                    sizes="(max-width: 768px) 85vw, (max-width: 1024px) 300px, 320px"
+                    quality={75}
                     loading="lazy"
                     imageData={{
                       image_url: post.cover_image_url,

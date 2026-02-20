@@ -9,7 +9,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getOrderById, markPaymentNotificationSent, updateOrderStatus } from "@/services/orders";
-import { sendOrderTelegramMessage } from "@/lib/telegram";
+import { sendTelegramAlert } from "@/utils/telegramAlert";
 import { formatPaymentSuccess, formatPaymentFailed } from "@/lib/telegramOrdersFormat";
 import { tinkoffGetState } from "@/lib/tinkoff";
 import { getSupabaseServer } from "@/lib/supabaseServer";
@@ -227,13 +227,13 @@ export async function POST(request: Request) {
           });
         }
         try {
-          await sendOrderTelegramMessage(message);
+          await sendTelegramAlert(message);
           if (process.env.NODE_ENV !== "production") {
             console.info(`[tbank-notify] payment success notification sent successfully`, { orderId });
           }
         } catch (telegramErr) {
           // Детальная ошибка от Telegram API
-          console.error(`[tbank-notify] sendOrderTelegramMessage failed`, {
+          console.error(`[tbank-notify] sendTelegramAlert failed`, {
             orderId,
             error: telegramErr instanceof Error ? telegramErr.message : String(telegramErr),
             errorStack: telegramErr instanceof Error ? telegramErr.stack : undefined,
@@ -255,13 +255,13 @@ export async function POST(request: Request) {
           });
         }
         try {
-          await sendOrderTelegramMessage(message);
+          await sendTelegramAlert(message);
           if (process.env.NODE_ENV !== "production") {
             console.info(`[tbank-notify] payment failed notification sent successfully`, { orderId });
           }
         } catch (telegramErr) {
           // Детальная ошибка от Telegram API
-          console.error(`[tbank-notify] sendOrderTelegramMessage failed`, {
+          console.error(`[tbank-notify] sendTelegramAlert failed`, {
             orderId,
             error: telegramErr instanceof Error ? telegramErr.message : String(telegramErr),
             errorStack: telegramErr instanceof Error ? telegramErr.stack : undefined,

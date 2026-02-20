@@ -177,6 +177,7 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
             fill
             variant="card"
             sizes="(max-width: 768px) 50vw, 33vw"
+            quality={75}
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             loading={imagePriority ? "eager" : "lazy"}
             priority={imagePriority}
