@@ -3,21 +3,22 @@
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, forwardRef } from "react";
 import { useRouter } from "next/navigation";
 import { parseAdminResponse } from "@/lib/adminFetch";
+import { Plus, Trash2 } from "lucide-react";
 
 type MarqueeData = {
   enabled: boolean;
-  text: string;
+  phrases: string[];
   link: string;
 };
 
 const DEFAULT_DATA: MarqueeData = {
   enabled: false,
-  text: "",
+  phrases: [""],
   link: "",
 };
 
 function snapshot(data: MarqueeData): string {
-  return JSON.stringify({ enabled: data.enabled, text: data.text, link: data.link });
+  return JSON.stringify({ enabled: data.enabled, phrases: data.phrases, link: data.link });
 }
 
 export type MarqueeFormRef = {
@@ -55,13 +56,14 @@ export const MarqueeForm = forwardRef<MarqueeFormRef, MarqueeFormProps>(function
 
   const performSave = useCallback(async (): Promise<void> => {
     if (!data) return;
+    const phrases = data.phrases.map((p) => p.trim()).filter((p) => p.length > 0);
     const payload = {
       enabled: data.enabled,
-      text: data.text.trim(),
+      phrases,
       link: data.link.trim() || undefined,
     };
-    if (payload.enabled && !payload.text) {
-      throw new Error("При включённой дорожке текст обязателен");
+    if (payload.enabled && phrases.length === 0) {
+      throw new Error("При включённой дорожке добавьте хотя бы одну фразу");
     }
     const res = await fetch("/api/admin/home-marquee", {
       method: "PATCH",
@@ -74,9 +76,15 @@ export const MarqueeForm = forwardRef<MarqueeFormRef, MarqueeFormProps>(function
       throw new Error(result.message ?? "Ошибка сохранения");
     }
     const responseData = result.data as any;
-    const updated = {
+    const rawPhrases = responseData.phrases;
+    const phrasesList: string[] = Array.isArray(rawPhrases)
+      ? rawPhrases.filter((x: unknown): x is string => typeof x === "string").map((s: string) => String(s).trim())
+      : responseData.text
+        ? [String(responseData.text).trim()]
+        : [""];
+    const updated: MarqueeData = {
       enabled: responseData.enabled === true || responseData.enabled === "true",
-      text: responseData.text ?? "",
+      phrases: phrasesList.length > 0 ? phrasesList : [""],
       link: responseData.link ?? "",
     };
     setData(updated);
@@ -125,9 +133,15 @@ export const MarqueeForm = forwardRef<MarqueeFormRef, MarqueeFormProps>(function
         return;
       }
       const raw = result.data as any;
+      const rawPhrases = raw.phrases;
+      const phrases: string[] = Array.isArray(rawPhrases)
+        ? rawPhrases.filter((x: unknown): x is string => typeof x === "string").map((s: string) => String(s).trim())
+        : raw.text
+          ? [String(raw.text).trim()]
+          : [""];
       const next: MarqueeData = {
         enabled: raw.enabled === true || (typeof raw.enabled === "string" && raw.enabled.toLowerCase() === "true"),
-        text: raw.text ?? "",
+        phrases: phrases.length > 0 ? phrases : [""],
         link: raw.link ?? "",
       };
       setData(next);
@@ -205,17 +219,52 @@ export const MarqueeForm = forwardRef<MarqueeFormRef, MarqueeFormProps>(function
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-[#111] mb-1">Текст</label>
-          <textarea
-            value={formData.text}
-            onChange={(e) =>
-              setData((d) => (d ? { ...d, text: e.target.value } : { ...DEFAULT_DATA, text: e.target.value }))
-            }
-            rows={3}
-            placeholder="Текст бегущей строки над шапкой"
-            className="w-full rounded border border-gray-300 px-3 py-2 text-[#111] text-sm"
-          />
-          <p className="mt-0.5 text-xs text-gray-500">При включённой дорожке текст обязателен.</p>
+          <label className="block text-sm font-medium text-[#111] mb-1">Фразы бегущей строки</label>
+          <p className="mb-2 text-xs text-gray-500">Между фразами автоматически вставляется точка (•). Оставьте пустыми лишние строки — они не отобразятся.</p>
+          <div className="space-y-2">
+            {(formData.phrases.length > 0 ? formData.phrases : [""]).map((phrase, idx) => (
+              <div key={idx} className="flex gap-2 items-center">
+                <input
+                  type="text"
+                  value={phrase}
+                  onChange={(e) => {
+                    const next = [...(formData.phrases.length > 0 ? formData.phrases : [""])];
+                    next[idx] = e.target.value;
+                    setData((d) => (d ? { ...d, phrases: next } : { ...DEFAULT_DATA, phrases: next }));
+                  }}
+                  placeholder={`Фраза ${idx + 1}`}
+                  className="flex-1 min-w-0 rounded border border-gray-300 px-3 py-2 text-[#111] text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = [...(formData.phrases.length > 0 ? formData.phrases : [""])];
+                    next.splice(idx, 1);
+                    if (next.length === 0) next.push("");
+                    setData((d) => (d ? { ...d, phrases: next } : { ...DEFAULT_DATA, phrases: next }));
+                  }}
+                  disabled={(formData.phrases.length || 1) <= 1}
+                  className="p-2 rounded border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                  title="Удалить фразу"
+                  aria-label="Удалить фразу"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                const next = [...(formData.phrases.length > 0 ? formData.phrases : [""]), ""];
+                setData((d) => (d ? { ...d, phrases: next } : { ...DEFAULT_DATA, phrases: next }));
+              }}
+              className="inline-flex items-center gap-1.5 text-sm text-accent-btn hover:underline"
+            >
+              <Plus className="w-4 h-4" />
+              Добавить фразу
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-gray-500">При включённой дорожке нужна хотя бы одна непустая фраза.</p>
         </div>
 
         <div>

@@ -10,6 +10,8 @@ export type HeroSlide = {
   id: string;
   imageUrl: string;
   sort_order: number;
+  /** Для cache-bust при смене фото (hero_slides.updated_at) */
+  updatedAt?: string | null;
   /** Варианты изображения для оптимизации */
   imageThumbUrl?: string | null;
   imageMediumUrl?: string | null;
@@ -33,7 +35,7 @@ async function getActiveHeroSlidesUncached(): Promise<HeroSlide[]> {
     const { data, error } = await supabase
       .from("hero_slides")
       .select(
-        "id, image_url, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, sort_order, button_text, button_href, button_variant, button_align"
+        "id, image_url, image_thumb_url, image_medium_url, image_large_url, image_thumb_avif_url, image_medium_avif_url, image_large_avif_url, sort_order, button_text, button_href, button_variant, button_align, updated_at"
       )
       .eq("is_active", true)
       .order("sort_order", { ascending: true, nullsFirst: false });
@@ -44,6 +46,7 @@ async function getActiveHeroSlidesUncached(): Promise<HeroSlide[]> {
       id: String(r.id),
       imageUrl: (r.image_url as string) ?? "",
       sort_order: (r.sort_order as number) ?? 0,
+      updatedAt: (r.updated_at as string | null) ?? null,
       imageThumbUrl: (r.image_thumb_url as string | null) ?? null,
       imageMediumUrl: (r.image_medium_url as string | null) ?? null,
       imageLargeUrl: (r.image_large_url as string | null) ?? null,

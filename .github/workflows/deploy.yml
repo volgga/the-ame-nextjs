@@ -277,9 +277,8 @@ jobs:
             export NODE_OPTIONS="--max-old-space-size=${NODE_MEM_LIMIT}"
             echo "📊 NODE_OPTIONS set to: $NODE_OPTIONS"
             
-            # Очищаем кеш Next.js перед сборкой
-            echo "🧹 Cleaning Next.js cache..."
-            rm -rf .next || true
+            # НЕ удаляем .next — сохраняем Incremental Cache для экономии Egress при деплое.
+            # Версионность ссылок (?v=updated_at) обновит фото при смене контента.
             
             # Явно указываем использование webpack вместо Turbopack
             echo "🔨 Starting build with webpack..."

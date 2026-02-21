@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Pencil } from "lucide-react";
@@ -52,7 +53,14 @@ export function SlideCard({ slide, index, onEdit }: SlideCardProps) {
       <div className="relative aspect-video w-full overflow-hidden bg-gray-100">
         {slide.image_url ? (
           <>
-            <img src={slide.image_url} alt={`Слайд ${index + 1}`} className="h-full w-full object-cover" />
+            <Image
+              src={slide.image_url}
+              alt={`Слайд ${index + 1}`}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 320px"
+              quality={75}
+            />
             {/* Dark overlay on hover */}
             <div
               className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/40"

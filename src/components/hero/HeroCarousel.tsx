@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { addImageCacheBust, imageUrlVersion, imageVersionFromUpdatedAt } from "@/utils/imageUtils";
 import { AppImage } from "@/components/ui/AppImage";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import type { HeroSlide } from "@/lib/heroSlides";
@@ -278,7 +279,10 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                 style={{ width: `${100 / loopSlides.length}%` }}
               >
                 <AppImage
-                  src={slide.imageUrl}
+                  src={addImageCacheBust(
+                    slide.imageUrl,
+                    imageVersionFromUpdatedAt(slide.updatedAt) ?? imageUrlVersion(slide.imageUrl)
+                  )}
                   alt={slide.buttonText ? `Баннер: ${slide.buttonText}` : "Доставка цветов в Сочи — The Ame"}
                   fill
                   variant="hero"
@@ -287,15 +291,24 @@ export function HeroCarousel({ slides: propSlides }: HeroCarouselProps) {
                   className="object-cover object-center select-none pointer-events-none"
                   sizes="(max-width: 768px) 100vw, 100vw"
                   fetchPriority={i === 0 ? "high" : undefined}
-                  imageData={{
-                    image_url: slide.imageUrl,
-                    image_thumb_url: slide.imageThumbUrl,
-                    image_medium_url: slide.imageMediumUrl,
-                    image_large_url: slide.imageLargeUrl,
-                    image_thumb_avif_url: slide.imageThumbAvifUrl,
-                    image_medium_avif_url: slide.imageMediumAvifUrl,
-                    image_large_avif_url: slide.imageLargeAvifUrl,
-                  }}
+                  imageData={(() => {
+                    const v = imageVersionFromUpdatedAt(slide.updatedAt) ?? imageUrlVersion(slide.imageUrl);
+                    return {
+                      image_url: addImageCacheBust(slide.imageUrl, v),
+                      image_thumb_url: slide.imageThumbUrl ? addImageCacheBust(slide.imageThumbUrl, v) : null,
+                      image_medium_url: slide.imageMediumUrl ? addImageCacheBust(slide.imageMediumUrl, v) : null,
+                      image_large_url: slide.imageLargeUrl ? addImageCacheBust(slide.imageLargeUrl, v) : null,
+                      image_thumb_avif_url: slide.imageThumbAvifUrl
+                        ? addImageCacheBust(slide.imageThumbAvifUrl, v)
+                        : null,
+                      image_medium_avif_url: slide.imageMediumAvifUrl
+                        ? addImageCacheBust(slide.imageMediumAvifUrl, v)
+                        : null,
+                      image_large_avif_url: slide.imageLargeAvifUrl
+                        ? addImageCacheBust(slide.imageLargeAvifUrl, v)
+                        : null,
+                    };
+                  })()}
                 />
                 {hasSlideButton(slide) && slide.buttonHref && slide.buttonText && (
                   <div

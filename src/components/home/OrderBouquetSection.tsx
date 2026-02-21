@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { addImageCacheBust, imageUrlVersion } from "@/utils/imageUtils";
 import { AppImage } from "@/components/ui/AppImage";
 import { ArrowRight } from "lucide-react";
 import { PhoneInput, toE164, isValidPhone } from "@/components/ui/PhoneInput";
@@ -30,7 +31,7 @@ export type OrderBouquetSectionProps = {
 /**
  * Секция "Заказать букет вашей мечты".
  * Порядок: 1) Заголовок (справа), 2) Подзаголовок №1, 3) Основной текст, 4) Кнопка «→ НАПИСАТЬ НАМ», 5) Форма заказа.
- * Изображение справа — такой же размер и пропорции (1:1), как в блоке «О нас».
+ * Изображение слева — строго квадрат 1:1 (aspect-ratio), как в карточках каталога и блоке «О нас».
  * Форма заказа не изменяется.
  */
 export function OrderBouquetSection({ title, subtitle1, text, imageUrl }: OrderBouquetSectionProps = {}) {
@@ -131,12 +132,13 @@ export function OrderBouquetSection({ title, subtitle1, text, imageUrl }: OrderB
             </div>
           </div>
 
-          {/* Flex: изображение слева, текст и форма справа; на десктопе высота ряда = высоте формы, фото подстраивается (низ фото = низ кнопки «Отправить») */}
-          <div className="flex flex-col md:flex-row md:items-stretch gap-6 md:gap-16">
-            <div className="order-2 md:order-1 w-full md:flex-[0_0_50%] md:min-h-0">
-              <div className="relative aspect-square md:aspect-auto w-full md:h-full overflow-hidden rounded-2xl border border-border-block bg-white md:max-h-[calc(100vh-14rem)]">
+          {/* Flex: изображение слева, текст и форма справа. Фото — строго квадрат 1:1, как в карточках каталога. */}
+          <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-16">
+            <div className="order-2 md:order-1 w-full md:flex-[0_0_50%] md:max-w-[400px] md:min-w-0">
+              <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border-block bg-white">
+                {/* TODO: Добавить updated_at в HomeOrderBlock для cache-bust при смене фото */}
                 <AppImage
-                  src={blockImageUrl}
+                  src={addImageCacheBust(blockImageUrl, imageUrlVersion(blockImageUrl))}
                   alt="Букет вашей мечты"
                   fill
                   variant="card"

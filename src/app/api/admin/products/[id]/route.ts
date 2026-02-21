@@ -250,6 +250,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         updates.image_large_avif_url = null;
       }
 
+      // updated_at для cache-bust изображений при обновлении товара
+      updates.updated_at = new Date().toISOString();
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data, error } = await (supabase as any)
         .from("products")

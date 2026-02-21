@@ -10,7 +10,10 @@ import { supabase } from "@/lib/supabaseClient";
 /** Единый тип настроек бегущей дорожки (админка + публичная часть). */
 export type MarqueeSettings = {
   enabled: boolean;
-  text: string | null;
+  /** @deprecated Используйте phrases. Оставлено для обратной совместимости. */
+  text?: string | null;
+  /** Массив фраз для бегущей строки. Между фразами автоматически вставляется • */
+  phrases: string[];
   link: string | null;
 };
 
@@ -19,9 +22,30 @@ export type HomeMarquee = MarqueeSettings;
 
 const DEFAULT_MARQUEE: MarqueeSettings = {
   enabled: false,
-  text: null,
+  phrases: [],
   link: null,
 };
+
+/** Парсит marquee_text из БД: JSON-массив ["фраза1","фраза2"] или plain string → одна фраза. */
+function parsePhrases(raw: string | null | undefined): string[] {
+  if (!raw || typeof raw !== "string") return [];
+  const s = raw.trim();
+  if (!s) return [];
+  if (s.startsWith("[")) {
+    try {
+      const arr = JSON.parse(s) as unknown;
+      if (Array.isArray(arr)) {
+        return arr
+          .filter((x): x is string => typeof x === "string")
+          .map((x) => String(x).trim())
+          .filter((x) => x.length > 0);
+      }
+    } catch {
+      /* fallback to single phrase */
+    }
+  }
+  return [s];
+}
 
 /** Нормализация значения из БД в boolean (PostgreSQL/драйвер может вернуть строку "t"/"f"). */
 export function marqueeSettingToBoolean(v: unknown): boolean {
@@ -52,9 +76,11 @@ async function getHomeMarqueeUncached(): Promise<MarqueeSettings> {
     if (error || !data) return DEFAULT_MARQUEE;
     if (!isValidMarqueeRow(data)) return DEFAULT_MARQUEE;
 
+    const phrases = parsePhrases(data.marquee_text);
     return {
       enabled: marqueeSettingToBoolean(data.marquee_enabled),
-      text: data.marquee_text?.trim() || null,
+      text: phrases.length > 0 ? phrases.join(" • ") : null,
+      phrases,
       link: data.marquee_link?.trim() || null,
     };
   } catch {

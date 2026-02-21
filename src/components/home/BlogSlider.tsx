@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { addImageCacheBust, imageVersionFromUpdatedAt } from "@/utils/imageUtils";
 import { AppImage } from "@/components/ui/AppImage";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MAIN_PAGE_BLOCK_GAP, MAIN_PAGE_BLOCK_GAP_MARGIN } from "@/components/ui/breadcrumbs";
@@ -120,7 +121,7 @@ export function BlogSlider({ posts, className = "" }: BlogSliderProps) {
               <div className="relative aspect-[4/3] w-full overflow-hidden bg-neutral-100">
                 {post.cover_image_url ? (
                   <AppImage
-                    src={post.cover_image_url}
+                    src={addImageCacheBust(post.cover_image_url, imageVersionFromUpdatedAt(post.updated_at))}
                     alt={post.cover_alt ?? post.title}
                     fill
                     variant="blog"
@@ -129,13 +130,25 @@ export function BlogSlider({ posts, className = "" }: BlogSliderProps) {
                     quality={75}
                     loading="lazy"
                     imageData={{
-                      image_url: post.cover_image_url,
-                      image_thumb_url: post.cover_image_thumb_url,
-                      image_medium_url: post.cover_image_medium_url,
-                      image_large_url: post.cover_image_large_url,
-                      image_thumb_avif_url: post.cover_image_thumb_avif_url,
-                      image_medium_avif_url: post.cover_image_medium_avif_url,
-                      image_large_avif_url: post.cover_image_large_avif_url,
+                      image_url: addImageCacheBust(post.cover_image_url, imageVersionFromUpdatedAt(post.updated_at)),
+                      image_thumb_url: post.cover_image_thumb_url
+                        ? addImageCacheBust(post.cover_image_thumb_url, imageVersionFromUpdatedAt(post.updated_at))
+                        : null,
+                      image_medium_url: post.cover_image_medium_url
+                        ? addImageCacheBust(post.cover_image_medium_url, imageVersionFromUpdatedAt(post.updated_at))
+                        : null,
+                      image_large_url: post.cover_image_large_url
+                        ? addImageCacheBust(post.cover_image_large_url, imageVersionFromUpdatedAt(post.updated_at))
+                        : null,
+                      image_thumb_avif_url: post.cover_image_thumb_avif_url
+                        ? addImageCacheBust(post.cover_image_thumb_avif_url, imageVersionFromUpdatedAt(post.updated_at))
+                        : null,
+                      image_medium_avif_url: post.cover_image_medium_avif_url
+                        ? addImageCacheBust(post.cover_image_medium_avif_url, imageVersionFromUpdatedAt(post.updated_at))
+                        : null,
+                      image_large_avif_url: post.cover_image_large_avif_url
+                        ? addImageCacheBust(post.cover_image_large_avif_url, imageVersionFromUpdatedAt(post.updated_at))
+                        : null,
                     }}
                   />
                 ) : (

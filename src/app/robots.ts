@@ -10,7 +10,12 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/_next/", "/admin/"],
+      disallow: [
+        "/api/",
+        "/_next/",
+        "/admin/",
+        "/storage/v1/object/public/", // Оригиналы Supabase Storage — не тратить Egress на краулеров
+      ],
     },
     sitemap: `${CANONICAL_BASE}/sitemap.xml`,
     host: "theame.ru",

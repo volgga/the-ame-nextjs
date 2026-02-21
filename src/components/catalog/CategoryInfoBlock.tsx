@@ -1,5 +1,6 @@
 import Image from "next/image";
 import DOMPurify from "isomorphic-dompurify";
+import { addImageCacheBust, imageUrlVersion } from "@/utils/imageUtils";
 
 type InfoBlockData = {
   info_subtitle?: string | null;
@@ -58,8 +59,9 @@ export function CategoryInfoBlock({ data }: CategoryInfoBlockProps) {
         {/* Правая колонка: фото уменьшенного размера (не перекрывает текст) */}
         {hasImage && (
           <div className="w-full max-w-full md:max-w-[400px] flex-shrink-0 overflow-hidden rounded-xl bg-[rgba(31,42,31,0.06)] aspect-square relative order-2">
+            {/* TODO: Добавить updated_at в categories/subcategories для cache-bust при смене info_image */}
             <Image
-              src={data.info_image_url!}
+              src={addImageCacheBust(data.info_image_url, imageUrlVersion(data.info_image_url))}
               alt={data.info_subtitle || "Изображение"}
               fill
               className="object-cover block w-full h-full"

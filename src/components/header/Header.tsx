@@ -19,8 +19,8 @@ const TOPBAR_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
  * marquee — настройки бегущей дорожки (SSR). Если выключена или нет текста — блок не рендерится, хедер без отступа.
  */
 export function Header({ marquee }: { marquee?: MarqueeSettings | null }) {
-  const hasText = Boolean(marquee?.text?.trim());
-  const marqueeVisible = Boolean(marquee?.enabled) && hasText;
+  const hasPhrases = Boolean(marquee?.phrases?.length);
+  const marqueeVisible = Boolean(marquee?.enabled) && hasPhrases;
   const marqueeHeight = marqueeVisible ? MARQUEE_H : 0;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const animationLockRef = useRef(false);
@@ -84,7 +84,7 @@ export function Header({ marquee }: { marquee?: MarqueeSettings | null }) {
               overflow: "hidden",
             }}
           >
-            <TopMarquee text={marquee.text ?? ""} href={marquee.link ?? undefined} speed={50} duplicates={6} />
+            <TopMarquee phrases={marquee.phrases ?? []} href={marquee.link ?? undefined} speed={50} duplicates={6} />
           </div>
         )}
 

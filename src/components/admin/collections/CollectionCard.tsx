@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Pencil } from "lucide-react";
@@ -51,7 +52,14 @@ export function CollectionCard({ collection, index, onEdit }: CollectionCardProp
       <div className="relative aspect-video w-full overflow-hidden bg-gray-100">
         {collection.image_url ? (
           <>
-            <img src={collection.image_url} alt={collection.name} className="h-full w-full object-cover" />
+            <Image
+              src={collection.image_url}
+              alt={collection.name}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 320px"
+              quality={75}
+            />
             <div
               className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/40"
               aria-hidden

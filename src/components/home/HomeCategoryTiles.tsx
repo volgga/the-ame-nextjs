@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { addImageCacheBust, imageUrlVersion } from "@/utils/imageUtils";
 import { AppImage } from "@/components/ui/AppImage";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -188,9 +189,10 @@ export function HomeCategoryTiles({ collections }: HomeCategoryTilesProps) {
           {collections.map((col, index) => {
             const href =
               !col.categorySlug || col.categorySlug === "magazin" ? "/magazin" : `/magazine/${col.categorySlug}`;
+            // TODO: Добавить updatedAt в HomeCollection (home_collections.updated_at) для cache-bust
             const imageSrc =
               col.imageUrl?.trim() && (col.imageUrl.startsWith("http") || col.imageUrl.startsWith("/"))
-                ? col.imageUrl
+                ? addImageCacheBust(col.imageUrl, imageUrlVersion(col.imageUrl))
                 : "/placeholder.svg";
             const cardKey = col.id;
             const rowInfo = cardRowMap.get(cardKey);

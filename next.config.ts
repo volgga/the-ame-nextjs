@@ -23,12 +23,15 @@ const nextConfig: NextConfig = {
     return [
       { source: "/icons/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       { source: "/_next/static/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
-      { source: "/_next/image", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      // next/image — все изображения (в т.ч. с nfezvjentfuzjuwrjfya.supabase.co) проходят через этот роут.
+      // Cache-Control 1 месяц — критично для экономии ~19 ГБ Egress.
+      { source: "/_next/image", headers: [{ key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=86400" }] },
       { source: "/sitemap.xml", headers: [{ key: "Cache-Control", value: "public, max-age=3600, s-maxage=3600" }] },
       { source: "/robots.txt", headers: [{ key: "Cache-Control", value: "public, max-age=3600, s-maxage=3600" }] },
     ];
   },
   images: {
+    ...(process.env.NODE_ENV === "development" && { unoptimized: true }),
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 31536000,
     remotePatterns: [

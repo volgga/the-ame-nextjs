@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { addImageCacheBust, imageUrlVersion } from "@/utils/imageUtils";
 import { AppImage } from "@/components/ui/AppImage";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -111,8 +112,9 @@ export function AboutSection({ about }: AboutSectionProps) {
           >
             {about?.imageUrl ? (
               <div className="relative aspect-square w-full overflow-hidden">
+                {/* TODO: Добавить updated_at в HomeAbout (home_reviews) для cache-bust при смене фото */}
                 <AppImage
-                  src={about.imageUrl}
+                  src={addImageCacheBust(about.imageUrl, imageUrlVersion(about.imageUrl))}
                   alt={about?.title ? `Фото для блока «${about.title}»` : "The Ame — о нас"}
                   fill
                   variant="card"

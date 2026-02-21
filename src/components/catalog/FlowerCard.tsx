@@ -5,7 +5,13 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { AppImage } from "@/components/ui/AppImage";
 import { Flower } from "@/types/flower";
-import { PLACEHOLDER_IMAGE, isValidImageUrl, addImageCacheBust, imageUrlVersion } from "@/utils/imageUtils";
+import {
+  PLACEHOLDER_IMAGE,
+  isValidImageUrl,
+  addImageCacheBust,
+  imageUrlVersion,
+  imageVersionFromUpdatedAt,
+} from "@/utils/imageUtils";
 import { Heart, ShoppingCart, Search, Clock, MousePointerClick } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
@@ -54,7 +60,8 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
   useEffect(() => setMounted(true), []);
 
   const rawImageSrc = !isValidImageUrl(flower.image) || imgError ? PLACEHOLDER_IMAGE : flower.image!.trim();
-  const imageVersion = imageUrlVersion(flower.image ?? "");
+  const imageVersion =
+    imageVersionFromUpdatedAt(product?.updatedAt) ?? imageUrlVersion(flower.image ?? "");
   const imageSrc = rawImageSrc === PLACEHOLDER_IMAGE ? rawImageSrc : addImageCacheBust(rawImageSrc, imageVersion);
 
   const handleAddToCart = (e: React.MouseEvent) => {

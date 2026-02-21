@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Eye, EyeOff, GripVertical, Pencil, Trash2 } from "lucide-react";
@@ -73,9 +74,16 @@ export function ProductRowCard({
       </div>
 
       {/* Миниатюра */}
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[rgba(31,42,31,0.08)]">
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-[rgba(31,42,31,0.08)]">
         {product.image_url ? (
-          <img src={product.image_url} alt="" className="h-full w-full object-cover" />
+          <Image
+            src={product.image_url}
+            alt=""
+            width={64}
+            height={64}
+            className="h-full w-full object-cover"
+            quality={75}
+          />
         ) : (
           <div className="h-full w-full" />
         )}

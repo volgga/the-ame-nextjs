@@ -7,6 +7,7 @@ import { ProductPageClient } from "@/components/product/ProductPageClient";
 import { canonicalUrl, truncateDescription, ROBOTS_INDEX_FOLLOW, CANONICAL_BASE, SITE_NAME, LOCALE } from "@/lib/seo";
 
 export const revalidate = 300;
+export const dynamicParams = true; // Остальные товары — по первому визиту (ISR), не при билде
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -14,9 +15,13 @@ type Props = {
 
 const PRODUCT_DESCRIPTION_FALLBACK = " — свежие цветы с доставкой по Сочи. Удобный заказ и быстрая доставка — The Ame.";
 
+/** Лимит для экономии Egress при деплое: пререндер только топ-N по sort_order. */
+const STATIC_PARAMS_LIMIT = 20;
+
 export async function generateStaticParams() {
   const products = await getAllCatalogProducts();
-  return products.map((product) => ({
+  const limited = products.slice(0, STATIC_PARAMS_LIMIT);
+  return limited.map((product) => ({
     slug: product.slug,
   }));
 }

@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { PLACEHOLDER_IMAGE, isValidImageUrl, addImageCacheBust, imageUrlVersion } from "@/utils/imageUtils";
+import {
+  PLACEHOLDER_IMAGE,
+  isValidImageUrl,
+  addImageCacheBust,
+  imageUrlVersion,
+  imageVersionFromUpdatedAt,
+} from "@/utils/imageUtils";
 import { AppImage } from "@/components/ui/AppImage";
 import Link from "next/link";
 import {
@@ -358,7 +364,8 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
       seen.add(u);
     }
   }
-  const mainVersion = imageUrlVersion(product.image ?? "");
+  const mainVersion =
+    imageVersionFromUpdatedAt(product.updatedAt) ?? imageUrlVersion(product.image ?? "");
   const images = rawImages.map((url, i) =>
     addImageCacheBust(url, i === 0 ? mainVersion : imageUrlVersion(url))
   );
