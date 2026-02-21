@@ -241,7 +241,7 @@ export const FlowerCatalog = ({ products, total, currentPage, pageSize, singlePa
               key={flower.id}
               flower={flower}
               product={product}
-              imagePriority={index < 8}
+              imagePriority={index < 12}
             />
           );
         })}

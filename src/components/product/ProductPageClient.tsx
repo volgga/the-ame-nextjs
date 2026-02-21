@@ -526,7 +526,7 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                         variant="thumb"
                         sizes="64px"
                         className="object-cover object-center"
-                        priority={idx < 5}
+                        priority={idx < 3}
                         loading="eager"
                         imageData={
                           idx === 0 && productImageDataBust
@@ -583,9 +583,9 @@ export function ProductPageClient({ product, productDetails, addToOrderProducts 
                             variant="gallery"
                             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 80vw, 55vw"
                             className="object-contain object-center rounded-xl"
-                            priority={idx < 5}
+                            priority={idx < 3}
                             loading="eager"
-                            fetchPriority={idx < 5 ? "high" : undefined}
+                            fetchPriority={idx === 0 ? "high" : undefined}
                             imageData={
                               idx === 0 && productImageDataBust
                                 ? productImageDataBust

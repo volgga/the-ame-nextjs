@@ -134,8 +134,8 @@ export function OrderBouquetSection({ title, subtitle1, text, imageUrl }: OrderB
 
           {/* Flex: изображение слева, текст и форма справа. Фото — строго квадрат 1:1, как в карточках каталога. */}
           <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-16">
-            <div className="order-2 md:order-1 w-full md:flex-[0_0_50%] md:max-w-[400px] md:min-w-0">
-              <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border-block bg-white">
+            <div className="order-2 md:order-1 w-full md:flex-[0_0_50%] md:max-w-[540px] md:min-w-0">
+              <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border-block bg-white min-h-[min(80vw,360px)] md:min-h-0">
                 {/* TODO: Добавить updated_at в HomeOrderBlock для cache-bust при смене фото */}
                 <AppImage
                   src={addImageCacheBust(blockImageUrl, imageUrlVersion(blockImageUrl))}

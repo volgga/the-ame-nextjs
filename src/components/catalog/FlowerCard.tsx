@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { AppImage } from "@/components/ui/AppImage";
 import { Flower } from "@/types/flower";
@@ -49,6 +50,7 @@ interface FlowerCardProps {
 }
 
 export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteOnMobile = false, showPriceFromOnMobile = false, compactCard = false, imagePriority = false }: FlowerCardProps) => {
+  const router = useRouter();
   const { addToCart } = useCart();
   const { toggle: toggleFavorite, isFavorite } = useFavorites();
   const [quickBuyOpen, setQuickBuyOpen] = useState(false);
@@ -102,6 +104,10 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
     name: flower.name,
     productSlug: flower.slug ?? null,
   });
+
+  const handleMouseEnter = () => {
+    router.prefetch(productUrl);
+  };
 
   // Подготавливаем данные для Quick View
   // Используем данные из Product если доступны, иначе из Flower
@@ -158,7 +164,13 @@ export const FlowerCard = ({ flower, product, showNewBadge = true, hideFavoriteO
 
   return (
     <div className="relative flex flex-col h-full">
-      <Link href={productUrl} aria-label={flower.name} className="block flex-1 relative" prefetch={true}>
+      <Link
+        href={productUrl}
+        aria-label={flower.name}
+        className="block flex-1 relative"
+        prefetch={true}
+        onMouseEnter={handleMouseEnter}
+      >
         {/* 📸 Image wrapper: clips badges to rounded image (productCardImageWrap = 24px radius + overflow hidden) */}
         <div className="productCardImageWrap group aspect-square bg-[#ece9e2]">
           {((isHitEffective || isNewEffective) || hasDiscount) && (
